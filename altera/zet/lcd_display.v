@@ -40,7 +40,7 @@ module lcd_display(f1, f2, m1, m2, go, busy, clk, boot, rs_, rw_, e_, db_);
     if (~boot)
       begin
         state <= 8'd00;
-        rs_ <= 1'b00; // 0: Instruction reg (busy flag)
+        rs_ <= 1'b0; // 0: Instruction reg (busy flag)
         rw_ <= 1'b1;  // 1: Read
         busy <= 1'b1;
         x <= 4'b0;
