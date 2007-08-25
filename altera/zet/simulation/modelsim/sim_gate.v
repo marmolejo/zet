@@ -92,7 +92,7 @@ module sim_gate;
            imm     = 16'hxxxx;
            off     = 16'h0000;
 
-                     // MODO 2 byte: mov [ax], ch; load, dirección impar
+                     // MODO 2 byte: mov [ax], ch; store, dirección impar
                      // ac ab im ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
        #40 ir      = 33'b1__0__0__x__1_000_111__0__0__1__0_xxxx_0101_0000_1100_11;
            imm     = 16'hxxxx;

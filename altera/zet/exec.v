@@ -23,7 +23,7 @@ module exec(ir, off, imm, clk, clk2x, boot,
   alu     alu0( {c, a}, bus_b, aluout, t, func, flags, oflags, ~byteop, s, off);
   regfile reg0( a, b, c, {aluout[31:16], omemalu}, s, flags, wr, wrfl, high, clk, boot,
                 addr_a, addr_b, addr_c, addr_d, addr_s, oflags, ~byteop, a_byte, c_byte);
-  memory  mem0( memout, c, ~wr_mem, aluout[19:0], byteop, clk, clk2x,
+  memory  mem0( memout, c, ~wr_mem, aluout[19:0], byteop, clk, clk2x, boot,
                 addr_, data_, roe_, rwe_, rcs_, rble_, rbhe_);
   
   // Assignments

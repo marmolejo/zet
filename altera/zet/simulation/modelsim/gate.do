@@ -10,7 +10,7 @@ quietly virtual signal -install /sim_gate/t0 { (concat_range (15 to 0) )( (conte
 quietly virtual signal -install /sim_gate/t0 { (concat_range (15 to 0) )( (context /sim_gate/t0 )&{\exec0|reg0|r[13][15]~regout\ , \exec0|reg0|r[13][14]~regout\ , \exec0|reg0|r[13][13]~regout\ , \exec0|reg0|r[13][12]~regout\ , \exec0|reg0|r[13][11]~regout\ , \exec0|reg0|r[13][10]~regout\ , \exec0|reg0|r[13][9]~regout\ , \exec0|reg0|r[13][8]~regout\ , \exec0|reg0|r[13][7]~regout\ , \exec0|reg0|r[13][6]~regout\ , \exec0|reg0|r[13][5]~regout\ , \exec0|reg0|r[13][4]~regout\ , \exec0|reg0|r[13][3]~regout\ , \exec0|reg0|r[13][2]~regout\ , \exec0|reg0|r[13][1]~regout\ , \exec0|reg0|r[13][0]~regout\ } )} rtmp
 add wave -noupdate -format Logic /sim_gate/t0/clk_
 add wave -noupdate -format Logic /sim_gate/t0/\\pll0|altpll_component|_clk0\\
-add wave -noupdate -format Logic /sim_gate/t0/\\pll0|altpll_component|_clk1\\
+add wave -noupdate -format Literal -radix decimal /sim_gate/t0/\\exec0|mem0|state\\
 add wave -noupdate -format Literal -radix hexadecimal /sim_gate/t0/addr_
 add wave -noupdate -format Literal -radix hexadecimal /sim_gate/t0/data_
 add wave -noupdate -format Logic /sim_gate/t0/rble_
