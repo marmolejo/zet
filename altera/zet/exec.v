@@ -1,30 +1,29 @@
-module exec(ir, off, imm, clk, clk2x, boot,
-            addr_, data_, roe_, rwe_, rcs_, rble_, rbhe_);
+module exec(ir, off, imm, cs, clk, boot,
+            memout, wr_data, we, addr, byteop);
   // IO Ports
   input [32:0] ir;
   input [15:0] off, imm;
-  input        clk, clk2x;
+  input        clk;
   input        boot;
+  input [15:0] memout;
 
-  output        roe_, rwe_, rcs_, rble_, rbhe_;
-  output [17:0] addr_;
-
-  inout [15:0] data_;
+  output [15:0] wr_data;
+  output        we, byteop;
+  output [19:0] addr;
+  output [15:0] cs;
 
   // Net declarations
-  wire [15:0] a, b, c, flags, s, oflags, omemalu, memout, bus_b;
+  wire [15:0] a, b, c, flags, s, oflags, omemalu, bus_b;
   wire [31:0] aluout;
   wire [3:0]  addr_a, addr_b, addr_c, addr_d;
   wire [2:0]  t, func;
   wire [1:0]  addr_s;
-  wire        wr, wrfl, high, byteop, wr_mem, memalu, a_byte, c_byte;
+  wire        wr, wrfl, high, wr_mem, memalu, a_byte, c_byte;
 
   // Module instances
   alu     alu0( {c, a}, bus_b, aluout, t, func, flags, oflags, ~byteop, s, off);
-  regfile reg0( a, b, c, {aluout[31:16], omemalu}, s, flags, wr, wrfl, high, clk, boot,
+  regfile reg0( a, b, c, cs, {aluout[31:16], omemalu}, s, flags, wr, wrfl, high, clk, boot,
                 addr_a, addr_b, addr_c, addr_d, addr_s, oflags, ~byteop, a_byte, c_byte);
-  memory  mem0( memout, c, ~wr_mem, aluout[19:0], byteop, clk, clk2x, boot,
-                addr_, data_, roe_, rwe_, rcs_, rble_, rbhe_);
   
   // Assignments
   assign addr_s = ir[1:0];
@@ -46,4 +45,8 @@ module exec(ir, off, imm, clk, clk2x, boot,
 
   assign omemalu = memalu ? aluout[15:0] : memout;
   assign bus_b   = b_imm ? imm : b;
+
+  assign we = ~wr_mem;
+  assign addr = aluout[19:0];
+  assign wr_data = c;
 endmodule

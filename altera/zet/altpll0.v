@@ -97,7 +97,7 @@ module altpll0 (
 		altpll_component.clk0_multiply_by = 1,
 		altpll_component.clk0_phase_shift = "0",
 		altpll_component.compensate_clock = "CLK0",
-		altpll_component.gate_lock_counter = 10,
+		altpll_component.gate_lock_counter = 20,
 		altpll_component.gate_lock_signal = "YES",
 		altpll_component.inclk0_input_frequency = 20000,
 		altpll_component.intended_device_family = "Stratix II",
@@ -151,8 +151,8 @@ module altpll0 (
 		altpll_component.port_sclkout0 = "PORT_UNUSED",
 		altpll_component.port_sclkout1 = "PORT_UNUSED",
 		altpll_component.spread_frequency = 0,
-		altpll_component.valid_lock_multiplier = 1;
-
+		altpll_component.valid_lock_multiplier = 1,
+    altpll_component.sim_gate_lock_device_behavior = "on";
 
 endmodule
 
@@ -183,7 +183,7 @@ endmodule
 // Retrieval info: PRIVATE: GLOCKED_COUNTER_EDIT_CHANGED STRING "1"
 // Retrieval info: PRIVATE: GLOCKED_FEATURE_ENABLED STRING "1"
 // Retrieval info: PRIVATE: GLOCKED_MODE_CHECK STRING "1"
-// Retrieval info: PRIVATE: GLOCK_COUNTER_EDIT NUMERIC "10"
+// Retrieval info: PRIVATE: GLOCK_COUNTER_EDIT NUMERIC "20"
 // Retrieval info: PRIVATE: HAS_MANUAL_SWITCHOVER STRING "1"
 // Retrieval info: PRIVATE: INCLK0_FREQ_EDIT STRING "50.000"
 // Retrieval info: PRIVATE: INCLK0_FREQ_UNIT_COMBO STRING "MHz"
@@ -232,7 +232,7 @@ endmodule
 // Retrieval info: PRIVATE: STICKY_CLK0 STRING "1"
 // Retrieval info: PRIVATE: SWITCHOVER_COUNT_EDIT NUMERIC "1"
 // Retrieval info: PRIVATE: SWITCHOVER_FEATURE_ENABLED STRING "1"
-// Retrieval info: PRIVATE: SYNTH_WRAPPER_GEN_POSTFIX STRING "0"
+// Retrieval info: PRIVATE: SYNTH_WRAPPER_GEN_POSTFIX STRING "1"
 // Retrieval info: PRIVATE: USE_CLK0 STRING "1"
 // Retrieval info: PRIVATE: ZERO_DELAY_RADIO STRING "0"
 // Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
@@ -242,7 +242,7 @@ endmodule
 // Retrieval info: CONSTANT: CLK0_MULTIPLY_BY NUMERIC "1"
 // Retrieval info: CONSTANT: CLK0_PHASE_SHIFT STRING "0"
 // Retrieval info: CONSTANT: COMPENSATE_CLOCK STRING "CLK0"
-// Retrieval info: CONSTANT: GATE_LOCK_COUNTER NUMERIC "10"
+// Retrieval info: CONSTANT: GATE_LOCK_COUNTER NUMERIC "20"
 // Retrieval info: CONSTANT: GATE_LOCK_SIGNAL STRING "YES"
 // Retrieval info: CONSTANT: INCLK0_INPUT_FREQUENCY NUMERIC "20000"
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Stratix II"
@@ -315,4 +315,5 @@ endmodule
 // Retrieval info: GEN_FILE: TYPE_NORMAL altpll0_bb.v FALSE FALSE
 // Retrieval info: GEN_FILE: TYPE_NORMAL altpll0_waveforms.html FALSE FALSE
 // Retrieval info: GEN_FILE: TYPE_NORMAL altpll0_wave*.jpg FALSE FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL altpll0_syn.v TRUE FALSE
 // Retrieval info: LIB_FILE: altera_mf

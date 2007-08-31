@@ -1,7 +1,8 @@
-module regfile(a, b, c, d, s, oflags, wr, wrfl, wrhi, clk, boot,
+module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, boot,
                addr_a, addr_b, addr_c, addr_d, addr_s, iflags, word_op, o_byte, c_byte);
   // IO Ports
   output [15:0] a, b, c, s, oflags;
+  output [15:0] cs;
   input  [3:0]  addr_a, addr_b, addr_c, addr_d;
   input  [1:0]  addr_s;
   input  [15:0] iflags;
@@ -32,11 +33,14 @@ module regfile(a, b, c, d, s, oflags, wr, wrfl, wrhi, clk, boot,
   assign oflags = { 4'd0, flags[8:3], 1'b0, flags[2], 1'b0, 
                     flags[1], 1'b1, flags[0] };
 
+  assign cs = r[9];
+
   // Behaviour
   always @(posedge clk)
-    if (~boot)
+    if (~boot) begin
       for (i=5'd0; i<5'd16; i=i+5'd1) r[i] = 16'd0;
-    else
+      r[9][15:12] <= 4'hf;
+    end else
       begin
         if (wr) begin
           if (word_op | addr_d[3:2]==2'b10) r[addr_d] <= d[15:0];

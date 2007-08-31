@@ -25,7 +25,7 @@
 
 set_global_assignment -name DEVICE EP2S60F672C5ES
 set_global_assignment -name FAMILY "Stratix II"
-set_global_assignment -name TOP_LEVEL_ENTITY test_exec
+set_global_assignment -name TOP_LEVEL_ENTITY cpu
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "7.1 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:12:56  AUGUST 13, 2007"
 set_global_assignment -name LAST_QUARTUS_VERSION "7.1 SP1"
@@ -35,27 +35,6 @@ set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VERILOG -section_id eda_simulation
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
 set_location_assignment PIN_AF15 -to clk_
-set_location_assignment PIN_B7 -to db_[7]
-set_location_assignment PIN_E10 -to db_[6]
-set_location_assignment PIN_B6 -to db_[5]
-set_location_assignment PIN_C6 -to db_[4]
-set_location_assignment PIN_E9 -to db_[3]
-set_location_assignment PIN_B4 -to db_[2]
-set_location_assignment PIN_B3 -to db_[1]
-set_location_assignment PIN_E7 -to db_[0]
-set_location_assignment PIN_A10 -to e_
-set_location_assignment PIN_AD26 -to led_[7]
-set_location_assignment PIN_AD25 -to led_[6]
-set_location_assignment PIN_AC25 -to led_[5]
-set_location_assignment PIN_AC24 -to led_[4]
-set_location_assignment PIN_AB24 -to led_[3]
-set_location_assignment PIN_AB23 -to led_[2]
-set_location_assignment PIN_AB26 -to led_[1]
-set_location_assignment PIN_AB25 -to led_[0]
-set_location_assignment PIN_H11 -to rs_
-set_location_assignment PIN_C11 -to rw_
-set_location_assignment PIN_W24 -to sw0_
-set_location_assignment PIN_W23 -to sw1_
 set_global_assignment -name ENABLE_CLOCK_LATENCY ON
 set_location_assignment PIN_U1 -to addr_[0]
 set_location_assignment PIN_U2 -to addr_[1]
@@ -75,30 +54,14 @@ set_location_assignment PIN_Y3 -to addr_[14]
 set_location_assignment PIN_Y4 -to addr_[15]
 set_location_assignment PIN_AA3 -to addr_[16]
 set_location_assignment PIN_AA4 -to addr_[17]
-set_location_assignment PIN_V4 -to data_[15]
-set_location_assignment PIN_V3 -to data_[14]
-set_location_assignment PIN_T9 -to data_[13]
-set_location_assignment PIN_T8 -to data_[12]
-set_location_assignment PIN_U4 -to data_[11]
-set_location_assignment PIN_U3 -to data_[10]
-set_location_assignment PIN_T5 -to data_[9]
-set_location_assignment PIN_T4 -to data_[8]
-set_location_assignment PIN_F20 -to data_[7]
-set_location_assignment PIN_E20 -to data_[6]
-set_location_assignment PIN_D19 -to data_[5]
-set_location_assignment PIN_G19 -to data_[4]
-set_location_assignment PIN_D20 -to data_[3]
-set_location_assignment PIN_E19 -to data_[2]
-set_location_assignment PIN_G15 -to data_[1]
-set_location_assignment PIN_E16 -to data_[0]
-set_location_assignment PIN_K20 -to rble_
-set_location_assignment PIN_K19 -to rbhe_
 set_location_assignment PIN_J19 -to rcs_
 set_location_assignment PIN_J22 -to roe_
 set_location_assignment PIN_J21 -to rwe_
 set_global_assignment -name RESERVE_DATA0_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
 set_global_assignment -name EDA_RUN_TOOL_AUTOMATICALLY OFF -section_id eda_simulation
+set_global_assignment -name VERILOG_FILE cpu.v
+set_global_assignment -name VERILOG_FILE fetch.v
 set_global_assignment -name VERILOG_FILE altpll0.v
 set_global_assignment -name VERILOG_FILE test_exec.v
 set_global_assignment -name VERILOG_FILE memory.v
@@ -106,5 +69,41 @@ set_global_assignment -name VERILOG_FILE exec.v
 set_global_assignment -name VERILOG_FILE regfile.v
 set_global_assignment -name VERILOG_FILE primitives.v
 set_global_assignment -name VERILOG_FILE alu.v
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_location_assignment PIN_V4 -to data0_[15]
+set_location_assignment PIN_V3 -to data0_[14]
+set_location_assignment PIN_T9 -to data0_[13]
+set_location_assignment PIN_T8 -to data0_[12]
+set_location_assignment PIN_U4 -to data0_[11]
+set_location_assignment PIN_U3 -to data0_[10]
+set_location_assignment PIN_T5 -to data0_[9]
+set_location_assignment PIN_T4 -to data0_[8]
+set_location_assignment PIN_F20 -to data0_[7]
+set_location_assignment PIN_E20 -to data0_[6]
+set_location_assignment PIN_D19 -to data0_[5]
+set_location_assignment PIN_G19 -to data0_[4]
+set_location_assignment PIN_D20 -to data0_[3]
+set_location_assignment PIN_E19 -to data0_[2]
+set_location_assignment PIN_G15 -to data0_[1]
+set_location_assignment PIN_E16 -to data0_[0]
+set_location_assignment PIN_K20 -to rble0_
+set_location_assignment PIN_K19 -to rbhe0_
+set_location_assignment PIN_AA6 -to data1_[15]
+set_location_assignment PIN_AA5 -to data1_[14]
+set_location_assignment PIN_W8 -to data1_[13]
+set_location_assignment PIN_W7 -to data1_[12]
+set_location_assignment PIN_W6 -to data1_[11]
+set_location_assignment PIN_W5 -to data1_[10]
+set_location_assignment PIN_V8 -to data1_[9]
+set_location_assignment PIN_V7 -to data1_[8]
+set_location_assignment PIN_V6 -to data1_[7]
+set_location_assignment PIN_V5 -to data1_[6]
+set_location_assignment PIN_U8 -to data1_[5]
+set_location_assignment PIN_U7 -to data1_[4]
+set_location_assignment PIN_T7 -to data1_[3]
+set_location_assignment PIN_T6 -to data1_[2]
+set_location_assignment PIN_U6 -to data1_[1]
+set_location_assignment PIN_U5 -to data1_[0]
+set_location_assignment PIN_K22 -to rble1_
+set_location_assignment PIN_K21 -to rbhe1_
 set_instance_assignment -name PARTITION_HIERARCHY no_file_for_top_partition -to | -section_id Top
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
