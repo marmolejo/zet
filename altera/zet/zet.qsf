@@ -25,7 +25,7 @@
 
 set_global_assignment -name DEVICE EP2S60F672C5ES
 set_global_assignment -name FAMILY "Stratix II"
-set_global_assignment -name TOP_LEVEL_ENTITY cpu
+set_global_assignment -name TOP_LEVEL_ENTITY fetch
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "7.1 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:12:56  AUGUST 13, 2007"
 set_global_assignment -name LAST_QUARTUS_VERSION "7.1 SP1"
@@ -63,7 +63,6 @@ set_global_assignment -name EDA_RUN_TOOL_AUTOMATICALLY OFF -section_id eda_simul
 set_global_assignment -name VERILOG_FILE cpu.v
 set_global_assignment -name VERILOG_FILE fetch.v
 set_global_assignment -name VERILOG_FILE altpll0.v
-set_global_assignment -name VERILOG_FILE test_exec.v
 set_global_assignment -name VERILOG_FILE memory.v
 set_global_assignment -name VERILOG_FILE exec.v
 set_global_assignment -name VERILOG_FILE regfile.v
@@ -105,5 +104,5 @@ set_location_assignment PIN_U6 -to data1_[1]
 set_location_assignment PIN_U5 -to data1_[0]
 set_location_assignment PIN_K22 -to rble1_
 set_location_assignment PIN_K21 -to rbhe1_
-set_instance_assignment -name PARTITION_HIERARCHY no_file_for_top_partition -to | -section_id Top
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_instance_assignment -name PARTITION_HIERARCHY no_file_for_top_partition -to | -section_id Top

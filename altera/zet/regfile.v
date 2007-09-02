@@ -7,7 +7,8 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, boot,
   input  [1:0]  addr_s;
   input  [15:0] iflags;
   input  [31:0] d;
-  input         wr, wrfl, wrhi, word_op, clk, boot, o_byte, c_byte;
+  input         wrfl, wrhi, word_op, clk, boot, o_byte, c_byte;
+  input  [1:0]  wr;
 
   // Net declarations
   reg [15:0] r[15:0];
@@ -40,9 +41,10 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, boot,
     if (~boot) begin
       for (i=5'd0; i<5'd16; i=i+5'd1) r[i] = 16'd0;
       r[9][15:12] <= 4'hf;
+      r[15] <= 16'hfff0;
     end else
       begin
-        if (wr) begin
+        if (wr[0] & ( ~wr[1] | wr[1] & r[addr_c][0])) begin
           if (word_op | addr_d[3:2]==2'b10) r[addr_d] <= d[15:0];
           else if (addr_d[3]~^addr_d[2]) r[addr_d][7:0] <= d[7:0];
           else r[{2'b0,addr_d[1:0]}][15:8] = d[7:0];

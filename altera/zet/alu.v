@@ -349,24 +349,31 @@ endmodule
 
 module othop (x, y, seg, off, iflags, func, word_op, out, oflags);
   // IO ports
-  input [15:0] x, y, seg, off, iflags;
+  input [15:0] x, y, off, seg, iflags;
   input [2:0] func;
   input word_op;
   output [19:0] out;
   output [15:0] oflags;
 
   // Net declarations
-  wire [15:0] dcmp, deff, outf, fandy, fory;
+  wire [15:0] deff, deff2, outf, fandy, fory, selfly, invfly;
+  wire [19:0] dcmp, dcmp2; 
 
   // Module instantiations
-  mux8_16 m0(func, dcmp, deff, outf, fandy, fory,,,, out[15:0]);
+  mux8_16 m0(func, dcmp[15:0], dcmp2[15:0], deff, outf, fandy, fory, 
+                   selfly, invfly, out[15:0]);
+  assign out[19:16] = func ? dcmp2[19:16] : dcmp[19:16];
 
   // Assignments
-  assign {out[19:16], dcmp} = x + y + (seg << 4) + off;
+  assign dcmp  = (seg << 4) + deff;
+  assign dcmp2 = (seg << 4) + deff2;
   assign deff  = x + y + off;
+  assign deff2 = x + y + off + 16'd2;
   assign outf  = x;
   assign fandy = iflags & y;
   assign fory  = iflags | y;
+  assign selfly = (iflags >> y) & 16'h0001;
+  assign invfly = ~((iflags >> y) & 16'h0001);
 
   assign oflags = word_op ? out[15:0] : {iflags[15:8], out[7:0]};
 endmodule

@@ -1,12 +1,66 @@
+# Prueba de todos los modos del mov y jmp
+# Al final, %es tiene que valer 0x4001
+#
+# mov: 1 (word), 2 (word), 3 (off, base+index+off), 4, 5 (off), 
+#      7 (byte,word), 8 (byte off), 9 (word base), 10 (byte,word), 
+#      11 (word off, byte base+index)
+# jmp: 1, 2, 3 (reg), 3 (mem base+index+off), 4, 5 (mem base+index+off)
 .code16
-movw $1, %si
-movw $0x3241, (%bx)
-movw (%bp), %dx
-movw %dx, %cx
-movw %dx, (%si)
-movw (0x0001), %di
-movb $0x76, %ch
-movb $0x79, (%bx)
-movb %ch, (%si)
-movb (%bx), %dl
-movb %dh, %dl
+start:
+jmp b                   # (2)  jmp
+
+.org 14
+b:
+movw $0xf000, %bx       # (10) mov word
+movw %bx, %ds           # (4)  mov
+movw (0xfff3), %ax      # (2)  mov word
+jmp *%ax                # (3)  jmp reg
+
+.org 0x1290
+ljmp $0xe342, $0xebe0   # (4)  jmp
+
+.org 0x2000
+movw $0x1000, %bx       # (10) mov word
+movw %bx, %ds           # (4)  mov
+
+movb $0xfb, %ah         # (10) mov byte
+movb $0xe1, %al         # (10) mov byte
+movw %ax, (0x2501)      # (1)  mov word
+
+movw $0x1001, (0x2600)  # (11) mov word
+movw (0x2600), %ss      # (3)  mov
+
+movw %ss, (0x2601)      # (5)  mov
+movb (0x2601), %dl      # (8)  mov byte
+movb $0x00, %dh         # (10) mov byte
+movw %dx, %di           # (7)  mov word
+
+movw $0x2506, %bp       # (10) mov word
+
+jmp *-22(%bp,%di)       # (3)  jmp mem
+
+.org 0x3001
+movw $0x4001, %ax
+movw $0x2501, %bx
+movw %ax, (%bx)         # (9)  mov word
+movw $2, %di
+movb $0x00, (%bx,%di)   # (11) mov byte
+movb $4, %ch
+movb %ch, %cl           # (7)  mov byte
+movb $0, %ch
+movw %cx, %si
+movb $0xf0, -1(%bx,%si)
+
+movw $0x3, %si
+ljmp *-24(%bp,%si)      # (5)  jmp mem
+
+.org 0x4001
+movw -3(%bx,%si), %es
+
+.org 65520
+jmp start               # (1)  jmp
+.word 0x1290
+
+.org 65534
+.word 0xffff
+

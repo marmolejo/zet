@@ -25,5 +25,10 @@ add wave sim:/cpu_gate/rble1_
 add wave sim:/cpu_gate/rbhe1_
 add wave sim:/cpu_gate/roe_
 add wave sim:/cpu_gate/rwe_
+add wave -radix hexadecimal sim:/cpu_gate/cpu0/exec0/reg0/r\[15\]
+add wave -radix hexadecimal sim:/cpu_gate/cpu0/exec0/reg0/d
+add wave sim:/cpu_gate/cpu0/exec0/reg0/addr_a
+add wave sim:/cpu_gate/cpu0/exec0/reg0/addr_d
+add wave sim:/cpu_gate/cpu0/exec0/reg0/wr
 
-run 500ns
+run 35us
