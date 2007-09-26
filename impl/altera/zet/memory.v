@@ -30,9 +30,18 @@ module memory (rd_data, wr_data, we, addr_data, w_b, clk, clk2x, boot,
   wire a0;
   wire [15:0] wr;
   wire [17:0] addr1; 
-  reg  [3:0]  state;
+  reg  [2:0]  state;
   reg  reset;
   reg  rble, rbhe;
+
+  parameter state_0 = 3'd0;
+  parameter state_1 = 3'd1;
+  parameter state_2 = 3'd2;
+  parameter state_3 = 3'd3;
+  parameter state_4 = 3'd4;
+  parameter state_5 = 3'd5;
+  parameter state_6 = 3'd6;
+  parameter state_7 = 3'd7;
 
   // Assignments
   assign a0     = addr_data[0];
@@ -63,19 +72,20 @@ module memory (rd_data, wr_data, we, addr_data, w_b, clk, clk2x, boot,
   always @(posedge clk2x) 
     begin
       case (state)
-        4'd0: begin rble <= ~we & a0; rbhe <= ~we & w_b & ~a0; end
-        4'd1: addr_ <= addr_data[18:1];
-        4'd2: rwe_ <= we;
-        4'd3: if (~we) rwe_ <= 1'b1; else rd_data <= rddata;
-        4'd4: if (~we & ~w_b & a0) begin rble <= 1'b0; rbhe <= 1'b1; end
-        4'd5: addr_ <= addr1;
-        4'd6: rwe_ <= we | w_b | ~a0;
-        4'd7: begin rwe_ <= 1'b1; if(~w_b & a0) rd_data[15:8] <= blr[7:0]; end
-        4'd8: addr_ <= 18'hz;
+        state_0: begin rble <= ~we & a0; rbhe <= ~we & w_b & ~a0; state <= state_1; end
+        state_1: begin addr_ <= addr_data[18:1]; state <= state_2; end
+        state_2: begin rwe_ <= we; state <= state_3; end
+        state_3: begin if (~we) rwe_ <= 1'b1; else rd_data <= rddata; state <= state_4; end
+        state_4: begin if (~we & ~w_b & a0) begin rble <= 1'b0; rbhe <= 1'b1; end state <= state_5; end
+        state_5: begin addr_ <= addr1; state <= state_6; end
+        state_6: begin rwe_ <= we | w_b | ~a0; state <= state_7; end
+        default: begin 
+                   rwe_ <= 1'b1; 
+                   if (clk) state <= state_0; 
+                   addr_ <= 18'hz; 
+                   if(~w_b & a0) rd_data[15:8] <= blr[7:0]; 
+                 end
       endcase
-      if (reset) begin rwe_ <= 1'b1; state <= 4'd8; end
-      else if (clk & state[3]) 
-        begin /* rble <= ~we & a0; rbhe <= ~we & w_b & ~a0;*/ state <= 4'd0; end
-      else state <= state + 4'd1;
+      if (reset) begin rwe_ <= 1'b1; state <= state_7; end
     end
 endmodule

@@ -25,7 +25,7 @@
 
 set_global_assignment -name DEVICE EP2S60F672C5ES
 set_global_assignment -name FAMILY "Stratix II"
-set_global_assignment -name TOP_LEVEL_ENTITY fetch
+set_global_assignment -name TOP_LEVEL_ENTITY cpu
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "7.1 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:12:56  AUGUST 13, 2007"
 set_global_assignment -name LAST_QUARTUS_VERSION "7.1 SP1"
@@ -60,14 +60,6 @@ set_location_assignment PIN_J21 -to rwe_
 set_global_assignment -name RESERVE_DATA0_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
 set_global_assignment -name EDA_RUN_TOOL_AUTOMATICALLY OFF -section_id eda_simulation
-set_global_assignment -name VERILOG_FILE cpu.v
-set_global_assignment -name VERILOG_FILE fetch.v
-set_global_assignment -name VERILOG_FILE altpll0.v
-set_global_assignment -name VERILOG_FILE memory.v
-set_global_assignment -name VERILOG_FILE exec.v
-set_global_assignment -name VERILOG_FILE regfile.v
-set_global_assignment -name VERILOG_FILE primitives.v
-set_global_assignment -name VERILOG_FILE alu.v
 set_location_assignment PIN_V4 -to data0_[15]
 set_location_assignment PIN_V3 -to data0_[14]
 set_location_assignment PIN_T9 -to data0_[13]
@@ -104,5 +96,17 @@ set_location_assignment PIN_U6 -to data1_[1]
 set_location_assignment PIN_U5 -to data1_[0]
 set_location_assignment PIN_K22 -to rble1_
 set_location_assignment PIN_K21 -to rbhe1_
+set_global_assignment -name FMAX_REQUIREMENT "50 MHz" -section_id "External Board Clock"
+set_instance_assignment -name CLOCK_SETTINGS "External Board Clock" -to clk_
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_instance_assignment -name PARTITION_HIERARCHY no_file_for_top_partition -to | -section_id Top
+set_global_assignment -name ENABLE_ADVANCED_IO_TIMING ON
+set_global_assignment -name USE_TIMEQUEST_TIMING_ANALYZER ON
+set_global_assignment -name VERILOG_FILE ../../../rtl/util/primitives.v
+set_global_assignment -name VERILOG_FILE ../../../rtl/zet/alu.v
+set_global_assignment -name VERILOG_FILE fetch2.v
+set_global_assignment -name VERILOG_FILE cpu.v
+set_global_assignment -name VERILOG_FILE altpll0.v
+set_global_assignment -name VERILOG_FILE memory.v
+set_global_assignment -name VERILOG_FILE exec.v
+set_global_assignment -name VERILOG_FILE regfile.v

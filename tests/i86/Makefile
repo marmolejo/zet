@@ -1,4 +1,8 @@
-all: ../../altera/zet/simulation/modelsim/bios0.dat ../../altera/zet/simulation/modelsim/bios1.dat
+all: bench
+
+bench: ../../bench/bios.dat
+
+altera: ../../altera/zet/simulation/modelsim/bios0.dat ../../altera/zet/simulation/modelsim/bios1.dat
 
 BIOS=bios0.out bios1.out
 
@@ -7,6 +11,9 @@ BIOS=bios0.out bios1.out
 
 ../../altera/zet/simulation/modelsim/bios1.dat: bios1.out
 	hexdump -v -e '1/1 "%02X"' -e '"\n"' bios1.out > ../../altera/zet/simulation/modelsim/bios1.dat
+
+../../bench/bios.dat: bios.out
+	hexdump -v -e '1/1 "%02X"' -e '"\n"' bios.out > ../../bench/bios.dat
 
 $(BIOS): bios.out
 	splitlh bios.out $(BIOS)

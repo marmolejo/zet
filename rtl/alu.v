@@ -24,7 +24,7 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
   adj    adj0(x[15:0], {cf_adj, adj}, func, afi, cfi, af_adj, of_adj);
   addsub ad0(x[15:0], y, add, func, word_op, cfi, cf_add, af_add, of_add);
   conv   cnv0(x[15:0], cnv, func[0]);
-  muldiv mul0(x, y, mul, func[1:0], word_op, cf_mul, of_mul);
+  /* muldiv mul0(x, y, mul, func[1:0], word_op, cf_mul, of_mul); */
   bitlog lo0(x[15:0], y, log, func, cf_log, of_log);
   shifts sh0(x[15:0], y, shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
   rotat  rot0(x[15:0], y, rot, func[1:0], word_op, cfi, cf_rot, of_rot);
@@ -32,9 +32,9 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
 
   mux8_16 m0(t, adj, add, cnv[15:0], mul[15:0], log, shi, rot, oth[15:0], out[15:0]);
   mux8_16 m1(t, 16'd0, 16'd0, cnv[31:16], mul[31:16], 16'd0, 16'd0, 16'd0, {12'b0,oth[19:16]}, out[31:16]);
-  mux8_1  a1(t, cf_adj, cf_add, cfi, cf_mul, cf_log, cf_shi, cf_rot,, cfo);
-  mux8_1  a2(t, af_adj, af_add, afi, , , ,afi ,, afo);
-  mux8_1  a3(t, , of_add, ofi, of_mul, of_log, of_shi, of_rot,, ofo);
+  mux8_1  a1(t, cf_adj, cf_add, cfi, cf_mul, cf_log, cf_shi, cf_rot, 1'b0, cfo);
+  mux8_1  a2(t, af_adj, af_add, afi, 1'b0, 1'b0, 1'b0, afi, 1'b0, afo);
+  mux8_1  a3(t, 1'b0, of_add, ofi, of_mul, of_log, of_shi, of_rot, 1'b0, ofo);
 
   // Flags
   assign pfo = flags_unchanged ? pfi : ^~ out[7:0];
@@ -135,12 +135,12 @@ module adj(x, out, func, afi, cfi, afo, cfo);
   wire        alcnd;
 
   // Module instances
-  mux8_17 m0(func, aaa, aad, aam, aas, daa, das, , , out);
+  mux8_17 m0(func, aaa, aad, aam, aas, daa, das, 17'd0, 17'd0, out);
   
   // Assignments
   assign aaa = afo ? { x[15:8] + 8'd1, (x[7:0] + 8'd6) & 8'h0f } : x;
   assign aad = { 8'b0, x[15:8] * 8'd10 + x[7:0] };
-  assign aam = { x[7:0] / 8'd10, x[7:0] % 8'd10 };
+  assign aam = 16'd0; // FIXME: { x[7:0] / 8'd10, x[7:0] % 8'd10 };
   assign aas = afo ? { x[15:8] - 8'd1, (x[7:0] - 8'd6) & 8'h0f } : x;
 
   assign ala = afo ? x[7:0] + 8'd6 : x[7:0];
@@ -172,7 +172,7 @@ module conv(x, out, func);
   assign cwd = { x15_16, x[7:0] };
   assign out = func ? cwd : cbw;
 endmodule
-
+/*
 module muldiv(x, y, out, func, word_op, cfo, ofo);
   // IO ports
   input  [31:0] x;
@@ -226,7 +226,7 @@ module muldiv(x, y, out, func, word_op, cfo, ofo);
   assign cfo = word_op ? cfo16 : cfo8;
   assign ofo = cfo;
 endmodule
-
+*/
 module bitlog(x, y, out, func, cfo, ofo);
   // IO ports
   input  [15:0] x, y;
@@ -238,7 +238,7 @@ module bitlog(x, y, out, func, cfo, ofo);
   wire [15:0] and_n, or_n, not_n, xor_n, test_n;
   
   // Module instantiations
-  mux8_16 m0(func, and_n, or_n, not_n, xor_n, test_n, , , , out);
+  mux8_16 m0(func, and_n, or_n, not_n, xor_n, test_n, 16'd0, 16'd0, 16'd0, out);
 
   // Assignments
   assign and_n  = x & y;
@@ -267,8 +267,8 @@ module shifts(x, y, out, func, word_op, cfi, ofi, cfo, ofo);
   wire ofo_shl, ofo_sar, ofo_shr, ofo_o, cfo16, cfo8;
 
   // Module instantiations
-  mux4_16 m0(func, sal_shl, sar, shr,, out);
-  mux4_1  m1(func, ofo_shl, ofo_sar, ofo_shr,, ofo_o);
+  mux4_16 m0(func, sal_shl, sar, shr, 16'd0, out);
+  mux4_1  m1(func, ofo_shl, ofo_sar, ofo_shr, 1'b0, ofo_o);
 
   // Assignments
   assign x_s     = x;
@@ -311,14 +311,14 @@ module rotat(x, y, out, func, word_op, cfi, cfo, ofo);
   mux4_1  m1(func, cfo_rcl, cfo_rcr, cfo_rol, cfo_ror, cfo);
 
   // Assignments
-  assign yce16 = y[7:0] % 8'd17;
+  assign yce16 = ye16; // FIXME: y[7:0] % 8'd17;
   assign ye16  = y[7:0] % 8'd16;
   assign rcl16 = yce16 ? (x << yce16 | cfi << (yce16-8'd1)  | x >> (8'd17-yce16)) : x;
   assign rcr16 = yce16 ? (x >> yce16 | cfi << (8'd16-yce16) | x << (8'd17-yce16)) : x;
   assign rol16 = (x << ye16 | x >> (8'd16-ye16));
   assign ror16 = (x >> ye16 | x << (8'd16-ye16));
 
-  assign yce8 = y[7:0] % 8'd9;
+  assign yce8 = ye8; // FIXME: y[7:0] % 8'd9;
   assign ye8  = y[7:0] % 8'd8;
   assign rcl8 = yce8 ? (x[7:0] << yce8 | cfi << (yce8-8'd1) | x[7:0] >> (8'd9-yce8)) : x[7:0];
   assign rcr8 = yce8 ? (x[7:0] >> yce8 | cfi << (8'd8-yce8) | x[7:0] << (9'd9-yce8)) : x[7:0];

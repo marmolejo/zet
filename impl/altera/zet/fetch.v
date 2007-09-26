@@ -1,8 +1,8 @@
 `include "defines.v"
 
-module fetch(clk, boot, cs, ip, ir, off, imm, pc, data, bytefetch, fetch_or_exec);
+module fetch(clk, reset, cs, ip, data, ir, off, imm, pc, bytefetch, fetch_or_exec);
   // IO ports
-  input clk, boot;
+  input clk, reset;
   input [15:0] cs, ip;
   input [15:0] data;
   output [`IR_SIZE-1:0] ir;
@@ -21,7 +21,7 @@ module fetch(clk, boot, cs, ip, ir, off, imm, pc, data, bytefetch, fetch_or_exec
   // Net declarations
   wire [19:0] pc;
   wire [7:0] opcode, modrm;
-  wire b, sm, dm, need_modrm, need_off, need_imm, off_size, imm_size;
+  wire sm, dm, need_modrm, need_off, need_imm, off_size, imm_size;
   wire [1:0] mod;
   wire [2:0] regm;
   wire [2:0] rm;
@@ -34,7 +34,7 @@ module fetch(clk, boot, cs, ip, ir, off, imm, pc, data, bytefetch, fetch_or_exec
   wire [1:0] ninstrs; // Number of IRs
 
   // Module instantiation
-  lookup_op op0(opcode, b, dst, sm, dm, src, base, index, 2'b11, off_m, mod, regm,
+  lookup_op op0(opcode, dst, sm, dm, src, base, index, 2'b11, off_m, mod, regm,
                 imm_m, need_off, off_size, need_imm, imm_size, need_modrm, 
                 ir0, ir1, ir2, off0, off1, off2, imm0, imm1, imm2, ninstrs, 
                 clk);
@@ -45,7 +45,6 @@ module fetch(clk, boot, cs, ip, ir, off, imm, pc, data, bytefetch, fetch_or_exec
   assign mod = modrm[7:6];
   assign regm = modrm[5:3];
   assign rm = modrm[2:0];
-  assign b = ~opcode[0];
   assign d = opcode[1];
   assign opcode = state ? opcode_r : data[7:0];
   assign modrm  = (state == 4'd1) ? data[7:0] : modrm_r;
@@ -60,78 +59,85 @@ module fetch(clk, boot, cs, ip, ir, off, imm, pc, data, bytefetch, fetch_or_exec
    (((state == 4'h2) & off_size | (state==4'h3) & imm_size) ? 16'd2 : 16'd1) : imm_r;
   assign ir  = (state < 4'h4) ? `ADD_IP : ir_r;
 
+  parameter state_0 = 4'h0;
+  parameter state_1 = 4'h1;
+  parameter state_2 = 4'h2;
+  parameter state_3 = 4'h3;
+  parameter state_4 = 4'h4;
+  parameter state_5 = 4'h5;
+  parameter state_6 = 4'h6;
+  parameter state_7 = 4'h7;
+  parameter state_8 = 4'h8;
+
   // Behaviour
   always @(posedge clk)
-    if (~boot)
-      begin
-        ir_r  <= `IR_SIZE'h0;
-        state <= 4'h8;
-     end
-   else
+    if (~reset) state <= state_7;
+    else
      case (state)
-       4'h0: // opcode fetch
+
+       state_0: // opcode fetch
          begin 
            opcode_r <= data[7:0]; 
-           state    <= need_modrm ? 4'h1 : 
-                       (need_off ? 4'h2 : need_imm ? 4'h3 : 4'h4);
+           state    <= need_modrm ? state_1 : 
+                       (need_off ? state_2 : need_imm ? state_3 : state_4);
            off_m    <= 16'h0;
          end
 
-       4'h1: // need modrm
+       state_1: // need modrm
          begin
            modrm_r <= data[7:0]; 
-           state   <= need_off ? 4'h2 : (need_imm ? 4'h3 : 4'h4);           
+           state   <= need_off ? state_2 : (need_imm ? state_3 : state_4);
          end
 
-       4'h2: // need off
+       state_2: // need off
          begin
            off_m <= data;
-           state <= need_imm ? 4'h3: 4'h4;
+           state <= need_imm ? state_3 : state_4;
          end
 
-       4'h3: // need imm
+       state_3: // need imm
          begin
            imm_m <= data;
-           state <= 4'h4;
+           state <= state_4;
          end
 
-       4'h4: // exec 1st IR
+       state_4: // exec 1st IR
          begin
            ir_r  <= ir0;
            off   <= off0;
            imm_r <= imm0;
-           state <= (ninstrs == 2'd1) ? 4'h7 : 4'h5;
+           state <= (ninstrs == 2'd1) ? state_7 : state_5;
          end
 
-       4'h5: // exec 2nd IR
+       state_5: // exec 2nd IR
          begin
            ir_r  <= ir1;
            off   <= off1;
            imm_r <= imm1;
-           state <= (ninstrs == 2'd2) ? 4'h7 : 4'h6;
+           state <= (ninstrs == 2'd2) ? state_7 : state_6;
          end
 
-       4'h6: // exec 3rd IR
+       state_6: // exec 3rd IR
          begin
            ir_r  <= ir2;
            off   <= off2;
            imm_r <= imm2;
-           state <= 4'h7;
+           state <= state_7;
          end
 
-       4'h7: begin ir_r <= `IR_SIZE'h0; state <= 4'h8; end
-       4'h8: state <= 4'h0;
+       state_7: begin ir_r <= `IR_SIZE'h0; state <= state_8; end
+       state_8: state <= state_0;
+       default: begin ir_r <= `IR_SIZE'h0; state <= state_8; end
      endcase
 
 endmodule
 
-module lookup_op (opcode, b, dst, sm, dm, src, base, index, seg, off, mod, regm, imm,
+module lookup_op (opcode, dst, sm, dm, src, base, index, seg, off, mod, regm, imm,
                   need_off, off_size, need_imm, imm_size, need_modrm, 
                   ir0, ir1, ir2, off0, off1, off2, imm0, imm1, imm2, ninstrs, 
                   clk);
   // IO Ports
   input [7:0] opcode;
-  input       b;    // byte operation ?
   input [2:0] dst;  // destination register
   input       sm;   // source in memory?
   input       dm;   // dest in memory?
@@ -155,6 +161,7 @@ module lookup_op (opcode, b, dst, sm, dm, src, base, index, seg, off, mod, regm,
 
   // Net declarations
   wire off_size_mod, need_off_mod;
+  wire b;
 
   // Assignments
   assign off_size_mod = (base == 4'b1100 && index == 4'b1100) ? 1'b1 : mod[1];
@@ -164,19 +171,22 @@ module lookup_op (opcode, b, dst, sm, dm, src, base, index, seg, off, mod, regm,
   assign off0 = offs[0]; assign off1 = offs[1]; assign off2 = offs[2];
   assign imm0 = imms[0]; assign imm1 = imms[1]; assign imm2 = imms[2];
 
+  assign b = ~opcode[0];
+
   // Behaviour
   always @(negedge clk)
     casex (opcode)
-8'b1000_10xx, 8'b1000_1100, 8'b1000_1110: begin // mov
-  if (dm) begin 
+// r->r, r->m, m->r  s->m, s->r   r->s, m->s
+   8'b1000_10xx,    8'b1000_1100, 8'b1000_1110: begin // mov
+  if (dm) begin // [byte bs, word cs] r->m, s->m
              // ac   ab    im    ma  by    fun       t    wh    wr    wm    wf    ad_d      ad_c     ad_b  ad_a    s
     irs[0] <= { b, 1'b0, 1'b0, 1'bx, b & ~opcode[2], 3'b000, 3'b111, 1'b0, 2'b00, 1'b1, 1'b0, 4'bxxxx, opcode[2] & ~opcode[1], src, index, base, seg };
     need_off <= need_off_mod;
-  end else if(sm) begin 
+  end else if(sm) begin // [byte ds, word es] m->r, m->s
              // ac   ab    im    ma  by    fun       t    wh    wr    wm    wf    ad_d      ad_c     ad_b  ad_a    s
     irs[0] <= { b, 1'b0, 1'b0, 1'b0, b & ~opcode[2], 3'b000, 3'b111, 1'b0, 2'b01, 1'b0, 1'b0, opcode[2] & opcode[1], dst, 4'bxxxx, index, base, seg };
     need_off <= need_off_mod;
-  end else begin
+  end else begin // [byte 9s, word as] r->r s->r r->s
              //   ac  ab   im    ma  by    fun      t    wh    wr    wm    wf    ad_d      ad_c       ad_b      ad_a      s
     irs[0] <= { 1'bx, b & ~opcode[2], 1'b1, 1'b1, b, 3'b001, 3'b001, 1'b0, 2'b01, 1'b0, 1'b0, opcode[2] & opcode[1], dst, 4'bxxxx, 4'bxxxx, opcode[2] & ~opcode[1], src, 2'bxx };
     imms[0] <= 16'd0;
@@ -186,17 +196,17 @@ module lookup_op (opcode, b, dst, sm, dm, src, base, index, seg, off, mod, regm,
  end
 
 8'b1010_00xx: begin // mov
-  if (opcode[1])
+  if (opcode[1]) // a->m [byte bs, word cs]
              // ac   ab    im    ma  by    fun       t    wh    wr    wm    wf    ad_d     ad_c     ad_b     ad_a     s
     irs[0] <= { b, 1'b0, 1'b0, 1'bx, b, 3'b000, 3'b111, 1'b0, 2'b00, 1'b1, 1'b0, 4'bxxxx, 4'b0000, 4'b1100, 4'b1100, seg };
-  else
+  else // m->a [byte ds, word es]
              // ac   ab    im    ma  by    fun       t    wh    wr    wm    wf    ad_d      ad_c     ad_b    ad_a     s
     irs[0] <= { b, 1'b0, 1'b0, 1'b0, b, 3'b000, 3'b111, 1'b0, 2'b01, 1'b0, 1'b0, 4'b0000, 4'bxxxx, 4'b1100, 4'b0000, seg };
 
   need_off <= 1'b1; need_imm <= 1'b0; need_modrm <= 1'b0; off_size <= 1'b1; offs[0] <= off; ninstrs <= 2'd1;
   end
 
-8'b1011_xxxx: begin // mov
+8'b1011_xxxx: begin // mov [byte 13s, word 14s]
              //   ac    ab   im    ma       by        fun      t    wh    wr    wm    wf         ad_d           ad_c    ad_b     ad_a      s
     irs[0] <= { 1'bx, 1'bx, 1'b1, 1'b1, ~opcode[3], 3'b001, 3'b001, 1'b0, 2'b01, 1'b0, 1'b0, 1'b0, opcode[2:0], 4'bxxxx, 4'bxxxx, 4'b1100, 2'bxx };
     imms[0] <= imm;
@@ -204,7 +214,7 @@ module lookup_op (opcode, b, dst, sm, dm, src, base, index, seg, off, mod, regm,
     ninstrs <= 2'd1;
   end
 
-8'b1100_011x: begin // mov
+8'b1100_011x: begin // mov [byte 15s, word 17s]
              //   ac    ab   im    ma  by     fun      t    wh    wr    wm    wf     ad_d     ad_c    ad_b     ad_a      s
     irs[0] <= { 1'bx, 1'bx, 1'b1, 1'b1, b, 3'b001, 3'b001, 1'b0, 2'b01, 1'b0, 1'b0, 4'b1101, 4'bxxxx, 4'bxxxx, 4'b1100, 2'bxx };
     irs[1] <= { 1'bx, 1'b0, 1'b0, 1'bx, b, 3'b000, 3'b111, 1'b0, 2'b00, 1'b1, 1'b0, 4'bxxxx, 4'b1101, index,   base,    seg };
@@ -214,7 +224,7 @@ module lookup_op (opcode, b, dst, sm, dm, src, base, index, seg, off, mod, regm,
     ninstrs <= 2'd2;
   end
 
-8'b1110_10x1: begin // jmp direct
+8'b1110_10x1: begin // jmp direct [off8 1s, off16 2s]
              //   ac    ab   im    ma    by     fun      t     wh    wr    wm    wf     ad_d     ad_c     ad_b     ad_a      s
     irs[0] <= { 1'bx, 1'b0, 1'b1, 1'b1, 1'b0, 3'b001, 3'b001, 1'b0, 2'b01, 1'b0, 1'b0, 4'b1111, 4'bxxxx, 4'bxxxx, 4'b1111, 2'bxx };
     imms[0] <= imm;
@@ -222,7 +232,7 @@ module lookup_op (opcode, b, dst, sm, dm, src, base, index, seg, off, mod, regm,
     ninstrs <= 2'd1;
   end
 
-8'b1110_1010: begin // jmp indirect different segment
+8'b1110_1010: begin // jmp indirect different segment [5s]
              //   ac    ab   im    ma    by     fun      t    wh      wr    wm    wf     ad_d     ad_c    ad_b     ad_a      s
     irs[0] <= { 1'bx, 1'b0, 1'b1, 1'b1, 1'b0, 3'b001, 3'b001, 1'b0, 2'b01, 1'b0, 1'b0, 4'b1001, 4'bxxxx, 4'bxxxx, 4'b1100, 2'bxx };
     irs[1] <= { 1'bx, 1'b0, 1'b1, 1'b1, 1'b0, 3'b001, 3'b001, 1'b0, 2'b01, 1'b0, 1'b0, 4'b1111, 4'bxxxx, 4'bxxxx, 4'b1100, 2'bxx };
@@ -235,14 +245,14 @@ module lookup_op (opcode, b, dst, sm, dm, src, base, index, seg, off, mod, regm,
 8'b1111_1111: begin 
   case (regm)
     3'b100: begin // jmp indirect, same seg
-      if (mod==2'b11) begin
+      if (mod==2'b11) begin // [3s]
         irs[0] <= { 1'bx, 1'b0, 1'b1, 1'b1, 1'b0, 3'b001, 3'b001, 1'b0, 2'b01, 1'b0, 1'b0, 4'b1111, 4'bxxxx, 4'bxxxx, 1'b0, src, 2'bxx };
         imms[0] <= 16'd0;
-      end else
+      end else // [4s]
         irs[0] <= { 1'bx, 1'b0, 1'b0, 1'b0, 1'b0, 3'b000, 3'b111, 1'b0, 2'b01, 1'b0, 1'b0, 4'b1111, 4'bxxxx, index, base, 2'b10 };
       ninstrs <= 2'd1;
     end 
-    3'b101: begin // jmp indirect, different seg
+    3'b101: begin // jmp indirect, different seg [7s]
                //   ac    ab   im    ma    by     fun      t    wh      wr    wm    wf     ad_d     ad_c    ad_b  ad_a   s
       irs[0] <= { 1'bx, 1'b0, 1'b0, 1'b0, 1'b0, 3'b000, 3'b111, 1'b0, 2'b01, 1'b0, 1'b0, 4'b1111, 4'bxxxx, index, base, 2'b10 };
       irs[1] <= { 1'bx, 1'b0, 1'b0, 1'b0, 1'b0, 3'b001, 3'b111, 1'b0, 2'b01, 1'b0, 1'b0, 4'b1001, 4'bxxxx, index, base, 2'b10 };

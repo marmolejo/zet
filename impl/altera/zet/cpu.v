@@ -20,7 +20,7 @@ module cpu(clk_, addr_, roe_, rwe_, rcs_,
 
   // Instantiations
   altpll0 pll0(clk_, clk, boot);
-  fetch   fetch0(clk, boot, cs, ip, ir, off, imm, addr_fetch, rd_data, 
+  fetch   fetch0(clk, boot, cs, ip, rd_data, ir, off, imm, addr_fetch, 
                  byte_fetch, fetch_or_exec);
   exec    exec0(ir, off, imm, cs, ip, clk, boot, 
                 rd_data, wr_data, we, addr_exec, byte_exec);
