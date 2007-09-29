@@ -21,7 +21,7 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
   wire flags_unchanged;
 
   // Module instances
-  adj    adj0(x[15:0], {cf_adj, adj}, func, afi, cfi, af_adj, of_adj);
+  adj    adj0(x[15:0], y, {cf_adj, adj}, func, afi, cfi, af_adj, of_adj);
   addsub ad0(x[15:0], y, add, func, word_op, cfi, cf_add, af_add, of_add);
   conv   cnv0(x[15:0], cnv, func[0]);
   /* muldiv mul0(x, y, mul, func[1:0], word_op, cf_mul, of_mul); */
@@ -63,20 +63,20 @@ module addsub(x, y, out, func, word_op, cfi, cfo, afo, ofo);
   output [15:0] out;
 
   // Net declarations
-  wire [16:0] adc, add, inc, dec, neg, sbb, sub, cmp;
+  wire [16:0] adc, add, ad8, dec, neg, sbb, sub, cmp;
   wire [4:0]  tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
   wire        resta, bneg, bincdec, cfo8, cfo16, ofo8, ofo16, cfoneg8, cfoneg16;
   wire [16:0] out17;
 
   // Module instances
-  mux8_17 m0(func, adc, add, inc, dec, neg, sbb, sub, cmp, out17);
+  mux8_17 m0(func, adc, add, ad8, dec, neg, sbb, sub, cmp, out17);
   mux8_1  m1(func, afo_adc, afo_add, afo_inc, afo_dec,
                    afo_neg, afo_sbb, afo_sub, afo_cmp, afo);
 
   // Assignments
   assign adc = x + y + cfi;
   assign add = x + y;
-  assign inc = x + 8'b1;
+  assign ad8 = x + y[7:0];
   assign dec = x - 8'b1;
   assign neg = {x==16'd0 ? 1'b0 : 1'b1, -x};
   assign sbb = x - y - cfi;
@@ -121,9 +121,9 @@ module addsub(x, y, out, func, word_op, cfi, cfo, afo, ofo);
   assign ofo   = word_op ? ofo16 : ofo8;
 endmodule
 
-module adj(x, out, func, afi, cfi, afo, cfo);
+module adj(x, y, out, func, afi, cfi, afo, cfo);
   // IO ports
-  input  [15:0] x;
+  input  [15:0] x, y;
   input  [2:0]  func;
   input         afi, cfi;
   output        afo, cfo;
@@ -135,7 +135,8 @@ module adj(x, out, func, afi, cfi, afo, cfo);
   wire        alcnd;
 
   // Module instances
-  mux8_17 m0(func, aaa, aad, aam, aas, daa, das, 17'd0, 17'd0, out);
+  mux8_17 m0(func, aaa, aad, aam, aas, 
+                   daa, das, {9'd0, y[7:0]}, {1'b0, y}, out);
   
   // Assignments
   assign aaa = afo ? { x[15:8] + 8'd1, (x[7:0] + 8'd6) & 8'h0f } : x;
@@ -369,7 +370,7 @@ module othop (x, y, seg, off, iflags, func, word_op, out, oflags);
   assign dcmp2 = (seg << 4) + deff2;
   assign deff  = x + y + off;
   assign deff2 = x + y + off + 16'd2;
-  assign outf  = x;
+  assign outf  = y;
   assign fandy = iflags & y;
   assign fory  = iflags | y;
   assign selfly = (iflags >> y) & 16'h0001;

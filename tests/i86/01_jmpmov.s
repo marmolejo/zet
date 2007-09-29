@@ -3,7 +3,7 @@
 #
 # mov: 1 (word), 2 (word), 3 (off, base+index+off), 4, 5 (off), 
 #      7 (byte,word), 8 (byte off), 9 (word base), 10 (byte,word), 
-#      11 (word off, byte base+index)
+#      11 (word off, byte base+index), 12 (imm,special)
 # jmp: 1, 2, 3 (reg), 3 (mem base+index+off), 4, 5 (mem base+index+off)
 .code16
 start:
@@ -40,7 +40,8 @@ movw $0x2506, %bp       # (10) mov word
 jmp *-22(%bp,%di)       # (3)  jmp mem
 
 .org 0x3001
-movw $0x4001, %ax
+.byte 0xc7,0xc0        # (12) movw $0x4001, %ax
+.word 0x4001           # [not in a default codification]
 movw $0x2501, %bx
 movw %ax, (%bx)         # (9)  mov word
 movw $2, %di

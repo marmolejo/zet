@@ -1,3 +1,4 @@
+SRCBIOS=02_datatrnf.s
 all: bench
 
 bench: ../../bench/bios.dat
@@ -21,8 +22,8 @@ $(BIOS): bios.out
 bios.out: bios.o
 	objcopy -O binary -S bios.o bios.out
 
-bios.o: bios.s
-	as bios.s -o bios.o
+bios.o: $(SRCBIOS)
+	as ${SRCBIOS} -o bios.o
 
 clean:
 	rm -f bios.out bios.o bios0.out bios1.out

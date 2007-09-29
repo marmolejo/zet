@@ -1,7 +1,7 @@
 `include "defines.v"
 
 module exec(ir, off, imm, cs, a, clk, rst,
-            memout, wr_data, we, addr, byteop);
+            memout, wr_data, addr, we, m_io, byteop);
   // IO Ports
   input [`IR_SIZE-1:0] ir;
   input [15:0] off, imm;
@@ -10,7 +10,7 @@ module exec(ir, off, imm, cs, a, clk, rst,
   input [15:0] memout;
 
   output [15:0] wr_data, a;
-  output        we, byteop;
+  output        we, m_io, byteop;
   output [19:0] addr;
   output [15:0] cs;
 
@@ -25,8 +25,9 @@ module exec(ir, off, imm, cs, a, clk, rst,
 
   // Module instances
   alu     alu0( {c, a}, bus_b, aluout, t, func, flags, oflags, ~byteop, s, off);
-  regfile reg0( a, b, c, cs, {aluout[31:16], omemalu}, s, flags, wr, wrfl, high, clk, rst,
-                addr_a, addr_b, addr_c, addr_d, addr_s, oflags, ~byteop, a_byte, c_byte);
+  regfile reg0( a, b, c, cs, {aluout[31:16], omemalu}, s, flags, wr, wrfl, high, 
+                clk, rst, addr_a, addr_b, addr_c, addr_d, addr_s, oflags, 
+                ~byteop, a_byte, c_byte);
   
   // Assignments
   assign addr_s = ir[1:0];
@@ -42,9 +43,10 @@ module exec(ir, off, imm, cs, a, clk, rst,
   assign func   = ir[28:26];
   assign byteop = ir[29];
   assign memalu = ir[30];
-  assign b_imm  = ir[31];
-  assign a_byte = ir[32];
-  assign c_byte = ir[33];
+  assign m_io   = ir[31];
+  assign b_imm  = ir[32];
+  assign a_byte = ir[33];
+  assign c_byte = ir[34];
 
   assign omemalu = memalu ? aluout[15:0] : memout;
   assign bus_b   = b_imm ? imm : b;

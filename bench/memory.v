@@ -2,9 +2,9 @@ module memory (
     input         clk,
     input  [19:0] addr,
     input  [15:0] wr_data,
+    output [15:0] rd_data,
     input         we,
-    input         byte_m,
-    output [15:0] rd_data
+    input         byte_m
   );
 
   // Registers and nets
