@@ -338,7 +338,7 @@ module opcode_deco (
           dst <= { 1'b0, rm };
         end
 
-      8'b1001_0000: // nop
+      8'b1001_0000: // 90h: nop
         begin
           seq_addr <= `NOP;
           need_modrm <= 1'b0;
@@ -509,6 +509,70 @@ module opcode_deco (
           need_imm <= 1'b0;
         end
 
+      8'b1111_0100: // hlt
+        begin
+          seq_addr <= `HLT;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1111_0101: // cmc
+        begin
+          seq_addr <= `CMC;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1111_1000: // clc
+        begin
+          seq_addr <= `CLC;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1111_1001: // stc
+        begin
+          seq_addr <= `STC;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1111_1010: // cli
+        begin
+          seq_addr <= `CLI;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1111_1011: // sti
+        begin
+          seq_addr <= `STI;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1111_1100: // cld
+        begin
+          seq_addr <= `CLD;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1111_1101: // std
+        begin
+          seq_addr <= `STD;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
       8'b1111_1111: 
         begin
           case (regm)
@@ -521,6 +585,14 @@ module opcode_deco (
           off_size <= off_size_mod;
           need_imm <= 1'b0;
           src <= { 1'b0, rm }; // Only for a non-standard PUSHR
+        end
+
+      default: // nop
+        begin
+          seq_addr <= `NOP;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
         end
 
   endcase
@@ -594,7 +666,8 @@ module micro_data (
   assign imm_o = var_imm == 3'd0 ? (16'h0000)
                : (var_imm == 3'd1 ? (16'h0002)
                : (var_imm == 3'd2 ? (16'h0004)
-               : (var_imm == 3'd3 ? off_i : imm_i )));
+               : (var_imm == 3'd3 ? off_i 
+               : (var_imm == 3'd4 ? imm_i : (16'hffff) ))));
 
   assign off_o = var_off ? off_i : 16'h0000;
 

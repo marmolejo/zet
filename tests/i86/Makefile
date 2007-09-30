@@ -1,4 +1,4 @@
-SRCBIOS=02_datatrnf.s
+SRCBIOS=03_control.s
 all: bench
 
 bench: ../../bench/bios.dat
