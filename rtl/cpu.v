@@ -1,3 +1,5 @@
+`timescale 1ns/10ps
+
 `include "defines.v"
 
 module cpu(

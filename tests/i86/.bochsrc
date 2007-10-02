@@ -1,6 +1,6 @@
-romimage: file=bios.bin
+romimage: file=bios.out
 cpu: count=1, ips=10000000, reset_on_triple_fault=1
-megs: 1
+megs: 2
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 vga: extension=none
 floppy_bootsig_check: disabled=0

@@ -1,3 +1,5 @@
+`timescale 1ns/10ps
+
 module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
                addr_a, addr_b, addr_c, addr_d, addr_s, iflags, word_op, o_byte, c_byte);
   // IO Ports
@@ -8,7 +10,7 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
   input  [15:0] iflags;
   input  [31:0] d;
   input         wrfl, wrhi, word_op, clk, rst, o_byte, c_byte;
-  input  [1:0]  wr;
+  input         wr;
 
   // Net declarations
   reg [15:0] r[15:0];
@@ -42,9 +44,10 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
       for (i=5'd0; i<5'd16; i=i+5'd1) r[i] = 16'd0;
       r[9][15:12] <= 4'hf;
       r[15] <= 16'hfff0;
+      flags <= 9'd0;
     end else
       begin
-        if (wr[0] & ( ~wr[1] | wr[1] & r[addr_c][0])) begin
+        if (wr) begin
           if (word_op | addr_d[3:2]==2'b10) r[addr_d] <= d[15:0];
           else if (addr_d[3]~^addr_d[2]) r[addr_d][7:0] <= d[7:0];
           else r[{2'b0,addr_d[1:0]}][15:8] = d[7:0];

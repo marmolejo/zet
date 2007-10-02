@@ -1,6 +1,6 @@
 # Microprocessor control instruction test bench
 #
-# At the end, %ax=0x08d6 and %bx=0x0603
+# At the end (1355ns), %ax=0x08d6 and %bx=0x0603
 #
 # clc (1)
 # cld (2)

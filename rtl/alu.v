@@ -1,3 +1,5 @@
+`timescale 1ns/10ps
+
 module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
   // IO ports
   input  [31:0] x;

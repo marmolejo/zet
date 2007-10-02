@@ -1,5 +1,5 @@
 # Prueba de todos los modos del mov y jmp
-# Al final, %es tiene que valer 0x4001
+# Al the end (2415ns), %es = 0x4001
 #
 # mov: 1 (word), 2 (word), 3 (off, base+index+off), 4, 5 (off), 
 #      7 (byte,word), 8 (byte off), 9 (word base), 10 (byte,word), 

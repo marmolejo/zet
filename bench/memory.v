@@ -1,3 +1,5 @@
+`timescale 1ns/10ps
+
 module memory (
     input         clk,
     input  [19:0] addr,

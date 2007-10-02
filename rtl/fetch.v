@@ -1,3 +1,5 @@
+`timescale 1ns/10ps
+
 `include "defines.v"
 
 module fetch (
@@ -240,6 +242,16 @@ module opcode_deco (
           dst <= { 1'b0, opcode[2:0] };
         end
 
+      8'b0111_xxxx: // jcc
+        begin
+          seq_addr <= `JCC;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          imm_size <= 1'b0;
+          src <= { opcode[3:0] };
+        end
+
       8'b1000_011x: // xchg
         begin
           seq_addr <= (mod==2'b11) ? (b ? `XCHRRB : `XCHRRW)
@@ -356,6 +368,16 @@ module opcode_deco (
           dst <= { 1'b0, opcode[2:0] };
         end
 
+      8'b1001_1010: // call different seg
+        begin
+          seq_addr <= `CALLF;
+          need_modrm <= 1'b0;
+          need_off <= 1'b1;
+          off_size <= 1'b1;
+          need_imm <= 1'b1;
+          imm_size <= 1'b1;
+        end
+
       8'b1001_1100: // pushf
         begin
           seq_addr <= `PUSHF;
@@ -416,6 +438,23 @@ module opcode_deco (
           imm_size <= opcode[3];
         end
 
+      8'b1100_0010: // ret near with value
+        begin
+          seq_addr <= `RETNV;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          imm_size <= 1'b1;
+        end
+
+      8'b1100_0011: // ret near
+        begin
+          seq_addr <= `RETN0;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
       8'b1100_0100: // les
         begin
           seq_addr <= `LES;
@@ -448,12 +487,65 @@ module opcode_deco (
           dst <= { 1'b0, rm };
         end
      
+      8'b1100_1010: // ret far with value
+        begin
+          seq_addr <= `RETFV;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          imm_size <= 1'b1;
+        end
+
+      8'b1100_1011: // ret far
+        begin
+          seq_addr <= `RETF0;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
       8'b1101_0111: // xlat
         begin
           seq_addr <= `XLAT;
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+        end
+
+      8'b1110_0000: // loopne
+        begin
+          seq_addr <= `LOOPNE;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          imm_size <= 1'b0;
+        end
+
+      8'b1110_0001: // loope
+        begin
+          seq_addr <= `LOOPE;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          imm_size <= 1'b0;
+        end
+
+      8'b1110_0010: // loop
+        begin
+          seq_addr <= `LOOP;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          imm_size <= 1'b0;
+        end
+
+      8'b1110_0011: // jcxz
+        begin
+          seq_addr <= `JCXZ;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          imm_size <= 1'b0;
         end
 
       8'b1110_010x: // in imm
@@ -472,6 +564,15 @@ module opcode_deco (
           need_off <= 1'b0;
           need_imm <= 1'b1;
           imm_size <= 1'b0;
+        end
+
+      8'b1110_1000: // call same segment
+        begin
+          seq_addr <= `CALLN;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          imm_size <= 1'b1;
         end
 
       8'b1110_10x1: // jmp direct
@@ -576,6 +677,8 @@ module opcode_deco (
       8'b1111_1111: 
         begin
           case (regm)
+            3'b010: seq_addr <= (mod==2'b11) ? `CALLNR : `CALLNM;
+            3'b011: seq_addr <= `CALLFM;
             3'b100: seq_addr <= (mod==2'b11) ? `JMPR : `JMPM;
             3'b101: seq_addr <= `LJMPM;
             3'b110: seq_addr <= (mod==2'b11) ? `PUSHR : `PUSHM;
@@ -584,7 +687,7 @@ module opcode_deco (
           need_off <= need_off_mod;
           off_size <= off_size_mod;
           need_imm <= 1'b0;
-          src <= { 1'b0, rm }; // Only for a non-standard PUSHR
+          src <= { 1'b0, rm }; 
         end
 
       default: // nop

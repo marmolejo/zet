@@ -1,5 +1,5 @@
 vlib work
-vlog -work work +incdir+../../rtl ../../rtl/regfile.v ../../rtl/alu.v ../../rtl/cpu.v ../../rtl/exec.v ../../rtl/fetch.v ../../rtl/util/primitives.v
+vlog -work work +incdir+../../rtl ../../rtl/regfile.v ../../rtl/alu.v ../../rtl/cpu.v ../../rtl/exec.v ../../rtl/fetch.v ../../rtl/jmp_cond.v ../../rtl/util/primitives.v
 vlog -work work +incdir+.. ../memory.v ../testbench.v
 vsim -t ns work.testbench
 add wave sim:/testbench/clk
