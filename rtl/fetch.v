@@ -186,7 +186,7 @@ module opcode_deco (
   wire [2:0] srcm, dstm;
 
   // Module instantiations
-  memory_regs mr(rm, mod, base, index);
+  memory_regs mr(rm, mod, base, index, seg);
 
   // Assignments
   assign mod  = modrm[7:6];
@@ -200,7 +200,6 @@ module opcode_deco (
   assign b    = ~opcode[0];
   assign off_size_mod = (base == 4'b1100 && index == 4'b1100) ? 1'b1 : mod[1];
   assign need_off_mod = (base == 4'b1100 && index == 4'b1100) || ^mod;
-  assign seg = 2'b11;
 
   // Behaviour
   always @(opcode or mod or need_off_mod or off_size_mod 
@@ -428,6 +427,46 @@ module opcode_deco (
           off_size <= 1'b1;
         end
 
+      8'b1010_010x: // movs
+        begin
+          seq_addr <= b ? `MOVSB : `MOVSW;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1010_011x: // cmps
+        begin
+          seq_addr <= b ? `CMPSB : `CMPSW;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1010_101x: // stos
+        begin
+          seq_addr <= b ? `STOSB : `STOSW;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1010_110x: // lods
+        begin
+          seq_addr <= b ? `LODSB : `LODSW;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1010_111x: // scas
+        begin
+          seq_addr <= b ? `SCASB : `SCASW;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
       8'b1011_xxxx: // mov: i->r
         begin
           seq_addr <= opcode[3] ? `MOVIRW : `MOVIRB;
@@ -475,7 +514,7 @@ module opcode_deco (
           src <= { 1'b0, srcm };
         end
 
-     8'b1100_011x: // mov: i->m (or i->r non-standard)
+      8'b1100_011x: // mov: i->m (or i->r non-standard)
         begin
           seq_addr <= (mod==2'b11) ? (b ? `MOVIRB : `MOVIRW) 
                                    : (b ? `MOVIMB : `MOVIMW);
@@ -499,6 +538,31 @@ module opcode_deco (
       8'b1100_1011: // ret far
         begin
           seq_addr <= `RETF0;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1100_1100: // int 3
+        begin
+          seq_addr <= `INT3;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+        end
+
+      8'b1100_1101: // int
+        begin
+          seq_addr <= `INT;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          imm_size <= 1'b0;
+        end
+
+      8'b1100_1111: // iret
+        begin
+          seq_addr <= `IRET;
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
@@ -706,20 +770,22 @@ module memory_regs (
     input [2:0] rm,
     input [1:0] mod,
     output reg [3:0] base,
-    output reg [3:0] index
+    output reg [3:0] index,
+    output reg [1:0] seg
   );
 
   // Behaviour
   always @(rm or mod)
     case (rm)
-      3'b000: begin base <= 4'b0011; index <= 4'b0110; end
-      3'b001: begin base <= 4'b0011; index <= 4'b0111; end
-      3'b010: begin base <= 4'b0101; index <= 4'b0110; end
-      3'b011: begin base <= 4'b0101; index <= 4'b0111; end
-      3'b100: begin base <= 4'b1100; index <= 4'b0110; end
-      3'b101: begin base <= 4'b1100; index <= 4'b0111; end
-      3'b110: begin base <= mod ? 4'b0101 : 4'b1100; index <= 4'b1100; end
-      3'b111: begin base <= 4'b0011; index <= 4'b1100; end
+      3'b000: begin base <= 4'b0011; index <= 4'b0110; seg <= 2'b11; end
+      3'b001: begin base <= 4'b0011; index <= 4'b0111; seg <= 2'b11; end
+      3'b010: begin base <= 4'b0101; index <= 4'b0110; seg <= 2'b10; end
+      3'b011: begin base <= 4'b0101; index <= 4'b0111; seg <= 2'b10; end
+      3'b100: begin base <= 4'b1100; index <= 4'b0110; seg <= 2'b11; end
+      3'b101: begin base <= 4'b1100; index <= 4'b0111; seg <= 2'b11; end
+      3'b110: begin base <= mod ? 4'b0101 : 4'b1100; index <= 4'b1100; 
+                    seg <= mod ? 2'b10 : 2'b11; end
+      3'b111: begin base <= 4'b0011; index <= 4'b1100; seg <= 2'b11; end
     endcase
 endmodule
 
@@ -770,7 +836,9 @@ module micro_data (
                : (var_imm == 3'd1 ? (16'h0002)
                : (var_imm == 3'd2 ? (16'h0004)
                : (var_imm == 3'd3 ? off_i 
-               : (var_imm == 3'd4 ? imm_i : (16'hffff) ))));
+               : (var_imm == 3'd4 ? imm_i 
+               : (var_imm == 3'd5 ? 16'hffff 
+               : (var_imm == 3'd6 ? 16'b11 : 16'd1))))));
 
   assign off_o = var_off ? off_i : 16'h0000;
 

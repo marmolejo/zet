@@ -48,7 +48,8 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
     end else
       begin
         if (wr) begin
-          if (word_op | addr_d[3:2]==2'b10) r[addr_d] <= d[15:0];
+          if (word_op | addr_d[3:2]==2'b10) 
+             r[addr_d] <= word_op ? d[15:0] : {{8{d[7]}},d[7:0]};
           else if (addr_d[3]~^addr_d[2]) r[addr_d][7:0] <= d[7:0];
           else r[{2'b0,addr_d[1:0]}][15:8] = d[7:0];
         end

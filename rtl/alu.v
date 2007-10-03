@@ -359,12 +359,13 @@ module othop (x, y, seg, off, iflags, func, word_op, out, oflags);
   output [15:0] oflags;
 
   // Net declarations
-  wire [15:0] deff, deff2, outf, clcm, setf;
+  wire [15:0] deff, deff2, outf, clcm, setf, intf, strf;
   wire [19:0] dcmp, dcmp2; 
+  wire dfi;
 
   // Module instantiations
   mux8_16 m0(func, dcmp[15:0], dcmp2[15:0], deff, outf, clcm, setf, 
-                   16'd0, 16'd0, out[15:0]);
+                   intf, strf, out[15:0]);
   assign out[19:16] = func ? dcmp2[19:16] : dcmp[19:16];
 
   // Assignments
@@ -381,6 +382,10 @@ module othop (x, y, seg, off, iflags, func, word_op, out, oflags);
                          : /* 4: std */ {iflags[15:11], 1'b1, iflags[9:0]})
                      : (y[1] ? /* 2: sti */ {iflags[15:10], 1'b1, iflags[8:0]}
                        : /* 0: outf */ iflags);
+
+  assign intf = {iflags[15:10], 2'b0, iflags[7:0]};
+  assign dfi  = iflags[10];
+  assign strf = dfi ? (x - y) : (x + y);
 
   assign oflags = word_op ? out[15:0] : {iflags[15:8], out[7:0]};
 endmodule

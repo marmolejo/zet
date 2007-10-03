@@ -38,7 +38,7 @@ movw %dx, %di           # (7)  mov word
 movw $0x2506, %bp       # (10) mov word
 
 jmp *-22(%bp,%di)       # (3)  jmp mem
-
+                        # m[0x12501] = 0xfbe1
 .org 0x3001
 .byte 0xc7,0xc0        # (12) movw $0x4001, %ax
 .word 0x4001           # [not in a default codification]

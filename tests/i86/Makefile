@@ -1,4 +1,4 @@
-SRCBIOS=05_jump2.s
+SRCBIOS=07_strings.s
 all: bench
 
 bench: ../../bench/bios.dat
