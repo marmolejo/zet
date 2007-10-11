@@ -160,7 +160,7 @@ endmodule
 module conv(x, out, func);
   // IO ports
   input  [15:0] x;
-  input         func;
+  input         func;  // type = 010 and func = 111 is reserved for INTO
   output [31:0] out;
   
   // Net declarations

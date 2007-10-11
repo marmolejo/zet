@@ -7,13 +7,17 @@ module fetch (
     input rst, 
     input [15:0] cs, 
     input [15:0] ip, 
+    input of,
+    input zf,
+    input cx_zero,
     input [15:0] data, 
     output [`IR_SIZE-1:0] ir,
     output [15:0] off,
     output [15:0] imm,
     output [19:0] pc,
     output bytefetch, 
-    output fetch_or_exec
+    output fetch_or_exec,
+    input  mem_rdy
   );
 
   // Registers, nets and parameters
@@ -28,15 +32,23 @@ module fetch (
   wire exec_st, end_instr;
   wire [15:0] imm_d;
   wire [2:0] next_state;
+  wire prefix;
+  wire next_in_opco, next_in_exec;
+  wire block;
 
   reg [2:0] state;
   reg [7:0] opcode_l, modrm_l;
   reg [15:0] off_l, imm_l;
+  reg [1:0] pref_l;
 
   // Module instantiation
-  decode decode0(opcode, modrm, off_l, imm_l, clk, exec_st, 
-                 need_modrm, need_off, need_imm, off_size, imm_size,
+  decode decode0(opcode, modrm, off_l, imm_l, pref_l[1], clk, rst, block, 
+                 exec_st, need_modrm, need_off, need_imm, off_size, imm_size,
                  rom_ir, off, imm_d, end_instr);
+  next_or_not nn0(pref_l, opcode, cx_zero, zf, next_in_opco, next_in_exec);
+  nstate ns0(state, prefix, need_modrm, need_off, need_imm, end_instr,
+             rom_ir[28:23], of, next_in_opco, next_in_exec, block,
+             next_state);
 
   // Assignments
   assign pc = (cs << 4) + ip;
@@ -52,27 +64,25 @@ module fetch (
               : ((state == offse_st) & off_size 
                 | (state == immed_st) & imm_size) ? 16'd2
               : 16'd1;
-  assign next_state = (state == opcod_st) ? (need_modrm ? modrm_st : 
-                         (need_off ? offse_st : (need_imm ? immed_st : execu_st)))
-                     : (state == modrm_st) ? (need_off ? offse_st 
-                                           : (need_imm ? immed_st : execu_st))
-                     : (state == offse_st) ? (need_imm ? immed_st : execu_st)
-                     : (state == immed_st) ? (execu_st)
-                     : (end_instr ? opcod_st : execu_st);
+  assign prefix = (opcode[7:1]==7'b1111_001);
+  assign block  = ir[`MEM_OP] && !mem_rdy;
 
   // Behaviour
   always @(posedge clk)
     if (rst) 
       begin
-        state <= exec_st;
+        state <= execu_st;
         opcode_l <= `OP_NOP;
       end
-    else
+    else if (!block)
       case (next_state)
-        // opcode
-        default: 
+        default:  // opcode or prefix
           begin
-            state <= opcod_st;
+            case (state)
+              opcod_st: pref_l = prefix ? { 1'b1, opcode[0] } : 2'b0;
+              default: pref_l = 2'b0;
+            endcase
+            state = opcod_st;
             off_l <= 16'd0;
           end
 
@@ -114,13 +124,84 @@ module fetch (
       endcase
 endmodule
 
+module nstate (
+    input [2:0] state,
+    input prefix,
+    input need_modrm,
+    input need_off,
+    input need_imm,
+    input end_seq,
+    input [5:0] ftype,
+    input of,
+    input next_in_opco,
+    input next_in_exec,
+    input block,
+    output [2:0] next_state
+  );
+
+  // Net declarations
+  parameter opcod_st = 3'h0;
+  parameter modrm_st = 3'h1;
+  parameter offse_st = 3'h2;
+  parameter immed_st = 3'h3;
+  parameter execu_st = 3'h4;
+  wire into, end_instr, end_into;
+  wire [2:0] n_state;
+
+  // Assignments
+  assign into = (ftype==6'b111_010);
+  assign end_into = into ? ~of : end_seq;
+  assign end_instr = end_into && !next_in_exec;
+
+  assign n_state = (state == opcod_st) ? (prefix ? opcod_st 
+                         : (next_in_opco ? opcod_st
+                         : (need_modrm ? modrm_st 
+                         : (need_off ? offse_st 
+                         : (need_imm ? immed_st : execu_st)))))
+                     : (state == modrm_st) ? (need_off ? offse_st 
+                                           : (need_imm ? immed_st : execu_st))
+                     : (state == offse_st) ? (need_imm ? immed_st : execu_st)
+                     : (state == immed_st) ? (execu_st)
+                     : (end_instr ? opcod_st : execu_st);
+
+  assign next_state = block ? state : n_state;
+endmodule
+
+module next_or_not (
+    input [1:0] prefix,
+    input [7:0] opcode,
+    input cx_zero,
+    input zf,
+    output next_in_opco,
+    output next_in_exec
+  );
+
+  // Net declarations
+  wire exit_z, cmp_sca, exit_rep, valid_ops;
+
+  // Assignments
+  assign cmp_sca = opcode[2] & opcode[1];
+  assign exit_z = prefix[0] ? /* repz */ (cmp_sca ? ~zf : 1'b0 )
+                            : /* repnz */ (cmp_sca ? zf : 1'b0 );
+  assign exit_rep = cx_zero | exit_z;
+  assign valid_ops = (opcode[7:1]==7'b1010_010   // movs
+                    || opcode[7:1]==7'b1010_011   // cmps
+                    || opcode[7:1]==7'b1010_101   // stos
+                    || opcode[7:1]==7'b1010_110   // lods
+                    || opcode[7:1]==7'b1010_111); // scas
+  assign next_in_exec = prefix[1] && valid_ops && !exit_rep;
+  assign next_in_opco = prefix[1] && valid_ops && cx_zero;
+endmodule
 
 module decode (
     input [7:0] opcode,
     input [7:0] modrm,
     input [15:0] off_i,
     input [15:0] imm_i,
+    input       rep,
     input clk,
+    input rst,
+    input block,
     input exec_st,
 
     output need_modrm,
@@ -132,7 +213,7 @@ module decode (
     output [`IR_SIZE-1:0] ir,
     output [15:0] off_o,
     output [15:0] imm_o,
-    output end_instr
+    output end_seq
   );
 
   // Net declarations
@@ -143,10 +224,10 @@ module decode (
   reg  [`SEQ_ADDR_WIDTH-1:0] seq;
 
   // Module instantiations
-  opcode_deco opcode_deco0 (opcode, modrm, base_addr, need_modrm, need_off, 
-                            need_imm, off_size, imm_size, src, dst, base, 
-                            index, seg);
-  seq_rom seq_rom0 (seq_addr, {end_instr, micro_addr});
+  opcode_deco opcode_deco0 (opcode, modrm, rep, base_addr, need_modrm, 
+                            need_off, need_imm, off_size, imm_size, src, dst, 
+                            base, index, seg);
+  seq_rom seq_rom0 (seq_addr, {end_seq, micro_addr});
   micro_data mdata0 (micro_addr, off_i, imm_i, src, dst, base, index, seg,
                      ir, off_o, imm_o);
 
@@ -154,15 +235,18 @@ module decode (
   assign seq_addr = base_addr + seq;
 
   // Behaviour
-  always @(posedge clk) seq <= exec_st ? (seq + `SEQ_ADDR_WIDTH'd1) 
-                                        : `SEQ_ADDR_WIDTH'd0;
+  always @(posedge clk)
+    if (!block)
+      seq <= (exec_st && !end_seq && !rst) ? (seq + `SEQ_ADDR_WIDTH'd1) 
+                                : `SEQ_ADDR_WIDTH'd0;
   
 endmodule
 
 module opcode_deco (
     input [7:0] opcode,
     input [7:0] modrm,
-    
+    input       rep,
+
     output reg [`SEQ_ADDR_WIDTH-1:0] seq_addr,
     output reg need_modrm,
     output reg need_off,
@@ -429,7 +513,7 @@ module opcode_deco (
 
       8'b1010_010x: // movs
         begin
-          seq_addr <= b ? `MOVSB : `MOVSW;
+          seq_addr <= rep ? (b ? `MOVSBR : `MOVSWR) : (b ? `MOVSB : `MOVSW);
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
@@ -437,7 +521,7 @@ module opcode_deco (
 
       8'b1010_011x: // cmps
         begin
-          seq_addr <= b ? `CMPSB : `CMPSW;
+          seq_addr <= rep ? (b ? `CMPSBR : `CMPSWR) : (b ? `CMPSB : `CMPSW);
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
@@ -445,7 +529,7 @@ module opcode_deco (
 
       8'b1010_101x: // stos
         begin
-          seq_addr <= b ? `STOSB : `STOSW;
+          seq_addr <= rep ? (b ? `STOSBR : `STOSWR) : (b ? `STOSB : `STOSW);
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
@@ -453,7 +537,7 @@ module opcode_deco (
 
       8'b1010_110x: // lods
         begin
-          seq_addr <= b ? `LODSB : `LODSW;
+          seq_addr <= rep ? (b ? `LODSBR : `LODSWR) : (b ? `LODSB : `LODSW);
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
@@ -461,7 +545,7 @@ module opcode_deco (
 
       8'b1010_111x: // scas
         begin
-          seq_addr <= b ? `SCASB : `SCASW;
+          seq_addr <= rep ? (b ? `SCASBR : `SCASWR) : (b ? `SCASB : `SCASW);
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
@@ -558,6 +642,14 @@ module opcode_deco (
           need_off <= 1'b0;
           need_imm <= 1'b1;
           imm_size <= 1'b0;
+        end
+
+      8'b1100_1110: // into
+        begin
+          seq_addr <= `INTO;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0; 
+          need_imm <= 1'b0;
         end
 
       8'b1100_1111: // iret
@@ -805,7 +897,7 @@ module micro_data (
 
   // Net declarations
   wire [`MICRO_DATA_WIDTH-1:0] micro_o;
-  wire [15:0] high_ir;
+  wire [16:0] high_ir;
   wire var_s, var_off;
   wire [1:0] var_a, var_b, var_c, var_d;
   wire [2:0] var_imm;
@@ -823,14 +915,14 @@ module micro_data (
   assign micro_b = micro_o[9:6];
   assign micro_c = micro_o[13:10];
   assign micro_d = micro_o[17:14];
-  assign high_ir = micro_o[34:18];
-  assign var_s   = micro_o[35];
-  assign var_a   = micro_o[37:36];
-  assign var_b   = micro_o[39:38];
-  assign var_c   = micro_o[41:40];
-  assign var_d   = micro_o[43:42];
-  assign var_off = micro_o[44];
-  assign var_imm = micro_o[47:45];
+  assign high_ir = micro_o[35:18];
+  assign var_s   = micro_o[36];
+  assign var_a   = micro_o[38:37];
+  assign var_b   = micro_o[40:39];
+  assign var_c   = micro_o[42:41];
+  assign var_d   = micro_o[44:43];
+  assign var_off = micro_o[45];
+  assign var_imm = micro_o[48:46];
 
   assign imm_o = var_imm == 3'd0 ? (16'h0000)
                : (var_imm == 3'd1 ? (16'h0002)

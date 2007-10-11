@@ -1,6 +1,6 @@
 # String instruction testbench
 #
-# At the end (3995ns), %ax=0x1234
+# At the end (3995ns in rtl-model, 276.1us in spartan3), %ax=0x1234
 #
 # cmpsb  1
 # cmpsw  2

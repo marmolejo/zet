@@ -15,7 +15,7 @@ module testbench;
 
   // Module instantiations
   memory mem0 (clk, addr, wr_data, mem_data, we & ~m_io, byte_m);
-  cpu    cpu0 (clk, rst, rd_data, wr_data, addr, we, m_io, byte_m);
+  cpu    cpu0 (clk, rst, rd_data, wr_data, addr, we, m_io, byte_m,, 1'b1);
 
   // Assignments
   assign io_data = (addr[15:0]==16'hb7) ? io_reg : 16'd0;

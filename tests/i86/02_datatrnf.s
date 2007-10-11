@@ -1,7 +1,7 @@
 # Recursive testbench for transfer data instructions, except "mov" 
 #  but ("jmp" & "mov" must work!!)
 #
-# At the end (3591ns), %ax must have the value 0x8cf1 to pass the test
+# At the end (3591ns in rtl-model, 274380ns in spartan3), %ax=0x8cf1
 #
 # sahf   1
 # lahf   2

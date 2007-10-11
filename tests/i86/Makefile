@@ -1,4 +1,4 @@
-SRCBIOS=07_strings.s
+SRCBIOS=08_rep.s
 all: bench
 
 bench: ../../bench/bios.dat
@@ -15,6 +15,7 @@ BIOS=bios0.out bios1.out
 
 ../../bench/bios.dat: bios.out
 	hexdump -v -e '1/1 "%02X"' -e '"\n"' bios.out > ../../bench/bios.dat
+	hexdump -v -e '1/2 "0x1%04_ax/%04x"' -e '"\n"' bios.out | awk -F/ '{printf "00%x/%s\n", rshift(strtonum($$1),1), $$2}' > ../../impl/spartan3an-sk/sim/flash-prom/memory_file
 
 $(BIOS): bios.out
 	splitlh bios.out $(BIOS)

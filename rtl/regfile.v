@@ -1,7 +1,8 @@
 `timescale 1ns/10ps
 
 module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
-               addr_a, addr_b, addr_c, addr_d, addr_s, iflags, word_op, o_byte, c_byte);
+               addr_a, addr_b, addr_c, addr_d, addr_s, iflags, word_op, 
+               o_byte, c_byte, cx_zero);
   // IO Ports
   output [15:0] a, b, c, s, oflags;
   output [15:0] cs;
@@ -11,6 +12,7 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
   input  [31:0] d;
   input         wrfl, wrhi, word_op, clk, rst, o_byte, c_byte;
   input         wr;
+  output        cx_zero;
 
   // Net declarations
   reg [15:0] r[15:0];
@@ -37,6 +39,7 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
                     flags[1], 1'b1, flags[0] };
 
   assign cs = r[9];
+  assign cx_zero = (addr_d==4'd1) ? (d==16'd0) : (r[1]==16'd0);
 
   // Behaviour
   always @(posedge clk)

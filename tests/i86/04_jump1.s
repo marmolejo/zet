@@ -1,6 +1,6 @@
 # Jump instruction testbench 1
 #
-# At the end (6215ns), %ax=0x1234
+# At the end (6215ns in rtl-model, 287us in spartan3), %ax=0x1234
 #
 # ja/jnbe     1
 # jae/jnb/jnc 2
