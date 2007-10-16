@@ -22,8 +22,8 @@ module flash_prom_zet_cntrlr (
   wire [15:0] addr0, addr1;
   wire [20:0] nf_addr0, nf_addr1;
   reg  [15:0] word0;
-  reg  [15:0] word1;
-  wire [7:0]  byte_l0, byte_l1, byte_h0, byte_h1;
+  reg  [7:0]  word1;
+  wire [7:0]  byte_l0, byte_l1, byte_h0;
   wire        a0;
   wire        sec_wrd;
   reg         old_clk, start_cmd;
@@ -50,8 +50,7 @@ module flash_prom_zet_cntrlr (
 
   assign byte_l0 = word0[7:0];
   assign byte_h0 = word0[15:8];
-  assign byte_l1 = word1[7:0];
-  assign byte_h1 = word1[15:8];
+  assign byte_l1 = word1;
 
   assign rd_data = byte_m ? ( a0 ? { {8{byte_h0[7]}}, byte_h0 } 
                                   : { {8{byte_l0[7]}}, byte_l0 } ) 
@@ -66,14 +65,14 @@ module flash_prom_zet_cntrlr (
   assign NF_OE   = 1'b0;
 
   // Read sequence
-  always @(state)
+  always @(state or reset or nf_addr0 or nf_addr1 or sec_wrd)
     if (reset) next_state <= rd_done; 
     else
       case (state)
         word0_st: 
           begin 
-            NF_A <= nf_addr0; 
-            next_state <= wait1; 
+            NF_A <= nf_addr0;
+            next_state <= wait1;
           end
         wait1:    next_state <= wait2;
         wait2:    next_state <= wait3;
@@ -81,13 +80,13 @@ module flash_prom_zet_cntrlr (
         word1_st: 
           begin
             word0 <= NF_D;
-            NF_A <= nf_addr1; 
+            NF_A <= nf_addr1;
             next_state <= sec_wrd ? wait4 : rd_done; 
           end
         wait4:    next_state <= wait5;
         wait5:    next_state <= wait6;
         wait6:    next_state <= rd_word1;
-        rd_word1: begin word1 <= NF_D; next_state <= rd_done; end
+        rd_word1: begin word1 <= NF_D[7:0]; next_state <= rd_done; end
         default: next_state <= word0_st;
       endcase
 
@@ -102,14 +101,14 @@ module flash_prom_zet_cntrlr (
   always @(negedge sys_clk)
     if (reset)
       begin
-        old_clk <= cpu_clk;
+        old_clk <= 1'b0;
         start_cmd <= 1'b0;
       end
     else
       begin
         if (cpu_clk && !old_clk && eff_ready && enable) start_cmd <= 1'b1;
         else start_cmd <= 1'b0;
-        old_clk = cpu_clk;
+        old_clk <= cpu_clk;
       end
    
   always @(posedge cpu_clk) eff_ready <= ready;

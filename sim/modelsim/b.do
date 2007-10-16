@@ -1,6 +1,6 @@
-vdel -all -lib work
+#vdel -all -lib work
 vlib work
-vlog -work work +incdir+../../rtl ../../rtl/regfile.v ../../rtl/alu.v ../../rtl/cpu.v ../../rtl/exec.v ../../rtl/fetch.v ../../rtl/jmp_cond.v ../../rtl/util/primitives.v
+vlog -work work +incdir+../../rtl-model ../../rtl-model/regfile.v ../../rtl-model/alu.v ../../rtl-model/cpu.v ../../rtl-model/exec.v ../../rtl-model/fetch.v ../../rtl-model/jmp_cond.v ../../rtl-model/util/primitives.v
 vlog -work work +incdir+.. ../memory.v ../testbench.v
 vsim -t ns work.testbench
 add wave sim:/testbench/clk

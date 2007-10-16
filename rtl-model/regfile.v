@@ -19,20 +19,17 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
   reg [8:0] flags;
   reg [4:0] i;  
   wire [7:0] a8, b8, c8;
-  wire [3:0] addr_a2, addr_b2, addr_c2;
 
   // Assignments
+	
   assign a = (o_byte & ~addr_a[3]) ? { {8{a8[7]}}, a8} : r[addr_a];
-  assign a8 = addr_a[2] ? r[addr_a2][15:8] : r[addr_a][7:0];
-  assign addr_a2 = {2'b0, addr_a[1:0]};
+  assign a8 = addr_a[2] ? r[addr_a[1:0]][15:8] : r[addr_a][7:0];
 
   assign b = (o_byte & ~addr_b[3]) ? { {8{b8[7]}}, b8} : r[addr_b];
-  assign b8 = addr_b[2] ? r[addr_b2][15:8] : r[addr_b][7:0];
-  assign addr_b2 = {2'b0, addr_b[1:0]};
+  assign b8 = addr_b[2] ? r[addr_b[1:0]][15:8] : r[addr_b][7:0];
 
   assign c = (c_byte & ~addr_c[3]) ? { {8{c8[7]}}, c8} : r[addr_c];
-  assign c8 = addr_c[2] ? r[addr_c2][15:8] : r[addr_c][7:0];
-  assign addr_c2 = {2'b0, addr_c[1:0]};
+  assign c8 = addr_c[2] ? r[addr_c[1:0]][15:8] : r[addr_c][7:0];
 
   assign s = r[{2'b10,addr_s}];
   assign oflags = { 4'd0, flags[8:3], 1'b0, flags[2], 1'b0, 
@@ -44,9 +41,14 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
   // Behaviour
   always @(posedge clk)
     if (rst) begin
-      for (i=5'd0; i<5'd16; i=i+5'd1) r[i] = 16'd0;
-      r[9][15:12] <= 4'hf;
-      r[15] <= 16'hfff0;
+      r[0]  <= 16'd0; r[1]  <= 16'd0; 
+      r[2]  <= 16'd0; r[3]  <= 16'd0; 
+      r[4]  <= 16'd0; r[5]  <= 16'd0; 
+      r[6]  <= 16'd0; r[7]  <= 16'd0; 
+      r[8]  <= 16'd0; r[9]  <= 16'hf000;
+      r[10] <= 16'd0; r[11] <= 16'd0; 
+      r[12] <= 16'd0; r[13] <= 16'd0; 
+      r[14] <= 16'd0; r[15] <= 16'hfff0;
       flags <= 9'd0;
     end else
       begin
@@ -54,7 +56,7 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
           if (word_op | addr_d[3:2]==2'b10) 
              r[addr_d] <= word_op ? d[15:0] : {{8{d[7]}},d[7:0]};
           else if (addr_d[3]~^addr_d[2]) r[addr_d][7:0] <= d[7:0];
-          else r[{2'b0,addr_d[1:0]}][15:8] = d[7:0];
+          else r[{2'b0,addr_d[1:0]}][15:8] <= d[7:0];
         end
         if (wrfl) flags <= { iflags[11:6], iflags[4], iflags[2], iflags[0] };
         if (wrhi) r[4'd2] <= d[31:16];

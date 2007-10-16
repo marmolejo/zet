@@ -25,7 +25,7 @@ endmodule
 //
 // Multiplexor 8:1 de 8 bits d'amplada
 //
-
+/*
 module mux8_8(sel, in0, in1, in2, in3, in4, in5, in6, in7, out);
   input  [2:0]  sel;
   input  [7:0] in0, in1, in2, in3, in4, in5, in6, in7;
@@ -45,7 +45,7 @@ module mux8_8(sel, in0, in1, in2, in3, in4, in5, in6, in7, out);
      3'd7:  out = in7;
     endcase
 endmodule
-
+*/
 //
 // Multiplexor 8:1 de 17 bits d'amplada
 //

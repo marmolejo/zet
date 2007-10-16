@@ -35,6 +35,7 @@ module fetch (
   wire prefix;
   wire next_in_opco, next_in_exec;
   wire block;
+  wire need_modrm, need_off, need_imm, off_size, imm_size;
 
   reg [2:0] state;
   reg [7:0] opcode_l, modrm_l;
@@ -79,10 +80,10 @@ module fetch (
         default:  // opcode or prefix
           begin
             case (state)
-              opcod_st: pref_l = prefix ? { 1'b1, opcode[0] } : 2'b0;
-              default: pref_l = 2'b0;
+              opcod_st: pref_l <= prefix ? { 1'b1, opcode[0] } : 2'b0;
+              default: pref_l <= 2'b0;
             endcase
-            state = opcod_st;
+            state <= opcod_st;
             off_l <= 16'd0;
           end
 
@@ -98,7 +99,7 @@ module fetch (
               opcod_st: opcode_l <= data[7:0];
               default: modrm_l <= data[7:0];
             endcase
-            state = offse_st;
+            state <= offse_st;
           end
 
         immed_st:  // immediate
@@ -108,7 +109,7 @@ module fetch (
               modrm_st: modrm_l <= data[7:0];
               default: off_l <= data;
             endcase
-            state = immed_st;
+            state <= immed_st;
           end
 
         execu_st:  // execute
@@ -119,7 +120,7 @@ module fetch (
               offse_st: off_l <= data;
               immed_st: imm_l <= data;
             endcase
-            state = execu_st;
+            state <= execu_st;
           end
       endcase
 endmodule
@@ -287,7 +288,7 @@ module opcode_deco (
 
   // Behaviour
   always @(opcode or mod or need_off_mod or off_size_mod 
-                   or b or sm or dm or regm or srcm or dstm)
+                   or b or sm or dm or regm or srcm or dstm or rm or rep)
     casex (opcode)
       8'b000x_x110: // push seg
         begin
@@ -960,7 +961,7 @@ module micro_rom (
   assign q = rom[addr];
 
   // Behaviour
-	initial $readmemb("/home/zeus/zet/rtl/micro_rom.dat", rom);
+	initial $readmemb("/home/zeus/zet/rtl-model/micro_rom.dat", rom);
 endmodule
 
 module seq_rom (
@@ -975,5 +976,5 @@ module seq_rom (
   assign q = rom[addr];
 
   // Behaviour
-	initial $readmemb("/home/zeus/zet/rtl/seq_rom.dat", rom);
+	initial $readmemb("/home/zeus/zet/rtl-model/seq_rom.dat", rom);
 endmodule

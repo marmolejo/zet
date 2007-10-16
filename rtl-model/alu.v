@@ -16,8 +16,8 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
   wire [19:0] oth;
   wire [31:0] cnv, mul, eff;
   wire af_add, af_adj;
-  wire cf_add, cf_adj, cf_mul, cf_shi, cf_rot;
-  wire of_add, of_mul, of_log, of_shi, of_rot;
+  wire cf_adj, cf_add, cf_mul, cf_log, cf_shi, cf_rot;
+  wire of_adj, of_add, of_mul, of_log, of_shi, of_rot;
   wire ofi, sfi, zfi, afi, pfi, cfi;
   wire ofo, sfo, zfo, afo, pfo, cfo;
   wire flags_unchanged;
@@ -36,7 +36,7 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
   mux8_16 m1(t, 16'd0, 16'd0, cnv[31:16], mul[31:16], 16'd0, 16'd0, 16'd0, {12'b0,oth[19:16]}, out[31:16]);
   mux8_1  a1(t, cf_adj, cf_add, cfi, cf_mul, cf_log, cf_shi, cf_rot, 1'b0, cfo);
   mux8_1  a2(t, af_adj, af_add, afi, 1'b0, 1'b0, 1'b0, afi, 1'b0, afo);
-  mux8_1  a3(t, 1'b0, of_add, ofi, of_mul, of_log, of_shi, of_rot, 1'b0, ofo);
+  mux8_1  a3(t, of_adj, of_add, ofi, of_mul, of_log, of_shi, of_rot, 1'b0, ofo);
 
   // Flags
   assign pfo = flags_unchanged ? pfi : ^~ out[7:0];
@@ -68,6 +68,7 @@ module addsub(x, y, out, func, word_op, cfi, cfo, afo, ofo);
   wire [16:0] adc, add, ad8, dec, neg, sbb, sub, cmp;
   wire [4:0]  tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
   wire        resta, bneg, bincdec, cfo8, cfo16, ofo8, ofo16, cfoneg8, cfoneg16;
+  wire        afo_adc, afo_add, afo_inc, afo_dec, afo_neg, afo_sbb, afo_sub, afo_cmp;
   wire [16:0] out17;
 
   // Module instances

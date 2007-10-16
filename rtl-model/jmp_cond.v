@@ -22,7 +22,7 @@ module jmp_cond (
   assign cx_zero = ~(|cx);
 
   // Behaviour
-  always @(flags or cond or is_cx or cx_zero)
+  always @(flags or cond or is_cx or cx_zero or zf or of or cf or sf or pf)
     if (is_cx) case (cond)
         4'b0000: jmp <= cx_zero;         /* jcxz   */
         4'b0001: jmp <= ~cx_zero;        /* loop   */

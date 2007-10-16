@@ -30,6 +30,7 @@ module exec(ir, off, imm, cs, a, of, zf, cx_zero, clk, rst,
   wire        wr, wr_reg, block;
   wire        wr_cnd;
   wire        jmp;
+  wire        mem_op, b_imm;
 
   // Module instances
   alu     alu0( {c, a}, bus_b, aluout, t, func, flags, oflags, ~byteop, s, off);

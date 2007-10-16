@@ -49,47 +49,17 @@ module vlog_xst_bl4
    output ar_done_val1,
    output user_ack1,
    output user_data_val1,
-   output [((`data_width*2)-1):0] user_output_data,
-   input [((`row_address +
-           `col_ap_width  + `bank_address)-1):0] u1_address,
+   output [31:0] user_output_data,
+   input [25:0] u1_address,
    input [3:0] user_cmd1,
-   input [((`data_width*2)-1):0] u1_data_i,
-   input [((`data_mask_width*2)-1):0] u1_data_m
+   input [31:0] u1_data_i,
+   input [3:0] u1_data_m
    );
 
    wire       wait_200us;
    wire       sys_rst;
    wire [4:0] delay_sel_val;
-/*
-vlog_xst_bl4_main_0     main_00
-   (
-   .DDR2_DQ	(cntrl0_DDR2_DQ),
-   .DDR2_A	(cntrl0_DDR2_A),
-   .DDR2_BA	(cntrl0_DDR2_BA),
-   .DDR2_CK	(cntrl0_DDR2_CK),
-   .DDR2_CK_N	(cntrl0_DDR2_CK_N),
-   .DDR2_CKE	(cntrl0_DDR2_CKE),
-   .DDR2_CS_N	(cntrl0_DDR2_CS_N),
-   .DDR2_RAS_N	(cntrl0_DDR2_RAS_N),
-   .DDR2_CAS_N	(cntrl0_DDR2_CAS_N),
-   .DDR2_WE_N	(cntrl0_DDR2_WE_N),
-   .DDR2_ODT	(cntrl0_DDR2_ODT),
-   .DDR2_DM	(cntrl0_DDR2_DM),
-   .rst_dqs_div_in	(cntrl0_rst_dqs_div_in),
-   .rst_dqs_div_out	(cntrl0_rst_dqs_div_out),
-   .led_error_output1	(cntrl0_led_error_output1),
-   .data_valid_out	(cntrl0_data_valid_out),
-   .DDR2_DQS	(cntrl0_DDR2_DQS),
-   .DDR2_DQS_N	(cntrl0_DDR2_DQS_N),
-   .wait_200us     (wait_200us),
-   .clk_int        (clk_0),
-   .clk90_int      (clk90_0),
-   .sys_rst        (sys_rst),
-   .sys_rst90      (sys_rst90),
-   .sys_rst180     (sys_rst180),
-   .delay_sel_val  (delay_sel_val)
-   );
-*/
+
    vlog_xst_bl4_top_0        top0
       (
        .auto_ref_req           (auto_ref_req),
@@ -100,8 +70,7 @@ vlog_xst_bl4_main_0     main_00
       .user_data_mask(u1_data_m),
        .user_output_data       (user_output_data),
        .user_data_valid       (user_data_val1),
-       .user_input_address    (u1_address[((`row_address + `col_ap_width 
-                                            + `bank_address)-1):0]),
+       .user_input_address    (u1_address[25:0]),
        .user_command_register (user_cmd1),
        .user_cmd_ack             (user_ack1),
        .burst_done               (burst_done_val1),

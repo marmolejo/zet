@@ -1,5 +1,5 @@
 # Prueba de todos los modos del mov y jmp
-# At the end (2415ns in rtl-model, 269.8us in spartan3), %es = 0x4001
+# At the end (2415ns in rtl-model, 274.3us in spartan3), %es = 0x4001
 #
 # mov: 1 (word), 2 (word), 3 (off, base+index+off), 4, 5 (off), 
 #      7 (byte,word), 8 (byte off), 9 (word base), 10 (byte,word), 

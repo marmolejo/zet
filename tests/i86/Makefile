@@ -1,30 +1,33 @@
-SRCBIOS=08_rep.s
-all: bench
+s3roms :=  $(patsubst %.s,%.s3rom,$(wildcard *.s))
+rtlroms := $(patsubst %.s,%.rtlrom,$(wildcard *s))
+all: $(s3roms) $(rtlroms)
 
-bench: ../../bench/bios.dat
+# altera: ../../altera/zet/simulation/modelsim/bios0.dat ../../altera/zet/simulation/modelsim/bios1.dat
 
-altera: ../../altera/zet/simulation/modelsim/bios0.dat ../../altera/zet/simulation/modelsim/bios1.dat
+# ../../altera/zet/simulation/modelsim/bios0.dat: bios0.out
+#	hexdump -v -e '1/1 "%02X"' -e '"\n"' bios0.out > ../../altera/zet/simulation/modelsim/bios0.dat
 
-BIOS=bios0.out bios1.out
+#../../altera/zet/simulation/modelsim/bios1.dat: bios1.out
+#	hexdump -v -e '1/1 "%02X"' -e '"\n"' bios1.out > ../../altera/zet/simulation/modelsim/bios1.dat
 
-../../altera/zet/simulation/modelsim/bios0.dat: bios0.out
-	hexdump -v -e '1/1 "%02X"' -e '"\n"' bios0.out > ../../altera/zet/simulation/modelsim/bios0.dat
+#../../sim/bios.dat: bios.out
+#	hexdump -v -e '1/1 "%02X"' -e '"\n"' bios.out > ../../sim/bios.dat
+#	hexdump -v -e '1/2 "0x1%04_ax/%04x"' -e '"\n"' bios.out | awk -F/ '{printf "00%x/%s\n", rshift(strtonum($$1),1), $$2}' > ../../impl/spartan3an-sk/sim/flash-prom/memory_file
 
-../../altera/zet/simulation/modelsim/bios1.dat: bios1.out
-	hexdump -v -e '1/1 "%02X"' -e '"\n"' bios1.out > ../../altera/zet/simulation/modelsim/bios1.dat
+#$(BIOS): bios.out
+#	splitlh bios.out $(BIOS)
 
-../../bench/bios.dat: bios.out
-	hexdump -v -e '1/1 "%02X"' -e '"\n"' bios.out > ../../bench/bios.dat
-	hexdump -v -e '1/2 "0x1%04_ax/%04x"' -e '"\n"' bios.out | awk -F/ '{printf "00%x/%s\n", rshift(strtonum($$1),1), $$2}' > ../../impl/spartan3an-sk/sim/flash-prom/memory_file
+%.s3rom: %.out
+	hexdump -v -e '1/2 "0x1%04_ax/%04x"' -e '"\n"' $< | awk -F/ '{printf "00%x/%s\n", rshift(strtonum($$1),1), $$2}' > ../../impl/spartan3an-sk/sim/flash-prom/$@
 
-$(BIOS): bios.out
-	splitlh bios.out $(BIOS)
+%.rtlrom: %.out
+	hexdump -v -e '1/1 "%02X"' -e '"\n"' $< > ../../sim/$@
 
-bios.out: bios.o
-	objcopy -O binary -S bios.o bios.out
+%.out: %.o
+	objcopy -O binary -S $< $@
 
-bios.o: $(SRCBIOS)
-	as ${SRCBIOS} -o bios.o
+%.o: %.c
+	as $< -o $@
 
 clean:
-	rm -f bios.out bios.o bios0.out bios1.out
+	rm -f *.o *.out ../../impl/spartan3an-sk/sim/flash-prom/*.s3rom ../../sim/*.rtlrom

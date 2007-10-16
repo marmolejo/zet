@@ -40,7 +40,7 @@ module ddr2_sdram_zet_cntrlr
     input  cntrl0_rst_dqs_div_in,     // loopback
     output  cntrl0_rst_dqs_div_out,   // loopback
     input  board_reset,                // board reset
-   
+
     input             cpu_clk,
     input      [19:0] addr,
     input      [15:0] wr_data,
@@ -65,7 +65,7 @@ module ddr2_sdram_zet_cntrlr
    wire                                          user_data_val1;
    wire [((`data_width*2)-1):0]                  user_output_data;
    wire [((`row_address +
-           `col_ap_width  + `bank_address)-1):0] usr_addr1, usr_addr2;   
+           `col_ap_width  + `bank_address)-1):0] usr_addr1, usr_addr2;
    wire [3:0]                                    user_cmd1;
    wire [((`data_width*2)-1):0]                  usr_data1, usr_data2;
    wire [((`data_mask_width*2)-1):0]             usr_mask1;
@@ -82,8 +82,12 @@ module ddr2_sdram_zet_cntrlr
    reg [1:0] init_state, next_init_state;
    reg burst_rd, burst_wr;
    reg [3:0] u_cmd_rd, u_cmd_wr, u_cmd_init;
-   reg [((`row_address +
+   wire [((`row_address +
            `col_ap_width  + `bank_address)-1):0] u1_address;
+   reg [((`row_address +
+           `col_ap_width  + `bank_address)-1):0] u1_read;
+   reg [((`row_address +
+           `col_ap_width  + `bank_address)-1):0] u1_write;
    reg [((`data_width*2)-1):0]                  u1_data_i;
    reg [((`data_mask_width*2)-1):0]             u1_data_m;
    reg row_rd_pass, row_wr_pass;
@@ -181,10 +185,12 @@ module ddr2_sdram_zet_cntrlr
   assign ready      = (we ? (next_rd_state==rd_done) 
                            : (next_wr_state==wr_done))
                        || !enable;
+  assign u1_address = we ? u1_read : u1_write;
 
   // Behaviour
   // Write command
-  always @(wr_state or user_ack1 or mem_rst or usr_addr1 or usr_addr2)
+  always @(wr_state or user_ack1 or mem_rst or usr_addr1 or usr_addr2
+	         /* or row_wr_pass or col_grp_ch or next_wr_state or row_change */)
     if (mem_rst) 
       begin 
         u_cmd_wr <= nop_cmd; 
@@ -197,17 +203,13 @@ module ddr2_sdram_zet_cntrlr
         write_st:    if (!user_ack1)
           begin 
             u_cmd_wr <= write_cmd;
-            u1_address <= row_wr_pass ? usr_addr2 : usr_addr1;
+            u1_write <= row_wr_pass ? usr_addr2 : usr_addr1;
             next_wr_state <= wait_ack;
-          end
-        wait_ack:    if (user_ack1) 
-          begin
-            next_data_state <= snd_word1;
-            next_wr_state <= wait_addr1;
-          end
+          end else next_wr_state <= write_st;
+        wait_ack:    if (user_ack1) next_wr_state <= wait_addr1;
         wait_addr1:  next_wr_state <= wait_addr2;
         wait_addr2:  next_wr_state <= col_grp_ch ? snd_addr1 : snd_burst1;
-        snd_addr1:   begin u1_address <= usr_addr2; next_wr_state <= snd_addr2; end
+        snd_addr1:   begin u1_write <= usr_addr2; next_wr_state <= snd_addr2; end
         snd_addr2:   next_wr_state <= snd_burst1;
         snd_burst1:  begin burst_wr <= 1'b1; next_wr_state <= snd_burst2; end
         snd_burst2:  next_wr_state <= end_burst;
@@ -230,8 +232,9 @@ module ddr2_sdram_zet_cntrlr
       endcase
 
   // Send data
-  always @(data_state or user_ack1 or usr_mask1 or usr_data1 or 
-           col_grp_ch or usr_data2 or mem_rst)
+  always @(data_state or user_ack1 or usr_mask1 or usr_data1
+           /* or col_grp_ch or usr_data2 or mem_rst or row_change 
+           or row_wr_pass or wr_state */)
     if (mem_rst) next_data_state <= snd_word4;
     else
       case (data_state)
@@ -248,11 +251,17 @@ module ddr2_sdram_zet_cntrlr
             u1_data_i <= usr_data2;
             next_data_state <= snd_word4;
           end
-        default: u1_data_m <= 4'b1111;
+        default:
+          begin
+            u1_data_m <= 4'b1111;
+            if (wr_state==wait_ack && user_ack1) next_data_state <= snd_word1;
+          end
       endcase
 
   // Read command
-  always @(rd_state or user_ack1 or user_data_val1 or mem_rst)
+  always @(rd_state or user_ack1 or user_data_val1 or mem_rst
+	        /* or row_rd_pass or usr_addr2 or usr_addr1 or col_grp_ch or byte_m
+					 or byte_l or byte_h or next_rd_state or row_change */)
     if (mem_rst) 
       begin 
         u_cmd_rd <= nop_cmd; 
@@ -265,13 +274,13 @@ module ddr2_sdram_zet_cntrlr
         read_st:     if (!user_ack1)
           begin 
             u_cmd_rd <= read_cmd; 
-            u1_address <= row_rd_pass ? usr_addr2 : usr_addr1;
+            u1_read <= row_rd_pass ? usr_addr2 : usr_addr1;
             next_rd_state <= wait_ack; 
-          end
+          end else next_rd_state <= read_st;
         wait_ack:    if (user_ack1) next_rd_state <= wait_addr1;
         wait_addr1:  next_rd_state <= wait_addr2;
         wait_addr2:  next_rd_state <= col_grp_ch ? snd_addr1 : snd_burst1;
-        snd_addr1:   begin u1_address <= usr_addr2; next_rd_state <= snd_addr2; end
+        snd_addr1:   begin u1_read <= usr_addr2; next_rd_state <= snd_addr2; end
         snd_addr2:   next_rd_state <= snd_burst1;
         snd_burst1:  begin burst_rd <= 1'b1; next_rd_state <= snd_burst2; end
         snd_burst2:  next_rd_state <= end_burst;
@@ -358,15 +367,15 @@ module ddr2_sdram_zet_cntrlr
   always @(posedge clk_int)
     if (mem_rst || !enable)
       begin
-        old_clk <= cpu_clk;
+        old_clk <= 1'b0;
         start_cmd <= 1'b0;
       end
     else
       begin
         if (cpu_clk && !old_clk && eff_ready) start_cmd <= 1'b1;
         else start_cmd <= 1'b0;
-        old_clk = cpu_clk;
+        old_clk <= cpu_clk;
       end
   
-  always @(posedge cpu_clk) eff_ready = ready;
+  always @(posedge cpu_clk) eff_ready <= ready;
 endmodule

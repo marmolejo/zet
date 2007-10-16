@@ -202,3 +202,6 @@ cmpw %bx,%ax
 
 .org 65520
 jmp a
+
+.org 65535
+.byte 0xff
