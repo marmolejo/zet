@@ -29,7 +29,7 @@ module fetch (
 
   wire [`IR_SIZE-1:0] rom_ir;
   wire [7:0] opcode, modrm;
-  wire exec_st, end_instr;
+  wire exec_st, end_seq;
   wire [15:0] imm_d;
   wire [2:0] next_state;
   wire prefix;
@@ -43,11 +43,12 @@ module fetch (
   reg [1:0] pref_l;
 
   // Module instantiation
-  decode decode0(opcode, modrm, off_l, imm_l, pref_l[1], clk, rst, block, 
+  decode decode0(opcode, modrm, off_l, imm_l, /* pref_l[1], */ clk, rst, block, 
                  exec_st, need_modrm, need_off, need_imm, off_size, imm_size,
-                 rom_ir, off, imm_d, end_instr);
-  next_or_not nn0(pref_l, opcode, cx_zero, zf, next_in_opco, next_in_exec);
-  nstate ns0(state, prefix, need_modrm, need_off, need_imm, end_instr,
+                 rom_ir, off, imm_d, end_seq);
+  next_or_not nn0(pref_l, opcode[7:1], cx_zero, zf, next_in_opco, 
+                  next_in_exec);
+  nstate ns0(state, prefix, need_modrm, need_off, need_imm, end_seq,
              rom_ir[28:23], of, next_in_opco, next_in_exec, block,
              next_state);
 
@@ -55,7 +56,7 @@ module fetch (
   assign pc = (cs << 4) + ip;
 
   assign ir     = (state == execu_st) ? rom_ir : `ADD_IP;
-  assign opcode = (state == opcod_st) ? data[7:0] : opcode_l;
+  assign opcode = (state == opcod_st) ? data[7:0] :  opcode_l;
   assign modrm  = (state == modrm_st) ? data[7:0] : modrm_l;
   assign fetch_or_exec = (state == execu_st);
   assign bytefetch = (state == offse_st) ? ~off_size 
@@ -170,7 +171,7 @@ endmodule
 
 module next_or_not (
     input [1:0] prefix,
-    input [7:0] opcode,
+    input [7:1] opcode,
     input cx_zero,
     input zf,
     output next_in_opco,
@@ -199,7 +200,7 @@ module decode (
     input [7:0] modrm,
     input [15:0] off_i,
     input [15:0] imm_i,
-    input       rep,
+//    input       rep,
     input clk,
     input rst,
     input block,
@@ -225,7 +226,7 @@ module decode (
   reg  [`SEQ_ADDR_WIDTH-1:0] seq;
 
   // Module instantiations
-  opcode_deco opcode_deco0 (opcode, modrm, rep, base_addr, need_modrm, 
+  opcode_deco opcode_deco0 (opcode, modrm, /* rep, */ base_addr, need_modrm, 
                             need_off, need_imm, off_size, imm_size, src, dst, 
                             base, index, seg);
   seq_rom seq_rom0 (seq_addr, {end_seq, micro_addr});
@@ -237,16 +238,17 @@ module decode (
 
   // Behaviour
   always @(posedge clk)
-    if (!block)
+    if (rst) seq <= `SEQ_ADDR_WIDTH'd0;
+    else if (!block)
       seq <= (exec_st && !end_seq && !rst) ? (seq + `SEQ_ADDR_WIDTH'd1) 
                                 : `SEQ_ADDR_WIDTH'd0;
-  
+
 endmodule
 
 module opcode_deco (
     input [7:0] opcode,
     input [7:0] modrm,
-    input       rep,
+//    input       rep,
 
     output reg [`SEQ_ADDR_WIDTH-1:0] seq_addr,
     output reg need_modrm,
@@ -287,9 +289,10 @@ module opcode_deco (
   assign need_off_mod = (base == 4'b1100 && index == 4'b1100) || ^mod;
 
   // Behaviour
-  always @(opcode or mod or need_off_mod or off_size_mod 
-                   or b or sm or dm or regm or srcm or dstm or rm or rep)
+  always @(opcode or dm or b or need_off_mod or srcm or sm or dstm
+           or off_size_mod or mod or rm or regm)
     casex (opcode)
+/*
       8'b000x_x110: // push seg
         begin
           seq_addr <= `PUSHR;
@@ -347,7 +350,7 @@ module opcode_deco (
           dst <= { 1'b0, dstm };
           src <= { 1'b0, srcm };
         end
-
+*/
       8'b1000_10xx: // mov: r->r, r->m, m->r
         begin
           if (dm)   // r->m
@@ -355,11 +358,13 @@ module opcode_deco (
               seq_addr <= b ? `MOVRMB : `MOVRMW;
               need_off <= need_off_mod;
               src <= { 1'b0, srcm };
+              dst <= 4'b0;
             end
           else if(sm) // m->r
             begin
               seq_addr <= b ? `MOVMRB : `MOVMRW;
               need_off <= need_off_mod;
+              src <= 4'b0;
               dst <= { 1'b0, dstm };
             end
           else     // r->r
@@ -372,6 +377,7 @@ module opcode_deco (
           need_imm <= 1'b0;
           need_modrm <= 1'b1;
           off_size <= off_size_mod;
+          imm_size <= 1'b0;
         end
 
       8'b1000_1100: // mov: s->m, s->r
@@ -381,19 +387,21 @@ module opcode_deco (
               seq_addr <= `MOVRMW;
               need_off <= need_off_mod;
               src <= { 1'b1, srcm };
+              dst <= 4'b0;
             end
           else     // s->r
             begin
               seq_addr <= `MOVRRW;
               need_off <= 1'b0;
-              dst <= { 1'b0, dstm };
               src <= { 1'b1, srcm };
+              dst <= { 1'b0, dstm };
             end
           need_imm <= 1'b0;
           need_modrm <= 1'b1;
           off_size <= off_size_mod;
+          imm_size <= 1'b0;
         end
-
+/*
       8'b1000_1101: // lea
         begin
           seq_addr <= `LEA;
@@ -403,27 +411,29 @@ module opcode_deco (
           need_imm <= 1'b0;
           src <= { 1'b0, srcm };
         end
-
+*/
       8'b1000_1110: // mov: m->s, r->s
         begin
           if (sm)   // m->s
             begin
               seq_addr <= `MOVMRW;
               need_off <= need_off_mod;
+              src <= 4'b0;
               dst <= { 1'b1, dstm };
             end
           else     // r->s
             begin
               seq_addr <= `MOVRRW;
               need_off <= 1'b0;
-              dst <= { 1'b1, dstm };
               src <= { 1'b0, srcm };
+              dst <= { 1'b1, dstm };
             end
           need_modrm <= 1'b1;
           off_size <= off_size_mod;
           need_imm <= 1'b0;
+          imm_size <= 1'b0;
         end
-
+/*
       8'b1000_1111: // pop mem or (pop reg non-standard)
         begin
           seq_addr <= (mod==2'b11) ? `POPR : `POPM;
@@ -461,15 +471,21 @@ module opcode_deco (
           need_imm <= 1'b1;
           imm_size <= 1'b1;
         end
-
+*/
       8'b1001_1100: // pushf
         begin
           seq_addr <= `PUSHF;
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
-        end
 
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
+/*
       8'b1001_1101: // popf
         begin
           seq_addr <= `POPF;
@@ -493,7 +509,7 @@ module opcode_deco (
           need_off <= 1'b0;
           need_imm <= 1'b0;
         end
-
+*/
       8'b1010_000x: // mov: m->a
         begin
           seq_addr <= b ? `MOVMAB : `MOVMAW;
@@ -501,6 +517,10 @@ module opcode_deco (
           need_off <= 1'b1;
           need_imm <= 1'b0;
           off_size <= 1'b1;
+          imm_size <= 1'b0;
+
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1010_001x: // mov: a->m
@@ -510,8 +530,12 @@ module opcode_deco (
           need_off <= 1'b1;
           need_imm <= 1'b0;
           off_size <= 1'b1;
-        end
+          imm_size <= 1'b0;
 
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
+/*
       8'b1010_010x: // movs
         begin
           seq_addr <= rep ? (b ? `MOVSBR : `MOVSWR) : (b ? `MOVSB : `MOVSW);
@@ -551,17 +575,20 @@ module opcode_deco (
           need_off <= 1'b0;
           need_imm <= 1'b0;
         end
-
+*/
       8'b1011_xxxx: // mov: i->r
         begin
           seq_addr <= opcode[3] ? `MOVIRW : `MOVIRB;
-          dst <= { 1'b0, opcode[2:0] };
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= opcode[3];
-        end
 
+          src <= 4'b0;
+          dst <= { 1'b0, opcode[2:0] };
+        end
+/*
       8'b1100_0010: // ret near with value
         begin
           seq_addr <= `RETNV;
@@ -598,7 +625,7 @@ module opcode_deco (
           need_imm <= 1'b0;
           src <= { 1'b0, srcm };
         end
-
+*/
       8'b1100_011x: // mov: i->m (or i->r non-standard)
         begin
           seq_addr <= (mod==2'b11) ? (b ? `MOVIRB : `MOVIRW) 
@@ -608,9 +635,11 @@ module opcode_deco (
           off_size <= off_size_mod;
           need_imm <= 1'b1;
           imm_size <= ~b;
+
+          src <= 4'b0;
           dst <= { 1'b0, rm };
         end
-     
+/*
       8'b1100_1010: // ret far with value
         begin
           seq_addr <= `RETFV;
@@ -731,14 +760,18 @@ module opcode_deco (
           need_imm <= 1'b1;
           imm_size <= 1'b1;
         end
-
+*/
       8'b1110_10x1: // jmp direct
         begin
           seq_addr <= `JMPI;
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= ~opcode[1];
+
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1110_1010: // jmp indirect different segment
@@ -749,8 +782,11 @@ module opcode_deco (
           off_size <= 1'b1;
           need_imm <= 1'b1;
           imm_size <= 1'b1;
-        end
 
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
+/*
       8'b1110_110x: // in dx
         begin
           seq_addr <= b ? `INRB : `INRW;
@@ -766,15 +802,20 @@ module opcode_deco (
           need_off <= 1'b0;
           need_imm <= 1'b0;
         end
-
+*/
       8'b1111_0100: // hlt
         begin
           seq_addr <= `HLT;
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
-        end
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
 
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
+/*
       8'b1111_0101: // cmc
         begin
           seq_addr <= `CMC;
@@ -830,21 +871,25 @@ module opcode_deco (
           need_off <= 1'b0;
           need_imm <= 1'b0;
         end
-
+*/
       8'b1111_1111: 
         begin
           case (regm)
-            3'b010: seq_addr <= (mod==2'b11) ? `CALLNR : `CALLNM;
-            3'b011: seq_addr <= `CALLFM;
+//             3'b010: seq_addr <= (mod==2'b11) ? `CALLNR : `CALLNM;
+//             3'b011: seq_addr <= `CALLFM;
             3'b100: seq_addr <= (mod==2'b11) ? `JMPR : `JMPM;
             3'b101: seq_addr <= `LJMPM;
-            3'b110: seq_addr <= (mod==2'b11) ? `PUSHR : `PUSHM;
+//             3'b110: seq_addr <= (mod==2'b11) ? `PUSHR : `PUSHM;
+            default: seq_addr <= `NOP;
           endcase
           need_modrm <= 1'b1;
           need_off <= need_off_mod;
-          off_size <= off_size_mod;
           need_imm <= 1'b0;
+          off_size <= off_size_mod;
+          imm_size <= 1'b0;
+
           src <= { 1'b0, rm }; 
+          dst <= 4'b0;
         end
 
       default: // nop
@@ -853,6 +898,11 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
   endcase
@@ -955,7 +1005,7 @@ module micro_rom (
   );
 
   // Registers, nets and parameters
-  reg [`MICRO_DATA_WIDTH-1:0] rom[2**`MICRO_ADDR_WIDTH-1:0];
+  reg [`MICRO_DATA_WIDTH-1:0] rom[0:2**`MICRO_ADDR_WIDTH-1];
 
   // Assignments
   assign q = rom[addr];
@@ -970,7 +1020,7 @@ module seq_rom (
   );
 
   // Registers, nets and parameters
-  reg [`SEQ_DATA_WIDTH-1:0] rom[2**`SEQ_ADDR_WIDTH-1:0];
+  reg [`SEQ_DATA_WIDTH-1:0] rom[0:2**`SEQ_ADDR_WIDTH-1];
 
   // Assignments
   assign q = rom[addr];

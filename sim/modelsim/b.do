@@ -1,16 +1,16 @@
-#vdel -all -lib work
+vdel -all -lib work
 vlib work
 vlog -work work +incdir+../../rtl-model ../../rtl-model/regfile.v ../../rtl-model/alu.v ../../rtl-model/cpu.v ../../rtl-model/exec.v ../../rtl-model/fetch.v ../../rtl-model/jmp_cond.v ../../rtl-model/util/primitives.v
 vlog -work work +incdir+.. ../memory.v ../testbench.v
-vsim -t ns work.testbench
-add wave sim:/testbench/clk
-add wave sim:/testbench/rst
-add wave -radix hexadecimal sim:/testbench/cpu0/fetch0/pc
-add wave -radix hexadecimal sim:/testbench/cpu0/fetch0/state
-add wave -radix hexadecimal sim:/testbench/cpu0/fetch0/next_state
-add wave -radix hexadecimal sim:/testbench/cpu0/fetch0/opcode
-add wave -radix hexadecimal sim:/testbench/cpu0/fetch0/modrm
-add wave sim:/testbench/cpu0/fetch0/end_instr
+vsim -novopt -t ns work.testbench
+add wave /testbench/clk
+add wave /testbench/rst
+add wave -radix hexadecimal /testbench/cpu0/fetch0/pc
+add wave -radix hexadecimal /testbench/cpu0/fetch0/state
+add wave -radix hexadecimal /testbench/cpu0/fetch0/next_state
+add wave -radix hexadecimal /testbench/cpu0/fetch0/opcode
+add wave -radix hexadecimal /testbench/cpu0/fetch0/modrm
+add wave /testbench/cpu0/fetch0/end_seq
 add wave -radix hexadecimal sim:/testbench/rd_data
 add wave -radix hexadecimal sim:/testbench/wr_data
 add wave sim:/testbench/cpu0/fetch0/need_modrm

@@ -73,13 +73,12 @@ module vdu
   wire      cursor_on1;
   reg       video_on;
   wire      video_on1;
-  reg       video_on2;
 
   // vga character ram access bus
   reg   [6:0] col_addr;  // 0 to 79
-  reg   [5:0] row_addr;  // 0 to 49 (25 * 2 -1)
+  reg   [4:0] row_addr;  // 0 to 49 (25 * 2 -1)
   reg   [6:0] col1_addr; // 0 to 79
-  reg   [5:0] row1_addr; // 0 to 49 (25 * 2 - 1)
+  reg   [4:0] row1_addr; // 0 to 49 (25 * 2 - 1)
   reg   [6:0] hor_addr;  // 0 to 79
   reg   [6:0] ver_addr;  // 0 to 124
   reg         vga0_we;
@@ -105,6 +104,7 @@ module vdu
   wire        byte1;
   wire [15:0] out_data;
   wire [15:0] ext_attr, ext_buff;
+  wire        fg_or_bg;
 
   // Character write handshake signals
   reg req_write; // request character write
@@ -178,13 +178,18 @@ module vdu
   // Old control registers
   assign reg_hcursor = 7'b0;
   assign reg_vcursor = 5'd0;
-  assign reg_voffset = 5'd2;
+  assign reg_voffset = 5'd0;
+
+  assign fg_or_bg    = vga_shift[7] ^ cursor_on;
 
   // Behaviour
   // vga clock generation
   always @(negedge vdu_clk_in)
-    if (vdu_rst) clk_count <= 2'b00;
-    else clk_count <= clk_count + 2'b01;
+    /* if (vdu_rst) clk_count <= 2'b00;
+    else */ clk_count <= clk_count + 2'b01;
+
+  // For simulation
+  initial clk_count <= 2'b00;
 
   // CPU write interface
   always @(negedge vdu_clk)
@@ -277,12 +282,12 @@ module vdu
       begin
         vga0_we <= 1'b0;
         vga0_rw <= 1'b1;
-        row_addr <= 6'b0;
+        row_addr <= 5'b0;
         col_addr <= 7'b0;
 
         vga1_we  <= 1'b0;
         vga1_rw  <= 1'b1;
-        row1_addr <= 6'b0;
+        row1_addr <= 5'b0;
         col1_addr <= 7'b0;
 
         vga2_we  <= 1'b0;
@@ -314,7 +319,7 @@ module vdu
               vga0_we <= 1'b1;
               vga0_rw <= 1'b0;
               col_addr <= h_count[9:3];
-              row_addr <= { 1'b0, v_count[8:4] } + { 1'b0, reg_voffset[4:0] };
+              row_addr <= v_count[8:4] + reg_voffset[4:0];
             end
         endcase
 
@@ -322,7 +327,7 @@ module vdu
         // row1_addr = (row_addr % 80)
         vga1_we <= vga0_we;
         vga1_rw <= vga0_rw;
-        row1_addr <= (row_addr < VER_DISP_CHR) ? row_addr  
+        row1_addr <= (row_addr < VER_DISP_CHR) ? row_addr
                     : row_addr - VER_DISP_CHR;
         col1_addr <= col_addr;
 
@@ -330,7 +335,7 @@ module vdu
         // ver_addr = (row_addr % 80) x 5
         vga2_we <= vga1_we;
         vga2_rw <= vga1_rw;
-        ver_addr <= { 2'b00, row1_addr[4:0]} + { row1_addr[4:0], 2'b00 }; // x5
+        ver_addr <= { 2'b00, row1_addr } + { row1_addr, 2'b00 }; // x5
         hor_addr <= col1_addr;
 
         // on vdu_clk + 3 calculate memory address
@@ -349,7 +354,6 @@ module vdu
   always @(negedge vdu_clk)
     if (vdu_rst)
       begin
-        video_on2     = 1'b0;
         video_on      = 1'b0;
         cursor_on     = 1'b0;
         vga_bg_colour = 3'b000;
@@ -363,8 +367,7 @@ module vdu
       begin
         if (h_count[2:0] == 3'b000)
           begin
-            video_on2 = video_on1;
-            video_on  = video_on2;
+            video_on  = video_on1;
             cursor_on = (cursor_on1 | attr_data_out[3]) & blink_count[22];
             vga_fg_colour = attr_data_out[2:0];
             vga_bg_colour = attr_data_out[6:4];
@@ -384,17 +387,11 @@ module vdu
         //  7  6  5  4  3  2  1  0
         //  X BG BB BR  X FG FB FR
         //
-        if (vga_shift[7] == !cursor_on)
-          begin
-            vga_red_o    = video_on & vga_fg_colour[0];
-            vga_green_o  = video_on & vga_fg_colour[1];
-            vga_blue_o   = video_on & vga_fg_colour[2];
-          end
-        else 
-          begin
-            vga_red_o    = video_on & vga_bg_colour[0];
-            vga_green_o  = video_on & vga_bg_colour[1];
-            vga_blue_o   = video_on & vga_bg_colour[2];
-          end
+        vga_red_o    = fg_or_bg ? video_on & vga_fg_colour[0] 
+                                : video_on & vga_bg_colour[0];
+        vga_green_o  = fg_or_bg ? video_on & vga_fg_colour[1]
+                                : video_on & vga_bg_colour[1];
+        vga_blue_o   = fg_or_bg ? video_on & vga_fg_colour[2]
+                                : video_on & vga_bg_colour[2];
       end
 endmodule

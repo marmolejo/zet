@@ -1,9 +1,9 @@
 `timescale 1ns/100ps
 
 module zet_soc (
-    input         DDR_CLK,
+//    input         DDR_CLK,
     input         SYS_CLK,
-
+/*
     inout  [15:0] SD_DQ,
     output [12:0] SD_A,
     output  [1:0] SD_BA,
@@ -23,13 +23,14 @@ module zet_soc (
     inout         SD_LDQS_N,
     input         SD_LOOP_IN,
     output        SD_LOOP_OUT,
-
+*/
     input  [15:0] NF_D,
     output [21:1] NF_A,
     output        NF_WE,
     output        NF_CE,
     output        NF_OE,
     output        NF_BYTE,
+    output        NF_RP,
 
     input         BTN_SOUTH,
 
@@ -37,7 +38,9 @@ module zet_soc (
     output        VGA_G,
     output        VGA_B,
     output        VGA_HSYNC,
-    output        VGA_VSYNC
+    output        VGA_VSYNC,
+
+    output  [1:0] LED
   );
 
   // Net declarations
@@ -47,14 +50,16 @@ module zet_soc (
   wire [15:0] wr_data;
   wire        we, m_io;
   wire        byte_m;
-  wire [15:0] rd_data, vdu_data, mem_data, io_data;
+  wire [15:0] rd_data, vdu_data, mem_data /*, io_data */;
   wire        vdu_cs;
   wire        mem_op;
   wire        ready, mem_rdy, vdu_rdy;
-  reg  [15:0] io_reg;
+  wire        wr_cnd;  // Stub
+//  reg  [15:0] io_reg;
 
   // Module instantiation
   memory mem_ctrlr_0 (
+/*
     .cntrl0_DDR2_DQ         (SD_DQ),
     .cntrl0_DDR2_A          (SD_A),
     .cntrl0_DDR2_BA         (SD_BA),
@@ -71,7 +76,7 @@ module zet_soc (
     .cntrl0_DDR2_DQS_N      ({SD_UDQS_N, SD_LDQS_N}),
     .cntrl0_rst_dqs_div_in  (SD_LOOP_IN),   // loopback
     .cntrl0_rst_dqs_div_out (SD_LOOP_OUT),   // loopback
-
+*/
     .NF_WE       (NF_WE),
     .NF_CE       (NF_CE),
     .NF_OE       (NF_OE),
@@ -79,15 +84,15 @@ module zet_soc (
     .NF_A        (NF_A),
     .NF_D        (NF_D),
 
-    .ddr_clk     (DDR_CLK),
+//    .ddr_clk     (DDR_CLK),
     .sys_clk     (SYS_CLK),
     .cpu_clk     (cpu_clk),
     .mem_rst     (mem_rst),
     .board_reset (BTN_SOUTH),
 
     .addr        (addr),
-    .wr_data     (wr_data),
-    .we          (we & ~m_io),
+//    .wr_data     (wr_data),
+//    .we          (we & ~m_io),
     .byte_m      (byte_m),
     .rd_data     (mem_data),
     .mem_op      (mem_op),
@@ -103,6 +108,7 @@ module zet_soc (
     .we      (we),
     .byte_m  (byte_m),
     .m_io    (m_io),
+    .wr_cnd  (wr_cnd), // Stub
     .mem_op  (mem_op),
     .mem_rdy (ready)
   );
@@ -126,15 +132,18 @@ module zet_soc (
     .ready       (vdu_rdy)
   );
 
-  assign io_data = (addr[15:0]==16'hb7) ? io_reg : 16'd0;
+//  assign io_data = (addr[15:0]==16'hb7) ? io_reg : 16'd0;
   assign vdu_cs  = (addr[19:12]==16'hb8) && mem_op;
-  assign rd_data = m_io ? io_data : (vdu_cs ? vdu_data : mem_data);
+  assign rd_data = /* m_io ? io_data : */ (vdu_cs ? vdu_data : mem_data);
   assign ready   = vdu_cs ? vdu_rdy : mem_rdy;
+  assign NF_RP   = 1'b1;
+  assign LED     = { wr_cnd, m_io };
 
   // Behaviour
   // IO Stub
+/*
   always @(posedge cpu_clk)
     if (addr==20'hb7 & ~we & m_io) 
       io_reg <= byte_m ? { io_reg[15:8], wr_data[7:0] } : wr_data;
-
+*/
 endmodule

@@ -2,7 +2,7 @@
 start:
 movw $0xb800, %dx
 movw %dx, %ds
-movw $0x704d, (0) 
+movw $0x034d, (4)
 movw (1), %cx
 hlt
 

@@ -1,27 +1,26 @@
 `timescale 1ns/10ps
 
-module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
+module regfile(a, b, c, cs, ip, d, s, flags, wr, wrfl, wrhi, clk, rst,
                addr_a, addr_b, addr_c, addr_d, addr_s, iflags, word_op, 
                o_byte, c_byte, cx_zero);
   // IO Ports
-  output [15:0] a, b, c, s, oflags;
+  output [15:0] a, b, c, s;
   output [15:0] cs;
   input  [3:0]  addr_a, addr_b, addr_c, addr_d;
   input  [1:0]  addr_s;
-  input  [15:0] iflags;
+  input  [8:0]  iflags;
   input  [31:0] d;
   input         wrfl, wrhi, word_op, clk, rst, o_byte, c_byte;
   input         wr;
   output        cx_zero;
+  output [15:0] ip;
+  output reg [8:0] flags;
 
   // Net declarations
   reg [15:0] r[15:0];
-  reg [8:0] flags;
-  reg [4:0] i;  
   wire [7:0] a8, b8, c8;
 
   // Assignments
-	
   assign a = (o_byte & ~addr_a[3]) ? { {8{a8[7]}}, a8} : r[addr_a];
   assign a8 = addr_a[2] ? r[addr_a[1:0]][15:8] : r[addr_a][7:0];
 
@@ -32,11 +31,11 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
   assign c8 = addr_c[2] ? r[addr_c[1:0]][15:8] : r[addr_c][7:0];
 
   assign s = r[{2'b10,addr_s}];
-  assign oflags = { 4'd0, flags[8:3], 1'b0, flags[2], 1'b0, 
-                    flags[1], 1'b1, flags[0] };
 
   assign cs = r[9];
   assign cx_zero = (addr_d==4'd1) ? (d==16'd0) : (r[1]==16'd0);
+
+  assign ip = r[15];
 
   // Behaviour
   always @(posedge clk)
@@ -58,7 +57,7 @@ module regfile(a, b, c, cs, d, s, oflags, wr, wrfl, wrhi, clk, rst,
           else if (addr_d[3]~^addr_d[2]) r[addr_d][7:0] <= d[7:0];
           else r[{2'b0,addr_d[1:0]}][15:8] <= d[7:0];
         end
-        if (wrfl) flags <= { iflags[11:6], iflags[4], iflags[2], iflags[0] };
+        if (wrfl) flags <= iflags;
         if (wrhi) r[4'd2] <= d[31:16];
       end
 endmodule

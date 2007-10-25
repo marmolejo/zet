@@ -1,7 +1,7 @@
 `timescale 1ns/10ps
 
 module jmp_cond (
-    input [15:0] flags,
+    input [4:0]  logic_flags,
     input [3:0]  cond,
     input        is_cx,
     input [15:0] cx,
@@ -9,20 +9,19 @@ module jmp_cond (
   );
 
   // Net declarations
-  wire of, sf, zf, af, pf, cf;
+  wire of, sf, zf, pf, cf;
   wire cx_zero;
 
   // Assignments
-  assign of = flags[11];
-  assign sf = flags[7];
-  assign zf = flags[6];
-  assign af = flags[4];
-  assign pf = flags[2];
-  assign cf = flags[0];
+  assign of = logic_flags[4];
+  assign sf = logic_flags[3];
+  assign zf = logic_flags[2];
+  assign pf = logic_flags[1];
+  assign cf = logic_flags[0];
   assign cx_zero = ~(|cx);
 
   // Behaviour
-  always @(flags or cond or is_cx or cx_zero or zf or of or cf or sf or pf)
+  always @(cond or is_cx or cx_zero or zf or of or cf or sf or pf)
     if (is_cx) case (cond)
         4'b0000: jmp <= cx_zero;         /* jcxz   */
         4'b0001: jmp <= ~cx_zero;        /* loop   */

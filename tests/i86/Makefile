@@ -20,6 +20,11 @@ all: $(s3roms) $(rtlroms)
 %.s3rom: %.out
 	hexdump -v -e '1/2 "0x1%04_ax/%04x"' -e '"\n"' $< | awk -F/ '{printf "00%x/%s\n", rshift(strtonum($$1),1), $$2}' > ../../impl/spartan3an-sk/sim/flash-prom/$@
 
+%.mcs: %.out
+	echo :020000040001F9 > $@
+	hexdump -v -e '":20%04_ax00"' -e '32/1 "%02x"' -e '"00"' -e '"\n"' $< | tr a-z A-Z >> $@
+	echo :00000001FF >> $@
+
 %.rtlrom: %.out
 	hexdump -v -e '1/1 "%02X"' -e '"\n"' $< > ../../sim/$@
 
@@ -30,4 +35,4 @@ all: $(s3roms) $(rtlroms)
 	as $< -o $@
 
 clean:
-	rm -f *.o *.out ../../impl/spartan3an-sk/sim/flash-prom/*.s3rom ../../sim/*.rtlrom
+	rm -f *.o *.out *.mcs ../../impl/spartan3an-sk/sim/flash-prom/*.s3rom ../../sim/*.rtlrom

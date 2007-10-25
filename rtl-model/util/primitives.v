@@ -133,6 +133,23 @@ module mux4_16(sel, in0, in1, in2, in3, out);
 endmodule
 
 //
+// Multiplexor 2:1 de 8 bits d'amplada
+//
+module mux2_8(sel, in0, in1, out);
+  input        sel;
+  input  [7:0] in0, in1;
+  output [7:0] out;
+
+  reg    [7:0] out;
+
+  always @(sel or in0 or in1)
+    case(sel)
+     1'd0:  out = in0;
+     1'd1:  out = in1;
+    endcase
+endmodule
+
+//
 // Multiplexor 4:1 de 1 bits d'amplada
 //
 module mux4_1(sel, in0, in1, in2, in3, out);

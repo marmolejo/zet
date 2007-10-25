@@ -13,6 +13,7 @@ entity test_stub is
     E_N       : in std_logic;
     G_N       : in std_logic;
     Byte_N    : in std_logic;
+    RP        : in std_logic;
     RB        : out std_logic;
     -- buses
     A         : in std_logic_vector(Addr_Bus_Dim - 1 downto 0);
@@ -65,6 +66,12 @@ mod_ule : M29DW323D
                  DQ15A_1 => DQ15A_1 
                  );
 
-
+reset_flash : process( RP, RP_N )
+begin
+   if RP = '1' then
+	   RP_N <= 3.0;
+	else RP_N <= 0.0;
+  end if;
+end process;
 
 end arch_stim;    -- architecture body
