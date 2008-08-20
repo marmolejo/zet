@@ -23,8 +23,10 @@ impl/spartan3an-sk/rtl/ddr2cntrl/vlog_xst_bl4_data_path_iobs_0.v
 impl/spartan3an-sk/rtl/ddr2cntrl/vlog_xst_bl4_top_0.v
 impl/spartan3an-sk/rtl/ddr2cntrl/vlog_xst_bl4_infrastructure_top_0.v
 impl/spartan3an-sk/rtl/ddr2cntrl/vlog_xst_bl4_cal_top.v
+impl/spartan3an-sk/rtl/ddr2cntrl/vlog_xst_bl4_parameters_0.v
 impl/spartan3an-sk/rtl/ddr2cntrl/vlog_xst_bl4_wr_gray_ctr.v
 impl/spartan3an-sk/rtl/ddr2cntrl/vlog_xst_bl4_data_read_0.v
+impl/spartan3an-sk/rtl/ddr2cntrl/parameters.v
 impl/spartan3an-sk/sim/ddr2sdram/ddr2_parameters.vh
 impl/spartan3an-sk/sim/ddr2sdram/ddr2.v
 impl/spartan3an-sk/sim/ddr2sdram/glbl.v

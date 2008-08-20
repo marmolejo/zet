@@ -12,8 +12,8 @@
 
 module vdu
   (
-    input             vdu_clk_in,  // 50MHz	System clock
-    output            cpu_clk_out, // 6.25 MHz CPU Clock
+    input             vdu_clk,     // 25MHz	VDU clock
+    input             cpu_clk,     // CPU Clock
     input             vdu_rst,
     input             vdu_cs,
     input             vdu_we,
@@ -111,10 +111,6 @@ module vdu
   reg req_read;
   reg one_more_cycle;
 
-  // Clock divider
-  reg [1:0] clk_count;
-  wire      vdu_clk;
-
   // Module instantiation
   char_rom vdu_char_rom (
     .clk   (vdu_clk),
@@ -146,16 +142,6 @@ module vdu
     .rdata (attr_data_out)
   );
 
-  BUFG vdu_clk_buffer (
-    .I (clk_count[0]),
-    .O (vdu_clk)
-  );
-
-  BUFG cpu_clk_buffer (
-    .I (clk_count[1]),
-    .O (cpu_clk_out)
-  );
-
   // Assignments
   assign video_on1  = video_on_h && video_on_v;
   assign cursor_on1 = cursor_on_h && cursor_on_v;
@@ -183,13 +169,6 @@ module vdu
   assign fg_or_bg    = vga_shift[7] ^ cursor_on;
 
   // Behaviour
-  // vga clock generation
-  always @(negedge vdu_clk_in)
-    /* if (vdu_rst) clk_count <= 2'b00;
-    else */ clk_count <= clk_count + 2'b01;
-
-  // For simulation
-  initial clk_count <= 2'b00;
 
   // CPU write interface
   always @(negedge vdu_clk)
@@ -215,7 +194,7 @@ module vdu
           end
       end
 
-  always @(negedge cpu_clk_out)
+  always @(negedge cpu_clk)
     if (vdu_rst)
       begin
         req_write <= 1'b0;

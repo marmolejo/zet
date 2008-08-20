@@ -14,9 +14,24 @@
 ############################################################################
 
 ### Board contraints
-NET "SYS_CLK"       LOC = "E12" | IOSTANDARD = LVCMOS33 ; # | PERIOD = 20.000 ;
-#OFFSET = IN  10.000 VALID 20.000 BEFORE "SYS_CLK" ;
-#OFFSET = OUT 20.000 AFTER "SYS_CLK" ;
+NET "SYS_CLK"       LOC = "E12" | IOSTANDARD = LVCMOS33 ; # TNM_NET = "SYS_CLK";
+#TIMESPEC "TS_SYS_CLK" = PERIOD "SYS_CLK" 20 ns HIGH 10;
+
+### DCM constraints
+INST "clocks/DCM_SP_INST" CLK_FEEDBACK = 1X;
+INST "clocks/DCM_SP_INST" CLKDV_DIVIDE = 4.0;
+INST "clocks/DCM_SP_INST" CLKFX_DIVIDE = 4;
+INST "clocks/DCM_SP_INST" CLKFX_MULTIPLY = 2;
+INST "clocks/DCM_SP_INST" CLKIN_DIVIDE_BY_2 = FALSE;
+INST "clocks/DCM_SP_INST" CLKIN_PERIOD = 20.000;
+INST "clocks/DCM_SP_INST" CLKOUT_PHASE_SHIFT = NONE;
+INST "clocks/DCM_SP_INST" DESKEW_ADJUST = SYSTEM_SYNCHRONOUS;
+INST "clocks/DCM_SP_INST" DFS_FREQUENCY_MODE = LOW;
+INST "clocks/DCM_SP_INST" DLL_FREQUENCY_MODE = LOW;
+INST "clocks/DCM_SP_INST" DUTY_CYCLE_CORRECTION = TRUE;
+INST "clocks/DCM_SP_INST" FACTORY_JF = C080;
+INST "clocks/DCM_SP_INST" PHASE_SHIFT = 0;
+INST "clocks/DCM_SP_INST" STARTUP_WAIT = FALSE;
 
 ##############################################################################
 # Parallel Flash (NF)

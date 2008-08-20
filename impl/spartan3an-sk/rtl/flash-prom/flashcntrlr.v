@@ -29,6 +29,10 @@ module flash_prom_zet_cntrlr (
   reg  [3:0]  state, next_state;
   reg         eff_ready;
   reg  [15:0] nf_addr;
+  reg  [16:0] addr_l;
+  reg         byte_m_l;
+
+  wire        rdy_to_start;
 
   parameter   word0_st = 4'd0;
   parameter   wait1    = 4'd1;
@@ -42,9 +46,9 @@ module flash_prom_zet_cntrlr (
   parameter   rd_done  = 4'd9;
 
   // Assignments
-  assign addr0   = addr[16:1];
+  assign addr0   = addr_l[16:1];
   assign addr1   = addr0 + 16'd1;
-  assign a0      = addr[0];
+  assign a0      = addr_l[0];
 
   assign byte_l0 = word0[7:0];
   assign byte_h0 = word0[15:8];
@@ -56,7 +60,9 @@ module flash_prom_zet_cntrlr (
                                  : word0 );
 
   assign ready   = (next_state==rd_done) || !enable;
-  assign sec_wrd = (!byte_m && a0);
+  assign sec_wrd = (!byte_m_l && a0);
+
+  assign rdy_to_start = cpu_clk && !old_clk && eff_ready && enable;
 
   assign NF_BYTE = 1'b1;
   assign NF_WE   = 1'b1;
@@ -82,6 +88,18 @@ module flash_prom_zet_cntrlr (
     else if (start_cmd || state == rd_done) nf_addr <= addr0;
     else if (state == wait3) nf_addr <= addr1;
     else nf_addr <= nf_addr;
+
+  // addr_l load logic
+  always @(negedge sys_clk)
+    if (reset) addr_l <= 17'h0;
+    else if (rdy_to_start) addr_l <= addr;
+    else addr_l <= addr_l;
+
+  // byte_m_l load logic
+  always @(negedge sys_clk)
+    if (reset) byte_m_l <= 1'b0;
+    else if (rdy_to_start) byte_m_l <= byte_m;
+    else byte_m_l <= byte_m_l;
 
   // Read sequence fsm
   always @(state or reset or sec_wrd)
@@ -116,7 +134,7 @@ module flash_prom_zet_cntrlr (
       end
     else
       begin
-        if (cpu_clk && !old_clk && eff_ready && enable) start_cmd <= 1'b1;
+        if (rdy_to_start) start_cmd <= 1'b1;
         else start_cmd <= 1'b0;
         old_clk <= cpu_clk;
       end

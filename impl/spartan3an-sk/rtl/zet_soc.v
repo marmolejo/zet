@@ -45,7 +45,7 @@ module zet_soc (
 
   // Net declarations
   wire        cpu_clk;
-  wire        mem_rst;
+// wire        mem_rst;
   wire [19:0] addr;
   wire [15:0] wr_data;
   wire        we, m_io;
@@ -56,6 +56,10 @@ module zet_soc (
   wire        ready, mem_rdy, vdu_rdy;
   wire        wr_cnd;  // Stub
 //  reg  [15:0] io_reg;
+
+  // Clock wires
+  wire        clk50M, clk25M;
+  wire        reset;
 
   // Module instantiation
   memory mem_ctrlr_0 (
@@ -85,10 +89,10 @@ module zet_soc (
     .NF_D        (NF_D),
 
 //    .ddr_clk     (DDR_CLK),
-    .sys_clk     (SYS_CLK),
+    .sys_clk     (clk50M),
     .cpu_clk     (cpu_clk),
-    .mem_rst     (mem_rst),
-    .board_reset (BTN_SOUTH),
+//    .mem_rst     (mem_rst),
+    .reset       (reset),
 
     .addr        (addr),
 //    .wr_data     (wr_data),
@@ -101,7 +105,7 @@ module zet_soc (
 
   cpu cpu0 (
     .clk     (cpu_clk),
-    .rst     (mem_rst),
+    .rst     (reset),
     .rd_data (rd_data), 
     .wr_data (wr_data),
     .addr    (addr),
@@ -120,9 +124,9 @@ module zet_soc (
     .horiz_sync  (VGA_HSYNC),
     .vert_sync   (VGA_VSYNC),
 
-    .vdu_clk_in  (SYS_CLK),  // 50MHz System clock
-    .cpu_clk_out (cpu_clk),  // 12.5 MHz CPU Clock
-    .vdu_rst     (BTN_SOUTH),
+    .vdu_clk     (clk25M),  // 25Mhz VDU Clock
+    .cpu_clk     (cpu_clk),  // 12.5 MHz CPU Clock
+    .vdu_rst     (reset),
     .vdu_cs      (vdu_cs),
     .vdu_we      (we),
     .byte_m      (byte_m),
@@ -132,12 +136,22 @@ module zet_soc (
     .ready       (vdu_rdy)
   );
 
+  clocks clocks (
+    .clk50M_pad (SYS_CLK),
+    .reset      (BTN_SOUTH),
+    .clk50M     (clk50M),
+    .clk25M     (clk25M),
+    .clk12M     (cpu_clk),
+    .locked     (locked)
+  );
+
 //  assign io_data = (addr[15:0]==16'hb7) ? io_reg : 16'd0;
   assign vdu_cs  = (addr[19:12]==16'hb8) && mem_op;
   assign rd_data = /* m_io ? io_data : */ (vdu_cs ? vdu_data : mem_data);
   assign ready   = vdu_cs ? vdu_rdy : mem_rdy;
   assign NF_RP   = 1'b1;
   assign LED     = { wr_cnd, m_io };
+  assign reset   = !locked;
 
   // Behaviour
   // IO Stub

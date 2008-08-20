@@ -1,0 +1,21 @@
+El controlador de memoria tiene sus peculiaridades.
+
+Parece que para escribir en la memoria SRAM, hay que bajar el WE, luego en el siguente ciclo subirlo, y en el siguiente hacer el Chip Disable a 1. A continuación se puede leer de ROM.
+
+Para hacer una prueba mejor, habría que probar diferentes combinaciones de lectura y escritura sin ningún controlador de por medio
+
+* Prueba de memoria entre segmentos RAM/ROM
+
+* RAM word read even
+* RAM word read odd
+* RAM word write even **
+* RAM word write odd (NO)
+* RAM byte read even
+* RAM byte read odd
+* RAM byte write even
+* RAM byte write odd
+* ROM word read even *
+* ROM word read odd
+* ROM byte read even *
+* ROM byte read odd
+* 2 escrituras seguidas

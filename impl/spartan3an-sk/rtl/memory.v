@@ -29,8 +29,8 @@ module memory (
 //    input             ddr_clk,
     input             sys_clk,
     input             cpu_clk,
-    output            mem_rst,
-    input             board_reset,
+//    output            mem_rst,
+    input             reset,
 
     input      [19:0] addr,
 //    input      [15:0] wr_data,
@@ -59,7 +59,7 @@ module memory (
 
     .cpu_clk (cpu_clk),
     .sys_clk (sys_clk),
-    .reset   (mem_rst),
+    .reset   (reset),
     .addr    (rom_addr),
     .byte_m  (byte_m),
     .rd_data (rd_rom_data),
@@ -107,7 +107,4 @@ module memory (
   assign ready          = rom_area ? rom_ready : 1'b1 /* ram_ready */;
   assign rom_op         = rom_area && mem_op;
 //  assign ram_op         = !rom_area && mem_op;
-
-  // stub
-  assign mem_rst        = board_reset;
 endmodule

@@ -1,4 +1,4 @@
-vdel -all -lib work
+# vdel -all -lib work
 vlib work
 
 # Hardware part
@@ -15,11 +15,12 @@ vlog -lint -work work +incdir+../../../../rtl-model ../../../../rtl-model/regfil
 
 vlog -lint -work work +incdir+../ddr2sdram/ ../ddr2sdram/glbl.v ../ddr2sdram/ddr2.v
 vcom -lint -work work ../flash-prom/generic_data.vhd ../flash-prom/test_stub.vhd ../flash-prom/utility_pack.vhd  ../flash-prom/m29dw323d.vhd
-vlog -lint -work work +incdir+../../rtl ../board.v ../../rtl/zet_soc.v
+vlog -lint -work work +incdir+../../rtl ../board.v ../../rtl/clocks.v ../../rtl/zet_soc.v
 
 
 vmap unisims /home/zeus/opt/xilinx92i/modelsim/verilog/unisims
 vsim -novopt -L /home/zeus/opt/xilinx92i/modelsim/verilog/unisims -t ps work.board work.glbl
+onerror {resume}
 add wave -divider Clocks
 add wave -radix hexadecimal /board/fpga0/cpu_clk
 add wave -radix hexadecimal /board/fpga0/mem_rst
@@ -39,9 +40,9 @@ add wave -radix hexadecimal /fpga0/cpu0/fetch0/next_state
 add wave -radix hexadecimal /fpga0/cpu0/fetch0/block
 add wave -radix hexadecimal /fpga0/cpu0/fetch0/opcode
 add wave -radix hexadecimal /fpga0/cpu0/fetch_or_exec
-add wave -divider VDU
-add wave -radix hexadecimal /fpga0/vdu0/*
+# add wave -divider VDU
+# add wave -radix hexadecimal /fpga0/vdu0/*
 # add wave -divider ddr2
 # add wave -radix hexadecimal /fpga0/mem_ctrlr_0/sdram0/*
-# add wave -divider Flash
-# add wave -radix hexadecimal /fpga0/mem_ctrlr_0/flash0/*
+add wave -divider Flash
+add wave -radix hexadecimal /fpga0/mem_ctrlr_0/flash0/*

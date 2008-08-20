@@ -12,12 +12,15 @@ vlog -lint -work work +incdir+../../../rtl ../../../sim/board.v
 
 
 vmap unisims /home/zeus/opt/xilinx92i/modelsim/verilog/unisims
-vsim -L /home/zeus/opt/xilinx92i/modelsim/verilog/unisims -t ps work.board work.glbl
+vsim -novopt -L /home/zeus/opt/xilinx92i/modelsim/verilog/unisims -t ps work.board work.glbl
 onerror {resume}
 add wave -divider Clocks
+add wave -radix hexadecimal /board/sys_clk
+add wave -radix hexadecimal /board/rst
+add wave -radix hexadecimal /board/fpga0/clk50M
+add wave -radix hexadecimal /board/fpga0/clk25M
 add wave -radix hexadecimal /board/fpga0/cpu_clk
-# add wave -radix hexadecimal /board/ddr_clk
-add wave -radix hexadecimal /board/fpga0/mem_rst
+add wave -radix hexadecimal /board/fpga0/reset
 add wave -divider Memory
 # add wave -radix hexadecimal /board/rst
 add wave -radix hexadecimal /fpga0/addr
