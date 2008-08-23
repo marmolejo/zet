@@ -6,7 +6,7 @@
 module mem_ctrl (
     // Wishbone signals
     input         clk_i,
-	 input         rst_i,
+	  input         rst_i,
     input  [19:0] adr_i,
     input  [15:0] dat_i,
     output [15:0] dat_o,
