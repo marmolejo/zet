@@ -5,7 +5,7 @@ module clock (
   );
 
   // Register declarations
-  reg [4:0] count;
+  reg [6:0] count;
   reg [2:0] clock;
 
   // Net declarations
@@ -21,15 +21,15 @@ module clock (
   );
 
   // Continuous assignments
-  assign rst    = (count!=5'h1f);
+  assign rst    = (count!=7'h7f);
   assign clk_7M = clock[2];
   assign clk    = clk_7M;
 
   // Behavioral description
   // count
   always @(posedge clk_60M)
-    if (!lock) count <= 5'b0;
-    else count <= (count==5'h1f || clock!=3'b111) ? count : (count + 5'h1);
+    if (!lock) count <= 7'b0;
+    else count <= (count==7'h7f || clock!=3'b111) ? count : (count + 7'h1);
 
   // clock
   always @(posedge clk_60M) clock <= clock + 3'd1;
