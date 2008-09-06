@@ -1,3 +1,26 @@
+//
+// Memory map test. It testes all kind of memory accesses in
+//   different RAM / ROM / video areas. RAM contents at the end:
+//
+//   Mem[01:00] = xx34
+//   Mem[03:02] = 1234
+//   Mem[05:04] = Mem[09:08]
+//   Mem[07:06] = 0a0b
+//   Mem[0d:0c] = 12xx
+//   Mem[0f:0e] = xxMem[08]
+//   Mem[11:10] = ff83
+//   Mem[13:12] = 0034
+//   Mem[15:14] = 0062
+//   Mem[17:16] = ext(Mem[09])
+//   Mem[19:18] = Mem[09]xx
+//   Mem[1b:1a] = 0b06
+//   Mem[1d:1c] = Mem[08]12
+//   Mem[1f:1e] = 0365
+//
+// In the screen: Aet erotessor ... (first & second 'e' yellow
+//   and fist 'o' yellow)
+//
+
 module mem_map_test (
     input         sys_clk_in_,
 
@@ -76,33 +99,243 @@ module mem_map_test (
   // Behavioral description
   always @(posedge clk)
     if (rst)
-      begin  // ROM word read (dada1 = 0607)
-        estat    <= 8'h02;
+      begin  // ROM word read (dada1 = 1234)
+        estat    <= 8'h00;
         dada_sor <= 16'd0;
         dada1    <= 16'h1234;
         dada2    <= 16'h6789;
-        adr      <= 20'hffff0;
+        adr      <= 21'hc0002;
         we       <= 1'd0;
-        stb      <= 1'd1;
-        byte_o   <= 1'd1;
+        stb      <= 1'd0;
+        byte_o   <= 1'd0;
       end
     else
       case (estat)
-        8'h02:
-          if (ack) begin
-            estat    <= 8'h04;
-            dada_sor <= dada_ent;
-            dada1    <= dada_ent;
+        8'h00:
+          begin  // ROM word read (dada2 = 0a0b)
+            estat    <= 8'h05;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
             dada2    <= dada2;
-            adr      <= 20'h0;
+            adr      <= 20'hc0004;
+            we       <= 1'd0;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h05:
+          if (ack) begin  // RAM word read (@4)
+            estat    <= 8'h10;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
+            dada2    <= dada_ent;
+            adr      <= 20'h8;
+            we       <= 1'd0;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h10:
+          if (ack) begin // RAM write (@2 = @4)
+            estat    <= 8'h15;
+            dada_sor <= dada_ent;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h4;
             we       <= 1'd1;
             stb      <= 1'd1;
             byte_o   <= 1'd0;
           end
+        8'h15:
+          if (ack) begin // RAM write (@3 = 0a0b)
+            estat    <= 8'h20;
+            dada_sor <= dada2;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h6;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h20:
+          if (ack) begin // RAM write (@1 = 1234)
+            estat    <= 8'h25;
+            dada_sor <= dada1;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h2;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h25:
+          if (ack) begin // ROM read byte (83)
+            estat    <= 8'h30;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'hc0040;
+            we       <= 1'd0;
+            stb      <= 1'd1;
+            byte_o   <= 1'd1;
+          end
+        8'h30:
+          if (ack) begin // RAM word write (@8 = ff83)
+            estat    <= 8'h35;
+            dada_sor <= dada_ent;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h10;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h35:
+          if (ack) begin // RAM byte read (07)
+            estat    <= 8'h40;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h2;
+            we       <= 1'd0;
+            stb      <= 1'd1;
+            byte_o   <= 1'd1;
+          end
+        8'h40:
+          if (ack) begin // RAM word write (@9 = 0034)
+            estat    <= 8'h45;
+            dada_sor <= dada_ent;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h12;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h45:
+          if (ack) begin // RAM byte write (@0 = 34)
+            estat    <= 8'h50;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h0;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd1;
+          end
+        8'h50:
+          if (ack) begin // ROM read byte odd (62)
+            estat    <= 8'h55;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'hc0031;
+            we       <= 1'd0;
+            stb      <= 1'd1;
+            byte_o   <= 1'd1;
+          end
+        8'h55:
+          if (ack) begin // RAM word write (@10 = 0062)
+            estat    <= 8'h60;
+            dada_sor <= dada_ent;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h14;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h60:
+          if (ack) begin // RAM byte read odd (8c)
+            estat    <= 8'h65;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h9;
+            we       <= 1'd0;
+            stb      <= 1'd1;
+            byte_o   <= 1'd1;
+          end
+        8'h65:
+          if (ack) begin // RAM word write (@11 = ff8c)
+            estat    <= 8'h70;
+            dada_sor <= dada_ent;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h16;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h70:
+          if (ack) begin // RAM byte write odd (@12 = 8cxx)
+            estat    <= 8'h75;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h19;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd1;
+          end
+        8'h75:
+          if (ack) begin // ROM word read odd (0b06)
+            estat    <= 8'h80;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'hc0003;
+            we       <= 1'd0;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h80:
+          if (ack) begin // RAM word write (@13 = 0b06)
+            estat    <= 8'h85;
+            dada_sor <= dada_ent;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h1a;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h85:
+          if (ack) begin // RAM word read (odd)
+            estat    <= 8'h90;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h3;
+            we       <= 1'd0;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h90:
+          if (ack) begin // RAM word write (even)
+            estat    <= 8'h95;
+            dada_sor <= dada_ent;
+            dada1    <= dada_ent;
+            dada2    <= dada2;
+            adr      <= 20'h1c;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'h95:
+          if (ack) begin // RAM word write (odd)
+            estat    <= 8'ha0;
+            dada_sor <= dada1;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'd13;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+
         // Video test
-        8'h04:
+        8'ha0:
           if (ack) begin // byte write even / A
-            estat    <= 8'h06;
+            estat    <= 8'ha5;
             dada_sor <= 16'h41;
             dada1    <= dada1;
             dada2    <= dada2;
@@ -111,9 +344,9 @@ module mem_map_test (
             stb      <= 1'd1;
             byte_o   <= 1'd1;
           end
-        8'h06:
+        8'ha5:
           if (ack) begin // byte write odd (attr) yellow (e)
-            estat    <= 8'h10;
+            estat    <= 8'hb0;
             dada_sor <= 16'h03;
             dada1    <= dada1;
             dada2    <= dada2;
@@ -122,9 +355,9 @@ module mem_map_test (
             stb      <= 1'd1;
             byte_o   <= 1'd1;
           end
-        8'h10:
+        8'hb0:
           if (ack) begin // word read (even) - yellow e
-            estat    <= 8'h15;
+            estat    <= 8'hb5;
             dada_sor <= dada_sor;
             dada1    <= dada1;
             dada2    <= dada2;
@@ -133,21 +366,21 @@ module mem_map_test (
             stb      <= 1'd1;
             byte_o   <= 1'd0;
           end
-        8'h15:
+        8'hb5:
           if (ack) begin // word write (even) RAM @7 = 0365
-            estat    <= 8'h20;
+            estat    <= 8'hc0;
             dada_sor <= dada_ent;
             dada1    <= dada_ent;
             dada2    <= dada_ent;
-            adr      <= 20'he;
+            adr      <= 20'h1e;
             we       <= 1'd1;
             stb      <= 1'd1;
             byte_o   <= 1'd0;
           end
-        8'h20: // word write (even) yellow e in
+        8'hc0: // word write (even) yellow e in
                //   place of the p of processor
           if (ack) begin 
-            estat    <= 8'h25;
+            estat    <= 8'hc5;
             dada_sor <= dada1;
             dada1    <= dada1;
             dada2    <= dada2;
@@ -156,9 +389,9 @@ module mem_map_test (
             stb      <= 1'd1;
             byte_o   <= 1'd0;
           end
-        8'h25:
+        8'hc5:
           if (ack) begin // word read (odd) 7403 't' yellow
-            estat    <= 8'h30;
+            estat    <= 8'hd0;
             dada_sor <= dada_sor;
             dada1    <= dada1;
             dada2    <= dada2;
@@ -167,12 +400,12 @@ module mem_map_test (
             stb      <= 1'd1;
             byte_o   <= 1'd0;
           end
-        8'h30:
+        8'hd0:
           if (ack) begin // word write (odd)
             // This changes the color attribute of the
             //  'o' in "processor" and writes a 't' in place
             // of the 'o'
-            estat    <= 8'h35;
+            estat    <= 8'hd5;
             dada_sor <= dada_ent;
             dada1    <= dada_ent;
             dada2    <= dada2;
@@ -181,9 +414,9 @@ module mem_map_test (
             stb      <= 1'd1;
             byte_o   <= 1'd0;
           end
-        8'h35:
+        8'hd5:
           if (ack) begin
-            estat <= 8'h40;
+            estat <= 8'he0;
             we    <= 1'b0;
             stb   <= 1'b0;
           end
