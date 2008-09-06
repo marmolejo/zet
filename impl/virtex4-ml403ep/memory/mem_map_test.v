@@ -38,7 +38,12 @@ module mem_map_test (
     output        tft_lcd_g_,
     output        tft_lcd_b_,
     output        tft_lcd_hsync_,
-    output        tft_lcd_vsync_
+    output        tft_lcd_vsync_,
+
+    output        rs_,
+    output        rw_,
+    output        e_,
+    output  [7:4] db_
   );
 
   // Net declarations
@@ -46,6 +51,9 @@ module mem_map_test (
   wire        clk;
   wire [15:0] dada_ent;
   wire        ack;
+  wire        clk_100M;
+  wire [63:0] f1, f2;
+  wire [15:0] m1, m2;
 
   // Register declarations
   reg [ 7:0] estat;
@@ -61,6 +69,7 @@ module mem_map_test (
   clock c0 (
     .sys_clk_in_ (sys_clk_in_),
     .clk         (clk),
+    .clk_100M    (clk_100M),
     .vdu_clk     (tft_lcd_clk_),
     .rst         (rst)
   );
@@ -95,6 +104,28 @@ module mem_map_test (
     .horiz_sync  (tft_lcd_hsync_),
     .vert_sync   (tft_lcd_vsync_)
   );
+
+  lcd_display lcd0 (
+    .f1 (f1),  // 1st row
+    .f2 (f2),  // 2nd row
+    .m1 (m1),  // 1st row mask
+    .m2 (m2),  // 2nd row mask
+
+    .clk (clk_100M),  // 100 Mhz clock
+
+    // Pad signals
+    .lcd_rs_  (rs_),
+    .lcd_rw_  (rw_),
+    .lcd_e_   (e_),
+    .lcd_dat_ (db_)
+  );
+
+  // Continuous assignments
+  assign f1 = { estat, 4'h0, dada_sor, 4'h0, dada1, dada2 };
+  assign f2 = { adr, 7'h0, we, 7'h0, stb, 7'h0, byte_o, 4'h0, dada_ent };
+  assign m1 = 16'b1101111011111111;
+  assign m2 = 16'b1111101010101111;
+
 
   // Behavioral description
   always @(posedge clk)
