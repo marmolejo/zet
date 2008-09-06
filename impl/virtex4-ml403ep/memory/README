@@ -12,3 +12,5 @@ project with these files:
 * ../../spartan3an-sk/rtl/vga/ram2k_b16.v
 * ../../spartan3an-sk/rtl/vga/vdu.v
 
+And to execute it step by step, substitute in the project the files
+mem_map_test.v by mem_map_step.v and ml403-with-tft.ucf by ml403-with-but.ucf
