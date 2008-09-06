@@ -1,0 +1,21 @@
+To test the RAM/ROM controller, create a project inside Xilinx ISE with the 
+following files:
+* clocks.xaw
+* clock.v
+* mem_ctrl.v
+* mem_cntrlr_test.v
+* ml403.ucf
+
+To test the video controller, with the mem map, create a empty project with 
+these files:
+* clocks.xaw
+* clock.v
+* mem_ctrl.v
+* mem_map_test.v
+* mem_map.v
+* ml403-with-tft.ucf
+* ../../spartan3an-sk/rtl/vga/char_rom_b16.v
+* ../../spartan3an-sk/rtl/vga/ram2k_b16_attr.v
+* ../../spartan3an-sk/rtl/vga/ram2k_b16.v
+* ../../spartan3an-sk/rtl/vga/vdu.v
+
