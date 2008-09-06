@@ -60,7 +60,7 @@ module test_mem_ctrl (
   );
 
   // Continuous assignments
-  assign leds_     = dada_sor[8:0];
+  assign leds_     = estat[7:0];
 
   // Behavioral description
   always @(posedge clk)
@@ -243,15 +243,70 @@ module test_mem_ctrl (
             byte_o   <= 1'd1;
           end
         8'd110:
-          if (ack) begin
+          if (ack) begin // ROM word read odd (0b06)
             estat    <= 8'd115;
             dada_sor <= dada_sor;
             dada1    <= dada1;
             dada2    <= dada2;
-            adr      <= 20'h19;
+            adr      <= 20'hc0003;
             we       <= 1'd0;
             stb      <= 1'd1;
-            byte_o   <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'd115:
+          if (ack) begin // RAM word write (@13 = 0b06)
+            estat    <= 8'd120;
+            dada_sor <= dada_ent;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h1a;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'd120:
+          if (ack) begin // RAM word read (odd)
+            estat    <= 8'd125;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'h3;
+            we       <= 1'd0;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'd125:
+          if (ack) begin // RAM word write (even)
+            estat    <= 8'd130;
+            dada_sor <= dada_ent;
+            dada1    <= dada_ent;
+            dada2    <= dada2;
+            adr      <= 20'h1c;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'd130:
+          if (ack) begin // RAM word write (even)
+            estat    <= 8'd135;
+            dada_sor <= dada1;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'd13;
+            we       <= 1'd1;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
+          end
+        8'd135:
+          if (ack) begin // RAM word write (even)
+            estat    <= 8'd140;
+            dada_sor <= dada_sor;
+            dada1    <= dada1;
+            dada2    <= dada2;
+            adr      <= 20'd13;
+            we       <= 1'd0;
+            stb      <= 1'd1;
+            byte_o   <= 1'd0;
           end
       endcase
 endmodule

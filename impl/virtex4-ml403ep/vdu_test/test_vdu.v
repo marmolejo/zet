@@ -41,8 +41,8 @@ module test_vdu (
   );
   
   vdu vdu0 (
+    .rst_i       (rst),
     .vdu_clk     (tft_lcd_clk),     // 25MHz	VDU clock
-    .vdu_rst     (rst),
     .vga_red_o   (tft_lcd_r),
     .vga_green_o (tft_lcd_g),
     .vga_blue_o  (tft_lcd_b),
