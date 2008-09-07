@@ -26,7 +26,7 @@ module exec(ir, off, imm, cs, ip, of, zf, cx_zero, clk, rst,
   wire [3:0]  addr_a, addr_b, addr_c, addr_d;
   wire [2:0]  t, func;
   wire [1:0]  addr_s;
-  wire        wrfl, high, wr_mem, memalu, a_byte, c_byte;
+  wire        wrfl, high, memalu, a_byte, c_byte;
   wire        wr, wr_reg, block;
   /* wire */ output       wr_cnd;
 //  wire        jmp;
@@ -49,7 +49,7 @@ module exec(ir, off, imm, cs, ip, of, zf, cx_zero, clk, rst,
   assign addr_c = ir[13:10];
   assign addr_d = ir[17:14];
   assign wrfl   = ir[18];
-  assign wr_mem = ir[19];
+  assign we     = ir[19];
   assign wr     = ir[20];
   assign wr_cnd = ir[21]; 
   assign high   = ir[22];
@@ -66,7 +66,6 @@ module exec(ir, off, imm, cs, ip, of, zf, cx_zero, clk, rst,
   assign omemalu = memalu ? aluout[15:0] : memout;
   assign bus_b   = b_imm ? imm : b;
 
-  assign we = ~wr_mem;
   assign addr = aluout[19:0];
   assign wr_data = c;
   assign wr_reg = (wr /* | (jmp & wr_cnd) */) && !block;

@@ -28,6 +28,12 @@ all: $(s3roms) $(rtlroms)
 %.rtlrom: %.out
 	hexdump -v -e '1/1 "%02X"' -e '"\n"' $< > ../../sim/$@
 
+%.rom: %.out
+	out2rom-ml403 < $< > $@
+	
+%.bin: %.rom
+	cat ff.rom $< > $@
+
 %.out: %.o
 	objcopy -O binary -S $< $@
 

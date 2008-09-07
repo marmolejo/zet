@@ -12,17 +12,19 @@
 
 module vdu
   (
-    input             vdu_clk,     // 25MHz	VDU clock
-    input             cpu_clk,     // CPU Clock
-    input             vdu_rst,
-    input             vdu_cs,
-    input             vdu_we,
-    input             byte_m,
-    input      [11:0] vdu_addr,
-    input      [15:0] wr_data,
-    output reg [15:0] rd_data,
-    output            ready,
+    // Wishbone signals
+    input             clk_i,     // CPU Clock
+    input             rst_i,
+    input             stb_i,
+    input             we_i,
+    input      [11:0] adr_i,
+    input      [15:0] dat_i,
+    output reg [15:0] dat_o,
+    output            ack_o,
+    input             byte_i,
 
+    // VGA pad signals
+    input             vdu_clk,     // 25MHz	VDU clock
     output reg        vga_red_o,
     output reg        vga_green_o,
     output reg        vga_blue_o,
@@ -114,7 +116,7 @@ module vdu
   // Module instantiation
   char_rom vdu_char_rom (
     .clk   (vdu_clk),
-    .rst   (vdu_rst),
+    .rst   (rst_i),
     .cs    (char_cs),
     .we    (char_we),
     .addr  (char_addr),
@@ -124,7 +126,7 @@ module vdu
 
   ram_2k char_buff_ram (
     .clk   (vdu_clk),
-    .rst   (vdu_rst),
+    .rst   (rst_i),
     .cs    (vga_cs),
     .we    (buff_we),
     .addr  (buff_addr),
@@ -134,7 +136,7 @@ module vdu
 
   ram_2k_attr attr_buff_ram (
     .clk   (vdu_clk),
-    .rst   (vdu_rst),
+    .rst   (rst_i),
     .cs    (vga_cs),
     .we    (attr_we),
     .addr  (attr_addr),
@@ -146,16 +148,16 @@ module vdu
   assign video_on1  = video_on_h && video_on_v;
   assign cursor_on1 = cursor_on_h && cursor_on_v;
   assign char_cs    = 1'b1;
-  assign char_we    = 1'b1;
+  assign char_we    = 1'b0;
   assign char_data_in = 8'b0;
   assign char_addr  = { vga_data_out, v_count[3:0] };
   assign vga_addr   = { 4'b0, hor_addr} + { ver_addr, 4'b0 };
-  assign a0         = vdu_addr[0];
-  assign vdu_addr1  = vdu_addr[11:1] + 11'd1;
-  assign byte1      = byte_m || (vdu_addr == 12'hfff);
-  assign ready      = !req_write && !req_read;
-  assign out_data   = a0 ? (byte_m ? ext_attr : {vga_data_out, attr_data_out} ) 
-                     : (byte_m ? ext_buff : {attr_data_out, vga_data_out} );
+  assign a0         = adr_i[0];
+  assign vdu_addr1  = adr_i[11:1] + 11'd1;
+  assign byte1      = byte_i || (adr_i == 12'hfff);
+  assign ack_o      = !req_write && !req_read;
+  assign out_data   = a0 ? (byte_i ? ext_attr : {vga_data_out, attr_data_out} ) 
+                     : (byte_i ? ext_buff : {attr_data_out, vga_data_out} );
   assign ext_buff   = { {8{vga_data_out[7]}}, vga_data_out };
   assign ext_attr   = { {8{attr_data_out[7]}}, attr_data_out };
 
@@ -172,30 +174,30 @@ module vdu
 
   // CPU write interface
   always @(negedge vdu_clk)
-    if (vdu_rst)
+    if (rst_i)
       begin
         attr0_addr    <= 11'b0;
-        attr0_we      <= 1'b1;
+        attr0_we      <= 1'b0;
         attr_data_in  <= 8'h0;
         buff0_addr    <= 11'b0;
-        buff0_we      <= 1'b1;
+        buff0_we      <= 1'b0;
         buff_data_in  <= 8'h0;
       end
     else
       begin
-        if (vdu_cs && ready)
+        if (stb_i && ack_o)
           begin
-            attr0_addr   <= vdu_addr[11:1];
-            attr0_we     <= vdu_we | (byte1 & ~a0);
-            attr_data_in <= a0 ? wr_data[7:0] : wr_data[15:8];
-            buff0_addr   <= (a0 && !byte1) ? vdu_addr1 : vdu_addr[11:1];
-            buff0_we     <= vdu_we | (byte1 & a0);
-            buff_data_in <= a0 ? wr_data[15:8] : wr_data[7:0];
+            attr0_addr   <= adr_i[11:1];
+            attr0_we     <= we_i & (!byte1 | a0);
+            attr_data_in <= a0 ? dat_i[7:0] : dat_i[15:8];
+            buff0_addr   <= (a0 && !byte1) ? vdu_addr1 : adr_i[11:1];
+            buff0_we     <= we_i & (!byte1 | !a0);
+            buff_data_in <= a0 ? dat_i[15:8] : dat_i[7:0];
           end
       end
 
-  always @(negedge cpu_clk)
-    if (vdu_rst)
+  always @(negedge clk_i)
+    if (rst_i)
       begin
         req_write <= 1'b0;
         req_read  <= 1'b0;
@@ -203,11 +205,11 @@ module vdu
       end
     else
       begin
-        if (vdu_cs && !vdu_we && ready) req_write <= 1'b1;
-        else if (req_write && !vga2_we) req_write <= 1'b0;
-        if (vdu_cs && vdu_we)
+        if (stb_i && we_i && ack_o) req_write <= 1'b1;
+        else if (req_write && vga2_we) req_write <= 1'b0;
+        if (stb_i && !we_i)
           begin
-            if (ready) 
+            if (ack_o) 
               begin
                 req_read <= 1'b1;
                 if (vga2_rw) one_more_cycle <= 1'b1;
@@ -225,7 +227,7 @@ module vdu
   // Sync generation & timing process
   // Generate horizontal and vertical timing signals for video signal
   always @(negedge vdu_clk) 
-    if (vdu_rst)
+    if (rst_i)
       begin
         h_count     <= 10'b0;
         horiz_sync  <= 1'b1;
@@ -257,7 +259,7 @@ module vdu
 
   // Video memory access
   always @(negedge vdu_clk)
-    if (vdu_rst)
+    if (rst_i)
       begin
         vga0_we <= 1'b0;
         vga0_rw <= 1'b1;
@@ -278,10 +280,10 @@ module vdu
 
         buff_addr <= 10'b0;
         attr_addr <= 10'b0;
-        buff_we   <= 1'b1;
-        attr_we   <= 1'b1;
+        buff_we   <= 1'b0;
+        attr_we   <= 1'b0;
 
-        rd_data   <= 16'd0;
+        dat_o   <= 16'd0;
       end
     else
       begin
@@ -290,12 +292,12 @@ module vdu
         case (h_count[2:0])
           3'b000:   // pipeline character write
             begin 
-              vga0_we <= !req_write;
+              vga0_we <= req_write;
               vga0_rw <= 1'b1;
             end
           default:  // other 6 cycles free
             begin
-              vga0_we <= 1'b1;
+              vga0_we <= 1'b0;
               vga0_rw <= 1'b0;
               col_addr <= h_count[9:3];
               row_addr <= v_count[8:4] + reg_voffset[4:0];
@@ -321,17 +323,17 @@ module vdu
         // vga_addr = (row_addr % 80) * 80 + hor_addr
         buff_addr <= vga2_rw ? buff0_addr : vga_addr;
         attr_addr <= vga2_rw ? attr0_addr : vga_addr;
-        buff_we   <= vga2_rw ? (buff0_we | vga2_we) : 1'b1;
-        attr_we   <= vga2_rw ? (attr0_we | vga2_we) : 1'b1;
+        buff_we   <= vga2_rw ? (buff0_we & vga2_we) : 1'b0;
+        attr_we   <= vga2_rw ? (attr0_we & vga2_we) : 1'b0;
         vga3_rw   <= vga2_rw;
 
-        rd_data   <= vga3_rw ? out_data : rd_data;
+        dat_o   <= vga3_rw ? out_data : dat_o;
         vga4_rw   <= vga3_rw;
       end
 
   // Video shift register
   always @(negedge vdu_clk)
-    if (vdu_rst)
+    if (rst_i)
       begin
         video_on      = 1'b0;
         cursor_on     = 1'b0;

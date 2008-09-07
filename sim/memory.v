@@ -21,8 +21,8 @@ module memory (
 
   // Behaviour
   always @(posedge clk) 
-    if (~we) if (byte_m) ram[addr] <= wr_data[7:0];
-             else { ram[addr1], ram[addr] } <= wr_data;
+    if (we) if (byte_m) ram[addr] <= wr_data[7:0];
+            else { ram[addr1], ram[addr] } <= wr_data;
 
-  initial $readmemh("/home/zeus/zet/sim/09_vdu.rtlrom", ram, 20'hf0000);
+  initial $readmemh("/home/zeus/zet/sim/01_jmpmov.rtlrom", ram, 20'hf0000);
 endmodule

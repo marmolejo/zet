@@ -1,5 +1,5 @@
-NET sys_clk_in_ TNM_NET = "sys_clk_in_";
-TIMESPEC "TSSYSCLK" = PERIOD "sys_clk_in_" 9.9 ns HIGH 50 %;
+#NET sys_clk_in_ TNM_NET = "sys_clk_in_";
+#TIMESPEC "TSSYSCLK" = PERIOD "sys_clk_in_" 9.9 ns HIGH 50 %;
 
 NET sys_clk_in_ LOC = AE14;
 NET sys_clk_in_ IOSTANDARD = LVCMOS33;

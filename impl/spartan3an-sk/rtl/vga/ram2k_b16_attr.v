@@ -12,7 +12,6 @@ module ram_2k_attr (clk, rst, cs, we, addr, rdata, wdata);
 
   // Net declarations
   wire dp;
-  wire rw;
 
   // Module instantiations
   RAMB16_S9 ram (.DO(rdata),
@@ -23,7 +22,7 @@ module ram_2k_attr (clk, rst, cs, we, addr, rdata, wdata);
                  .DIP (dp),
                  .EN (cs),
                  .SSR (rst),
-                 .WE (rw));
+                 .WE (we));
 
     defparam ram.INIT_00 = 256'h0707070707070707070707070707070707070707070707070707070707070707;
     defparam ram.INIT_01 = 256'h0707070707070707070707070707070707070707070707070707070707070707;
@@ -90,6 +89,4 @@ module ram_2k_attr (clk, rst, cs, we, addr, rdata, wdata);
     defparam ram.INIT_3E = 256'h0707070707070707070707070707070707070707070707070707070707070707;
     defparam ram.INIT_3F = 256'h0707070707070707070707070707070707070707070707070707070707070707;
 
-  // Assignments
-  assign rw = ~we;
 endmodule

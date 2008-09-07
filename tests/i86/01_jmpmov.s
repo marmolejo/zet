@@ -8,6 +8,7 @@
 .code16
 start:
 jmp b                   # (2)  jmp
+hlt
 
 .org 14
 b:
@@ -15,9 +16,11 @@ movw $0xf000, %bx       # (10) mov word
 movw %bx, %ds           # (4)  mov
 movw (0xfff3), %ax      # (2)  mov word
 jmp *%ax                # (3)  jmp reg
+hlt
 
 .org 0x1290
 ljmp $0xe342, $0xebe0   # (4)  jmp
+hlt
 
 .org 0x2000
 movw $0x1000, %bx       # (10) mov word
@@ -38,7 +41,8 @@ movw %dx, %di           # (7)  mov word
 movw $0x2506, %bp       # (10) mov word
 
 jmp *-22(%bp,%di)       # (3)  jmp mem
-                        # m[0x12501] = 0xfbe1
+hlt                     # m[0x12501] = 0xfbe1
+
 .org 0x3001
 .byte 0xc7,0xc0        # (12) movw $0x4001, %ax
 .word 0x4001           # [not in a default codification]
@@ -53,9 +57,11 @@ movw %cx, %si
 movb $0xf0, -1(%bx,%si)
 movw $0x3, %si
 ljmp *-24(%bp,%si)      # (5)  jmp mem
+hlt
 
 .org 0x4001
 movw -3(%bx,%si), %es
+hlt
 
 .org 65520
 jmp start               # (1)  jmp

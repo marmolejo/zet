@@ -23,7 +23,6 @@ module char_rom (clk, rst, cs, we, addr, rdata, wdata);
 
   // Net declarations
   wire dp0, dp1;
-  wire rw;
   wire [7:0] rdata1, rdata0;
 
   // Module instantiations
@@ -35,7 +34,7 @@ module char_rom (clk, rst, cs, we, addr, rdata, wdata);
                   .DIP (dp0),
                   .EN (cs),
                   .SSR (rst),
-                  .WE (rw));
+                  .WE (we));
 
   RAMB16_S9 rom1 (.DO(rdata1),
                   .DOP (dp1),
@@ -45,7 +44,7 @@ module char_rom (clk, rst, cs, we, addr, rdata, wdata);
                   .DIP (dp1),
                   .EN (cs),
                   .SSR (rst),
-                  .WE (rw));
+                  .WE (we));
 
     defparam rom0.INIT_00 = 256'h000000007E818199A58181A5817E0000_00000000000000000000000000000000; // 01() 00( )
     defparam rom0.INIT_01 = 256'h0000000010387CFEFEFEFE6C00000000_000000007EFFFFE7DBFFFFDBFF7E0000; // 03() 02()
@@ -178,6 +177,5 @@ module char_rom (clk, rst, cs, we, addr, rdata, wdata);
     defparam rom1.INIT_3F = 256'h00000000000000000000000000000000_00000000007C7C7C7C7C7C7C00000000; // ff(�) fe(�)
 
   // Assignments
-  assign rw = ~we;
   assign rdata = addr[11] ? rdata1 : rdata0;
 endmodule

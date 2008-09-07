@@ -1,4 +1,4 @@
-vdel -all -lib work
+#vdel -all -lib work
 vlib work
 vlog -work work +incdir+../../rtl-model ../../rtl-model/regfile.v ../../rtl-model/alu.v ../../rtl-model/cpu.v ../../rtl-model/exec.v ../../rtl-model/fetch.v ../../rtl-model/jmp_cond.v ../../rtl-model/util/primitives.v
 vlog -work work +incdir+.. ../memory.v ../testbench.v
@@ -26,4 +26,5 @@ add wave sim:/testbench/cpu0/exec0/reg0/addr_a
 add wave sim:/testbench/cpu0/exec0/reg0/addr_d
 add wave sim:/testbench/cpu0/exec0/reg0/wr
 add wave sim:/testbench/we
+add wave sim:/testbench/ack_i
 add wave sim:/testbench/cpu0/fetch_or_exec
