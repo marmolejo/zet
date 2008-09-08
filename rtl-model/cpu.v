@@ -15,9 +15,7 @@ module cpu (
     output        stb_o,
     input         ack_i,
     output [15:0] cs,
-    output [15:0] ip,
-
-    output wr_cnd // Stub
+    output [15:0] ip
   );
 
   // Net declarations
@@ -32,7 +30,7 @@ module cpu (
   fetch   fetch0(clk_i, rst_i, cs, ip, of, zf, cx_zero, dat_i, ir, off, 
                  imm, addr_fetch, byte_fetch, fetch_or_exec, ack_i);
   exec    exec0(ir, off, imm, cs, ip, of, zf, cx_zero, clk_i, rst_i, 
-                dat_i, dat_o, addr_exec, we_o, mio_o, wr_cnd, byte_exec, ack_i);
+                dat_i, dat_o, addr_exec, we_o, mio_o, byte_exec, ack_i);
 
   // Assignments 
   assign adr_o   = fetch_or_exec ? addr_exec : addr_fetch;

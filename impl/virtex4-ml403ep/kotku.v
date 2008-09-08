@@ -39,6 +39,11 @@ module kotku_ml403 (
   wire [15:0] m1, m2;
   wire [19:0] pc;
   wire [15:0] cs, ip;
+  wire [15:0] dat_io;
+  wire [15:0] dat_mem;
+
+  // Register declarations
+  reg  [15:0] io_reg;
 
   // Module instantiations
   clock c0 (
@@ -70,7 +75,7 @@ module kotku_ml403 (
     .rst_i  (rst),
     .adr_i  (adr),
     .dat_i  (dat_o),
-    .dat_o  (dat_i),
+    .dat_o  (dat_mem),
     .we_i   (we),
     .ack_o  (ack),
     .stb_i  (stb & !mio),
@@ -118,4 +123,14 @@ module kotku_ml403 (
   assign m2 = 16'b1111101110011111;
 
   assign pc = (cs << 4) + ip;
+
+  assign dat_io = (adr[15:0]==16'hb7) ? io_reg : 16'd0;
+  assign dat_i  = mio ? dat_io : dat_mem;
+
+  // Behaviour
+  // IO Stub
+  always @(posedge clk)
+    if (adr==20'hb7 & we & mio)
+      io_reg <= byte_o ? { io_reg[15:8], dat_o[7:0] } : dat_o;
+
 endmodule

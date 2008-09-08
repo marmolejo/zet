@@ -19,16 +19,16 @@
 
 .code16
 start:
-movb $0xed, %ah     
+movb $0xed, %ah
 sahf                    # (1)
 lahf                    # (2) Now %ah must have 0xc7
 movb %ah, %al
-outb %al, $0xb7         # (19) 
+outb %al, $0xb7         # (19)
 movw $0xb7, %ax
 movw %ax, %dx
 movb $0xa5, %ah
 inb  %dx, %al           # (24)
-sahf               
+sahf
 lahf                # Now %ax must have 0x87c7
 
 outw %ax, %dx           # (22)
@@ -51,7 +51,7 @@ movw $0xabcd, %cx
 push %cx                # (10)
 movw $0x8cf1, %cx
 movw %cx, %es
-push %es                # (11)       
+push %es                # (11)
 popf                    # (9)
 les  -46(%bx,%si), %di  # (5) %di=0x8cf1, %es=%0xabcd
 lea  -452(%bp,%di), %si # (4) %si=0x8b2d
@@ -76,6 +76,10 @@ movw $0xb7, %dx
 outb %al, %dx           # (20)
 movb $0xff, %al
 inb  $0xb7, %al         # (23) %ax=0x8cf1
+movw $0x0, %bx
+movw %bx, %ds
+movw %ax, (0)
+hlt
 
 .org 65520
 jmp start

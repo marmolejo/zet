@@ -1,5 +1,5 @@
 # Prueba de todos los modos del mov y jmp
-# At the end (2415ns in rtl-model, 274.3us in spartan3), %es = 0x4001
+# At the end (2415ns in rtl-model, 274.3us in spartan3), %ax = 0x4001
 #
 # mov: 1 (word), 2 (word), 3 (off, base+index+off), 4, 5 (off), 
 #      7 (byte,word), 8 (byte off), 9 (word base), 10 (byte,word), 
@@ -60,7 +60,10 @@ ljmp *-24(%bp,%si)      # (5)  jmp mem
 hlt
 
 .org 0x4001
-movw -3(%bx,%si), %es
+movw -3(%bx,%si), %ax
+movw $0x0, %dx
+movw %dx, %ds
+movw %ax, (0)
 hlt
 
 .org 65520

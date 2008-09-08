@@ -44,6 +44,13 @@ sti                # (9)
 pushf
 pop   %bx          # %bx = 0x0603
 
+movw $0x0, %cx
+movw %cx, %ds
+movw %ax, (0)
+movw %bx, (2)
+
+nop
+
 hlt                # (5)
 
 .org 65520

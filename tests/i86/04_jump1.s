@@ -200,7 +200,7 @@ jmp jerr
 
 # All correct
 j16:
-movw $0x1234, %ax
+movw $0x1234, (0)
 hlt
 
 .org 65520

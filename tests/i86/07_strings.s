@@ -106,8 +106,12 @@ movb $0xc2, (%di)
 jmp *(%di)
 
 .org 0xd000
-movw $0x1234, %ax
+movw $0, %dx
+movw %dx, %ds
+movw $0x1234, (2)
+
 hlt
+
 .org 65520
 jmp start
 

@@ -266,7 +266,9 @@ jmp *%cx
 hlt
 
 .org 0x601b
-movw $0x1234, %ax
+movw $0, %dx
+movw %dx, %ds
+movw $0x1234, (4)
 hlt
 
 .org 0xf003

@@ -76,7 +76,8 @@ lret $2                 # (12)
 movw $0x1000, %sp
 movw %sp, %ss
 call start              # (1)
-movw $0x1234, %ax
+movw %cx, %ds
+movw %bx, (0)
 hlt
 .org 65535
 .byte 0xff

@@ -57,7 +57,7 @@ popf
 movw $0x5000, (16)
 
 into                    # (3) branch not taken
-movw $0x1234, %ax
+movw $0x1234, (0)
 hlt 
 
 .org 0x5000

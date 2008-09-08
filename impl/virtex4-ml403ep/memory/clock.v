@@ -8,12 +8,12 @@ module clock (
 
   // Register declarations
   reg [6:0] count;
-  reg [2:0] clock;
+  reg [3:0] clock;
 
   // Net declarations
   wire lock;
   wire clk_60M;
-  wire clk_7M;
+  wire clk_3M;
 
   // Module instantiations
   clocks c0 (
@@ -26,15 +26,15 @@ module clock (
 
   // Continuous assignments
   assign rst    = (count!=7'h7f);
-  assign clk_7M = clock[2];
-  assign clk    = clk_7M;
+  assign clk_3M = clock[3];
+  assign clk    = clk_3M;
 
   // Behavioral description
   // count
   always @(posedge clk_60M)
     if (!lock) count <= 7'b0;
-    else count <= (count==7'h7f || clock!=3'b111) ? count : (count + 7'h1);
+    else count <= (count==7'h7f || clock!=4'b1111) ? count : (count + 7'h1);
 
   // clock
-  always @(posedge clk_60M) clock <= clock + 3'd1;
+  always @(posedge clk_60M) clock <= clock + 4'd1;
 endmodule

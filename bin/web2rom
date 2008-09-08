@@ -9,7 +9,7 @@
 
   // Read all the instruction definitions
   //
-  $f1 = fopen("http://pfc.aluzina.org/index.php/Instrucciones_8086", "r");
+  $f1 = fopen("http://zet.aluzina.org/index.php/8086_instructions", "r");
 
   if (!$f1) 
     {
