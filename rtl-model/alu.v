@@ -25,12 +25,12 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
 
   // Module instances
   addsub ad0(x[15:0], y, add, func, word_op, cfi, cf_add, af_add, of_add);
-  adj    adj0(x[15:0], y, {cf_adj, adj}, func, afi, cfi, af_adj, of_adj);
-  conv   cnv0(x[15:0], cnv, func[0]);
-  muldiv mul0(x, y, mul, func[1:0], word_op, cf_mul, of_mul);
-  bitlog lo0(x[15:0], y, log, func, cf_log, of_log);
-  shifts sh0(x[15:0], y, shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
-  rotat  rot0(x[15:0], y, rot, func[1:0], word_op, cfi, cf_rot, of_rot);
+//  adj    adj0(x[15:0], y, {cf_adj, adj}, func, afi, cfi, af_adj, of_adj);
+//  conv   cnv0(x[15:0], cnv, func[0]);
+//  muldiv mul0(x, y, mul, func[1:0], word_op, cf_mul, of_mul);
+//  bitlog lo0(x[15:0], y, log, func, cf_log, of_log);
+//  shifts sh0(x[15:0], y, shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
+//  rotat  rot0(x[15:0], y, rot, func[1:0], word_op, cfi, cf_rot, of_rot);
   othop  oth0(x[15:0], y, seg, off, iflags, func, word_op, oth, othflags);
 
   mux8_16 m0(t, adj, add, cnv[15:0],
@@ -127,7 +127,7 @@ module addsub(x, y, out, func, word_op, cfi, cfo, afo, ofo);
   assign ofo   = word_op ? ofo16 : ofo8;
 endmodule
 
-
+/*
 module adj(x, y, out, func, afi, cfi, afo, cfo);
   // IO ports
   input  [15:0] x, y;
@@ -357,7 +357,7 @@ module rotat(x, y, out, func, word_op, cfi, cfo, ofo);
                         : // left 
                          (word_op ? cfo^out[15] : cfo^out[7]);
 endmodule
-
+*/
 
 module othop (x, y, seg, off, iflags, func, word_op, out, oflags);
   // IO ports
