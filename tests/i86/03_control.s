@@ -49,7 +49,7 @@ movw %cx, %ds
 movw %ax, (0)
 movw %bx, (2)
 
-nop
+#nop    # FIXME: Without this nop seems not working
 
 hlt                # (5)
 
