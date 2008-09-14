@@ -1,3 +1,21 @@
+/*
+ *  Copyright (c) 2008  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ */
+
 `timescale 1ns/10ps
 
 module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
@@ -28,7 +46,7 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
 //  adj    adj0(x[15:0], y, {cf_adj, adj}, func, afi, cfi, af_adj, of_adj);
 //  conv   cnv0(x[15:0], cnv, func[0]);
 //  muldiv mul0(x, y, mul, func[1:0], word_op, cf_mul, of_mul);
-//  bitlog lo0(x[15:0], y, log, func, cf_log, of_log);
+  bitlog lo0(x[15:0], y, log, func, cf_log, of_log);
 //  shifts sh0(x[15:0], y, shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
 //  rotat  rot0(x[15:0], y, rot, func[1:0], word_op, cfi, cf_rot, of_rot);
   othop  oth0(x[15:0], y, seg, off, iflags, func, word_op, oth, othflags);
@@ -56,7 +74,7 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
   assign pfi = iflags[2];
   assign cfi = iflags[0];
 
-  assign flags_unchanged = (t == 4'd6 || t == 4'd2 || t == 4'd4 && func == 4'd1);
+  assign flags_unchanged = (t == 4'd6 || t == 4'd2 || t == 4'd4 && func == 4'd2);
 endmodule
 
 module addsub(x, y, out, func, word_op, cfi, cfo, afo, ofo);
@@ -235,7 +253,7 @@ module muldiv(x, y, out, func, word_op, cfo, ofo);
   assign cfo = word_op ? cfo16 : cfo8;
   assign ofo = cfo;
 endmodule
-
+*/
 module bitlog(x, y, out, func, cfo, ofo);
   // IO ports
   input  [15:0] x, y;
@@ -244,22 +262,24 @@ module bitlog(x, y, out, func, cfo, ofo);
   output        cfo, ofo;
 
   // Net declarations
-  wire [15:0] and_n, or_n, not_n, xor_n, test_n;
+  wire [15:0] and_n, or_n, not_n, xor_n;
 
   // Module instantiations
-  mux8_16 m0(func, and_n, or_n, not_n, xor_n, test_n, 16'd0, 16'd0, 16'd0, out);
+  mux8_16 m0(func, and_n, or_n, not_n, xor_n, 16'd0, 16'd0, 16'd0, 16'd0, out);
 
   // Assignments
   assign and_n  = x & y;
   assign or_n   = x | y;
   assign not_n  = ~x;
   assign xor_n  = x ^ y;
-  assign test_n = x & y;
 
   assign cfo = 1'b0;
   assign ofo = 1'b0;
 endmodule
-
+/*
+//
+// This module implements the instructions shl/sal, sar, shr
+//
 module shifts(x, y, out, func, word_op, cfi, ofi, cfo, ofo);
   // IO ports
   input  [15:0] x, y;

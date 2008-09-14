@@ -1,3 +1,21 @@
+/*
+ *  Copyright (c) 2008  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ */
+
 `timescale 1ns/10ps
 
 `include "defines.v"
@@ -301,6 +319,44 @@ module opcode_deco (
           src <= { 2'b10, opcode[4:3] };
         end
 
+      8'b0000_100x: // or r->r, r->m
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `ORRRB : `ORRRW)
+                                     : (b ? `ORRMB : `ORRMW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0000_101x: // or r->r, m->r
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `ORRRB : `ORRRW)
+                                     : (b ? `ORMRB : `ORMRW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0000_110x: // or i->r
+        begin
+          seq_addr   <= b ? `ORIRB : `ORIRW;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b1;
+          off_size   <= 1'b0;
+          imm_size   <= ~b;
+          dst        <= 4'b0;
+          src        <= 4'b0;
+        end
+
       8'b000x_x111: // pop seg
         begin
           seq_addr <= `POPR;
@@ -308,6 +364,82 @@ module opcode_deco (
           need_off <= 1'b0;
           need_imm <= 1'b0;
           dst <= { 2'b10, opcode[4:3] };
+        end
+
+      8'b0010_000x: // and r->r, r->m
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `ANDRRB : `ANDRRW)
+                                     : (b ? `ANDRMB : `ANDRMW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0010_001x: // and r->r, m->r
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `ANDRRB : `ANDRRW)
+                                     : (b ? `ANDMRB : `ANDMRW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0010_010x: // and i->r
+        begin
+          seq_addr   <= b ? `ANDIRB : `ANDIRW;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b1;
+          off_size   <= 1'b0;
+          imm_size   <= ~b;
+          dst        <= 4'b0;
+          src        <= 4'b0;
+        end
+
+      8'b0011_000x: // xor r->r, r->m
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `XORRRB : `XORRRW)
+                                     : (b ? `XORRMB : `XORRMW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0011_001x: // xor r->r, m->r
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `XORRRB : `XORRRW)
+                                     : (b ? `XORMRB : `XORMRW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0011_010x: // and i->r
+        begin
+          seq_addr   <= b ? `XORIRB : `XORIRW;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b1;
+          off_size   <= 1'b0;
+          imm_size   <= ~b;
+          dst        <= 4'b0;
+          src        <= 4'b0;
         end
 
       8'b0101_0xxx: // push reg
@@ -336,6 +468,37 @@ module opcode_deco (
           need_imm <= 1'b1;
           imm_size <= 1'b0;
           src <= { opcode[3:0] };
+        end
+
+      8'b1000_000x: // and, or i->r, i->m
+        begin
+          seq_addr   <= regm == 3'b100 ?
+               ((mod==2'b11) ? (b ? `ANDIRB : `ANDIRW)
+                             : (b ? `ANDIMB : `ANDIMW))
+           : (regm == 3'b001 ? ((mod==2'b11) ? (b ? `ORIRB : `ORIRW)
+                                             : (b ? `ORIMB : `ORIMW))
+           : ((mod==2'b11) ? (b ? `XORIRB : `XORIRW)
+                           : (b ? `XORIMB : `XORIMW)));
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b1;
+          off_size   <= off_size_mod;
+          imm_size   <= ~b;
+          dst        <= { 1'b0, dstm };
+          src        <= 4'b0;
+        end
+
+      8'b1000_010x: // test r->r, r->m
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `TSTRRB : `TSTRRW)
+                                     : (b ? `TSTMRB : `TSTMRW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, srcm };
+          src        <= { 1'b0, dstm };
         end
 
       8'b1000_011x: // xchg
@@ -548,6 +711,18 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+        end
+
+      8'b1010_100x: // test i->r
+        begin
+          seq_addr   <= b ? `TSTIRB : `TSTIRW;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b1;
+          off_size   <= 1'b0;
+          imm_size   <= ~b;
+          dst        <= 4'b0;
+          src        <= 4'b0;
         end
 
       8'b1010_101x: // stos
@@ -822,6 +997,22 @@ module opcode_deco (
           need_imm <= 1'b0;
         end
 
+      8'b1111_011x: // test i->r, i->m
+        begin
+          seq_addr   <= regm == 3'b000 ?
+                        ((mod==2'b11) ? (b ? `TSTIRB : `TSTIRW)
+                                      : (b ? `TSTIMB : `TSTIMW))
+                      : ((mod==2'b11) ? (b ? `NOTRB : `NOTRW)
+                                      : (b ? `NOTMB : `NOTMW));
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= (regm == 3'b000); // imm on test
+          off_size   <= off_size_mod;
+          imm_size   <= ~b;
+          dst        <= { 1'b0, srcm };
+          src        <= 4'b0;
+        end
+
       8'b1111_1000: // clc
         begin
           seq_addr <= `CLC;
@@ -946,7 +1137,7 @@ module micro_data (
 
   // Net declarations
   wire [`MICRO_DATA_WIDTH-1:0] micro_o;
-  wire [16:0] high_ir;
+  wire [17:0] high_ir;
   wire var_s, var_off;
   wire [1:0] var_a, var_b, var_c, var_d;
   wire [2:0] var_imm;

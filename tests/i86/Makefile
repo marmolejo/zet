@@ -41,4 +41,4 @@ all: $(s3roms) $(rtlroms)
 	as $< -o $@
 
 clean:
-	rm -f *.o *.out *.mcs ../../impl/spartan3an-sk/sim/flash-prom/*.s3rom ../../sim/*.rtlrom
+	rm -f *.o *.out *.bin *.mcs ../../impl/spartan3an-sk/sim/flash-prom/*.s3rom ../../sim/*.rtlrom
