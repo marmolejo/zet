@@ -2,15 +2,15 @@
 
 module mem_ctrl (
     // Wishbone signals
-    input         clk_i,
-    input         rst_i,
-    input  [19:0] adr_i,
-    input  [15:0] dat_i,
-    output [15:0] dat_o,
-    input         we_i,
-    output        ack_o,
-    input         stb_i,
-    input         byte_i,
+    input             clk_i,
+    input             rst_i,
+    input      [19:0] adr_i,
+    input      [15:0] dat_i,
+    output reg [15:0] dat_o,
+    input             we_i,
+    output reg        ack_o,
+    input             stb_i,
+    input             byte_i,
 
     // Pad signals
     output        sram_clk_,
@@ -20,74 +20,196 @@ module mem_ctrl (
     output        sram_flash_we_n_,
     output [ 3:0] sram_bw_,
     output        sram_cen_,
+    output        sram_adv_ld_n_,
     output        flash_ce2_
   );
 
-  // Net declarations
-  wire        rom_area;
-  wire [ 5:0] high_flash;
-  wire [ 5:0] high_addr;
-  wire [ 1:0] be;  // byte enable
-  wire        a0;  // address 0 bit
-  wire [15:0] wr;  // word from memory read
-  wire [15:0] ww;  // word to memory write
+  // Register and net declarations
+  reg [15:0] ww;  // word to memory write
+  reg [14:0] adr;
+  reg [ 5:0] highad;
+  reg [ 1:0] be;
+  reg        wen;
+  reg        sr_cen;
+  reg        fl_ce;
+  reg        adv_ld;
+  reg [ 2:0] cs, ns;
+
+  wire rom_area;
+  wire a0;       // address 0 bit
+  wire odd_word; // Word odd operation
+  wire fl_sel;    // flash chip select
+  wire sr_sel;    // sram chip select
+
   wire [15:0] bhr; // byte high read, sign extended
   wire [15:0] blr; // byte low read, sign extended
-  wire [19:0] adr_1; // next address
-  wire        odd_word; // Word odd operation
-  wire [19:0] adr; // address
-  wire        next_cnd; // Next byte condition
+  wire [15:0] wr;  // word from memory read
+  wire [14:0] adr1;
+  wire [ 5:0] high;
+  wire [15:0] wwc;
 
-  // Register declarations
-  reg [1:0] cnt;
-  reg       next;
-  reg [7:0] bhr_l;
+  // Declare the symbolic names for states
+  parameter [2:0]
+    adr_setup = 3'd0,
+    cen_setup = 3'd1,
+    brs_setup = 3'd2,
+    dat_1     = 3'd3,
+    dat_2     = 3'd4,
+    wait_1    = 3'd5,
+    datf_2    = 3'd6,
+    ce_off    = 3'd7;
 
-  // Continous assignments
-  assign sram_clk_        = clk_i;
-  assign sram_flash_addr_ = { high_addr, adr[15:1] };
-  assign sram_flash_we_n_ = cnt != 2'b00 | !stb_i | !we_i | rom_area;
-  assign sram_flash_oe_n_ = !rom_area & we_i;
+  // Continuous assignments
+  assign sram_clk_        = !clk_i;
+  assign sram_flash_oe_n_ = 1'b0;
+  assign sram_flash_we_n_ = wen;
+  assign sram_flash_data_ = ((cs==brs_setup || cs==dat_1 &&
+                           odd_word) && we_i) ? ww : 16'hzzzz;
+  assign sram_flash_addr_ = { highad, adr };
   assign sram_bw_         = { 2'b11, be };
-  assign sram_cen_        = rom_area | !stb_i;
-  assign flash_ce2_       = rom_area &  stb_i;
+  assign sram_cen_        = sr_cen;
+  assign flash_ce2_       = fl_ce;
+  assign sram_adv_ld_n_   = adv_ld;
 
-  assign sram_flash_data_ = we_i ? ww : 16'hzzzz;
-
-  assign rom_area   = (adr[19:16]==4'hc || adr[19:16]==4'hf);
-  assign high_flash = { 5'b0, adr[17] };
-  assign high_addr  = rom_area ? high_flash : { 2'b0, adr[19:16] };
-  assign be         = byte_i ? (a0 ? 2'b01 : 2'b10) 
-                             : (a0 ? (next ? 2'b10 : 2'b01) : 2'b00);
+  assign rom_area   = (adr_i[19:16]==4'hc || adr_i[19:16]==4'hf);
   assign a0         = adr_i[0];
-  assign wr         = sram_flash_data_;
   assign bhr        = { {8{wr[15]}}, wr[15:8] };
   assign blr        = { {8{wr[7]}},  wr[7:0] };
-  assign ww         = a0 ? { dat_i[7:0], dat_i[15:8] } : dat_i;
+  assign wr         = sram_flash_data_;
 
-  assign adr_1   = adr_i + 20'd1;
   assign odd_word = a0 & !byte_i;
-  assign adr      = (next && stb_i && odd_word) ? adr_1 : adr_i;
-  assign ack_o    = stb_i & (rom_area ? (!odd_word | next)
-                             : (cnt==2'b10 & (!odd_word | next)));
-  assign dat_o    = byte_i ? (a0 ? bhr : blr)
-                           : (a0 ? { wr[7:0], bhr_l } : wr);
-  assign next_cnd = stb_i & odd_word & 
-    (next ? (rom_area ? 1'b0 : (cnt==2'b10 ? 1'b0 : 1'b1 ))
-          : (rom_area ? 1'b1 : (cnt==2'b10 ? 1'b1 : 1'b0)));
+  assign fl_sel   = rom_area &  stb_i;
+  assign sr_sel   = rom_area | !stb_i;
+  assign adr1     = adr_i[15:1] + 15'd1;
+  assign high     = rom_area ? { 5'b0, adr_i[17] }
+                             : { 2'b0, adr_i[19:16] };
+  assign wwc      = a0 ? { dat_i[7:0], dat_i[15:8] } : dat_i;
 
-  // Behavioral description
-  // cnt
+  // Behaviour
+  // cs
+  always @(posedge clk_i) cs <= rst_i ? adr_setup : ns;
+
+  // dat_o
   always @(posedge clk_i)
-    if (rst_i) cnt <= 2'd0;
-    else cnt <= (stb_i && !rom_area) ?
-      ((cnt==2'b10) ? 2'd0 : cnt + 2'b1) : 2'd0;
+    dat_o <= (ns == dat_1 ? (byte_i ? (a0 ? bhr : blr)
+                                    : (a0 ? { 8'd0, wr[15:8] } : wr))
+           : (ns == dat_2 ? { wr[7:0], dat_o[7:0] }
+           : (ns == datf_2 ? { wr[7:0], dat_o[7:0] } : dat_o)));
 
-  // next
-  always @(posedge clk_i)
-    if (rst_i) next <= 1'b0;
-    else next <= next_cnd;
+  // state machine
+  always @(*)
+    case (cs)
+      default:
+        begin
+          adr    <= adr_i[15:1];
+          highad <= high;
+          be     <= byte_i ? (a0 ? 2'b01 : 2'b10)
+                           : (a0 ? 2'b01 : 2'b00);
+          ww     <= wwc;
+          wen    <= !we_i | rom_area;
+          sr_cen <= 1'b1;
+          fl_ce  <= 1'b0;
+          adv_ld <= 1'b0;
+          ack_o  <= 1'b0;
+          ns     <= stb_i ? cen_setup : adr_setup;
+        end
+      cen_setup:
+        begin
+          adr    <= adr_i[15:1];
+          highad <= high;
+          be     <= byte_i ? (a0 ? 2'b01 : 2'b10)
+                           : (a0 ? 2'b01 : 2'b00);
+          ww     <= wwc;
+          wen    <= !we_i | rom_area;
+          sr_cen <= sr_sel;
+          fl_ce  <= fl_sel;
+          adv_ld <= 1'b0;
+          ack_o  <= 1'b0;
+          ns     <= stb_i ? (rom_area ? dat_1 : brs_setup)
+                          : adr_setup;
+        end
+      brs_setup:
+        begin
+          adr    <= adr_i[15:1];
+          highad <= high;
+          be     <= odd_word ? 2'b10 : 2'b00;
+          ww     <= wwc;
+          wen    <= odd_word ? !we_i : 1'b1;
+          sr_cen <= sr_sel;
+          fl_ce  <= fl_sel;
+          adv_ld <= odd_word;
+          ack_o  <= 1'b0;
+          ns     <= stb_i ? dat_1 : adr_setup;
+        end
+      dat_1:
+        begin
+          adr    <= adr_i[15:1];
+          highad <= high;
+          be     <= 2'b00;
+          ww     <= wwc;
+          wen    <= 1'b1;
+          sr_cen <= sr_sel;
+          fl_ce  <= fl_sel;
+          adv_ld <= 1'b0;
+          ack_o  <= 1'b0;
+          ns     <= stb_i ? (odd_word ? dat_2 : ce_off )
+                           : adr_setup;
+        end
+      dat_2:
+        begin
+          adr    <= adr1;
+          highad <= high;
+          be     <= 2'b00;
+          ww     <= wwc;
+          wen    <= 1'b1;
+          sr_cen <= sr_sel;
+          fl_ce  <= fl_sel;
+          adv_ld <= 1'b0;
+          ack_o  <= 1'b0;
+          ns     <= stb_i ? (rom_area ? wait_1 : ce_off)
+                          : adr_setup;
+        end
+      wait_1:
+        begin
+          adr    <= adr1;
+          highad <= high;
+          be     <= 2'b00;
+          ww     <= wwc;
+          wen    <= 1'b1;
+          sr_cen <= sr_sel;
+          fl_ce  <= fl_sel;
+          adv_ld <= 1'b0;
+          ack_o  <= 1'b0;
+          ns     <= stb_i ? datf_2 : adr_setup;
+        end
+      datf_2:
+        begin
+          adr    <= adr1;
+          highad <= high;
+          be     <= 2'b00;
+          ww     <= wwc;
+          wen    <= 1'b1;
+          sr_cen <= sr_sel;
+          fl_ce  <= fl_sel;
+          adv_ld <= 1'b0;
+          ack_o  <= 1'b0;
+          ns     <= stb_i ? ce_off : adr_setup;
+        end
+      ce_off:
+        begin
+          adr    <= adr1;
+          highad <= high;
+          be     <= 2'b00;
+          ww     <= wwc;
+          wen    <= 1'b1;
+          sr_cen <= 1'b1;
+          fl_ce  <= 1'b0;
+          adv_ld <= 1'b0;
+          ack_o  <= 1'b1;
+          ns     <= adr_setup;
+        end
+    endcase
 
-  // bhr_l
-  always @(posedge clk_i) bhr_l <= next_cnd ? wr[15:8] : bhr_l;
 endmodule
+
+
