@@ -21,6 +21,10 @@
 `include "defines.v"
 
 module fetch (
+`ifdef DEBUG
+    output reg [2:0] state,
+    output [2:0] next_state,
+`endif
     input clk, 
     input rst, 
     input [15:0] cs, 
@@ -45,17 +49,20 @@ module fetch (
   parameter immed_st = 3'h3;
   parameter execu_st = 3'h4;
 
+`ifndef DEBUG
+  wire [2:0] next_state;
+  reg [2:0] state;
+`endif
+
   wire [`IR_SIZE-1:0] rom_ir;
   wire [7:0] opcode, modrm;
   wire exec_st, end_seq;
   wire [15:0] imm_d;
-  wire [2:0] next_state;
   wire prefix;
   wire next_in_opco, next_in_exec;
   wire block;
   wire need_modrm, need_off, need_imm, off_size, imm_size;
 
-  reg [2:0] state;
   reg [7:0] opcode_l, modrm_l;
   reg [15:0] off_l, imm_l;
   reg [1:0] pref_l;
@@ -316,7 +323,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
           src <= { 2'b10, opcode[4:3] };
+          dst <= 4'b0;
         end
 
       8'b0000_100x: // or r->r, r->m
@@ -363,7 +373,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
-          dst <= { 2'b10, opcode[4:3] };
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src      <= 4'b0;
+          dst      <= { 2'b10, opcode[4:3] };
         end
 
       8'b0010_000x: // and r->r, r->m
@@ -448,7 +461,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
           src <= { 1'b0, opcode[2:0] };
+          dst <= 4'b0;
         end
 
       8'b0101_1xxx: // pop reg
@@ -457,6 +473,9 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
           dst <= { 1'b0, opcode[2:0] };
         end
 
@@ -466,8 +485,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= 1'b0;
           src <= { opcode[3:0] };
+          dst <= 4'b0;
         end
 
       8'b1000_000x: // and, or i->r, i->m
@@ -509,6 +530,7 @@ module opcode_deco (
           need_off <= need_off_mod;
           off_size <= off_size_mod;
           need_imm <= 1'b0;
+          imm_size <= 1'b0;
           dst <= { 1'b0, dstm };
           src <= { 1'b0, srcm };
         end
@@ -570,7 +592,9 @@ module opcode_deco (
           need_off <= need_off_mod;
           off_size <= off_size_mod;
           need_imm <= 1'b0;
+          imm_size <= 1'b0;
           src <= { 1'b0, srcm };
+          dst <= 4'b0;
         end
 
       8'b1000_1110: // mov: m->s, r->s
@@ -602,6 +626,8 @@ module opcode_deco (
           need_off <= need_off_mod;
           off_size <= off_size_mod;
           need_imm <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
           dst <= { 1'b0, rm };
         end
 
@@ -611,6 +637,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1001_0xxx: // xchg acum
@@ -619,6 +649,8 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
           src <= 4'b0000;
           dst <= { 1'b0, opcode[2:0] };
         end
@@ -631,6 +663,8 @@ module opcode_deco (
           off_size <= 1'b1;
           need_imm <= 1'b1;
           imm_size <= 1'b1;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1001_1100: // pushf
@@ -653,6 +687,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1001_1110: // sahf
@@ -661,7 +699,11 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
-        end   
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
 
       8'b1001_1111: // lahf
         begin
@@ -669,6 +711,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1010_000x: // mov: m->a
@@ -703,6 +749,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1010_011x: // cmps
@@ -711,6 +761,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1010_100x: // test i->r
@@ -731,6 +785,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1010_110x: // lods
@@ -739,6 +797,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1010_111x: // scas
@@ -747,6 +809,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1011_xxxx: // mov: i->r
@@ -769,6 +835,9 @@ module opcode_deco (
           need_off <= 1'b0;
           need_imm <= 1'b1;
           imm_size <= 1'b1;
+          off_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1100_0011: // ret near
@@ -777,6 +846,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1100_0100: // les
@@ -786,7 +859,9 @@ module opcode_deco (
           need_off <= need_off_mod;
           off_size <= off_size_mod;
           need_imm <= 1'b0;
+          imm_size <= 1'b0;
           src <= { 1'b0, srcm };
+          dst <= 4'b0;
         end
 
       8'b1100_0101: // lds
@@ -796,7 +871,9 @@ module opcode_deco (
           need_off <= need_off_mod;
           off_size <= off_size_mod;
           need_imm <= 1'b0;
+          imm_size <= 1'b0;
           src <= { 1'b0, srcm };
+          dst <= 4'b0;
         end
 
       8'b1100_011x: // mov: i->m (or i->r non-standard)
@@ -819,7 +896,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= 1'b1;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1100_1011: // ret far
@@ -828,6 +908,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1100_1100: // int 3
@@ -836,6 +920,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1100_1101: // int
@@ -844,7 +932,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1100_1110: // into
@@ -853,6 +944,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0; 
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1100_1111: // iret
@@ -861,6 +956,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1101_0111: // xlat
@@ -869,6 +968,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1110_0000: // loopne
@@ -877,7 +980,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1110_0001: // loope
@@ -886,7 +992,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1110_0010: // loop
@@ -895,7 +1004,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1110_0011: // jcxz
@@ -904,7 +1016,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1110_010x: // in imm
@@ -913,7 +1028,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1110_011x: // out imm
@@ -922,7 +1040,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1110_1000: // call same segment
@@ -931,7 +1052,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b1;
+          off_size <= 1'b0;
           imm_size <= 1'b1;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1110_10x1: // jmp direct
@@ -966,6 +1090,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1110_111x: // out dx
@@ -974,6 +1102,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1111_0100: // hlt
@@ -995,6 +1127,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1111_011x: // test i->r, i->m
@@ -1019,6 +1155,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1111_1001: // stc
@@ -1027,6 +1167,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1111_1010: // cli
@@ -1035,6 +1179,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1111_1011: // sti
@@ -1043,6 +1191,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1111_1100: // cld
@@ -1051,6 +1203,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1111_1101: // std
@@ -1059,6 +1215,10 @@ module opcode_deco (
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1111_1111:

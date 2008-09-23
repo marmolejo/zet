@@ -1,4 +1,21 @@
+`include "defines.v"
+
 module kotku_ml403 (
+`ifdef DEBUG
+    output        rs_,
+    output        rw_,
+    output        e_,
+    output  [7:4] db_,
+
+`endif
+/*
+    output        tft_lcd_clk_,
+    output        tft_lcd_r_,
+    output        tft_lcd_g_,
+    output        tft_lcd_b_,
+    output        tft_lcd_hsync_,
+    output        tft_lcd_vsync_,
+*/
     input         sys_clk_in_,
 
     output        sram_clk_,
@@ -8,24 +25,15 @@ module kotku_ml403 (
     output        sram_flash_we_n_,
     output [ 3:0] sram_bw_,
     output        sram_cen_,
+    output        sram_adv_ld_n_,
     output        flash_ce2_,
 
-    output        tft_lcd_clk_,
-    output        tft_lcd_r_,
-    output        tft_lcd_g_,
-    output        tft_lcd_b_,
-    output        tft_lcd_hsync_,
-    output        tft_lcd_vsync_,
-
-    output        rs_,
-    output        rw_,
-    output        e_,
-    output  [7:4] db_
+    input         but_
   );
 
   // Net declarations
   wire        clk;
-  wire        rst;
+  wire        rst_lck;
   wire [15:0] dat_i;
   wire [15:0] dat_o;
   wire [19:0] adr;
@@ -34,39 +42,35 @@ module kotku_ml403 (
   wire        stb;
   wire        ack;
   wire        byte_o;
+  wire [15:0] dat_io;
+  wire [15:0] dat_mem;
+
+`ifdef DEBUG
+  wire [35:0] control0;
+  wire [ 5:0] ir;
+  wire [ 2:0] state, next_state;
+  wire [15:0] x, y;
+  wire [15:0] imm;
   wire        clk_100M;
   wire [63:0] f1, f2;
   wire [15:0] m1, m2;
   wire [19:0] pc;
   wire [15:0] cs, ip;
-  wire [15:0] dat_io;
-  wire [15:0] dat_mem;
+`endif
 
   // Register declarations
   reg  [15:0] io_reg;
+  reg         rst;
 
   // Module instantiations
   clock c0 (
+`ifdef DEBUG
+    .clk_100M    (clk_100M),
+`endif
     .sys_clk_in_ (sys_clk_in_),
     .clk         (clk),
-    .clk_100M    (clk_100M),
-    .vdu_clk     (tft_lcd_clk_),
-    .rst         (rst)
-  );
-
-  lcd_display lcd0 (
-    .f1 (f1),  // 1st row
-    .f2 (f2),  // 2nd row
-    .m1 (m1),  // 1st row mask
-    .m2 (m2),  // 2nd row mask
-
-    .clk (clk_100M),  // 100 Mhz clock
-
-    // Pad signals
-    .lcd_rs_  (rs_),
-    .lcd_rw_  (rw_),
-    .lcd_e_   (e_),
-    .lcd_dat_ (db_)
+//    .vdu_clk     (tft_lcd_clk_),
+    .rst         (rst_lck)
   );
 
   mem_map mem_map0 (
@@ -89,18 +93,31 @@ module kotku_ml403 (
     .sram_flash_we_n_ (sram_flash_we_n_),
     .sram_bw_         (sram_bw_),
     .sram_cen_        (sram_cen_),
-    .flash_ce2_       (flash_ce2_),
-
+    .sram_adv_ld_n_   (sram_adv_ld_n_),
+    .flash_ce2_       (flash_ce2_)
+/*
     // VGA pad signals
     .vdu_clk     (tft_lcd_clk_),
     .vga_red_o   (tft_lcd_r_),
     .vga_green_o (tft_lcd_g_),
     .vga_blue_o  (tft_lcd_b_),
     .horiz_sync  (tft_lcd_hsync_),
-    .vert_sync   (tft_lcd_vsync_)
+    .vert_sync   (tft_lcd_vsync_),
+*/
   );
 
   cpu zet_proc (
+`ifdef DEBUG
+    .cs         (cs),
+    .ip         (ip),
+    .state      (state),
+    .next_state (next_state),
+    .iralu      (ir),
+    .x          (x),
+    .y          (y),
+    .imm        (imm),
+`endif
+
     // Wishbone signals
     .clk_i  (clk),
     .rst_i  (rst),
@@ -111,9 +128,42 @@ module kotku_ml403 (
     .mio_o  (mio),
     .byte_o (byte_o),
     .stb_o  (stb),
-    .ack_i  (ack),
-    .cs     (cs),
-    .ip     (ip)
+    .ack_i  (ack)
+  );
+
+`ifdef DEBUG
+  // Module instantiations
+  icon icon0 (
+    .CONTROL0 (control0)
+  );
+
+  ila ila0 (
+    .CONTROL (control0),
+    .CLK     (clk_100M),
+    .TRIG0   (adr),
+    .TRIG1   ({dat_o,dat_i}),
+    .TRIG2   (pc),
+    .TRIG3   ({clk,we,mio,byte_o,stb,ack}),
+    .TRIG5   (ir),
+    .TRIG6   ({state,next_state}),
+    .TRIG7   (io_reg),
+    .TRIG8   (imm),
+    .TRIG9   ({x,y})
+  );
+
+  lcd_display lcd0 (
+    .f1 (f1),  // 1st row
+    .f2 (f2),  // 2nd row
+    .m1 (m1),  // 1st row mask
+    .m2 (m2),  // 2nd row mask
+
+    .clk (clk_100M),  // 100 Mhz clock
+
+    // Pad signals
+    .lcd_rs_  (rs_),
+    .lcd_rw_  (rw_),
+    .lcd_e_   (e_),
+    .lcd_dat_ (db_)
   );
 
   // Continuous assignments
@@ -123,6 +173,7 @@ module kotku_ml403 (
   assign m2 = 16'b1111101110011111;
 
   assign pc = (cs << 4) + ip;
+`endif
 
   assign dat_io = (adr[15:0]==16'hb7) ? io_reg : 16'd0;
   assign dat_i  = mio ? dat_io : dat_mem;
@@ -132,5 +183,9 @@ module kotku_ml403 (
   always @(posedge clk)
     if (adr==20'hb7 & we & mio)
       io_reg <= byte_o ? { io_reg[15:8], dat_o[7:0] } : dat_o;
+
+  // rst
+  always @(posedge clk)
+    rst <= rst_lck ? 1'b1 : (but_ ? 1'b0 : rst );
 
 endmodule

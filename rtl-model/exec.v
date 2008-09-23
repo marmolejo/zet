@@ -20,23 +20,31 @@
 
 `include "defines.v"
 
-module exec(ir, off, imm, cs, ip, of, zf, cx_zero, clk, rst,
-            memout, wr_data, addr, we, m_io, byteop, mem_rdy);
-  // IO Ports
-  input [`IR_SIZE-1:0] ir;
-  input [15:0] off, imm;
-  input        clk;
-  input        rst;
-  input [15:0] memout;
-  input        mem_rdy;
+module exec (
+    // IO Ports
+`ifdef DEBUG
+    output [15:0] x,
+    output [15:0] y,
+`endif
+    input [`IR_SIZE-1:0] ir,
+    input [15:0]  off,
+    input [15:0]  imm,
+    output [15:0] cs,
+    output [15:0] ip,
+    output        of,
+    output        zf,
+    output        cx_zero,
+    input         clk,
+    input         rst,
+    input [15:0]  memout,
 
-  output [15:0] wr_data, ip;
-  output        of;
-  output        zf;
-  output        cx_zero;
-  output        we, m_io, byteop;
-  output [19:0] addr;
-  output [15:0] cs;
+    output [15:0] wr_data,
+    output [19:0] addr,
+    output        we,
+    output        m_io,
+    output        byteop,
+    input         mem_rdy
+  );
 
   // Net declarations
   wire [15:0] a, b, c, s, alu_iflags, omemalu, bus_b;
@@ -95,4 +103,8 @@ module exec(ir, off, imm, cs, ip, of, zf, cx_zero, clk, rst,
   assign alu_iflags = { 4'b0, flags[8:3], 1'b0, flags[2], 1'b0, flags[1], 
                         1'b1, flags[0] };
   assign logic_flags = { flags[8], flags[4], flags[3], flags[1], flags[0] };
+`ifdef DEBUG
+  assign x        = a;
+  assign y        = bus_b;
+`endif
 endmodule

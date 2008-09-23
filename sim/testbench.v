@@ -10,13 +10,14 @@ module testbench;
   wire        m_io;
   wire        byte_m;
   wire        ack_i;
+  wire        stb;
 
   reg         clk, rst;
   reg [15:0]  io_reg;
   reg [ 1:0]  ack;
 
   // Module instantiations
-  memory mem0 (clk, addr, wr_data, mem_data, we & ~m_io, byte_m);
+  memory mem0 (clk, addr, wr_data, mem_data, stb & we & ~m_io, byte_m);
 
   cpu cpu0 (
     .clk_i  (clk),
@@ -27,6 +28,7 @@ module testbench;
     .we_o   (we),
     .mio_o  (m_io),
     .byte_o (byte_m),
+    .stb_o  (stb),
     .ack_i  (ack_i)
   );
 

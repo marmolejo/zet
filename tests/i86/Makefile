@@ -32,7 +32,7 @@ all: $(s3roms) $(rtlroms)
 	out2rom-ml403 < $< > $@
 	
 %.bin: %.rom
-	cat ff.rom $< > $@
+	cat count.rom $< > $@
 
 %.out: %.o
 	objcopy -O binary -S $< $@

@@ -50,7 +50,6 @@ hlt
 jmp rep_stos_z
 
 .org 0x607
-nop ## FIXME: THIS MUST BE INTRODUCED, otherwise the jmp is not taken!!
 jmp rep_lods_nz
 
 .org 0x809

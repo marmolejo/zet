@@ -1,6 +1,15 @@
 `timescale 1ns/10ps
 
 module mem_map (
+/*
+    // VGA pad signals
+    input         vdu_clk,  // 25MHz	VDU clock
+    output        vga_red_o,
+    output        vga_green_o,
+    output        vga_blue_o,
+    output        horiz_sync,
+    output        vert_sync,
+*/
     // Wishbone signals
     input         clk_i,
     input         rst_i,
@@ -21,17 +30,7 @@ module mem_map (
     output [ 3:0] sram_bw_,
     output        sram_cen_,
     output        sram_adv_ld_n_,
-    output        flash_ce2_,
-/*
-    // VGA pad signals
-    input         vdu_clk,  // 25MHz	VDU clock
-    output        vga_red_o,
-    output        vga_green_o,
-    output        vga_blue_o,
-    output        horiz_sync,
-    output        vert_sync,
-*/
-    output  [1:0] cnt
+    output        flash_ce2_
   );
 
   // Net declarations

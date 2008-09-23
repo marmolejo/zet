@@ -1,7 +1,7 @@
 # Jump instruction testbench 2
 #
 # At the end (3535ns in rtl-model, 274.05us in spartan3), %ax=0x1234
-#
+#  (0) = 0x2ff0
 # call            1 (direct same seg), 2 (indirect reg, same seg), 
 #                 3 (indirect mem, same seg), 4 (direct diff seg), 
 #                 5 (indirect mem, diff seg)

@@ -1,6 +1,25 @@
+//
+// Memory map test. It testes all kind of memory accesses in
+//   different RAM / ROM. RAM contents at the end:
+//
+//   Mem[01:00] = xx07
+//   Mem[03:02] = 0607
+//   Mem[05:04] = Mem[09:08]
+//   Mem[07:06] = 0a0b
+//   Mem[0d:0c] = 06xx
+//   Mem[0f:0e] = xxMem[08]
+//   Mem[11:10] = ff83
+//   Mem[13:12] = 0007
+//   Mem[15:14] = 0062
+//   Mem[17:16] = ext(Mem[09])
+//   Mem[19:18] = Mem[09]xx
+//   Mem[1b:1a] = 0b06
+//   Mem[1d:1c] = Mem[08]06
+//
+
 module test_mem_ctrl (
     input         sys_clk_in_,
-    
+
     output        sram_clk_,
     output [20:0] sram_flash_addr_,
     inout  [15:0] sram_flash_data_,
@@ -8,16 +27,20 @@ module test_mem_ctrl (
     output        sram_flash_we_n_,
     output [ 3:0] sram_bw_,
     output        sram_cen_,
+    output        sram_adv_ld_n_,
     output        flash_ce2_,
-    
-    output [ 8:0] leds_
+
+    input         but_
   );
 
   // Net declarations
-  wire        rst;
+  wire        rst_lck;
   wire        clk;
   wire [15:0] dada_ent;
   wire        ack;
+  wire [35:0] control;
+  wire        clk_100M;
+  wire [ 3:0] cs;
 
   // Register declarations
   reg [ 7:0] estat;
@@ -28,18 +51,38 @@ module test_mem_ctrl (
   reg        we;
   reg        stb;
   reg        byte_o;
+  reg        rst;
 
   // Module instantiations
   clock c0 (
     .sys_clk_in_ (sys_clk_in_),
     .clk         (clk),
-    .rst         (rst)
+    .clk_100M    (clk_100M),
+    .rst         (rst_lck)
+  );
+
+  icon icon0 (
+    .CONTROL0 (control)
+  );
+
+  ila_mem ilmem0 (
+    .CONTROL (control),
+    .CLK     (clk_100M),
+    .TRIG0   (adr),
+    .TRIG1   (dada_sor),
+    .TRIG2   (dada_ent),
+    .TRIG3   ({clk,rst,we,byte_o,ack,stb}),
+    .TRIG4   (sram_flash_addr_),
+    .TRIG5   (sram_flash_data_),
+    .TRIG6   ({sram_adv_ld_n_,sram_clk_,sram_flash_oe_n_,sram_flash_we_n_,sram_bw_,sram_cen_,flash_ce2_}),
+    .TRIG7   (cs),
+    .TRIG8   (estat)
   );
 
   mem_ctrl mem_ctrl0 (
     // Wishbone signals
     .clk_i  (clk),
-	  .rst_i  (rst),
+    .rst_i  (rst),
     .adr_i  (adr),
     .dat_i  (dada_sor),
     .dat_o  (dada_ent),
@@ -56,13 +99,20 @@ module test_mem_ctrl (
     .sram_flash_we_n_ (sram_flash_we_n_),
     .sram_bw_         (sram_bw_),
     .sram_cen_        (sram_cen_),
-    .flash_ce2_       (flash_ce2_)
+    .sram_adv_ld_n_   (sram_adv_ld_n_),
+    .flash_ce2_       (flash_ce2_),
+
+    .cs (cs)
   );
 
   // Continuous assignments
-  assign leds_     = estat[7:0];
+  //assign leds_     = estat[7:0];
 
   // Behavioral description
+  // rst
+  always @(posedge clk)
+    rst <= rst_lck ? 1'b1 : (but_ ? 1'b0 : rst );
+
   always @(posedge clk)
     if (rst)
       begin  // ROM word read (dada1 = 0607)
@@ -287,7 +337,7 @@ module test_mem_ctrl (
             byte_o   <= 1'd0;
           end
         8'd130:
-          if (ack) begin // RAM word write (even)
+          if (ack) begin // RAM word write (odd)
             estat    <= 8'd135;
             dada_sor <= dada1;
             dada1    <= dada1;

@@ -21,6 +21,17 @@
 `include "defines.v"
 
 module cpu (
+`ifdef DEBUG
+    output [15:0] cs,
+    output [15:0] ip,
+    output [ 2:0] state,
+    output [ 2:0] next_state,
+    output [ 5:0] iralu,
+    output [15:0] x,
+    output [15:0] y,
+    output [15:0] imm,
+`endif
+
     // Wishbone signals
     input         clk_i,
     input         rst_i,
@@ -31,27 +42,75 @@ module cpu (
     output        mio_o,
     output        byte_o,
     output        stb_o,
-    input         ack_i,
-    output [15:0] cs,
-    output [15:0] ip
+    input         ack_i
   );
 
   // Net declarations
-  // wire [15:0] cs, ip;
+`ifndef DEBUG
+  wire [15:0] cs, ip;
+  wire [15:0] imm;
+`endif
   wire [`IR_SIZE-1:0] ir;
-  wire [15:0] off, imm;
+  wire [15:0] off;
+
   wire [19:0] addr_exec, addr_fetch;
   wire byte_fetch, byte_exec, fetch_or_exec;
   wire of, zf, cx_zero;
 
   // Module instantiations
-  fetch   fetch0(clk_i, rst_i, cs, ip, of, zf, cx_zero, dat_i, ir, off, 
-                 imm, addr_fetch, byte_fetch, fetch_or_exec, ack_i);
-  exec    exec0(ir, off, imm, cs, ip, of, zf, cx_zero, clk_i, rst_i, 
-                dat_i, dat_o, addr_exec, we_o, mio_o, byte_exec, ack_i);
+  fetch fetch0 (
+`ifdef DEBUG
+    .state      (state),
+    .next_state (next_state),
+`endif
+    .clk  (clk_i),
+    .rst  (rst_i),
+    .cs   (cs),
+    .ip   (ip),
+    .of   (of),
+    .zf   (zf),
+    .data (dat_i),
+    .ir   (ir),
+    .off  (off),
+    .imm  (imm),
+    .pc   (addr_fetch),
 
-  // Assignments 
-  assign adr_o   = fetch_or_exec ? addr_exec : addr_fetch;
+    .cx_zero       (cx_zero),
+    .bytefetch     (byte_fetch),
+    .fetch_or_exec (fetch_or_exec),
+    .mem_rdy       (ack_i)
+  );
+
+  exec exec0 (
+`ifdef DEBUG
+    .x (x),
+    .y (y),
+`endif
+    .ir      (ir),
+    .off     (off),
+    .imm     (imm),
+    .cs      (cs),
+    .ip      (ip),
+    .of      (of),
+    .zf      (zf),
+    .cx_zero (cx_zero),
+    .clk     (clk_i),
+    .rst     (rst_i),
+    .memout  (dat_i),
+    .wr_data (dat_o),
+    .addr    (addr_exec),
+    .we      (we_o),
+    .m_io    (mio_o),
+    .byteop  (byte_exec),
+    .mem_rdy (ack_i)
+  );
+
+  // Assignments
+  assign adr_o  = fetch_or_exec ? addr_exec : addr_fetch;
   assign byte_o = fetch_or_exec ? byte_exec : byte_fetch;
-  assign stb_o = rst_i ? 1'b1 : ir[`MEM_OP];
+  assign stb_o  = rst_i ? 1'b1 : ir[`MEM_OP];
+
+`ifdef DEBUG
+  assign iralu = ir[28:23];
+`endif
 endmodule

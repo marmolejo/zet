@@ -47,11 +47,11 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
 //  conv   cnv0(x[15:0], cnv, func[0]);
 //  muldiv mul0(x, y, mul, func[1:0], word_op, cf_mul, of_mul);
   bitlog lo0(x[15:0], y, log, func, cf_log, of_log);
-//  shifts sh0(x[15:0], y, shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
+  shifts sh0(x[15:0], y, shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
 //  rotat  rot0(x[15:0], y, rot, func[1:0], word_op, cfi, cf_rot, of_rot);
   othop  oth0(x[15:0], y, seg, off, iflags, func, word_op, oth, othflags);
 
-  mux8_16 m0(t, adj, add, cnv[15:0],
+  mux8_16 m0(t, /* adj */ {8'd0, y[7:0]}, add, cnv[15:0],
              mul[15:0], log, shi, rot, oth[15:0], out[15:0]);
   mux8_16 m1(t, 16'd0, 16'd0, cnv[31:16], mul[31:16],
              16'd0, 16'd0, 16'd0, {12'b0,oth[19:16]}, out[31:16]);
@@ -276,7 +276,7 @@ module bitlog(x, y, out, func, cfo, ofo);
   assign cfo = 1'b0;
   assign ofo = 1'b0;
 endmodule
-/*
+
 //
 // This module implements the instructions shl/sal, sar, shr
 //
@@ -320,7 +320,7 @@ module shifts(x, y, out, func, word_op, cfi, ofi, cfo, ofo);
   assign ofo_sar = 1'b0;
   assign ofo_shr = word_op ? x[15] : x[7];
 endmodule
-
+/*
 module rotat(x, y, out, func, word_op, cfi, cfo, ofo);
   // IO ports
   input  [15:0] x, y;
