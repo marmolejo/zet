@@ -962,6 +962,33 @@ module opcode_deco (
           dst <= 4'b0;
         end
 
+      8'b1101_00xx: // sal/shl
+        begin
+          seq_addr <= (regm==3'b100) ? ((mod==2'b11) ?
+            (opcode[1] ? (opcode[0] ? `SALCRW : `SALCRB )
+                       : (opcode[0] ? `SAL1RW : `SAL1RB ))
+          : (opcode[1] ? (opcode[0] ? `SALCMW : `SALCMB )
+                       : (opcode[0] ? `SAL1MW : `SAL1MB )))
+         : ( (regm==3'b111) ? ((mod==2'b11) ?
+            (opcode[1] ? (opcode[0] ? `SARCRW : `SARCRB )
+                       : (opcode[0] ? `SAR1RW : `SAR1RB ))
+          : (opcode[1] ? (opcode[0] ? `SARCMW : `SARCMB )
+                       : (opcode[0] ? `SAR1MW : `SAR1MB )))
+           : ((mod==2'b11) ?
+            (opcode[1] ? (opcode[0] ? `SHRCRW : `SHRCRB )
+                       : (opcode[0] ? `SHR1RW : `SHR1RB ))
+          : (opcode[1] ? (opcode[0] ? `SHRCMW : `SHRCMB )
+                       : (opcode[0] ? `SHR1MW : `SHR1MB ))));
+
+          need_modrm <= 1'b1;
+          need_off <= need_off_mod;
+          need_imm <= 1'b0;
+          off_size <= off_size_mod;
+          imm_size <= 1'b0;
+          src <= rm;
+          dst <= rm;
+        end
+
       8'b1101_0111: // xlat
         begin
           seq_addr <= `XLAT;
