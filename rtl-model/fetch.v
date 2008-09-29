@@ -964,7 +964,27 @@ module opcode_deco (
 
       8'b1101_00xx: // sal/shl
         begin
-          seq_addr <= (regm==3'b100) ? ((mod==2'b11) ?
+          seq_addr <= (regm==3'b010) ? ((mod==2'b11) ?
+            (opcode[1] ? (opcode[0] ? `RCLCRW : `RCLCRB )
+                       : (opcode[0] ? `RCL1RW : `RCL1RB ))
+          : (opcode[1] ? (opcode[0] ? `RCLCMW : `RCLCMB )
+                       : (opcode[0] ? `RCL1MW : `RCL1MB )))
+         : ((regm==3'b011) ? ((mod==2'b11) ?
+            (opcode[1] ? (opcode[0] ? `RCRCRW : `RCRCRB )
+                       : (opcode[0] ? `RCR1RW : `RCR1RB ))
+          : (opcode[1] ? (opcode[0] ? `RCRCMW : `RCRCMB )
+                       : (opcode[0] ? `RCR1MW : `RCR1MB )))
+         : ((regm==3'b001) ? ((mod==2'b11) ?
+            (opcode[1] ? (opcode[0] ? `RORCRW : `RORCRB )
+                       : (opcode[0] ? `ROR1RW : `ROR1RB ))
+          : (opcode[1] ? (opcode[0] ? `RORCMW : `RORCMB )
+                       : (opcode[0] ? `ROR1MW : `ROR1MB )))
+         : ((regm==3'b000) ? ((mod==2'b11) ?
+            (opcode[1] ? (opcode[0] ? `ROLCRW : `ROLCRB )
+                       : (opcode[0] ? `ROL1RW : `ROL1RB ))
+          : (opcode[1] ? (opcode[0] ? `ROLCMW : `ROLCMB )
+                       : (opcode[0] ? `ROL1MW : `ROL1MB )))
+         : ( (regm==3'b100) ? ((mod==2'b11) ?
             (opcode[1] ? (opcode[0] ? `SALCRW : `SALCRB )
                        : (opcode[0] ? `SAL1RW : `SAL1RB ))
           : (opcode[1] ? (opcode[0] ? `SALCMW : `SALCMB )
@@ -978,7 +998,7 @@ module opcode_deco (
             (opcode[1] ? (opcode[0] ? `SHRCRW : `SHRCRB )
                        : (opcode[0] ? `SHR1RW : `SHR1RB ))
           : (opcode[1] ? (opcode[0] ? `SHRCMW : `SHRCMB )
-                       : (opcode[0] ? `SHR1MW : `SHR1MB ))));
+                       : (opcode[0] ? `SHR1MW : `SHR1MB ))))))));
 
           need_modrm <= 1'b1;
           need_off <= need_off_mod;

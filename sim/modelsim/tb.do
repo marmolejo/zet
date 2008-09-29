@@ -1,6 +1,6 @@
 vdel -all -lib work
 vlib work
-vlog -work work -lint +incdir+../../rtl-model ../../rtl-model/regfile.v ../../rtl-model/alu.v ../../rtl-model/cpu.v ../../rtl-model/exec.v ../../rtl-model/fetch.v ../../rtl-model/jmp_cond.v ../../rtl-model/util/primitives.v
+vlog -work work -lint +incdir+../../rtl-model ../../rtl-model/regfile.v ../../rtl-model/alu.v ../../rtl-model/cpu.v ../../rtl-model/exec.v ../../rtl-model/fetch.v ../../rtl-model/jmp_cond.v ../../rtl-model/util/primitives.v ../../rtl-model/rotate.v
 vlog -work work +incdir+.. ../memory.v ../testbench.v
 vsim -novopt -t ns work.testbench
 add wave -label clk /testbench/clk
@@ -22,6 +22,8 @@ add wave -label off -radix hexadecimal /testbench/cpu0/fetch0/off
 add wave -divider alu
 add wave -label x -radix hexadecimal /testbench/cpu0/exec0/a
 add wave -label y -radix hexadecimal /testbench/cpu0/exec0/bus_b
+add wave -label t -radix hexadecimal /testbench/cpu0/exec0/alu0/t
+add wave -label func -radix hexadecimal /testbench/cpu0/exec0/alu0/func
 add wave -label rd_data -radix hexadecimal sim:/testbench/rd_data
 add wave -label wr_data -radix hexadecimal sim:/testbench/wr_data
 add wave -label addr -radix hexadecimal /testbench/addr

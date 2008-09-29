@@ -24,5 +24,5 @@ module memory (
     if (we) if (byte_m) ram[addr] <= wr_data[7:0];
             else { ram[addr1], ram[addr] } <= wr_data;
 
-  initial $readmemh("/home/zeus/zet/sim/11_shifts.rtlrom", ram, 20'hf0000);
+  initial $readmemh("/home/zeus/zet/sim/12_rotate.rtlrom", ram, 20'hf0000);
 endmodule

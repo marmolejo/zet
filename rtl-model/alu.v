@@ -48,7 +48,7 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
 //  muldiv mul0(x, y, mul, func[1:0], word_op, cf_mul, of_mul);
   bitlog lo0(x[15:0], y, log, func, cf_log, of_log);
   shifts sh0(x[15:0], y, shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
-//  rotat  rot0(x[15:0], y, rot, func[1:0], word_op, cfi, cf_rot, of_rot);
+  rotate rot0(x[15:0], y, func[1:0], cfi, word_op, rot, cf_rot, ofi, of_rot);
   othop  oth0(x[15:0], y, seg, off, iflags, func, word_op, oth, othflags);
 
   mux8_16 m0(t, /* adj */ {8'd0, y[7:0]}, add, cnv[15:0],
@@ -74,9 +74,9 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
   assign pfi = iflags[2];
   assign cfi = iflags[0];
 
-  assign flags_unchanged = (t == 4'd6 || t == 4'd2
-                         || t == 4'd4 && func == 4'd2
-                         || t == 4'd5 && y[7:0] == 8'd0);
+  assign flags_unchanged = (t == 3'd6 || t == 3'd2
+                         || t == 3'd4 && func == 4'd2
+                         || t == 3'd5 && y[7:0] == 8'd0);
 endmodule
 
 module addsub(x, y, out, func, word_op, cfi, cfo, afo, ofo);
@@ -335,64 +335,6 @@ module shifts(x, y, out, func, word_op, cfi, ofi, cfo, ofo);
   assign ofo_sar = 1'b0;
   assign ofo_shr = word_op ? x[15] : x[7];
 endmodule
-/*
-module rotat(x, y, out, func, word_op, cfi, cfo, ofo);
-  // IO ports
-  input  [15:0] x, y;
-  input   [1:0] func;
-  input         cfi, word_op;
-  output [15:0] out;
-  output        cfo;
-  output        ofo;
-
-  // Net declarations
-  wire [15:0] rcl16, rcr16, rol16, ror16, rcl, rcr, rol, ror;
-  wire [7:0]  yce16, ye16, yce8, ye8, rcl8, rcr8, rol8, ror8, yc16, yc8;
-  wire        cfo_rcl, cfo_rcr, cfo_rol, cfo_ror;
-
-  // Module instantiations
-  mux4_16 m0(func, rcl, rcr, rol, ror, out);
-  mux4_1  m1(func, cfo_rcl, cfo_rcr, cfo_rol, cfo_ror, cfo);
-
-  // Assignments
-  assign yce16 = 8'd0; //y[7:0] % 8'd17;
-  assign ye16  = y[7:0] % 8'd16;
-  assign rcl16 = yce16 ? (x << yce16 | cfi << (yce16-8'd1)  | x >> (8'd17-yce16)) : x;
-  assign rcr16 = yce16 ? (x >> yce16 | cfi << (8'd16-yce16) | x << (8'd17-yce16)) : x;
-  assign rol16 = (x << ye16 | x >> (8'd16-ye16));
-  assign ror16 = (x >> ye16 | x << (8'd16-ye16));
-
-  assign yce8 = 8'd0; //y[7:0] % 8'd9;
-  assign ye8  = y[7:0] % 8'd8;
-  assign rcl8 = yce8 ? (x[7:0] << yce8 | cfi << (yce8-8'd1) | x[7:0] >> (8'd9-yce8)) : x[7:0];
-  assign rcr8 = yce8 ? (x[7:0] >> yce8 | cfi << (8'd8-yce8) | x[7:0] << (9'd9-yce8)) : x[7:0];
-  assign rol8 = (x[7:0] << ye8 | x[7:0] >> (8'd8-ye8));
-  assign ror8 = (x[7:0] >> ye8 | x[7:0] << (8'd8-ye8));
-
-  assign rcl = word_op ? rcl16 : { 8'd0, rcl8 };
-  assign rcr = word_op ? rcr16 : { 8'd0, rcr8 };
-  assign rol = word_op ? rol16 : { 8'd0, rol8 };
-  assign ror = word_op ? ror16 : { 8'd0, ror8 };
-
-  // Carry
-  assign yc16 = (y[7:0]-8'd1)%8'd16;
-  assign yc8  = (y[7:0]-8'd1)%8'd8;
-  assign cfo_rcl = word_op ? (yce16==8'd0 ? cfi : x[16-yce16]) 
-                            : (yce8==8'd0 ? cfi : x[8-yce8]);
-  assign cfo_rcr = word_op ? (yce16==8'd0 ? cfi : x[yce16-1])
-                            : (yce8==8'd0 ? cfi : x[yce8-1]);
-  assign cfo_rol = word_op ? (y[7:0]==8'd0 ? cfi : x[15-yc16])
-                            : (y[7:0]==8'd0 ? cfi : x[7-yc8]);
-  assign cfo_ror = word_op ? (y[7:0]==8'd0 ? cfi : x[yc16])
-                            : (y[7:0]==8'd0 ? cfi : x[yc8]);
-
-  // Overflow
-  assign ofo = func[0] ? // right 
-                        (word_op ? out[15]^out[14] : out[7]^out[6])
-                        : // left 
-                         (word_op ? cfo^out[15] : cfo^out[7]);
-endmodule
-*/
 
 module othop (x, y, seg, off, iflags, func, word_op, out, oflags);
   // IO ports
