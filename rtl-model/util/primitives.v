@@ -185,3 +185,71 @@ module mux4_1(sel, in0, in1, in2, in3, out);
      2'd3:  out = in3;
     endcase
 endmodule
+
+//
+// 1 bit cell divider by 10
+//
+module div10b1 (
+    input  [3:0] c,
+    input        a,
+    output       q,
+    output [3:0] r
+  );
+
+  // Continuous assignments
+  assign r = { c[3]&c[0] | c[2]&~c[1]&~c[0],
+               ~c[2]&c[1] | c[1]&c[0] | c[3]&~c[0],
+               c[3]&~c[0] | c[2]&c[1]&~c[0] | ~c[3]&~c[2]&~c[0],
+               a };
+  assign q = c[3] | c[2]&c[1] | c[2]&c[0];
+endmodule
+
+//
+// 8 bit divider by 10
+//
+module div10b8 (
+    input  [7:0] a,
+    output [4:0] q,
+    output [3:0] r
+  );
+
+  // Net declarations
+  wire [3:0] c10, c21, c32, c43;
+
+  // Module instantiations
+  div10b1 bit4 (
+    .c ({1'b0, a[7:5]}),
+    .a (a[4]),
+    .q (q[4]),
+    .r (c43)
+  );
+
+  div10b1 bit3 (
+    .c (c43),
+    .a (a[3]),
+    .q (q[3]),
+    .r (c32)
+  );
+
+  div10b1 bit2 (
+    .c (c32),
+    .a (a[2]),
+    .q (q[2]),
+    .r (c21)
+  );
+
+  div10b1 bit1 (
+    .c (c21),
+    .a (a[1]),
+    .q (q[1]),
+    .r (c10)
+  );
+
+  div10b1 bit0 (
+    .c (c10),
+    .a (a[0]),
+    .q (q[0]),
+    .r (r)
+  );
+
+endmodule

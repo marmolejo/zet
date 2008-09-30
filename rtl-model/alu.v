@@ -147,7 +147,7 @@ module addsub(x, y, out, func, word_op, cfi, cfo, afo, ofo);
   assign ofo   = word_op ? ofo16 : ofo8;
 endmodule
 
-/*
+
 module adj(x, y, out, func, afi, cfi, afo, cfo);
   // IO ports
   input  [15:0] x, y;
@@ -157,19 +157,26 @@ module adj(x, y, out, func, afi, cfi, afo, cfo);
   output [16:0] out;
 
   // Net declarations
-  wire [16:0] aaa, aad, aam, aas, daa, das, aad16;
+  wire [15:0] aaa, aad, aam, aas, daa, das, aad16;
   wire [7:0]  ala, als, alout;
   wire        alcnd;
+  wire [4:0]  q;
+  wire [3:0]  r;
 
   // Module instances
   mux8_17 m0(func, aaa, aad, aam, aas,
                    daa, das, {9'd0, y[7:0]}, {1'b0, y}, out);
+  div10b8 div10 (
+    .a (x[7:0]),
+    .q (q),
+    .r (r)
+  );
 
   // Assignments
   assign aaa = afo ? { x[15:8] + 8'd1, (x[7:0] + 8'd6) & 8'h0f } : x;
-  assign aad16 = x[15:8] * 8'd10 + x[7:0];
+  assign aad16 = (x[15:8] << 3) + (x[15:8] << 1) + x[7:0];
   assign aad = { 8'b0, aad16[7:0] };
-  assign aam = 17'h0; //{ x[7:0] / 8'd10, x[7:0] % 8'd10 };
+  assign aam = { 3'b0, q, 4'b0, r };
   assign aas = afo ? { x[15:8] - 8'd1, (x[7:0] - 8'd6) & 8'h0f } : x;
 
   assign ala = afo ? x[7:0] + 8'd6 : x[7:0];
@@ -201,7 +208,7 @@ module conv(x, out, func);
   assign cwd = { x15_16, x[7:0] };
   assign out = func ? cwd : cbw;
 endmodule
-
+/*
 module muldiv(x, y, out, func, word_op, cfo, ofo);
   // IO ports
   input  [31:0] x;
