@@ -417,6 +417,30 @@ module opcode_deco (
           src        <= 4'b0;
         end
 
+      8'b0010_0111: // daa
+        begin
+          seq_addr   <= `DAA;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b0;
+          off_size   <= 1'b0;
+          imm_size   <= 1'b0;
+          dst        <= 4'b0;
+          src        <= 4'b0;
+        end
+
+      8'b0010_1111: // das
+        begin
+          seq_addr   <= `DAS;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b0;
+          off_size   <= 1'b0;
+          imm_size   <= 1'b0;
+          dst        <= 4'b0;
+          src        <= 4'b0;
+        end
+
       8'b0011_000x: // xor r->r, r->m
         begin
           seq_addr   <= (mod==2'b11) ? (b ? `XORRRB : `XORRRW)
@@ -451,6 +475,30 @@ module opcode_deco (
           need_imm   <= 1'b1;
           off_size   <= 1'b0;
           imm_size   <= ~b;
+          dst        <= 4'b0;
+          src        <= 4'b0;
+        end
+
+      8'b0011_0111: // aaa
+        begin
+          seq_addr   <= `AAA;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b0;
+          off_size   <= 1'b0;
+          imm_size   <= 1'b0;
+          dst        <= 4'b0;
+          src        <= 4'b0;
+        end
+
+      8'b0011_1111: // aas
+        begin
+          seq_addr   <= `AAS;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b0;
+          off_size   <= 1'b0;
+          imm_size   <= 1'b0;
           dst        <= 4'b0;
           src        <= 4'b0;
         end
@@ -653,6 +701,30 @@ module opcode_deco (
           imm_size <= 1'b0;
           src <= 4'b0000;
           dst <= { 1'b0, opcode[2:0] };
+        end
+
+      8'b1001_1000: // cbw
+        begin
+          seq_addr   <= `CBW;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b0;
+          off_size   <= 1'b0;
+          imm_size   <= 1'b0;
+          dst        <= 4'b0;
+          src        <= 4'b0;
+        end
+
+      8'b1001_1001: // cwd
+        begin
+          seq_addr   <= `CWD;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b0;
+          off_size   <= 1'b0;
+          imm_size   <= 1'b0;
+          dst        <= 4'b0;
+          src        <= 4'b0;
         end
 
       8'b1001_1010: // call different seg
