@@ -1,18 +1,3 @@
-# String instruction testbench
-#
-# At the end (3995ns in rtl-model, 276.1us in spartan3), %ax=0x1234
-#
-# cmpsb  1
-# cmpsw  2
-# lodsb  3
-# lodsw  4
-# movsb  5
-# movsw  6
-# scasb  7
-# scasw  8
-# stosb  9
-# stosw 10
-#
 .code16
 start:
 movw $0xf000, %cx
@@ -43,13 +28,13 @@ ret
 .org 0x812
 cmpsw              # (2)
 pushf
-ret
+ret                # jump to f000:0883
 
 .org 0x883
 movb $0x10, %ah
 std
 lodsb              # (3)
-jmp *%ax
+jmp *%ax           # jump to f000:10c2
 
 .org 0x1000
 .byte 0x01,0xff,0xff,0x80

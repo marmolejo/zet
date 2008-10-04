@@ -20,7 +20,7 @@
 
 module rotate (
     input  [15:0] x,
-    input  [15:0] y,
+    input  [ 4:0] y,
     input  [ 1:0] func,  // 00: ror, 01: rol, 10: rcr, 11: rcl
     input         cfi,
     input         word_op,
@@ -58,14 +58,14 @@ module rotate (
   );
 
   // Continuous assignments
-  assign unchanged = word_op ? (y[4:0]==5'b0) : (y[3:0]==4'b0);
+  assign unchanged = word_op ? (y==5'b0) : (y[3:0]==4'b0);
   assign ror16 = { 1'b0, y[3:0] };
   assign rol16 = { 1'b0, -y[3:0] };
   assign ror8  = { 1'b0, y[2:0] };
   assign rol8  = { 1'b0, -y[2:0] };
 
-  assign rcr16 = y[4:0] <= 5'd16 ? y[4:0] : { 1'b0, y[3:0] - 4'b1 };
-  assign rcl16 = y[4:0] <= 5'd17 ? 5'd17 - y[4:0] : 6'd34 - y[4:0];
+  assign rcr16 = (y <= 5'd16) ? y : { 1'b0, y[3:0] - 4'b1 };
+  assign rcl16 = (y <= 5'd17) ? 5'd17 - y : 6'd34 - y;
   assign rcr8  = y[3:0] <= 4'd8 ? y[3:0] : { 1'b0, y[2:0] - 3'b1 };
   assign rcl8  = y[3:0] <= 4'd9 ? 4'd9 - y[3:0] : 5'd18 - y[3:0];
 

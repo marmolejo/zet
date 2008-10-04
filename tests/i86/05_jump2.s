@@ -1,19 +1,4 @@
-# Jump instruction testbench 2
-#
-# At the end (3535ns in rtl-model, 274.05us in spartan3), %ax=0x1234
-#  (0) = 0x2ff0
-# call            1 (direct same seg), 2 (indirect reg, same seg), 
-#                 3 (indirect mem, same seg), 4 (direct diff seg), 
-#                 5 (indirect mem, diff seg)
-# 
-# loop            6 
-# loope/loopz     7
-# loopne/loopnz   8
-# ret             9 (same seg), 10 (same seg, value), 11 (diff seg), 
-#                12 (diff seg, value)
-# jcxz           13
 .code16
-
 start:
 movw $0xf000, %bx
 movw %bx, %ds

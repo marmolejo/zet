@@ -293,6 +293,7 @@ module opcode_deco (
   wire [1:0] mod;
   wire [2:0] regm;
   wire [2:0] rm;
+  wire       sw;
   wire       d, b, sm, dm;
   wire       off_size_mod, need_off_mod;
   wire [2:0] srcm, dstm;
@@ -312,11 +313,50 @@ module opcode_deco (
   assign b    = ~opcode[0];
   assign off_size_mod = (base == 4'b1100 && index == 4'b1100) ? 1'b1 : mod[1];
   assign need_off_mod = (base == 4'b1100 && index == 4'b1100) || ^mod;
+  assign sw   = opcode[0] ~^ opcode[1];
 
   // Behaviour
   always @(opcode or dm or b or need_off_mod or srcm or sm or dstm
-           or off_size_mod or mod or rm or regm or rep)
+           or off_size_mod or mod or rm or regm or rep or sw or modrm)
     casex (opcode)
+      8'b0000_000x: // add r->r, r->m
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `ADDRRB : `ADDRRW)
+                                     : (b ? `ADDRMB : `ADDRMW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0000_001x: // add r->r, m->r
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `ADDRRB : `ADDRRW)
+                                     : (b ? `ADDMRB : `ADDMRW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0000_010x: // add i->r
+        begin
+          seq_addr   <= b ? `ADDIRB : `ADDIRW;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b1;
+          off_size   <= 1'b0;
+          imm_size   <= ~b;
+          dst        <= 4'b0;
+          src        <= 4'b0;
+        end
+
       8'b000x_x110: // push seg
         begin
           seq_addr <= `PUSHR;
@@ -379,6 +419,82 @@ module opcode_deco (
           dst      <= { 2'b10, opcode[4:3] };
         end
 
+      8'b0001_000x: // adc r->r, r->m
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `ADCRRB : `ADCRRW)
+                                     : (b ? `ADCRMB : `ADCRMW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0001_001x: // adc r->r, m->r
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `ADCRRB : `ADCRRW)
+                                     : (b ? `ADCMRB : `ADCMRW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0001_010x: // adc i->r
+        begin
+          seq_addr   <= b ? `ADCIRB : `ADCIRW;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b1;
+          off_size   <= 1'b0;
+          imm_size   <= ~b;
+          dst        <= 4'b0;
+          src        <= 4'b0;
+        end
+
+      8'b0001_100x: // sbb r->r, r->m
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `SBBRRB : `SBBRRW)
+                                     : (b ? `SBBRMB : `SBBRMW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0001_101x: // sbb r->r, m->r
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `SBBRRB : `SBBRRW)
+                                     : (b ? `SBBMRB : `SBBMRW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0001_110x: // sbb i->r
+        begin
+          seq_addr   <= b ? `SBBIRB : `SBBIRW;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b1;
+          off_size   <= 1'b0;
+          imm_size   <= ~b;
+          dst        <= 4'b0;
+          src        <= 4'b0;
+        end
+
       8'b0010_000x: // and r->r, r->m
         begin
           seq_addr   <= (mod==2'b11) ? (b ? `ANDRRB : `ANDRRW)
@@ -425,6 +541,44 @@ module opcode_deco (
           need_imm   <= 1'b0;
           off_size   <= 1'b0;
           imm_size   <= 1'b0;
+          dst        <= 4'b0;
+          src        <= 4'b0;
+        end
+
+      8'b0010_100x: // sub r->r, r->m
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `SUBRRB : `SUBRRW)
+                                     : (b ? `SUBRMB : `SUBRMW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0010_101x: // sub r->r, m->r
+        begin
+          seq_addr   <= (mod==2'b11) ? (b ? `SUBRRB : `SUBRRW)
+                                     : (b ? `SUBMRB : `SUBMRW);
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          off_size   <= off_size_mod;
+          imm_size   <= 1'b0;
+          dst        <= { 1'b0, dstm };
+          src        <= { 1'b0, srcm };
+        end
+
+      8'b0010_110x: // sub i->r
+        begin
+          seq_addr   <= b ? `SUBIRB : `SUBIRW;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b1;
+          off_size   <= 1'b0;
+          imm_size   <= ~b;
           dst        <= 4'b0;
           src        <= 4'b0;
         end
@@ -503,6 +657,30 @@ module opcode_deco (
           src        <= 4'b0;
         end
 
+      8'b0100_0xxx: // inc
+        begin
+          seq_addr   <= `INCRW;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b0;
+          off_size   <= 1'b0;
+          imm_size   <= 1'b0;
+          dst        <= 4'b0;
+          src        <= { 1'b0, opcode[2:0] };
+        end
+
+      8'b0100_1xxx: // dec
+        begin
+          seq_addr   <= `DECRW;
+          need_modrm <= 1'b0;
+          need_off   <= 1'b0;
+          need_imm   <= 1'b0;
+          off_size   <= 1'b0;
+          imm_size   <= 1'b0;
+          dst        <= 4'b0;
+          src        <= { 1'b0, opcode[2:0] };
+        end
+
       8'b0101_0xxx: // push reg
         begin
           seq_addr <= `PUSHR;
@@ -539,21 +717,29 @@ module opcode_deco (
           dst <= 4'b0;
         end
 
-      8'b1000_000x: // and, or i->r, i->m
+      8'b1000_00xx: // and, or i->r, i->m
         begin
-          seq_addr   <= regm == 3'b100 ?
-               ((mod==2'b11) ? (b ? `ANDIRB : `ANDIRW)
+          seq_addr   <= regm == 3'b101 ?
+             ((mod==2'b11) ? (b ? `SUBIRB : `SUBIRW)
+                          : (b ? `SUBIMB : `SUBIMW))
+           : (regm == 3'b011 ? ((mod==2'b11) ? (b ? `SBBIRB : `SBBIRW)
+                          : (b ? `SBBIMB : `SBBIMW))
+           : (regm == 3'b010 ? ((mod==2'b11) ? (b ? `ADCIRB : `ADCIRW)
+                          : (b ? `ADCIMB : `ADCIMW))
+           : (regm == 3'b000 ? ((mod==2'b11) ? (b ? `ADDIRB : `ADDIRW)
+                          : (b ? `ADDIMB : `ADDIMW))
+           : (regm == 3'b100 ? ((mod==2'b11) ? (b ? `ANDIRB : `ANDIRW)
                              : (b ? `ANDIMB : `ANDIMW))
            : (regm == 3'b001 ? ((mod==2'b11) ? (b ? `ORIRB : `ORIRW)
                                              : (b ? `ORIMB : `ORIMW))
            : ((mod==2'b11) ? (b ? `XORIRB : `XORIRW)
-                           : (b ? `XORIMB : `XORIMW)));
+                           : (b ? `XORIMB : `XORIMW)))))));
           need_modrm <= 1'b1;
           need_off   <= need_off_mod;
           need_imm   <= 1'b1;
           off_size   <= off_size_mod;
-          imm_size   <= ~b;
-          dst        <= { 1'b0, dstm };
+          imm_size   <= !sw;
+          dst        <= { 1'b0, modrm[2:0] };
           src        <= 4'b0;
         end
 
@@ -1340,9 +1526,28 @@ module opcode_deco (
           dst <= 4'b0;
         end
 
+      8'b1111_1110: // inc
+        begin
+          case (regm)
+            3'b000: seq_addr <= (mod==2'b11) ? `INCRB : `INCMB;
+            3'b001: seq_addr <= (mod==2'b11) ? `DECRB : `DECMB;
+            default: seq_addr <= `NOP;
+          endcase
+          need_modrm <= 1'b1;
+          need_off <= need_off_mod;
+          need_imm <= 1'b0;
+          off_size <= off_size_mod;
+          imm_size <= 1'b0;
+
+          src <= { 1'b0, rm }; 
+          dst <= 4'b0;
+        end
+
       8'b1111_1111:
         begin
           case (regm)
+            3'b000: seq_addr <= (mod==2'b11) ? `INCRW : `INCMW;
+            3'b001: seq_addr <= (mod==2'b11) ? `DECRW : `DECMW;
             3'b010: seq_addr <= (mod==2'b11) ? `CALLNR : `CALLNM;
             3'b011: seq_addr <= `CALLFM;
             3'b100: seq_addr <= (mod==2'b11) ? `JMPR : `JMPM;

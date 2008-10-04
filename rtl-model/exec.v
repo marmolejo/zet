@@ -25,6 +25,7 @@ module exec (
 `ifdef DEBUG
     output [15:0] x,
     output [15:0] y,
+    output [15:0] aluo,
 `endif
     input [`IR_SIZE-1:0] ir,
     input [15:0]  off,
@@ -106,5 +107,6 @@ module exec (
 `ifdef DEBUG
   assign x        = a;
   assign y        = bus_b;
+  assign aluo     = aluout;
 `endif
 endmodule

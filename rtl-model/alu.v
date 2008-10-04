@@ -30,7 +30,7 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
   output  [8:0] oflags;
 
   // Net declarations
-  wire [15:0] add, adj, log, shi, rot;
+  wire [15:0] add, log, shi, rot;
   wire  [8:0] othflags;
   wire [19:0] oth;
   wire [31:0] cnv, mul;
@@ -52,8 +52,8 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
     .oflags ({af_cnv, of_cnv, cf_cnv})
   );
 
-  bitlog log4 (x[15:0], y, log, func, cf_log, of_log);
-  shifts shi5 (x[15:0], y, shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
+  bitlog log4 (x[15:0], y[4:0], log, func, cf_log, of_log);
+  shifts shi5 (x[15:0], y[4:0], shi, func[1:0], word_op, cf_shi, of_shi);
   rotate rot6 (x[15:0], y, func[1:0], cfi, word_op, rot, cf_rot, ofi, of_rot);
   othop  oth7 (x[15:0], y, seg, off, iflags, func, word_op, oth, othflags);
 
@@ -83,76 +83,55 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
   assign cfi = iflags[0];
 
   assign flags_unchanged = (t == 3'd6
-                         || t == 3'd4 && func == 4'd2
-                         || t == 3'd5 && y[7:0] == 8'd0);
+                         || t == 3'd4 && func == 3'd2
+                         || t == 3'd5 && y[4:0] == 5'h0
+                         || t == 3'd6 && y[4:0] == 5'h0);
 endmodule
 
-module addsub(x, y, out, func, word_op, cfi, cfo, afo, ofo);
-  // IO ports
-  input  [15:0] x, y;
-  input  [2:0]  func;
-  input         cfi, word_op;
-  output        cfo, afo, ofo;
-  output [15:0] out;
+module addsub (
+    input  [15:0] x,
+    input  [15:0] y,
+    output [15:0] out,
+    input  [ 2:0] f,
+    input         word_op,
+    input         cfi,
+    output        cfo,
+    output        afo,
+    output        ofo
+  );
 
   // Net declarations
-  wire [16:0] adc, add, ad8, dec, neg, sbb, sub, cmp;
-  wire [4:0]  tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
-  wire        resta, bneg, bincdec, cfo8, cfo16, ofo8, ofo16, cfoneg8, cfoneg16;
-  wire        afo_adc, afo_add, afo_inc, afo_dec, afo_neg, afo_sbb, afo_sub, afo_cmp;
-  wire [16:0] out17;
+  wire [15:0] op2;
+
+  wire ci;
+  wire cfoadd;
+  wire xs, ys, os;
 
   // Module instances
-  mux8_17 m0(func, adc, add, ad8, dec, neg, sbb, sub, cmp, out17);
-  mux8_1  m1(func, afo_adc, afo_add, afo_inc, afo_dec,
-                   afo_neg, afo_sbb, afo_sub, afo_cmp, afo);
+  fulladd16 fa0 ( // We instantiate only one adder
+    .x  (x),      //  to have less hardware
+    .y  (op2),
+    .ci (ci),
+    .co (cfoadd),
+    .z  (out),
+    .s  (f[2])
+  );
 
   // Assignments
-  assign adc = x + y + cfi;
-  assign add = x + y;
-  assign ad8 = x + y[7:0];
-  assign dec = x - 8'b1;
-  assign neg = {x==16'd0 ? 1'b0 : 1'b1, -x};
-  assign sbb = x - y - cfi;
-  assign sub = x - y;
-  assign cmp = x - y;
+  assign op2 = f[2] ? ~y
+             : ((f[1:0]==2'b11) ? { 8'b0, y[7:0] } : y);
+  assign ci  = f[2] & f[1] | f[2] & ~f[0] & ~cfi
+             | f[2] & f[0] | (f==3'b0) & cfi;
+  assign afo = f[1] ? (f[2] ? &out[3:0] : ~|out[3:0] )
+                    : (x[4] ^ y[4] ^ out[4]);
+  assign cfo = f[1] ? cfi /* inc, dec */
+             : (word_op ? cfoadd : (x[8]^y[8]^out[8]));
 
-  assign tmp0 = x[3:0] + y[3:0] + cfi;
-  assign tmp1 = x[3:0] + y[3:0];
-  assign tmp2 = x[3:0] + 4'b1;
-  assign tmp3 = x[3:0] - 4'b1;
-  assign tmp4 = -x[3:0];
-  assign tmp5 = x[3:0] - y[3:0] -cfi;
-  assign tmp6 = x[3:0] - y[3:0];
-  assign tmp7 = x[3:0] - y[3:0];
-
-  assign afo_adc = tmp0[4];
-  assign afo_add = tmp1[4];
-  assign afo_inc = tmp2[4];
-  assign afo_dec = tmp3[4];
-  assign afo_neg = tmp4[4];
-  assign afo_sbb = tmp5[4];
-  assign afo_sub = tmp6[4];
-  assign afo_cmp = tmp7[4];
-
-  assign resta = (func > 3'd2);
-  assign bneg  = (func == 3'd4);
-  assign ofo16 = resta ? ( bneg ? x[15] & out[15] : 
-                               (~x[15] & y[15] & out[15] | x[15] & ~y[15] & ~out[15]))
-                     : (~x[15] & ~y[15] & out[15] | x[15] & y[15] & ~out[15]);
-
-  assign ofo8  = resta ? ( bneg ? x[7] & out[7] :
-                               (~x[7] & y[7] & out[7] | x[7] & ~y[7] & ~out[7]))
-                     : (~x[7] & ~y[7] & out[7] | x[7] & y[7] & ~out[7]);
-
-  assign cfoneg8  = x[7:0]!=8'd0;
-  assign cfoneg16 = x[15:0]!=16'd0;
-  assign bincdec = (func == 3'd2 || func == 3'd3);
-  assign cfo8  = bneg ? cfoneg8  : out17[8];
-  assign cfo16 = bneg ? cfoneg16 : out17[16];
-  assign out   = out17[15:0];
-  assign cfo   = bincdec ? cfi : (word_op ? cfo16 : cfo8);
-  assign ofo   = word_op ? ofo16 : ofo8;
+  assign xs  = word_op ? x[15] : x[7];
+  assign ys  = word_op ? y[15] : y[7];
+  assign os  = word_op ? out[15] : out[7];
+  assign ofo = f[2] ? (~xs & ys & os | xs & ~ys & ~os)
+                    : (~xs & ~ys & os | xs & ys & ~os);
 endmodule
 
 module conv (
@@ -286,54 +265,48 @@ endmodule
 // This module implements the instructions shl/sal, sar, shr
 //
 
-module shifts(x, y, out, func, word_op, cfi, ofi, cfo, ofo);
+module shifts(x, y, out, func, word_op, cfo, ofo);
   // IO ports
-  input  [15:0] x, y;
+  input  [15:0] x;
+  input  [ 4:0] y;
   input   [1:0] func;
-  input         cfi, ofi;
   input         word_op;
   output [15:0] out;
   output        cfo, ofo;
 
   // Net declarations
-  wire [15:0] sal_shl, sar, shr, sar16, shr16;
-  wire [7:0]  sar8, shr8;
-  wire signed [15:0] x_s;
-  wire signed [7:0]  x_s8;
-  wire ofo_shl, ofo_sar, ofo_shr, ofo_o;
+  wire [15:0] sal, sar, shr, sal16, sar16, shr16;
+  wire [7:0]  sal8, sar8, shr8;
+  wire ofo_shl, ofo_sar, ofo_shr;
   wire cfo_sal8, cfo_sal16, cfo_sar8, cfo_sar16, cfo_shr8, cfo_shr16;
   wire cfo16, cfo8;
 
   // Module instantiations
-  mux4_16 m0(func, sal_shl, sar, shr, 16'd0, out);
-  mux4_1  m1(func, ofo_shl, ofo_sar, ofo_shr, 1'b0, ofo_o);
+  mux4_16 m0(func, sal, sar, shr, 16'd0, out);
+  mux4_1  m1(func, ofo_shl, ofo_sar, ofo_shr, 1'b0, ofo);
 
   // Assignments
-  assign x_s     = x;
-  assign x_s8    = x[7:0];
-  assign sal_shl = x << y[7:0];
-  assign sar16   = (y[7:0]>8'd15) ? 16'hffff : (x_s >>> y[7:0]);
-  assign shr16   = x >> y[7:0];
-  assign sar8    = (y[7:0]>8'd15) ? 8'hff : (x_s8 >>> y[7:0]);
-  assign shr8    = x[7:0] >> y[7:0];
-  assign shr     = word_op ? shr16 : {8'd0, shr8};
-  assign sar     = word_op ? sar16 : { {8{sar8[7]}}, sar8};
+  assign { cfo_sal16, sal16 } = x << y;
+  assign { sar16, cfo_sar16 } = (y > 5'd16) ? 17'h1ffff
+    : (({x,1'b0} >> y) | (x[15] ? (17'h1ffff << (17 - y))
+                                     : 17'h0));
+  assign { shr16, cfo_shr16 } = ({x,1'b0} >> y);
 
-  assign cfo_sal8  = |(x[7:0] & (8'h80 >> (y[7:0]-1)));
-  assign cfo_sal16 = |(x & (16'h8000 >> (y[7:0]-1)));
-  assign cfo_sar8  = (y[7:0]>8'd8) ? 1'b1 :
-                     (1'b1 & (x_s8 >>> (y[7:0]-1)));
-  assign cfo_sar16 = (y[7:0]>8'd16) ? 1'b1 :
-                     (1'b1 & (x_s >>> (y[7:0]-1)));
-  assign cfo_shr8  = (1'b1 & (x[7:0] >> (y[7:0]-1)));
-  assign cfo_shr16 = (1'b1 & (x >> (y[7:0]-1)));
+  assign { cfo_sal8, sal8 } = x[7:0] << y;
+  assign { sar8, cfo_sar8 } = (y > 5'd8) ? 9'h1ff
+    : (({x[7:0],1'b0} >> y) | (x[7] ? (9'h1ff << (9 - y))
+                                         : 9'h0));
+  assign { shr8, cfo_shr8 } = ({x[7:0],1'b0} >> y);
 
-  assign cfo16 = (y[7:0] == 8'd0) ? cfi :
-              (func[1] ? cfo_shr16 : (func[0] ? cfo_sar16 : cfo_sal16));
-  assign cfo8  = (y[7:0] == 8'd0) ? cfi :
-              (func[1] ? cfo_shr8 : (func[0] ? cfo_sar8 : cfo_sal8));
+  assign sal     = word_op ? sal16 : { 8'd0, sal8 };
+  assign shr     = word_op ? shr16 : { 8'd0, shr8 };
+  assign sar     = word_op ? sar16 : { {8{sar8[7]}}, sar8 };
+
+  assign cfo16 = func[1] ? cfo_shr16
+               : (func[0] ? cfo_sar16 : cfo_sal16);
+  assign cfo8  = func[1] ? cfo_shr8
+               : (func[0] ? cfo_sar8 : cfo_sal8);
   assign cfo = word_op ? cfo16 : cfo8;
-  assign ofo = (y[7:0] == 16'd0) ? ofi : ofo_o;
   assign ofo_shl = word_op ? (out[15] != cfo) : (out[7] != cfo);
   assign ofo_sar = 1'b0;
   assign ofo_shr = word_op ? x[15] : x[7];

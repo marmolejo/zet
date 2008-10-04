@@ -30,6 +30,7 @@ module cpu (
     output [15:0] x,
     output [15:0] y,
     output [15:0] imm,
+    output [15:0] aluo,
 `endif
 
     // Wishbone signals
@@ -83,8 +84,9 @@ module cpu (
 
   exec exec0 (
 `ifdef DEBUG
-    .x (x),
-    .y (y),
+    .x    (x),
+    .y    (y),
+    .aluo (aluo),
 `endif
     .ir      (ir),
     .off     (off),

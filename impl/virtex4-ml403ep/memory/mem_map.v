@@ -1,6 +1,11 @@
 `timescale 1ns/10ps
 
+`include "defines.v"
+
 module mem_map (
+`ifdef DEBUG
+    output     [ 2:0] curr_st,
+`endif
 /*
     // VGA pad signals
     input         vdu_clk,  // 25MHz	VDU clock
@@ -40,6 +45,9 @@ module mem_map (
 
   // Module instantiations
   mem_ctrl mem_ctrl0 (
+`ifdef DEBUG
+    .curr_st (curr_st),
+`endif
     .clk_i  (clk_i),
     .rst_i  (rst_i),
     .adr_i  (adr_i),

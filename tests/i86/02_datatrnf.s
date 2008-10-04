@@ -1,22 +1,3 @@
-# Recursive testbench for transfer data instructions, except "mov" 
-#  but ("jmp" & "mov" must work!!)
-#
-# At the end (3591ns in rtl-model, 274380ns in spartan3), %ax=0x8cf1
-#
-# sahf   1
-# lahf   2
-# lds    3
-# lea    4
-# les    5
-# pop    6 (reg,non-st), 7 (seg), 8 (mem)
-# popf   9
-# push  10 (reg), 11 (seg), 12 (mem) 
-# pushf 13
-# xchg  14 (reg-reg), 15 (reg-mem), 16 (reg-acum), 17 (reg-reg,byte)
-# xlat  18
-# in    19 (byte,imm) 20 (byte,dx) 21 (word,imm) 22 (word,dx)
-# out   23 (byte,imm) 24 (byte,dx) 25 (word,imm) 26 (word,dx)
-
 .code16
 start:
 movb $0xed, %ah

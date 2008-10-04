@@ -1,24 +1,3 @@
-# Jump instruction testbench 1
-#
-# At the end (6215ns in rtl-model, 287us in spartan3), %ax=0x1234
-#
-# ja/jnbe     1
-# jae/jnb/jnc 2
-# jb/jnae/jc  3
-# jbe/jna     4
-# je/jz       5
-# jg/jnle     6
-# jge/jnl     7
-# jl/jnge     8
-# jle/jng     9
-# jne/jnz    10
-# jno        11
-# jnp/jpo    12
-# jns        13
-# jo         14
-# jp/jpe     15
-# js         16
-#
 .code16
 start:
 movw $0, %cx

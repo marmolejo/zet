@@ -1,7 +1,7 @@
-vdel -all -lib work
-vlib work
-vlog -work work -lint +incdir+../../rtl-model ../../rtl-model/regfile.v ../../rtl-model/alu.v ../../rtl-model/cpu.v ../../rtl-model/exec.v ../../rtl-model/fetch.v ../../rtl-model/jmp_cond.v ../../rtl-model/util/primitives.v ../../rtl-model/rotate.v
-vlog -work work +incdir+.. ../memory.v ../testbench.v
+#vdel -all -lib work
+#vlib work
+#vlog -work work -lint +incdir+../../rtl-model ../../rtl-model/regfile.v ../../rtl-model/alu.v ../../rtl-model/cpu.v ../../rtl-model/exec.v ../../rtl-model/fetch.v ../../rtl-model/jmp_cond.v ../../rtl-model/util/primitives.v ../../rtl-model/rotate.v
+#vlog -work work +incdir+.. ../memory.v ../testbench.v
 vsim -novopt -t ns work.testbench
 add wave -label clk /testbench/clk
 add wave -label rst /testbench/rst
@@ -35,3 +35,4 @@ add wave -label wr /testbench/cpu0/exec0/reg0/wr
 add wave -label we /testbench/we
 add wave -label ack_i /testbench/ack_i
 add wave -label fetch_or_exec /testbench/cpu0/fetch_or_exec
+run 50us

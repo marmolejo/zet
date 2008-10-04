@@ -1,8 +1,3 @@
-# String repeating prefixes testbench
-# At the end (12835ns in rtl-model, 319.5us in spartan3), %ax=0x1234
-#
-# rep, repz, repnz
-
 .code16
 start:
 
@@ -59,7 +54,7 @@ jmp rep_movs_nz
 jmp cont_n5
 .org 0x0ffe
 jmp cont_n10
-# Prefixes don't affect normal instructions
+# Prefixes do not affect normal instructions
 .org 0x1000
 movw $0, %cx
 .byte 0xf3 

@@ -1,39 +1,3 @@
-#  Shift logic instruction test bench
-
-#  Copyright (c) 2008  Zeus Gomez Marmolejo <zeus@opencores.org>
-#
-#  This file is part of the Zet processor. This processor is free
-#  hardware; you can redistribute it and/or modify it under the terms of
-#  the GNU General Public License as published by the Free Software
-#  Foundation; either version 3, or (at your option) any later version.
-#
-#  Zet is distrubuted in the hope that it will be useful, but WITHOUT
-#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-#  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
-#  License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with Zet; see the file COPYING. If not, see
-#  <http://www.gnu.org/licenses/>.
-
-# sal  1 (w:1,r), 2 (w:1,m), 3 (w:cl,r), 4 (w:cl,m)
-#      5 (b:1,r), 6 (b:1,m), 7 (b:cl,r), 8 (b:cl,m)
-# sar  9 (w:1,r), 10(w:1,m), 11(w:cl,r), 12(w:cl,m)
-#      13(b:1,r), 14(b:1,m), 15(b:cl,r), 16(b:cl,m)
-# shr  17(w:1,r), 18(w:1,m), 19(w:cl,r), 20(w:cl,m)
-#      21(b:1,r), 22(b:1,m), 23(b:cl,r), 24(b:cl,m)
-#
-# End results, memory contents:
-#
-# 0x00:  0xa670  0x31e0  0x66c0  0x6480  0x0f5d  0x7402  0xe5d4  0x6eff
-# 0x10:  0x5d55  0x3403  0x1d26  0x8d00  0xXXXX  0xXXXX  0xXXXX  0xXXXX
-# 0x20:  0xdd8a  0xb1a8  0x0000  0xa800  0x8493  0x9580  0xfdb9  0xdfb9
-# 0x30:  0xffff  0xfefd  0x3388  0x93ff  0x3dd0  0x54e8  0x0000  0x054e
-# 0x40:  0x0b28  0x0400  0x0046  0x0046  0x0007  0x0002  0x0006  0x0007
-# 0x50:  0x0046  0x0806  0x0806  0x0003  0x0087  0x0086  0x0082  0x0006
-# 0x60:  0x0003  0x0083  0x0087  0x0003  0x0003  0x0082  0x0083  0x0083
-# 0x70:  0x0006  0x0886  0x0083  0x0087  0x0046  0x0882  0x0882  0x0882
-
 .code16
 start:
 

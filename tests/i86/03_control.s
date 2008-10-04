@@ -1,18 +1,3 @@
-# Microprocessor control instruction test bench
-#
-# At the end (1355ns in rtl-model,262.4us in spartan3), 
-# %ax=0x08d6 and %bx=0x0603
-#
-# clc (1)
-# cld (2)
-# cli (3)
-# cmc (4)
-# hlt (5)
-# nop (6)
-# stc (7)
-# std (8)
-# sti (9)
-#
 .code16
 start:
 movw $0x1000, %ax
@@ -48,8 +33,6 @@ movw $0x0, %cx
 movw %cx, %ds
 movw %ax, (0)
 movw %bx, (2)
-
-#nop    # FIXME: Without this nop seems not working
 
 hlt                # (5)
 

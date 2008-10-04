@@ -186,6 +186,7 @@ module mux4_1(sel, in0, in1, in2, in3, out);
     endcase
 endmodule
 
+/*
 //
 // 1 bit cell divider by 10
 //
@@ -251,5 +252,17 @@ module div10b8 (
     .q (q[0]),
     .r (r)
   );
+*/
 
+module fulladd16 (
+    input  [15:0] x,
+    input  [15:0] y,
+    input         ci,
+    output        co,
+    output [15:0] z,
+    input         s
+  );
+
+  // Continuous assignments
+  assign {co,z} = {1'b0, x} + {s, y} + ci;
 endmodule

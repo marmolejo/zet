@@ -47,7 +47,7 @@ module kotku_ml403 (
 
 `ifdef DEBUG
   wire [35:0] control0;
-  wire [ 5:0] ir;
+  wire [ 5:0] funct;
   wire [ 2:0] state, next_state;
   wire [15:0] x, y;
   wire [15:0] imm;
@@ -56,6 +56,9 @@ module kotku_ml403 (
   wire [15:0] m1, m2;
   wire [19:0] pc;
   wire [15:0] cs, ip;
+  wire [15:0] aluo;
+  wire [ 2:0] curr_st;
+  reg         dbg;
 `endif
 
   // Register declarations
@@ -74,6 +77,9 @@ module kotku_ml403 (
   );
 
   mem_map mem_map0 (
+`ifdef DEBUG
+    .curr_st (curr_st),
+`endif
     // Wishbone signals
     .clk_i  (clk),
     .rst_i  (rst),
@@ -112,10 +118,11 @@ module kotku_ml403 (
     .ip         (ip),
     .state      (state),
     .next_state (next_state),
-    .iralu      (ir),
+    .iralu      (funct),
     .x          (x),
     .y          (y),
     .imm        (imm),
+    .aluo       (aluo),
 `endif
 
     // Wishbone signals
@@ -144,11 +151,17 @@ module kotku_ml403 (
     .TRIG1   ({dat_o,dat_i}),
     .TRIG2   (pc),
     .TRIG3   ({clk,we,mio,byte_o,stb,ack}),
-    .TRIG5   (ir),
-    .TRIG6   ({state,next_state}),
-    .TRIG7   (io_reg),
-    .TRIG8   (imm),
-    .TRIG9   ({x,y})
+    .TRIG4   (funct),
+    .TRIG5   ({state,next_state}),
+    .TRIG6   (io_reg),
+    .TRIG7   (imm),
+    .TRIG8   ({x,y}),
+    .TRIG9   (aluo),
+    .TRIG10  (sram_flash_addr_),
+    .TRIG11  (sram_flash_data_),
+    .TRIG12  ({sram_flash_oe_n_, sram_flash_we_n_, sram_bw_,
+               sram_cen_, sram_adv_ld_n_, flash_ce2_}),
+    .TRIG13  (curr_st)
   );
 
   lcd_display lcd0 (
@@ -188,4 +201,9 @@ module kotku_ml403 (
   always @(posedge clk)
     rst <= rst_lck ? 1'b1 : (but_ ? 1'b0 : rst );
 
+  // dbg
+`ifdef DEBUG
+  always @(posedge clk)
+    dbg <= rst_lck ? 1'b1 : (pc==20'hf005a ? 1'b0 : dbg);
+`endif
 endmodule
