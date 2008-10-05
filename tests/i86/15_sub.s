@@ -24,7 +24,7 @@ movw %cx, (10)
 pushf
 
 movw $0x8000, %ax
-addw $0x0001, %ax
+subw $0x0001, %ax
 movw %ax, (12)
 pushf
 

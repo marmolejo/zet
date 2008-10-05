@@ -52,9 +52,9 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
     .oflags ({af_cnv, of_cnv, cf_cnv})
   );
 
-  bitlog log4 (x[15:0], y[4:0], log, func, cf_log, of_log);
+  bitlog log4 (x[15:0], y, log, func, cf_log, of_log);
   shifts shi5 (x[15:0], y[4:0], shi, func[1:0], word_op, cf_shi, of_shi);
-  rotate rot6 (x[15:0], y, func[1:0], cfi, word_op, rot, cf_rot, ofi, of_rot);
+  rotate rot6 (x[15:0], y[4:0], func[1:0], cfi, word_op, rot, cf_rot, ofi, of_rot);
   othop  oth7 (x[15:0], y, seg, off, iflags, func, word_op, oth, othflags);
 
   mux8_16 m0(t, {8'd0, y[7:0]}, add, cnv[15:0],
