@@ -1,8 +1,10 @@
 vdel -all -lib work
+vmap unisims /opt/Xilinx/10.1/modelsim/verilog/unisims
 vlib work
 vlog -work work -lint +incdir+../../rtl-model ../../rtl-model/regfile.v ../../rtl-model/alu.v ../../rtl-model/cpu.v ../../rtl-model/exec.v ../../rtl-model/fetch.v ../../rtl-model/jmp_cond.v ../../rtl-model/util/primitives.v ../../rtl-model/rotate.v
-vlog -work work +incdir+.. ../memory.v ../testbench.v
-vsim -novopt -t ns work.testbench
+vlog -work work +incdir+.. ../memory.v ../testbench.v ../mult.v
+vlog -work unisims /opt/Xilinx/10.1/ISE/verilog/src/glbl.v
+vsim -L /opt/Xilinx/10.1/modelsim/verilog/unisims -novopt -t ns work.testbench work.glbl
 add wave -label clk /testbench/clk
 add wave -label rst /testbench/rst
 add wave -label pc -radix hexadecimal /testbench/cpu0/fetch0/pc

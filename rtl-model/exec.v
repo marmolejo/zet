@@ -60,10 +60,11 @@ module exec (
   wire        mem_op, b_imm;
   wire  [8:0] flags, iflags, oflags;
   wire  [4:0] logic_flags;
+  wire        wordop;
 
   // Module instances
   alu     alu0( {c, a }, bus_b, aluout, t, func, alu_iflags, oflags, 
-               ~byteop, s, off);
+               wordop, s, off, clk);
   regfile reg0( a, b, c, cs, ip, {aluout[31:16], omemalu}, s, flags, wr_reg, wrfl,
                 high, clk, rst, addr_a, addr_b, addr_c, addr_d, addr_s, iflags,
                 ~byteop, a_byte, c_byte, cx_zero);
@@ -78,7 +79,7 @@ module exec (
   assign wrfl   = ir[18];
   assign we     = ir[19];
   assign wr     = ir[20];
-  assign wr_cnd = ir[21]; 
+  assign wr_cnd = ir[21];
   assign high   = ir[22];
   assign t      = ir[25:23];
   assign func   = ir[28:26];
@@ -104,6 +105,9 @@ module exec (
   assign alu_iflags = { 4'b0, flags[8:3], 1'b0, flags[2], 1'b0, flags[1], 
                         1'b1, flags[0] };
   assign logic_flags = { flags[8], flags[4], flags[3], flags[1], flags[0] };
+
+  assign wordop = (t==3'b011) ? ~a_byte : ~byteop;
+
 `ifdef DEBUG
   assign x        = a;
   assign y        = bus_b;

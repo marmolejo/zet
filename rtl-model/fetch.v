@@ -1307,6 +1307,18 @@ module opcode_deco (
           dst <= rm;
         end
 
+      8'b1101_0101: // aad
+        begin
+          seq_addr <= `AAD;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
+
       8'b1101_0111: // xlat
         begin
           seq_addr <= `XLAT;
@@ -1478,22 +1490,28 @@ module opcode_deco (
           dst <= 4'b0;
         end
 
-      8'b1111_011x: // test i->r, i->m
+      8'b1111_011x: // test, not, neg, mul, imul
         begin
-          seq_addr   <= regm == 3'b011 ? 
-                        ((mod==2'b11) ? (b ? `NEGRB : `NEGRW)
-                                      : (b ? `NEGMB : `NEGMW))
-                      : (regm == 3'b000 ? 
-                        ((mod==2'b11) ? (b ? `TSTIRB : `TSTIRW)
-                                      : (b ? `TSTIMB : `TSTIMW))
-                      : ((mod==2'b11) ? (b ? `NOTRB : `NOTRW)
-                                      : (b ? `NOTMB : `NOTMW)));
+          case (regm)
+            3'b000: seq_addr <= (mod==2'b11) ?
+             (b ? `TSTIRB : `TSTIRW) : (b ? `TSTIMB : `TSTIMW);
+            3'b010: seq_addr <= (mod==2'b11) ?
+             (b ? `NOTRB : `NOTRW) : (b ? `NOTMB : `NOTMW);
+            3'b011: seq_addr <= (mod==2'b11) ?
+             (b ? `NEGRB : `NEGRW) : (b ? `NEGMB : `NEGMW);
+            3'b100: seq_addr <= (mod==2'b11) ?
+             (b ? `MULRB : `MULRW) : (b ? `MULMB : `MULMW);
+            3'b101: seq_addr <= (mod==2'b11) ?
+             (b ? `IMULRB : `IMULRW) : (b ? `IMULMB : `IMULMW);
+            default: seq_addr <= `NOP;
+          endcase
+
           need_modrm <= 1'b1;
           need_off   <= need_off_mod;
           need_imm   <= (regm == 3'b000); // imm on test
           off_size   <= off_size_mod;
           imm_size   <= ~b;
-          dst        <= { 1'b0, srcm };
+          dst        <= { 1'b0, modrm[2:0] };
           src        <= { 1'b0, modrm[2:0] };
         end
 

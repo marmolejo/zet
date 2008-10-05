@@ -18,7 +18,7 @@
 
 `timescale 1ns/10ps
 
-module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
+module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off, clk);
   // IO ports
   input  [31:0] x;
   input  [15:0] y;
@@ -28,6 +28,7 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
   input  [15:0] seg, off;
   output [31:0] out;
   output  [8:0] oflags;
+  input  clk;
 
   // Net declarations
   wire [15:0] add, log, shi, rot;
@@ -43,13 +44,24 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
 
   // Module instances
   addsub add1 (x[15:0], y, add, func, word_op, cfi, cf_add, af_add, of_add);
-//  muldiv mul0(x, y, mul, func[1:0], word_op, cf_mul, of_mul);
+
   conv cnv2 (
     .x      (x[15:0]),
     .func   (func),
     .out    (cnv),
     .iflags ({afi, ofi, cfi}),
     .oflags ({af_cnv, of_cnv, cf_cnv})
+  );
+
+  muldiv mul3 (
+    .x       (x),
+    .y       (y),
+    .o       (mul),
+    .f       (func[1:0]),
+    .word_op (word_op),
+    .cfo     (cf_mul),
+    .ofo     (of_mul),
+    .clk     (clk)
   );
 
   bitlog log4 (x[15:0], y, log, func, cf_log, of_log);
@@ -61,9 +73,9 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off);
              mul[15:0], log, shi, rot, oth[15:0], out[15:0]);
   mux8_16 m1(t, 16'd0, 16'd0, cnv[31:16], mul[31:16],
              16'd0, 16'd0, 16'd0, {12'b0,oth[19:16]}, out[31:16]);
-  mux8_1  a1(t, cfi, cf_add, cf_cnv, cf_mul, cf_log, cf_shi, cf_rot, 1'b0, cfo);
-  mux8_1  a2(t, afi, af_add, af_cnv, 1'b0, 1'b0, 1'b0, afi, 1'b0, afo);
-  mux8_1  a3(t, ofi, of_add, of_cnv, of_mul, of_log, of_shi, of_rot, 1'b0, ofo);
+  mux8_1  a1(t, 1'b0, cf_add, cf_cnv, cf_mul, cf_log, cf_shi, cf_rot, 1'b0, cfo);
+  mux8_1  a2(t, 1'b0, af_add, af_cnv, 1'b0, 1'b0, 1'b0, afi, 1'b0, afo);
+  mux8_1  a3(t, 1'b0, of_add, of_cnv, of_mul, of_log, of_shi, of_rot, 1'b0, ofo);
 
   // Flags
   assign pfo = flags_unchanged ? pfi : ^~ out[7:0];
@@ -183,61 +195,47 @@ module conv (
   assign oflags = { afo, ofo, cfo };
 endmodule
 
-/*
-module muldiv(x, y, out, func, word_op, cfo, ofo);
-  // IO ports
-  input  [31:0] x;
-  input  [15:0] y;
-  input  [1:0] func;
-  input        word_op;
-  output [31:0] out;
-  output        cfo, ofo;
+
+module muldiv (
+    input  [31:0] x,  // 16 MSb for division
+    input  [15:0] y,
+    output [31:0] o,
+    input  [ 1:0] f,
+    input         word_op,
+    output        cfo,
+    output        ofo,
+    input         clk
+  );
 
   // Net declarations
-  wire signed [31:0] x_s, imul, idiv32, mods32;
-  wire signed [15:0] y_s, idivr16, modsr16, idiv16, mods16;
-  wire signed [7:0]  idivr8, modsr8; 
-  wire [31:0] mul, div32, modu32, div, idiv;
-  wire [15:0] divr16, modur16, div16, modu16;
-  wire [7:0]  divr8, modur8;
-  wire cfo8, cfo16;
+  wire as, bs, cfs, cfu;
+  wire [16:0] a, b;
+  wire [33:0] p;
 
   // Module instantiations
-  mux4_32 m0(func, mul, imul, div, idiv, out);
+  mult signmul17 (
+    .clk (clk),
+    .a   (a),
+    .b   (b),
+    .p   (p)
+  );
 
-  // Assignments
-  assign x_s = x;
-  assign y_s = y;
-  assign mul  = x[15:0] * y;
-  assign imul = x_s[15:0] * y_s;
+  // Sign ext. for imul
+  assign as  = f[0] & (word_op ? x[15] : x[7]);
+  assign bs  = f[0] & (word_op ? y[15] : y[7]);
+  assign a   = word_op ? { as, x[15:0] }
+                       : { {9{as}}, x[7:0] };
+  assign b   = word_op ? { bs, y } : { {9{bs}}, y[7:0] };
+  assign o   = p[31:0];
 
-  assign div32  = 32'd0; //x / y;
-  assign modu32 = 32'd0; //x % y;
-  assign idiv32 = 32'd0; //x_s / y_s;
-  assign mods32 = 32'd0; //x_s % y_s;
-  assign divr16  = div32[15:0];
-  assign modur16 = modu32[15:0];
-  assign idivr16 = idiv32[15:0];
-  assign modsr16 = mods32[15:0];
-
-  assign div16  = 16'd0; //x[15:0] / y[7:0];
-  assign modu16 = 16'd0; //x[15:0] % y[7:0];
-  assign idiv16 = 16'd0; //x_s[15:0] / y_s[7:0];
-  assign mods16 = 16'd0; //x_s[15:0] % y_s[7:0];
-  assign divr8  = div16[7:0];
-  assign modur8 = modu16[7:0];
-  assign idivr8 = idiv16[7:0];
-  assign modsr8 = mods16[7:0];
-
-  assign div   = word_op ? { modur16, divr16 } : { 16'd0, modur8, divr8 };
-  assign idiv  = word_op ? { modsr16, idivr16 } : { 16'd0, modsr8, idivr8 };
-
-  assign cfo16 = (out[31:16] != { 16{out[15]} });
-  assign cfo8  = (out[15:8]  != {  8{out[7]} });
-  assign cfo = word_op ? cfo16 : cfo8;
   assign ofo = cfo;
+  assign cfo = !(f[0] ? cfs : cfu);
+  assign cfu = word_op ? (o[31:16] == 16'h0)
+                       : (o[15:8] == 8'h0);
+  assign cfs = word_op ? (o[31:16] == {16{o[15]}})
+                       : (o[15:8] == {8{o[7]}});
 endmodule
-*/
+
 module bitlog(x, y, out, func, cfo, ofo);
   // IO ports
   input  [15:0] x, y;
