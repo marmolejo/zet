@@ -1,7 +1,7 @@
 vdel -all -lib work
 vmap unisims /opt/Xilinx/10.1/modelsim/verilog/unisims
 vlib work
-vlog -work work -lint +incdir+../../rtl-model ../../rtl-model/regfile.v ../../rtl-model/alu.v ../../rtl-model/cpu.v ../../rtl-model/exec.v ../../rtl-model/fetch.v ../../rtl-model/jmp_cond.v ../../rtl-model/util/primitives.v ../../rtl-model/rotate.v
+vlog -work work -lint +incdir+../../rtl-model +incdir+.. ../../rtl-model/regfile.v ../../rtl-model/alu.v ../../rtl-model/cpu.v ../../rtl-model/exec.v ../../rtl-model/fetch.v ../../rtl-model/jmp_cond.v ../../rtl-model/util/primitives.v ../../rtl-model/util/div_su.v ../../rtl-model/util/div_uu.v ../../rtl-model/rotate.v
 vlog -work work +incdir+.. ../memory.v ../testbench.v ../mult.v
 vlog -work unisims /opt/Xilinx/10.1/ISE/verilog/src/glbl.v
 vsim -L /opt/Xilinx/10.1/modelsim/verilog/unisims -novopt -t ns work.testbench work.glbl
@@ -37,4 +37,6 @@ add wave -label wr /testbench/cpu0/exec0/reg0/wr
 add wave -label we /testbench/we
 add wave -label ack_i /testbench/ack_i
 add wave -label fetch_or_exec /testbench/cpu0/fetch_or_exec
+add wave -divider mul
+add wave -radix hexadecimal -r /testbench/cpu0/exec0/alu0/mul3/dut/*
 #run 50us

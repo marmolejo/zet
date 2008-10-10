@@ -44,7 +44,9 @@ module exec (
     output        we,
     output        m_io,
     output        byteop,
-    input         mem_rdy
+    input         mem_rdy,
+    output        div_exc,
+    input         wrip0
   );
 
   // Net declarations
@@ -53,21 +55,25 @@ module exec (
   wire [3:0]  addr_a, addr_b, addr_c, addr_d;
   wire [2:0]  t, func;
   wire [1:0]  addr_s;
-  wire        wrfl, high, memalu, a_byte, c_byte;
+  wire        wrfl, high, memalu, r_byte, c_byte;
   wire        wr, wr_reg, block;
   wire        wr_cnd;
   wire        jmp;
   wire        mem_op, b_imm;
   wire  [8:0] flags, iflags, oflags;
   wire  [4:0] logic_flags;
-  wire        wordop;
+  wire        alu_word;
+  wire        a_byte;
+  wire        b_byte;
+  wire        wr_high;
+  wire        dive;
 
   // Module instances
   alu     alu0( {c, a }, bus_b, aluout, t, func, alu_iflags, oflags, 
-               wordop, s, off, clk);
+               alu_word, s, off, clk, dive);
   regfile reg0( a, b, c, cs, ip, {aluout[31:16], omemalu}, s, flags, wr_reg, wrfl,
-                high, clk, rst, addr_a, addr_b, addr_c, addr_d, addr_s, iflags,
-                ~byteop, a_byte, c_byte, cx_zero);
+                wr_high, clk, rst, addr_a, addr_b, addr_c, addr_d, addr_s, iflags,
+                ~byteop, a_byte, b_byte, c_byte, cx_zero, wrip0);
   jmp_cond jc0( logic_flags, addr_b, addr_c[0], c, jmp);
 
   // Assignments
@@ -88,7 +94,7 @@ module exec (
   assign mem_op = ir[31];
   assign m_io   = ir[32];
   assign b_imm  = ir[33];
-  assign a_byte = ir[34];
+  assign r_byte = ir[34];
   assign c_byte = ir[35];
 
   assign omemalu = memalu ? aluout[15:0] : memout;
@@ -96,7 +102,8 @@ module exec (
 
   assign addr = aluout[19:0];
   assign wr_data = c;
-  assign wr_reg = (wr | (jmp & wr_cnd)) && !block;
+  assign wr_reg  = (wr | (jmp & wr_cnd)) && !block && !div_exc;
+  assign wr_high = high && !block && !div_exc;
   assign of = flags[8];
   assign zf = flags[3];
   assign block = mem_op && !mem_rdy;
@@ -106,7 +113,10 @@ module exec (
                         1'b1, flags[0] };
   assign logic_flags = { flags[8], flags[4], flags[3], flags[1], flags[0] };
 
-  assign wordop = (t==3'b011) ? ~a_byte : ~byteop;
+  assign alu_word = (t==3'b011) ? ~r_byte : ~byteop;
+  assign a_byte = (t==3'b011 && func[1]) ? 1'b0 : r_byte;
+  assign b_byte = r_byte;
+  assign div_exc = dive && wr;
 
 `ifdef DEBUG
   assign x        = a;

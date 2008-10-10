@@ -39,7 +39,9 @@ module fetch (
     output [19:0] pc,
     output bytefetch, 
     output fetch_or_exec,
-    input  mem_rdy
+    input  mem_rdy,
+    input  div_exc,
+    output inopco_st
   );
 
   // Registers, nets and parameters
@@ -62,19 +64,20 @@ module fetch (
   wire next_in_opco, next_in_exec;
   wire block;
   wire need_modrm, need_off, need_imm, off_size, imm_size;
+  wire dive;
 
   reg [7:0] opcode_l, modrm_l;
   reg [15:0] off_l, imm_l;
   reg [1:0] pref_l;
 
   // Module instantiation
-  decode decode0(opcode, modrm, off_l, imm_l, pref_l[1], clk, rst, block, 
-                 exec_st, need_modrm, need_off, need_imm, off_size, imm_size,
-                 rom_ir, off, imm_d, end_seq);
+  decode decode0(opcode, modrm, off_l, imm_l, pref_l[1], clk, rst, block,
+                 exec_st, div_exc, need_modrm, need_off, need_imm, off_size,
+                 imm_size, rom_ir, off, imm_d, end_seq, dive);
   next_or_not nn0(pref_l, opcode[7:1], cx_zero, zf, next_in_opco, 
                   next_in_exec);
   nstate ns0(state, prefix, need_modrm, need_off, need_imm, end_seq,
-             rom_ir[28:23], of, next_in_opco, next_in_exec, block,
+             rom_ir[28:23], of, next_in_opco, next_in_exec, block, div_exc,
              next_state);
 
   // Assignments
@@ -87,12 +90,14 @@ module fetch (
   assign bytefetch = (state == offse_st) ? ~off_size 
                    : ((state == immed_st) ? ~imm_size : 1'b1); 
   assign exec_st = (state == execu_st);
-  assign imm = (state == execu_st) ? imm_d 
-              : ((state == offse_st) & off_size 
+  assign imm = (state == execu_st) ? imm_d
+              : (((state == offse_st) & off_size 
                 | (state == immed_st) & imm_size) ? 16'd2
-              : 16'd1;
+              : 16'd1);
   assign prefix = (opcode[7:1]==7'b1111_001);
   assign block  = ir[`MEM_OP] && !mem_rdy;
+
+  assign inopco_st = (state == opcod_st);
 
   // Behaviour
   always @(posedge clk)
@@ -163,6 +168,7 @@ module nstate (
     input next_in_opco,
     input next_in_exec,
     input block,
+    input div_exc,
     output [2:0] next_state
   );
 
@@ -178,7 +184,7 @@ module nstate (
   // Assignments
   assign into = (ftype==6'b111_010);
   assign end_into = into ? ~of : end_seq;
-  assign end_instr = end_into && !next_in_exec;
+  assign end_instr = !div_exc && end_into && !next_in_exec;
 
   assign n_state = (state == opcod_st) ? (prefix ? opcod_st 
                          : (next_in_opco ? opcod_st
@@ -230,6 +236,7 @@ module decode (
     input rst,
     input block,
     input exec_st,
+    input div_exc,
 
     output need_modrm,
     output need_off,
@@ -240,7 +247,8 @@ module decode (
     output [`IR_SIZE-1:0] ir,
     output [15:0] off_o,
     output [15:0] imm_o,
-    output end_seq
+    output end_seq,
+    output reg dive
   );
 
   // Net declarations
@@ -259,15 +267,19 @@ module decode (
                      ir, off_o, imm_o);
 
   // Assignments
-  assign seq_addr = base_addr + seq;
+  assign seq_addr = (dive ? `INTD : base_addr) + seq;
 
   // Behaviour
+  // seq
   always @(posedge clk)
     if (rst) seq <= `SEQ_ADDR_WIDTH'd0;
     else if (!block)
       seq <= (exec_st && !end_seq && !rst) ? (seq + `SEQ_ADDR_WIDTH'd1) 
                                 : `SEQ_ADDR_WIDTH'd0;
-
+  // dive
+  always @(posedge clk)
+    if (rst) dive <= 1'b0;
+    else dive <= block ? dive : (div_exc ? 1'b1 : (dive ? !end_seq : 1'b0));
 endmodule
 
 module opcode_deco (
@@ -1306,7 +1318,19 @@ module opcode_deco (
           src <= rm;
           dst <= rm;
         end
-
+/*
+      8'b1101_0100: // aam
+        begin
+          seq_addr <= `AAM;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          off_size <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
+*/
       8'b1101_0101: // aad
         begin
           seq_addr <= `AAD;
@@ -1503,6 +1527,10 @@ module opcode_deco (
              (b ? `MULRB : `MULRW) : (b ? `MULMB : `MULMW);
             3'b101: seq_addr <= (mod==2'b11) ?
              (b ? `IMULRB : `IMULRW) : (b ? `IMULMB : `IMULMW);
+            3'b110: seq_addr <= (mod==2'b11) ?
+             (b ? `DIVRB : `DIVRW) : (b ? `DIVMB : `DIVMW);
+            3'b111: seq_addr <= (mod==2'b11) ?
+             (b ? `IDIVRB : `IDIVRW) : (b ? `IDIVMB : `IDIVMW);
             default: seq_addr <= `NOP;
           endcase
 

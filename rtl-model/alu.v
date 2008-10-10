@@ -18,17 +18,20 @@
 
 `timescale 1ns/10ps
 
-module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off, clk);
-  // IO ports
-  input  [31:0] x;
-  input  [15:0] y;
-  input  [2:0]  t, func;
-  input  [15:0] iflags;
-  input         word_op;
-  input  [15:0] seg, off;
-  output [31:0] out;
-  output  [8:0] oflags;
-  input  clk;
+module alu (
+    input  [31:0] x,
+    input  [15:0] y,
+    output [31:0] out,
+    input  [ 2:0] t,
+    input  [ 2:0] func,
+    input  [15:0] iflags,
+    output [ 8:0] oflags,
+    input         word_op,
+    input  [15:0] seg,
+    input  [15:0] off,
+    input         clk,
+    output        div_exc
+  );
 
   // Net declarations
   wire [15:0] add, log, shi, rot;
@@ -41,6 +44,7 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off, clk);
   wire ofi, sfi, zfi, afi, pfi, cfi;
   wire ofo, sfo, zfo, afo, pfo, cfo;
   wire flags_unchanged;
+  wire dexc;
 
   // Module instances
   addsub add1 (x[15:0], y, add, func, word_op, cfi, cf_add, af_add, of_add);
@@ -61,7 +65,8 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off, clk);
     .word_op (word_op),
     .cfo     (cf_mul),
     .ofo     (of_mul),
-    .clk     (clk)
+    .clk     (clk),
+    .exc     (dexc)
   );
 
   bitlog log4 (x[15:0], y, log, func, cf_log, of_log);
@@ -98,6 +103,9 @@ module alu(x, y, out, t, func, iflags, oflags, word_op, seg, off, clk);
                          || t == 3'd4 && func == 3'd2
                          || t == 3'd5 && y[4:0] == 5'h0
                          || t == 3'd6 && y[4:0] == 5'h0);
+
+  assign div_exc = func[1] && (t==3'd3) && dexc;
+
 endmodule
 
 module addsub (
@@ -204,13 +212,20 @@ module muldiv (
     input         word_op,
     output        cfo,
     output        ofo,
-    input         clk
+    input         clk,
+    output        exc
   );
 
   // Net declarations
   wire as, bs, cfs, cfu;
   wire [16:0] a, b;
   wire [33:0] p;
+  wire div0, over, ovf, mint;
+
+  wire [33:0] zi;
+  wire [16:0] di;
+  wire [17:0] q;
+  wire [17:0] s;
 
   // Module instantiations
   mult signmul17 (
@@ -220,13 +235,36 @@ module muldiv (
     .p   (p)
   );
 
+  div_su #(34) dut (
+    .clk  (clk),
+    .ena  (1'b1),
+    .z    (zi),
+    .d    (di),
+    .q    (q),
+    .s    (s),
+    .ovf  (ovf),
+    .div0 (div0)
+  );
+
   // Sign ext. for imul
   assign as  = f[0] & (word_op ? x[15] : x[7]);
   assign bs  = f[0] & (word_op ? y[15] : y[7]);
   assign a   = word_op ? { as, x[15:0] }
                        : { {9{as}}, x[7:0] };
   assign b   = word_op ? { bs, y } : { {9{bs}}, y[7:0] };
-  assign o   = p[31:0];
+
+  assign zi  = word_op ? (f[0] ? { {2{x[31]}}, x }
+                               : { 2'b0, x })
+                       : (f[0] ? { {18{x[15]}}, x[15:0] }
+                               : { 18'b0, x[15:0] });
+
+  assign di  = word_op ? (f[0] ? { y[15], y } : { 1'b0, y })
+                       : (f[0] ? { {9{y[7]}}, y[7:0] }
+                               : { 9'h000, y[7:0] });
+
+  assign o   = f[1] ? ( word_op ? {s[15:0], q[15:0]}
+                                : {16'h0, s[7:0], q[7:0]})
+                    : p[31:0];
 
   assign ofo = cfo;
   assign cfo = !(f[0] ? cfs : cfu);
@@ -234,6 +272,15 @@ module muldiv (
                        : (o[15:8] == 8'h0);
   assign cfs = word_op ? (o[31:16] == {16{o[15]}})
                        : (o[15:8] == {8{o[7]}});
+
+  // Exceptions
+  assign over = word_op ? (f[0] ? (q[17:16]!={2{q[15]}})
+                                : (q[17:16]!=2'b0) )
+                        : (f[0] ? (q[17:8]!={10{q[7]}})
+                                : (q[17:8]!=10'h000) );
+  assign mint = f[0] & (word_op ? (x==32'h80000000)
+                                : (x==16'h8000));
+  assign exc  = div0 | ovf | over | mint;
 endmodule
 
 module bitlog(x, y, out, func, cfo, ofo);

@@ -18,31 +18,45 @@
 
 `timescale 1ns/10ps
 
-module regfile(a, b, c, cs, ip, d, s, flags, wr, wrfl, wrhi, clk, rst,
-               addr_a, addr_b, addr_c, addr_d, addr_s, iflags, word_op, 
-               o_byte, c_byte, cx_zero);
-  // IO Ports
-  output [15:0] a, b, c, s;
-  output [15:0] cs;
-  input  [3:0]  addr_a, addr_b, addr_c, addr_d;
-  input  [1:0]  addr_s;
-  input  [8:0]  iflags;
-  input  [31:0] d;
-  input         wrfl, wrhi, word_op, clk, rst, o_byte, c_byte;
-  input         wr;
-  output        cx_zero;
-  output [15:0] ip;
-  output reg [8:0] flags;
+module regfile (
+    output [15:0] a,
+    output [15:0] b,
+    output [15:0] c,
+    output [15:0] cs,
+    output [15:0] ip,
+    input  [31:0] d,
+    output [15:0] s,
+
+    output reg [8:0] flags,
+
+    input         wr,
+    input         wrfl,
+    input         wrhi,
+    input         clk,
+    input         rst,
+    input  [ 3:0] addr_a,
+    input  [ 3:0] addr_b,
+    input  [ 3:0] addr_c,
+    input  [ 3:0] addr_d,
+    input  [ 1:0] addr_s,
+    input  [ 8:0] iflags,
+    input         word_op,
+    input         a_byte,
+    input         b_byte,
+    input         c_byte,
+    output        cx_zero,
+    input         wr_ip0
+  );
 
   // Net declarations
   reg [15:0] r[15:0];
   wire [7:0] a8, b8, c8;
 
   // Assignments
-  assign a = (o_byte & ~addr_a[3]) ? { {8{a8[7]}}, a8} : r[addr_a];
+  assign a = (a_byte & ~addr_a[3]) ? { {8{a8[7]}}, a8} : r[addr_a];
   assign a8 = addr_a[2] ? r[addr_a[1:0]][15:8] : r[addr_a][7:0];
 
-  assign b = (o_byte & ~addr_b[3]) ? { {8{b8[7]}}, b8} : r[addr_b];
+  assign b = (b_byte & ~addr_b[3]) ? { {8{b8[7]}}, b8} : r[addr_b];
   assign b8 = addr_b[2] ? r[addr_b[1:0]][15:8] : r[addr_b][7:0];
 
   assign c = (c_byte & ~addr_c[3]) ? { {8{c8[7]}}, c8} : r[addr_c];
@@ -77,5 +91,6 @@ module regfile(a, b, c, cs, ip, d, s, flags, wr, wrfl, wrhi, clk, rst,
         end
         if (wrfl) flags <= iflags;
         if (wrhi) r[4'd2] <= d[31:16];
+        r[14] <= wr_ip0 ? ip : r[14];
       end
 endmodule
