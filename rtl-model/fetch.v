@@ -1318,7 +1318,7 @@ module opcode_deco (
           src <= rm;
           dst <= rm;
         end
-/*
+
       8'b1101_0100: // aam
         begin
           seq_addr <= `AAM;
@@ -1330,7 +1330,7 @@ module opcode_deco (
           src <= 4'b0;
           dst <= 4'b0;
         end
-*/
+
       8'b1101_0101: // aad
         begin
           seq_addr <= `AAD;

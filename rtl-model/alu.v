@@ -61,7 +61,7 @@ module alu (
     .x       (x),
     .y       (y),
     .o       (mul),
-    .f       (func[1:0]),
+    .f       (func),
     .word_op (word_op),
     .cfo     (cf_mul),
     .ofo     (of_mul),
@@ -208,7 +208,7 @@ module muldiv (
     input  [31:0] x,  // 16 MSb for division
     input  [15:0] y,
     output [31:0] o,
-    input  [ 1:0] f,
+    input  [ 2:0] f,
     input         word_op,
     output        cfo,
     output        ofo,
@@ -253,34 +253,37 @@ module muldiv (
                        : { {9{as}}, x[7:0] };
   assign b   = word_op ? { bs, y } : { {9{bs}}, y[7:0] };
 
-  assign zi  = word_op ? (f[0] ? { {2{x[31]}}, x }
+  assign zi  = f[2] ? { 26'h0, x[7:0] }
+               : (word_op ? (f[0] ? { {2{x[31]}}, x }
                                : { 2'b0, x })
                        : (f[0] ? { {18{x[15]}}, x[15:0] }
-                               : { 18'b0, x[15:0] });
+                               : { 18'b0, x[15:0] }));
 
   assign di  = word_op ? (f[0] ? { y[15], y } : { 1'b0, y })
                        : (f[0] ? { {9{y[7]}}, y[7:0] }
                                : { 9'h000, y[7:0] });
 
-  assign o   = f[1] ? ( word_op ? {s[15:0], q[15:0]}
+  assign o   = f[2] ? { 16'h0, q[7:0], s[7:0] }
+               : (f[1] ? ( word_op ? {s[15:0], q[15:0]}
                                 : {16'h0, s[7:0], q[7:0]})
-                    : p[31:0];
+                    : p[31:0]);
 
-  assign ofo = cfo;
-  assign cfo = !(f[0] ? cfs : cfu);
+  assign ofo = f[1] ? 1'b0 : cfo;
+  assign cfo = f[1] ? 1'b0 : !(f[0] ? cfs : cfu);
   assign cfu = word_op ? (o[31:16] == 16'h0)
                        : (o[15:8] == 8'h0);
   assign cfs = word_op ? (o[31:16] == {16{o[15]}})
                        : (o[15:8] == {8{o[7]}});
 
   // Exceptions
-  assign over = word_op ? (f[0] ? (q[17:16]!={2{q[15]}})
+  assign over = f[2] ? 1'b0
+              : (word_op ? (f[0] ? (q[17:16]!={2{q[15]}})
                                 : (q[17:16]!=2'b0) )
                         : (f[0] ? (q[17:8]!={10{q[7]}})
-                                : (q[17:8]!=10'h000) );
+                                : (q[17:8]!=10'h000)));
   assign mint = f[0] & (word_op ? (x==32'h80000000)
                                 : (x==16'h8000));
-  assign exc  = div0 | ovf | over | mint;
+  assign exc  = div0 | (!f[2] & ovf) | over | mint;
 endmodule
 
 module bitlog(x, y, out, func, cfo, ofo);

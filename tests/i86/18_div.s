@@ -1,12 +1,12 @@
 .code16
 start:
-movw $256, %sp
+movw $208, %sp
 
 # Exception 0 handler
 movw $0x1000, (0)
 movw $0xf000, (2)
 
-movw $256, %bp
+movw $208, %bp
 
 # div word tests
 # easy test
@@ -315,6 +315,50 @@ addw $0x2, %bp
 movw %ax, (124)
 movw %dx, (126)
 pushf
+
+
+# AAM tests
+movw $0xffff, %ax
+
+movw $0x2, (%bp)
+aam $0
+addw $0x2, %bp
+movw %ax, (132)
+pushf
+
+movw $0x2, (%bp)
+aam $1
+addw $0x2, %bp
+movw %ax, (134)
+pushf
+
+movw $0xffff, %ax
+movw $0x2, (%bp)
+aam
+addw $0x2, %bp
+movw %ax, (136)
+pushf
+
+movw $0xff00, %ax
+movw $0x2, (%bp)
+aam $0
+addw $0x2, %bp
+movw %ax, (138)
+pushf
+
+movw $0x2, (%bp)
+aam $1
+addw $0x2, %bp
+movw %ax, (140)
+pushf
+
+movw $0x3ffb, %ax
+movw $0x2, (%bp)
+aam
+addw $0x2, %bp
+movw %ax, (142)
+pushf
+
 hlt
 
 # Exception handler (int 0)
