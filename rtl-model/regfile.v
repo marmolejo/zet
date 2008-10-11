@@ -91,6 +91,6 @@ module regfile (
         end
         if (wrfl) flags <= iflags;
         if (wrhi) r[4'd2] <= d[31:16];
-        r[14] <= wr_ip0 ? ip : r[14];
+        if (wr_ip0) r[14] <= ip;
       end
 endmodule

@@ -41,7 +41,7 @@ module fetch (
     output fetch_or_exec,
     input  mem_rdy,
     input  div_exc,
-    output inopco_st
+    output wr_ip0
   );
 
   // Registers, nets and parameters
@@ -60,7 +60,7 @@ module fetch (
   wire [7:0] opcode, modrm;
   wire exec_st, end_seq;
   wire [15:0] imm_d;
-  wire prefix;
+  wire prefix, repz_pr, sovr_pr;
   wire next_in_opco, next_in_exec;
   wire block;
   wire need_modrm, need_off, need_imm, off_size, imm_size;
@@ -69,11 +69,12 @@ module fetch (
   reg [7:0] opcode_l, modrm_l;
   reg [15:0] off_l, imm_l;
   reg [1:0] pref_l;
+  reg [2:0] sop_l;
 
   // Module instantiation
   decode decode0(opcode, modrm, off_l, imm_l, pref_l[1], clk, rst, block,
                  exec_st, div_exc, need_modrm, need_off, need_imm, off_size,
-                 imm_size, rom_ir, off, imm_d, end_seq, dive);
+                 imm_size, rom_ir, off, imm_d, end_seq, dive, sop_l);
   next_or_not nn0(pref_l, opcode[7:1], cx_zero, zf, next_in_opco, 
                   next_in_exec);
   nstate ns0(state, prefix, need_modrm, need_off, need_imm, end_seq,
@@ -94,10 +95,12 @@ module fetch (
               : (((state == offse_st) & off_size 
                 | (state == immed_st) & imm_size) ? 16'd2
               : 16'd1);
-  assign prefix = (opcode[7:1]==7'b1111_001);
   assign block  = ir[`MEM_OP] && !mem_rdy;
+  assign wr_ip0 = (state == opcod_st) && !pref_l[1] && !sop_l[2];
 
-  assign inopco_st = (state == opcod_st);
+  assign sovr_pr = (opcode[7:5]==3'b001 && opcode[2:0]==3'b110);
+  assign repz_pr = (opcode[7:1]==7'b1111_001);
+  assign prefix  = sovr_pr || repz_pr;
 
   // Behaviour
   always @(posedge clk)
@@ -111,11 +114,16 @@ module fetch (
         default:  // opcode or prefix
           begin
             case (state)
-              opcod_st: pref_l <= prefix ? { 1'b1, opcode[0] } : 2'b0;
-              default: pref_l <= 2'b0;
+              opcod_st:
+                begin // There has been a prefix
+                  pref_l <= repz_pr ? { 1'b1, opcode[0] } : pref_l;
+                  sop_l  <= sovr_pr ? { 1'b1, opcode[4:3] } : sop_l;
+                end
+              default: begin pref_l <= 2'b0; sop_l <= 3'b0; end
             endcase
             state <= opcod_st;
             off_l <= 16'd0;
+            modrm_l <= 8'b0000_0110;
           end
 
         modrm_st:  // modrm
@@ -248,7 +256,9 @@ module decode (
     output [15:0] off_o,
     output [15:0] imm_o,
     output end_seq,
-    output reg dive
+    output reg dive,
+
+    input  [2:0] sop_l
   );
 
   // Net declarations
@@ -259,7 +269,7 @@ module decode (
   reg  [`SEQ_ADDR_WIDTH-1:0] seq;
 
   // Module instantiations
-  opcode_deco opcode_deco0 (opcode, modrm, rep, base_addr, need_modrm, 
+  opcode_deco opcode_deco0 (opcode, modrm, rep, sop_l, base_addr, need_modrm, 
                             need_off, need_imm, off_size, imm_size, src, dst, 
                             base, index, seg);
   seq_rom seq_rom0 (seq_addr, {end_seq, micro_addr});
@@ -286,6 +296,7 @@ module opcode_deco (
     input [7:0] opcode,
     input [7:0] modrm,
     input       rep,
+    input [2:0] sovr_pr,
 
     output reg [`SEQ_ADDR_WIDTH-1:0] seq_addr,
     output reg need_modrm,
@@ -311,7 +322,7 @@ module opcode_deco (
   wire [2:0] srcm, dstm;
 
   // Module instantiations
-  memory_regs mr(rm, mod, base, index, seg);
+  memory_regs mr(rm, mod, sovr_pr, base, index, seg);
 
   // Assignments
   assign mod  = modrm[7:6];
@@ -1674,23 +1685,31 @@ endmodule
 module memory_regs (
     input [2:0] rm,
     input [1:0] mod,
+    input [2:0] sovr_pr,
+
     output reg [3:0] base,
     output reg [3:0] index,
-    output reg [1:0] seg
+    output     [1:0] seg
   );
+
+  // Register declaration
+  reg [1:0] s;
+
+  // Continuous assignments
+  assign seg = sovr_pr[2] ? sovr_pr[1:0] : s;
 
   // Behaviour
   always @(rm or mod)
     case (rm)
-      3'b000: begin base <= 4'b0011; index <= 4'b0110; seg <= 2'b11; end
-      3'b001: begin base <= 4'b0011; index <= 4'b0111; seg <= 2'b11; end
-      3'b010: begin base <= 4'b0101; index <= 4'b0110; seg <= 2'b10; end
-      3'b011: begin base <= 4'b0101; index <= 4'b0111; seg <= 2'b10; end
-      3'b100: begin base <= 4'b1100; index <= 4'b0110; seg <= 2'b11; end
-      3'b101: begin base <= 4'b1100; index <= 4'b0111; seg <= 2'b11; end
-      3'b110: begin base <= mod ? 4'b0101 : 4'b1100; index <= 4'b1100; 
-                    seg <= mod ? 2'b10 : 2'b11; end
-      3'b111: begin base <= 4'b0011; index <= 4'b1100; seg <= 2'b11; end
+      3'b000: begin base <= 4'b0011; index <= 4'b0110; s <= 2'b11; end
+      3'b001: begin base <= 4'b0011; index <= 4'b0111; s <= 2'b11; end
+      3'b010: begin base <= 4'b0101; index <= 4'b0110; s <= 2'b10; end
+      3'b011: begin base <= 4'b0101; index <= 4'b0111; s <= 2'b10; end
+      3'b100: begin base <= 4'b1100; index <= 4'b0110; s <= 2'b11; end
+      3'b101: begin base <= 4'b1100; index <= 4'b0111; s <= 2'b11; end
+      3'b110: begin base <= mod ? 4'b0101 : 4'b1100; index <= 4'b1100;
+                    s <= mod ? 2'b10 : 2'b11; end
+      3'b111: begin base <= 4'b0011; index <= 4'b1100; s <= 2'b11; end
     endcase
 endmodule
 

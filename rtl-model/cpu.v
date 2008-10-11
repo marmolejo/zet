@@ -58,7 +58,7 @@ module cpu (
   wire byte_fetch, byte_exec, fetch_or_exec;
   wire of, zf, cx_zero;
   wire div_exc;
-  wire inopco_st;
+  wire wr_ip0;
 
   // Module instantiations
   fetch fetch0 (
@@ -83,7 +83,8 @@ module cpu (
     .fetch_or_exec (fetch_or_exec),
     .mem_rdy       (ack_i),
     .div_exc       (div_exc),
-    .inopco_st     (inopco_st)
+
+    .wr_ip0 (wr_ip0)
   );
 
   exec exec0 (
@@ -110,7 +111,7 @@ module cpu (
     .byteop  (byte_exec),
     .mem_rdy (ack_i),
     .div_exc (div_exc),
-    .wrip0   (inopco_st)
+    .wrip0   (wr_ip0)
   );
 
   // Assignments

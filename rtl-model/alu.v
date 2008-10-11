@@ -70,7 +70,7 @@ module alu (
   );
 
   bitlog log4 (x[15:0], y, log, func, cf_log, of_log);
-  shifts shi5 (x[15:0], y[4:0], shi, func[1:0], word_op, cf_shi, of_shi);
+  shifts shi5 (x[15:0], y[4:0], shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
   rotate rot6 (x[15:0], y[4:0], func[1:0], cfi, word_op, rot, cf_rot, ofi, of_rot);
   othop  oth7 (x[15:0], y, seg, off, iflags, func, word_op, oth, othflags);
 
@@ -99,10 +99,9 @@ module alu (
   assign pfi = iflags[2];
   assign cfi = iflags[0];
 
-  assign flags_unchanged = (t == 3'd6
-                         || t == 3'd4 && func == 3'd2
+  assign flags_unchanged = (t == 3'd4 && func == 3'd2
                          || t == 3'd5 && y[4:0] == 5'h0
-                         || t == 3'd6 && y[4:0] == 5'h0);
+                         || t == 3'd6);
 
   assign div_exc = func[1] && (t==3'd3) && dexc;
 
@@ -313,7 +312,7 @@ endmodule
 // This module implements the instructions shl/sal, sar, shr
 //
 
-module shifts(x, y, out, func, word_op, cfo, ofo);
+module shifts(x, y, out, func, word_op, cfi, ofi, cfo, ofo);
   // IO ports
   input  [15:0] x;
   input  [ 4:0] y;
@@ -321,6 +320,7 @@ module shifts(x, y, out, func, word_op, cfo, ofo);
   input         word_op;
   output [15:0] out;
   output        cfo, ofo;
+  input         cfi, ofi;
 
   // Net declarations
   wire [15:0] sal, sar, shr, sal16, sar16, shr16;
@@ -328,10 +328,10 @@ module shifts(x, y, out, func, word_op, cfo, ofo);
   wire ofo_shl, ofo_sar, ofo_shr;
   wire cfo_sal8, cfo_sal16, cfo_sar8, cfo_sar16, cfo_shr8, cfo_shr16;
   wire cfo16, cfo8;
+  wire unchanged;
 
   // Module instantiations
   mux4_16 m0(func, sal, sar, shr, 16'd0, out);
-  mux4_1  m1(func, ofo_shl, ofo_sar, ofo_shr, 1'b0, ofo);
 
   // Assignments
   assign { cfo_sal16, sal16 } = x << y;
@@ -350,14 +350,18 @@ module shifts(x, y, out, func, word_op, cfo, ofo);
   assign shr     = word_op ? shr16 : { 8'd0, shr8 };
   assign sar     = word_op ? sar16 : { {8{sar8[7]}}, sar8 };
 
+  assign ofo = unchanged ? ofi
+             : (func[1] ? ofo_shr : (func[0] ? ofo_sar : ofo_shl));
   assign cfo16 = func[1] ? cfo_shr16
                : (func[0] ? cfo_sar16 : cfo_sal16);
   assign cfo8  = func[1] ? cfo_shr8
                : (func[0] ? cfo_sar8 : cfo_sal8);
-  assign cfo = word_op ? cfo16 : cfo8;
+  assign cfo = unchanged ? cfi : (word_op ? cfo16 : cfo8);
   assign ofo_shl = word_op ? (out[15] != cfo) : (out[7] != cfo);
   assign ofo_sar = 1'b0;
   assign ofo_shr = word_op ? x[15] : x[7];
+
+  assign unchanged = word_op ? (y==5'b0) : (y[3:0]==4'b0);
 endmodule
 
 module othop (x, y, seg, off, iflags, func, word_op, out, oflags);
