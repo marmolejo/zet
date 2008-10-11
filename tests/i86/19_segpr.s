@@ -92,11 +92,6 @@ hlt
 .byte 0x02,0xff,0x01,0x01
 .word 0x8001
 
-
-repz cs cmpsb
-repz cs lodsb
-repz cs scasb
-
 .org 65520
 jmp start
 .org 65535
