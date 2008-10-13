@@ -1112,7 +1112,9 @@ block_count_rounded:
   push di       ;; Save DI
   ;; Push addr of ROM entry point
   push cx       ;; Push seg
-  push #0x0003  ;; Push offset
+  ;; push #0x0003  ;; Push offset - not an 8086 valid operand
+  mov ax, #0x0003
+  push ax
 
   ;; Point ES:DI at "$PnP", which tells the ROM that we are a PnP BIOS.
   ;; That should stop it grabbing INT 19h; we will use its BEV instead.
@@ -1270,7 +1272,7 @@ post_default_ints:
   call rom_scan
 
   call _print_bios_banner
-
+hlt
   call _init_boot_vectors
 
   mov  cx, #0xc800  ;; init option roms
