@@ -1,6 +1,7 @@
 s3roms :=  $(patsubst %.s,%.s3rom,$(wildcard *.s))
+ml403roms := $(patsubst %.s,%.bin,$(wildcard *.s))
 rtlroms := $(patsubst %.s,%.rtlrom,$(wildcard *s))
-all: $(s3roms) $(rtlroms)
+all: $(ml403roms) $(rtlroms)
 
 # altera: ../../altera/zet/simulation/modelsim/bios0.dat ../../altera/zet/simulation/modelsim/bios1.dat
 
@@ -26,6 +27,9 @@ all: $(s3roms) $(rtlroms)
 	echo :00000001FF >> $@
 
 %.rtlrom: %.out
+	hexdump -v -e '1/2 "%04X"' -e '"\n"' $< > ../../sim/$@
+
+%.rtlold: %.out
 	hexdump -v -e '1/1 "%02X"' -e '"\n"' $< > ../../sim/$@
 
 %.rom: %.out

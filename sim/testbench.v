@@ -3,54 +3,71 @@
 module testbench;
 
   // Net declarations
-  wire [15:0] rd_data;
-  wire [15:0] wr_data, mem_data, io_data;
-  wire [19:0] addr;
+  wire [15:0] dat_o;
+  wire [15:0] mem_dat_i, io_dat_i, dat_i;
+  wire [19:1] adr;
   wire        we;
-  wire        m_io;
-  wire        byte_m;
-  wire        ack_i;
+  wire        tga;
+  wire [ 1:0] sel;
   wire        stb;
+  wire        cyc;
+  wire        ack, mem_ack, io_ack;
 
-  reg         clk, rst;
-  reg [15:0]  io_reg;
-  reg [ 1:0]  ack;
+  reg         clk;
+  reg         rst;
+
+  reg  [15:0] io_reg;
 
   // Module instantiations
-  memory mem0 (clk, addr, wr_data, mem_data, stb & we & ~m_io, byte_m);
+  memory mem0 (
+    .wb_clk_i (clk),
+    .wb_rst_i (rst),
+    .wb_dat_i (dat_o),
+    .wb_dat_o (mem_dat_i),
+    .wb_adr_i (adr),
+    .wb_we_i  (we),
+    .wb_sel_i (sel),
+    .wb_stb_i (stb & !tga),
+    .wb_cyc_i (cyc & !tga),
+    .wb_ack_o (mem_ack)
+  );
 
   cpu cpu0 (
-    .clk_i  (clk),
-    .rst_i  (rst),
-    .dat_i  (rd_data),
-    .dat_o  (wr_data),
-    .adr_o  (addr),
-    .we_o   (we),
-    .mio_o  (m_io),
-    .byte_o (byte_m),
-    .stb_o  (stb),
-    .ack_i  (ack_i)
+    .wb_clk_i (clk),
+    .wb_rst_i (rst),
+    .wb_dat_i (dat_i),
+    .wb_dat_o (dat_o),
+    .wb_adr_o (adr),
+    .wb_we_o  (we),
+    .wb_tga_o (tga),
+    .wb_sel_o (sel),
+    .wb_stb_o (stb),
+    .wb_cyc_o (cyc),
+    .wb_ack_i (ack)
   );
 
   // Assignments
-  assign io_data = (addr[15:0]==16'hb7) ? io_reg : 16'd0;
-  assign rd_data = m_io ? io_data : mem_data;
-  assign ack_i   = (ack==2'b10);
+  assign io_dat_i = (adr[15:1]==15'h5b) ? { io_reg[7:0], 8'h0 }
+    : ((adr[15:1]==15'h5c) ? { 8'h0, io_reg[15:8] } : 16'h0);
+  assign dat_i = tga ? io_dat_i : mem_dat_i;
+
+  assign ack    = tga ? io_ack : mem_ack;
+  assign io_ack = stb;
 
   // Behaviour
   // IO Stub
-  always @(posedge clk) 
-    if (addr==20'hb7 & we & m_io) 
-      io_reg <= byte_m ? { io_reg[15:8], wr_data[7:0] } : wr_data;
+  always @(posedge clk)
+    if (adr[15:1]==15'h5b && sel[1] && cyc && stb)
+      io_reg[7:0] <= dat_o[15:8];
+    else if (adr[15:1]==15'h5c & sel[0] && cyc && stb)
+      io_reg[15:8] <= dat_o[7:0];
 
   always #1 clk = ~clk;
-  always #2.13 ack = ack + 2'd1;
 
   initial 
     begin
          clk <= 1'b1;
          rst <= 1'b0;
-         ack <= 2'b0;
       #5 rst <= 1'b1;
       #2 rst <= 1'b0;
     end

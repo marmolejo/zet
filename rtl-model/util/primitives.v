@@ -106,6 +106,7 @@ module mux4_16(sel, in0, in1, in2, in3, out);
     endcase
 endmodule
 
+/*
 //
 // Multiplexor 4:1 de 1 bits d'amplada
 //
@@ -125,7 +126,6 @@ module mux4_1(sel, in0, in1, in2, in3, out);
     endcase
 endmodule
 
-/*
 //
 // Multiplexor 2:1 de 8 bits d'amplada
 //

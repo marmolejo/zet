@@ -21,22 +21,32 @@ add wave -label need_imm /testbench/cpu0/fetch0/need_imm
 add wave -label ir /testbench/cpu0/fetch0/ir
 add wave -label imm -radix hexadecimal /testbench/cpu0/fetch0/imm
 add wave -label off -radix hexadecimal /testbench/cpu0/fetch0/off
+add wave -divider mem
+add wave -label cs -radix hexadecimal /testbench/cpu0/wm0/cs
+add wave -label op -radix hexadecimal /testbench/cpu0/wm0/op
+add wave -label block /testbench/cpu0/wm0/cpu_block
+add wave -label dat_o -radix hexadecimal sim:/testbench/dat_o
+add wave -label dat_i -radix hexadecimal sim:/testbench/dat_i
+add wave -label adr -radix hexadecimal /testbench/adr
+add wave -label byte_o -radix hexadecimal /cpu0/wm0/cpu_byte_o
+add wave -label sel_o -radix hexadecimal /cpu0/wm0/wb_sel_o
+add wave -label stb_o -radix hexadecimal /cpu0/wm0/wb_stb_o
+add wave -label cyc_o -radix hexadecimal /cpu0/wm0/wb_cyc_o
+add wave -label ack_i -radix hexadecimal /cpu0/wm0/wb_ack_i
+add wave -label we_o -radix hexadecimal /cpu0/wm0/wb_we_o
+add wave -label tga_o -radix hexadecimal /cpu0/wm0/wb_tga_o
+add wave -label cpu_dat_i -radix hexadecimal /cpu0/wm0/cpu_dat_i
 add wave -divider alu
 add wave -label x -radix hexadecimal /testbench/cpu0/exec0/a
 add wave -label y -radix hexadecimal /testbench/cpu0/exec0/bus_b
 add wave -label t -radix hexadecimal /testbench/cpu0/exec0/alu0/t
 add wave -label func -radix hexadecimal /testbench/cpu0/exec0/alu0/func
-add wave -label rd_data -radix hexadecimal sim:/testbench/rd_data
-add wave -label wr_data -radix hexadecimal sim:/testbench/wr_data
-add wave -label addr -radix hexadecimal /testbench/addr
 add wave -label r\[15\] -radix hexadecimal /testbench/cpu0/exec0/reg0/r\[15\]
 add wave -label d -radix hexadecimal /testbench/cpu0/exec0/reg0/d
 add wave -label addr_a /testbench/cpu0/exec0/reg0/addr_a
 add wave -label addr_d /testbench/cpu0/exec0/reg0/addr_d
 add wave -label wr /testbench/cpu0/exec0/reg0/wr
 add wave -label we /testbench/we
-add wave -label ack_i /testbench/ack_i
+add wave -label ack /testbench/ack
 add wave -label fetch_or_exec /testbench/cpu0/fetch_or_exec
-add wave -divider mul
-add wave -radix hexadecimal -r /testbench/cpu0/exec0/alu0/mul3/dut/*
-#run 50us
+run 15us

@@ -44,7 +44,7 @@ module exec (
     output        we,
     output        m_io,
     output        byteop,
-    input         mem_rdy,
+    input         block,
     output        div_exc,
     input         wrip0
   );
@@ -56,10 +56,10 @@ module exec (
   wire [2:0]  t, func;
   wire [1:0]  addr_s;
   wire        wrfl, high, memalu, r_byte, c_byte;
-  wire        wr, wr_reg, block;
+  wire        wr, wr_reg;
   wire        wr_cnd;
   wire        jmp;
-  wire        mem_op, b_imm;
+  wire        b_imm;
   wire  [8:0] flags, iflags, oflags;
   wire  [4:0] logic_flags;
   wire        alu_word;
@@ -91,7 +91,6 @@ module exec (
   assign func   = ir[28:26];
   assign byteop = ir[29];
   assign memalu = ir[30];
-  assign mem_op = ir[31];
   assign m_io   = ir[32];
   assign b_imm  = ir[33];
   assign r_byte = ir[34];
@@ -106,7 +105,6 @@ module exec (
   assign wr_high = high && !block && !div_exc;
   assign of = flags[8];
   assign zf = flags[3];
-  assign block = mem_op && !mem_rdy;
 
   assign iflags = oflags;
   assign alu_iflags = { 4'b0, flags[8:3], 1'b0, flags[2], 1'b0, flags[1], 

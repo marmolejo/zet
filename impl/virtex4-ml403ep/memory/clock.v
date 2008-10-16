@@ -27,7 +27,8 @@ module clock (
   // Continuous assignments
   assign rst    = (count!=7'h7f);
   assign clk_3M = clock[3];
-  assign clk    = clk_3M;
+//  assign clk    = clk_3M;
+  assign clk    = clock[1];
 
   // Behavioral description
   // count

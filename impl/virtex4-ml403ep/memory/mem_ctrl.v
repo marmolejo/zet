@@ -1,6 +1,6 @@
 `timescale 1ns/10ps
 
-`include "defines.v"
+//`include "defines.v"
 
 module mem_ctrl (
 `ifdef DEBUG

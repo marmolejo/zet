@@ -43,17 +43,27 @@ module mem_map_test (
     output        rs_,
     output        rw_,
     output        e_,
-    output  [7:4] db_
+    output  [7:4] db_,
+
+    input         but_
   );
 
   // Net declarations
-  wire        rst;
   wire        clk;
   wire [15:0] dada_ent;
   wire        ack;
   wire        clk_100M;
   wire [63:0] f1, f2;
   wire [15:0] m1, m2;
+  wire        rst_lck;
+
+  wire req_write;
+  wire req_read;
+  wire one_more_cycle;
+  wire vga2_we;
+  wire vga2_rw;
+  wire vga4_rw;
+
 
   // Register declarations
   reg [ 7:0] estat;
@@ -64,17 +74,46 @@ module mem_map_test (
   reg        we;
   reg        stb;
   reg        byte_o;
+  reg        rst;
+
+// DEBUG
+  wire [35:0] control0;
+
+  // Module instantiations
+  icon icon0 (
+    .CONTROL0 (control0)
+  );
+
+  ila ila0 (
+    .CONTROL (control0),
+    .CLK     (clk_100M),
+    .TRIG0   ({tft_lcd_clk_,tft_lcd_r_,tft_lcd_g_,tft_lcd_b_,tft_lcd_hsync_,tft_lcd_vsync_}),
+    .TRIG1   (dada_ent),
+    .TRIG2   (estat),
+    .TRIG3   (dada_sor),
+    .TRIG4   (adr),
+    .TRIG5   ({rst,clk,ack,we,stb,byte_o}),
+    .TRIG6   ({req_write,req_read,one_more_cycle,vga2_we,vga2_rw,vga4_rw})
+  );
 
   // Module instantiations
   clock c0 (
     .sys_clk_in_ (sys_clk_in_),
     .clk         (clk),
     .clk_100M    (clk_100M),
-    .vdu_clk     (tft_lcd_clk_),
-    .rst         (rst)
+//    .vdu_clk     (tft_lcd_clk_),
+    .rst         (rst_lck)
   );
+  assign tft_lcd_clk_ = clk;
 
   mem_map mem_map0 (
+    .req_write (req_write),
+    .req_read  (req_read),
+    .one_more_cycle (one_more_cycle),
+    .vga2_we (vga2_we),
+    .vga2_rw (vga2_rw),
+    .vga4_rw (vga4_rw),
+
     // Wishbone signals
     .clk_i  (clk),
     .rst_i  (rst),
@@ -126,8 +165,10 @@ module mem_map_test (
   assign m1 = 16'b1101111011111111;
   assign m2 = 16'b1111101010101111;
 
-
   // Behavioral description
+  always @(posedge clk)
+    rst <= rst_lck ? 1'b1 : (but_ ? 1'b0 : rst );
+
   always @(posedge clk)
     if (rst)
       begin  // ROM word read (dada1 = 1234)

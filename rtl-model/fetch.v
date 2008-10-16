@@ -39,7 +39,7 @@ module fetch (
     output [19:0] pc,
     output bytefetch, 
     output fetch_or_exec,
-    input  mem_rdy,
+    input  block,
     input  div_exc,
     output wr_ip0
   );
@@ -62,7 +62,6 @@ module fetch (
   wire [15:0] imm_d;
   wire prefix, repz_pr, sovr_pr;
   wire next_in_opco, next_in_exec;
-  wire block;
   wire need_modrm, need_off, need_imm, off_size, imm_size;
   wire dive;
 
@@ -95,7 +94,6 @@ module fetch (
               : (((state == offse_st) & off_size 
                 | (state == immed_st) & imm_size) ? 16'd2
               : 16'd1);
-  assign block  = ir[`MEM_OP] && !mem_rdy;
   assign wr_ip0 = (state == opcod_st) && !pref_l[1] && !sop_l[2];
 
   assign sovr_pr = (opcode[7:5]==3'b001 && opcode[2:0]==3'b110);

@@ -8,14 +8,14 @@ module kotku_ml403 (
     output  [7:4] db_,
 
 `endif
-/*
+
     output        tft_lcd_clk_,
     output        tft_lcd_r_,
     output        tft_lcd_g_,
     output        tft_lcd_b_,
     output        tft_lcd_hsync_,
     output        tft_lcd_vsync_,
-*/
+
     input         sys_clk_in_,
 
     output        sram_clk_,
@@ -72,7 +72,7 @@ module kotku_ml403 (
 `endif
     .sys_clk_in_ (sys_clk_in_),
     .clk         (clk),
-//    .vdu_clk     (tft_lcd_clk_),
+    .vdu_clk     (tft_lcd_clk_),
     .rst         (rst_lck)
   );
 
@@ -80,9 +80,17 @@ module kotku_ml403 (
 `ifdef DEBUG
     .curr_st (curr_st),
 `endif
+    // VGA pad signals
+    .vdu_clk     (tft_lcd_clk_),
+    .vga_red_o   (tft_lcd_r_),
+    .vga_green_o (tft_lcd_g_),
+    .vga_blue_o  (tft_lcd_b_),
+    .horiz_sync  (tft_lcd_hsync_),
+    .vert_sync   (tft_lcd_vsync_),
+
     // Wishbone signals
     .clk_i  (clk),
-    .rst_i  (rst),
+    .rst_i  (rst_lck),
     .adr_i  (adr),
     .dat_i  (dat_o),
     .dat_o  (dat_mem),
@@ -101,15 +109,6 @@ module kotku_ml403 (
     .sram_cen_        (sram_cen_),
     .sram_adv_ld_n_   (sram_adv_ld_n_),
     .flash_ce2_       (flash_ce2_)
-/*
-    // VGA pad signals
-    .vdu_clk     (tft_lcd_clk_),
-    .vga_red_o   (tft_lcd_r_),
-    .vga_green_o (tft_lcd_g_),
-    .vga_blue_o  (tft_lcd_b_),
-    .horiz_sync  (tft_lcd_hsync_),
-    .vert_sync   (tft_lcd_vsync_),
-*/
   );
 
   cpu zet_proc (
