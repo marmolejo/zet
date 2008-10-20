@@ -19,14 +19,14 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 module test_vdu (
-    input  sys_clk_in,
-    output tft_lcd_clk,
-    output tft_lcd_r,
-    output tft_lcd_g,
-    output tft_lcd_b,
-    output tft_lcd_hsync,
-    output tft_lcd_vsync,
-    
+    input         sys_clk_in,
+    output       tft_lcd_clk,
+    output [1:0] tft_lcd_r,
+    output [1:0] tft_lcd_g,
+    output [1:0] tft_lcd_b,
+    output       tft_lcd_hsync,
+    output       tft_lcd_vsync,
+
     output led
   );
 
@@ -41,8 +41,8 @@ module test_vdu (
   );
   
   vdu vdu0 (
-    .rst_i       (rst),
-    .vdu_clk     (tft_lcd_clk),     // 25MHz	VDU clock
+    .wb_rst_i    (rst),
+    .wb_clk_i    (tft_lcd_clk),     // 25MHz	VDU clock
     .vga_red_o   (tft_lcd_r),
     .vga_green_o (tft_lcd_g),
     .vga_blue_o  (tft_lcd_b),

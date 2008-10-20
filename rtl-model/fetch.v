@@ -63,7 +63,6 @@ module fetch (
   wire prefix, repz_pr, sovr_pr;
   wire next_in_opco, next_in_exec;
   wire need_modrm, need_off, need_imm, off_size, imm_size;
-  wire dive;
 
   reg [7:0] opcode_l, modrm_l;
   reg [15:0] off_l, imm_l;
@@ -73,7 +72,7 @@ module fetch (
   // Module instantiation
   decode decode0(opcode, modrm, off_l, imm_l, pref_l[1], clk, rst, block,
                  exec_st, div_exc, need_modrm, need_off, need_imm, off_size,
-                 imm_size, rom_ir, off, imm_d, end_seq, dive, sop_l);
+                 imm_size, rom_ir, off, imm_d, end_seq, sop_l);
   next_or_not nn0(pref_l, opcode[7:1], cx_zero, zf, next_in_opco, 
                   next_in_exec);
   nstate ns0(state, prefix, need_modrm, need_off, need_imm, end_seq,
@@ -254,7 +253,6 @@ module decode (
     output [15:0] off_o,
     output [15:0] imm_o,
     output end_seq,
-    output reg dive,
 
     input  [2:0] sop_l
   );
@@ -265,6 +263,7 @@ module decode (
   wire [3:0] src, dst, base, index;
   wire [1:0] seg;
   reg  [`SEQ_ADDR_WIDTH-1:0] seq;
+  reg  dive;
 
   // Module instantiations
   opcode_deco opcode_deco0 (opcode, modrm, rep, sop_l, base_addr, need_modrm, 

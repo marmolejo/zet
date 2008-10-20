@@ -18,7 +18,13 @@
 
 `timescale 1ns/10ps
 
+`include "defines.v"
+
 module regfile (
+`ifdef DEBUG
+    output [15:0] sp,
+`endif
+
     output [15:0] a,
     output [15:0] b,
     output [15:0] c,
@@ -53,6 +59,9 @@ module regfile (
   wire [7:0] a8, b8, c8;
 
   // Assignments
+`ifdef DEBUG
+  assign sp = r[4];
+`endif
   assign a = (a_byte & ~addr_a[3]) ? { {8{a8[7]}}, a8} : r[addr_a];
   assign a8 = addr_a[2] ? r[addr_a[1:0]][15:8] : r[addr_a][7:0];
 

@@ -5,6 +5,7 @@ module lcd_display (
     input [15:0] m2,  // 2nd row mask
 
     input        clk, // 100 Mhz clock
+    input        rst,
 
     // Pad signals
     output reg       lcd_rs_,
@@ -41,7 +42,8 @@ module lcd_display (
 
   // Behaviour
   always @(posedge clk)
-    begin
+    if (rst) cnt <= 26'hfffffff;
+    else begin
       cnt <= cnt - 1;
       casex (cnt[k+1+n:k+2])
         8'hff: lcd <= 6'b000010; // function set

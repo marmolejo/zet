@@ -37,14 +37,13 @@ RELVERS = `pwd | sed "s-.*/--" | sed "s/vgabios//" | sed "s/-//"`
 VGABIOS_DATE = "-DVGABIOS_DATE=\"$(RELDATE)\""
 
 
-bios: bios.bin
+all: run
 
 bios.bin: vgabios.rom ff.rom zet-bios.rom
 	cat vgabios.rom ff.rom zet-bios.rom > $@
 
 run: bios.bin
 	prf
-	kotku
 
 %.rom: %.out
 	out2rom-ml403 < $< > $@
@@ -76,7 +75,7 @@ vgabios.out: vgabios.c vgabios.h vgatables.h vgasums
 	$(BCC) -o vgabios.s -C-c -D__i86__ -S -0 _vgabios_.c
 	sed -e 's/^\.text//' -e 's/^\.data//' vgabios.s > _vgabios_.s
 	$(AS86) _vgabios_.s -b vgabios.bin -u -w- -g -0 -j -O -l vgabios.txt
-	rm -f _vgabios_.s _vgabios_.c vgabios.s
+#	rm -f _vgabios_.s _vgabios_.c vgabios.s
 	mv vgabios.bin $@
 	./vgasums $@
 

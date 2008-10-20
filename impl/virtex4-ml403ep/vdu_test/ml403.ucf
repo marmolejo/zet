@@ -22,7 +22,8 @@ NET led LOC = G5;
 #NET tft_lcd_b<5> LOC = F8;  # VGA_B7
 #NET tft_lcd_b<*> SLEW = FAST;
 #NET tft_lcd_b<*> DRIVE = 8;
-NET tft_lcd_b LOC = F8;  # VGA_B7
+NET tft_lcd_b[0] LOC = G8;  # VGA_B6
+NET tft_lcd_b[1] LOC = F8;  # VGA_B7
 #NET tft_lcd_b SLEW = FAST;
 #NET tft_lcd_b DRIVE = 8;
 
@@ -41,7 +42,8 @@ NET tft_lcd_clk  LOC = AF8;
 #NET tft_lcd_g<5> LOC = C1;  # VGA_G7
 #NET tft_lcd_g<*> SLEW = FAST;
 #NET tft_lcd_g<*> DRIVE = 8;
-NET tft_lcd_g LOC = C1;  # VGA_G7
+NET tft_lcd_g[0] LOC = H8;  # VGA_G6
+NET tft_lcd_g[1] LOC = C1;  # VGA_G7
 #NET tft_lcd_g SLEW = FAST;
 #NET tft_lcd_g DRIVE = 8;
 
@@ -58,7 +60,8 @@ NET tft_lcd_hsync LOC = C10;
 #NET tft_lcd_r<5> LOC = E6; #VGA_R7
 #NET tft_lcd_r<*> SLEW = FAST;
 #NET tft_lcd_r<*> DRIVE = 8;
-NET tft_lcd_r LOC = E6; #VGA_R7
+NET tft_lcd_r[0] LOC = E5; #VGA_R6
+NET tft_lcd_r[1] LOC = E6; #VGA_R7
 #NET tft_lcd_r SLEW = FAST;
 #NET tft_lcd_r DRIVE = 8;
 

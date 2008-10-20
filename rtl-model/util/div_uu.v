@@ -149,7 +149,7 @@ module div_uu(clk, ena, z, d, q, s, div0, ovf);
 	always @(posedge clk)
 	  if(ena)
 	    for(n0=1; n0 <= d_width; n0=n0+1)
-	       d_pipe[n0] <= #1 d_pipe[n0-1];
+	       d_pipe[n0] <= d_pipe[n0-1];
 
 	// generate internal remainder pipe
 	always @(z)
@@ -158,16 +158,16 @@ module div_uu(clk, ena, z, d, q, s, div0, ovf);
 	always @(posedge clk)
 	  if(ena)
 	    for(n1=1; n1 <= d_width; n1=n1+1)
-	       s_pipe[n1] <= #1 gen_s(s_pipe[n1-1], d_pipe[n1-1]);
+	       s_pipe[n1] <= gen_s(s_pipe[n1-1], d_pipe[n1-1]);
 
 	// generate quotient pipe
 	always @(posedge clk)
-	  q_pipe[0] <= #1 0;
+	  q_pipe[0] <= 0;
 
 	always @(posedge clk)
 	  if(ena)
 	    for(n2=1; n2 < d_width; n2=n2+1)
-	       q_pipe[n2] <= #1 gen_q(q_pipe[n2-1], s_pipe[n2]);
+	       q_pipe[n2] <= gen_q(q_pipe[n2-1], s_pipe[n2]);
 
 
 	// flags (divide_by_zero, overflow)
@@ -181,26 +181,26 @@ module div_uu(clk, ena, z, d, q, s, div0, ovf);
 	  if(ena)
 	    for(n3=1; n3 <= d_width; n3=n3+1)
 	    begin
-	        ovf_pipe[n3] <= #1 ovf_pipe[n3-1];
-	        div0_pipe[n3] <= #1 div0_pipe[n3-1];
+	        ovf_pipe[n3] <= ovf_pipe[n3-1];
+	        div0_pipe[n3] <= div0_pipe[n3-1];
 	    end
 
 	// assign outputs
 	always @(posedge clk)
 	  if(ena)
-	    ovf <= #1 ovf_pipe[d_width];
+	    ovf <= ovf_pipe[d_width];
 
 	always @(posedge clk)
 	  if(ena)
-	    div0 <= #1 div0_pipe[d_width];
+	    div0 <= div0_pipe[d_width];
 
 	always @(posedge clk)
 	  if(ena)
-	    q <= #1 gen_q(q_pipe[d_width-1], s_pipe[d_width]);
+	    q <= gen_q(q_pipe[d_width-1], s_pipe[d_width]);
 
 	always @(posedge clk)
 	  if(ena)
-	    s <= #1 assign_s(s_pipe[d_width], d_pipe[d_width]);
+	    s <= assign_s(s_pipe[d_width], d_pipe[d_width]);
 endmodule
 
 

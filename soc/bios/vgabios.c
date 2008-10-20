@@ -64,7 +64,7 @@ vgabios_entry_point:
   jmp vgabios_init_func
 
 vgabios_name:
-.ascii	"Plex86/Bochs VGABios"
+.ascii	"Zet/Bochs VGABios"
 .ascii	" "
 .byte	0x00
 
@@ -102,6 +102,8 @@ vgabios_website:
 .byte	0x0a,0x0d
 ;;.ascii  " . http://www.plex86.org"
 ;;.byte	0x0a,0x0d
+.ascii	" . http://zet.aluzina.org"
+.byte	0x0a,0x0d
 .ascii	" . http://bochs.sourceforge.net"
 .byte	0x0a,0x0d
 .ascii	" . http://www.nongnu.org/vgabios"
@@ -125,7 +127,7 @@ vgabios_init_func:
 
 ;; display splash screen
   call _display_splash_screen
-hlt
+
 ;; init video mode and clear the screen
   mov ax,#0x0003
   int #0x10
@@ -163,6 +165,7 @@ int10_normal:
 ;; We have to set ds to access the right data segment
   mov   bx, #0xc000
   mov   ds, bx
+
   call _int10_func
 
   ; popa ; we do this instead:
@@ -262,28 +265,8 @@ ASM_END
  */
 static void display_splash_screen()
 {
-/*
-ASM_START
-push dx
-push ds
-mov dx, #0xb800
-mov ds, dx
-mov [6], #0x0361
-pop ds
-pop dx
-ASM_END
- */
-
-  write_byte (0xb800, 0x2, 'o');
   write_byte (0xb800, 0x0, 'H');
-  write_byte (0xb800, 0x4, 'l');
-  write_byte (0xb800, 0x6, 'a');
-  write_byte (0xb800, 0x8, ' ');
-  write_byte (0xb800, 0xa, 't');
-  write_byte (0xb800, 0xc, 'i');
-  write_byte (0xb800, 0xe, 'o');
-  write_byte (0xb800, 0x10, '!');
-  write_byte (0xb800, 0x12, '!');
+//  write_byte (0xb800, 0x2, 'o');
 }
 
 // --------------------------------------------------------------------------------------------
@@ -300,7 +283,7 @@ ASM_START
  call _display_string
  mov si,#vgabios_version
  call _display_string
- 
+
  ;;mov si,#vgabios_copyright
  ;;call _display_string
  ;;mov si,#crlf
@@ -333,7 +316,7 @@ ASM_START
  mov ax,#0x0300
  mov bx,#0x0000
  int #0x10
- 
+
  pop cx
  mov ax,#0x1301
  mov bx,#0x000b
@@ -349,14 +332,13 @@ ASM_END
 static void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
   Bit16u DI, SI, BP, SP, BX, DX, CX, AX, ES, DS, FLAGS;
 {
-
  // BIOS functions
  switch(GET_AH())
   {
    case 0x00:
      biosfn_set_video_mode(GET_AL());
      switch(GET_AL()&0x7F)
-      {case 6: 
+      {case 6:
         SET_AL(0x3F);
         break;
        case 0:
@@ -371,6 +353,9 @@ static void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
       default:
         SET_AL(0x20);
       }
+     break;
+   case 0x02:
+     biosfn_set_cursor_pos(GET_BH(),DX);
      break;
    case 0x03:
      biosfn_get_cursor_pos(GET_BH(),&CX,&DX);
@@ -401,7 +386,7 @@ static void biosfn_set_video_mode(mode) Bit8u mode;
  Bit16u i,twidth,theightm1,cheight;
  Bit8u modeset_ctl,video_ctl,vga_switches;
  Bit16u crtc_addr;
- 
+
  // The real mode
  mode=mode&0x7f;
 

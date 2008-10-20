@@ -31,6 +31,7 @@ module cpu (
     output [15:0] y,
     output [15:0] imm,
     output [15:0] aluo,
+    output [15:0] sp,
 `endif
 
     // Wishbone master interface
@@ -101,6 +102,7 @@ module cpu (
     .x    (x),
     .y    (y),
     .aluo (aluo),
+    .sp   (sp),
 `endif
     .ir      (ir),
     .off     (off),

@@ -100,27 +100,27 @@ module div_su(clk, ena, z, d, q, s, div0, ovf);
   always @(posedge clk)
     if (ena)
       if (d[d_width-1])
-         id <= #1 ~d +1'h1;
+         id <= ~d +1'h1;
       else
-         id <= #1 d;
+         id <= d;
 
   // check z, take abs value
   always @(posedge clk)
     if (ena)
       if (z[z_width-1])
-         iz <= #1 ~z +1'h1;
+         iz <= ~z +1'h1;
       else
-         iz <= #1 z;
+         iz <= z;
 
   // generate szpipe (z sign bit pipe)
   integer n;
   always @(posedge clk)
     if(ena)
     begin
-        szpipe[0] <= #1 z[z_width-1];
+        szpipe[0] <= z[z_width-1];
 
         for(n=1; n <= d_width+1; n=n+1)
-           szpipe[n] <= #1 szpipe[n-1];
+           szpipe[n] <= szpipe[n-1];
     end
 
   // generate sdpipe (d sign bit pipe)
@@ -128,10 +128,10 @@ module div_su(clk, ena, z, d, q, s, div0, ovf);
   always @(posedge clk)
     if(ena)
     begin
-        sdpipe[0] <= #1 d[d_width-1];
+        sdpipe[0] <= d[d_width-1];
 
         for(m=1; m <= d_width+1; m=m+1)
-           sdpipe[m] <= #1 sdpipe[m-1];
+           sdpipe[m] <= sdpipe[m-1];
     end
 
   // hookup non-restoring divider
@@ -151,17 +151,17 @@ module div_su(clk, ena, z, d, q, s, div0, ovf);
   always @(posedge clk)
     if(ena)
       begin
-         q <= #1 (szpipe[d_width+1]^sdpipe[d_width+1]) ?
-                 ((~iq) + 1'h1) : ({1'b0, iq});
-         s <= #1 (szpipe[d_width+1]) ?
-                 ((~is) + 1'h1) : ({1'b0, is});
+         q <= (szpipe[d_width+1]^sdpipe[d_width+1]) ?
+              ((~iq) + 1'h1) : ({1'b0, iq});
+         s <= (szpipe[d_width+1]) ?
+              ((~is) + 1'h1) : ({1'b0, is});
       end
 
   // delay flags same as results
   always @(posedge clk)
     if(ena)
     begin
-        div0 <= #1 idiv0;
-        ovf  <= #1 iovf;
+        div0 <= idiv0;
+        ovf  <= iovf;
     end
 endmodule

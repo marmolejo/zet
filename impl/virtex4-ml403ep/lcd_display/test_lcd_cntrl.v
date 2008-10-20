@@ -4,12 +4,14 @@ module lcd_test (
     output       rs_,
     output       rw_,
     output       e_,
-    inout  [7:4] db_
+    inout  [7:4] db_,
+    input        but_
   );
 
   // Module instantiations
   lcd_display lcd0 (
     .clk (sys_clk_in_),
+    .rst (but_),
     .f1  (64'h123456f890abcde7),
     .f2  (64'h7645321dcbaef987),
     .m1  (16'b0101011101011111),

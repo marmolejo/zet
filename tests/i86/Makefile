@@ -1,7 +1,8 @@
-s3roms :=  $(patsubst %.s,%.s3rom,$(wildcard *.s))
+#s3roms :=  $(patsubst %.s,%.s3rom,$(wildcard *.s))
 ml403roms := $(patsubst %.s,%.bin,$(wildcard *.s))
 rtlroms := $(patsubst %.s,%.rtlrom,$(wildcard *s))
-all: $(ml403roms) $(rtlroms)
+
+all: $(ml403roms)
 
 # altera: ../../altera/zet/simulation/modelsim/bios0.dat ../../altera/zet/simulation/modelsim/bios1.dat
 

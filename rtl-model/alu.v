@@ -53,7 +53,7 @@ module alu (
     .x      (x[15:0]),
     .func   (func),
     .out    (cnv),
-    .iflags ({afi, ofi, cfi}),
+    .iflags ({afi, cfi}),
     .oflags ({af_cnv, of_cnv, cf_cnv})
   );
 
@@ -157,7 +157,7 @@ module conv (
     input  [15:0] x,
     input  [ 2:0] func,
     output [31:0] out,
-    input  [ 2:0] iflags, // afi, ofi, cfi
+    input  [ 1:0] iflags, // afi, cfi
     output [ 2:0] oflags  // afo, ofo, cfo
   );
 
@@ -190,7 +190,7 @@ module conv (
   assign acond = ((x[7:0] & 8'h0f) > 8'h09) | afi;
   assign dcond = (x[7:0] > 8'h99) | cfi;
 
-  assign afi = iflags[2];
+  assign afi = iflags[1];
   assign cfi = iflags[0];
 
   assign afo = acond;

@@ -792,7 +792,7 @@ ASM_END
     }
 }
 
-static char bios_svn_version_string[] = "$Revision$ $Date$";
+static char bios_svn_version_string[] = "$Revision: 46 $ $Date: 2008-10-13 02:19:35 +0200 (lun, 13 oct 2008) $";
 
 //--------------------------------------------------------------------------
 // print_bios_banner
@@ -801,7 +801,7 @@ static char bios_svn_version_string[] = "$Revision$ $Date$";
 void
 print_bios_banner()
 {
-  printf("Zet BIOS - build: %s\n%s\n",
+  printf("Zet ROMBIOS - build: %s\n%s\n\n",
     BIOS_BUILD_DATE, bios_svn_version_string);
 }
 
@@ -1205,7 +1205,6 @@ bios_table_area_start:
 ;--------
 .org 0xe05b ; POST Entry Point
 post:
-
   xor ax, ax
 
 normal_post:
@@ -1269,10 +1268,11 @@ post_default_ints:
 
   mov  cx, #0xc000  ;; init vga bios
   mov  ax, #0xc780
+
   call rom_scan
 
   call _print_bios_banner
-hlt
+
   call _init_boot_vectors
 
   mov  cx, #0xc800  ;; init option roms

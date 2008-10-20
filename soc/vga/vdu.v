@@ -10,24 +10,23 @@
 // 16 vertical scan lines / character (2 scan lines/row)
 `timescale 1ns/10ps
 
-module vdu
-  (
+module vdu (
     // Wishbone signals
-    input             clk_i,     // 25 Mhz VDU clock
-    input             rst_i,
-    input             stb_i,
-    input             cyc_i,
-    input             we_i,
-    input      [11:0] adr_i,
-    input      [15:0] dat_i,
-    output reg [15:0] dat_o,
-    output reg        ack_o,
-    input             byte_i,
+    input             wb_clk_i,     // 25 Mhz VDU clock
+    input             wb_rst_i,
+    input      [15:0] wb_dat_i,
+    output reg [15:0] wb_dat_o,
+    input      [11:1] wb_adr_i,
+    input             wb_we_i,
+    input      [ 1:0] wb_sel_i,
+    input             wb_stb_i,
+    input             wb_cyc_i,
+    output reg        wb_ack_o,
 
     // VGA pad signals
-    output reg        vga_red_o,
-    output reg        vga_green_o,
-    output reg        vga_blue_o,
+    output reg [ 1:0] vga_red_o,
+    output reg [ 1:0] vga_green_o,
+    output reg [ 1:0] vga_blue_o,
     output reg        horiz_sync,
     output reg        vert_sync
   );
@@ -35,7 +34,7 @@ module vdu
   // Net, registers and parameters
 
   // Synchronization constants
-  parameter HOR_DISP_END = 10'd639; // Last horizontal pixel displayed
+  parameter HOR_DISP_END = 10'd640; // Last horizontal pixel displayed
   parameter HOR_SYNC_BEG = 10'd679; // Start of horizontal synch pulse
   parameter HOR_SYNC_END = 10'd775; // End of Horizontal Synch pulse
   parameter HOR_SCAN_END = 10'd799; // Last pixel in scan line
@@ -84,7 +83,7 @@ module vdu
   reg   [6:0] hor_addr;  // 0 to 79
   reg   [6:0] ver_addr;  // 0 to 124
   reg         vga0_we;
-  reg         vga0_rw, vga1_rw, vga2_rw, vga3_rw, vga4_rw;
+  reg         vga0_rw, vga1_rw, vga2_rw, vga3_rw;
   reg         vga1_we;
   reg         vga2_we;
   reg         buff_we;
@@ -97,27 +96,21 @@ module vdu
   reg  [10:0] buff0_addr;
   reg         buff0_we;
   reg  [10:0] attr_addr;
+  reg         intense;
   wire        vga_cs;
   wire  [7:0] vga_data_out;
   wire  [7:0] attr_data_out;
   wire [10:0] vga_addr;  // 2K byte character buffer
-  wire        a0;
-  wire [10:0] vdu_addr1;
-  wire        byte1;
   wire [15:0] out_data;
-  wire [15:0] ext_attr, ext_buff;
   wire        fg_or_bg;
   wire        stb;
-
-  // Character write handshake signals
-  reg req_write; // request character write
-  reg req_read;
-  reg one_more_cycle;
+  wire        brown_bg;
+  wire        brown_fg;
 
   // Module instantiation
   char_rom vdu_char_rom (
-    .clk   (clk_i),
-    .rst   (rst_i),
+    .clk   (wb_clk_i),
+    .rst   (wb_rst_i),
     .cs    (char_cs),
     .we    (char_we),
     .addr  (char_addr),
@@ -126,8 +119,8 @@ module vdu
   );
 
   ram_2k char_buff_ram (
-    .clk   (clk_i),
-    .rst   (rst_i),
+    .clk   (wb_clk_i),
+    .rst   (wb_rst_i),
     .cs    (vga_cs),
     .we    (buff_we),
     .addr  (buff_addr),
@@ -136,8 +129,8 @@ module vdu
   );
 
   ram_2k_attr attr_buff_ram (
-    .clk   (clk_i),
-    .rst   (rst_i),
+    .clk   (wb_clk_i),
+    .rst   (wb_rst_i),
     .cs    (vga_cs),
     .we    (attr_we),
     .addr  (attr_addr),
@@ -153,16 +146,10 @@ module vdu
   assign char_data_in = 8'b0;
   assign char_addr  = { vga_data_out, v_count[3:0] };
   assign vga_addr   = { 4'b0, hor_addr} + { ver_addr, 4'b0 };
-  assign a0         = adr_i[0];
-  assign vdu_addr1  = adr_i[11:1] + 11'd1;
-  assign byte1      = byte_i || (adr_i == 12'hfff);
-  assign out_data   = a0 ? (byte_i ? ext_attr : {vga_data_out, attr_data_out} ) 
-                     : (byte_i ? ext_buff : {attr_data_out, vga_data_out} );
-  assign ext_buff   = { {8{vga_data_out[7]}}, vga_data_out };
-  assign ext_attr   = { {8{attr_data_out[7]}}, attr_data_out };
+  assign out_data   = {attr_data_out, vga_data_out};
 
   assign vga_cs     = 1'b1;
-  assign stb        = stb_i && cyc_i;
+  assign stb        = wb_stb_i && wb_cyc_i;
 
   // Old control registers
   assign reg_hcursor = 7'b0;
@@ -170,12 +157,14 @@ module vdu
   assign reg_voffset = 5'd0;
 
   assign fg_or_bg    = vga_shift[7] ^ cursor_on;
+  assign brown_fg    = (vga_fg_colour==3'd6) && !intense;
+  assign brown_bg    = (vga_bg_colour==3'd6);
 
   // Behaviour
 
   // CPU write interface
-  always @(posedge clk_i)
-    if (rst_i)
+  always @(posedge wb_clk_i)
+    if (wb_rst_i)
       begin
         attr0_addr    <= 11'b0;
         attr0_we      <= 1'b0;
@@ -183,39 +172,37 @@ module vdu
         buff0_addr    <= 11'b0;
         buff0_we      <= 1'b0;
         buff_data_in  <= 8'h0;
-        req_write     <= 1'b0;
       end
     else
       begin
         if (stb)
           begin
-            attr0_addr   <= adr_i[11:1];
-            attr0_we     <= we_i & (!byte1 | a0);
-            attr_data_in <= a0 ? dat_i[7:0] : dat_i[15:8];
-            buff0_addr   <= (a0 && !byte1) ? vdu_addr1 : adr_i[11:1];
-            buff0_we     <= we_i & (!byte1 | !a0);
-            buff_data_in <= a0 ? dat_i[15:8] : dat_i[7:0];
-            req_write    <= we_i;
+            attr0_addr   <= wb_adr_i;
+            attr0_we     <= wb_we_i & wb_sel_i[1];
+            attr_data_in <= wb_dat_i[15:8];
+            buff0_addr   <= wb_adr_i;
+            buff0_we     <= wb_we_i & wb_sel_i[0];
+            buff_data_in <= wb_dat_i[7:0];
           end
       end
 
   // CPU read interface
-  always @(posedge clk_i)
-    if (rst_i)
+  always @(posedge wb_clk_i)
+    if (wb_rst_i)
       begin
-        dat_o <= 16'h0;
-        ack_o <= 16'h0;
+        wb_dat_o <= 16'h0;
+        wb_ack_o <= 16'h0;
       end
     else
       begin
-        dat_o <= vga3_rw ? out_data : dat_o;
-        ack_o <= vga3_rw ? 1'b1 : (ack_o && stb);
+        wb_dat_o <= vga3_rw ? out_data : wb_dat_o;
+        wb_ack_o <= vga3_rw ? 1'b1 : (wb_ack_o && stb);
       end
 
   // Sync generation & timing process
   // Generate horizontal and vertical timing signals for video signal
-  always @(posedge clk_i)
-    if (rst_i)
+  always @(posedge wb_clk_i)
+    if (wb_rst_i)
       begin
         h_count     <= 10'b0;
         horiz_sync  <= 1'b1;
@@ -246,8 +233,8 @@ module vdu
       end
 
   // Video memory access
-  always @(posedge clk_i)
-    if (rst_i)
+  always @(posedge wb_clk_i)
+    if (wb_rst_i)
       begin
         vga0_we <= 1'b0;
         vga0_rw <= 1'b1;
@@ -277,8 +264,8 @@ module vdu
         case (h_count[2:0])
           3'b000:   // pipeline character write
             begin 
-              vga0_we <= we_i;
-              vga0_rw <= stb_i && cyc_i;
+              vga0_we <= wb_we_i;
+              vga0_rw <= stb;
             end
           default:  // other 6 cycles free
             begin
@@ -314,47 +301,48 @@ module vdu
       end
 
   // Video shift register
-  always @(posedge clk_i)
-    if (rst_i)
+  always @(posedge wb_clk_i)
+    if (wb_rst_i)
       begin
-        video_on      = 1'b0;
-        cursor_on     = 1'b0;
-        vga_bg_colour = 3'b000;
-        vga_fg_colour = 3'b111;
-        vga_shift     = 8'b00000000;
-        vga_red_o     = 1'b0;
-        vga_green_o   = 1'b0;
-        vga_blue_o    = 1'b0;
+        video_on      <= 1'b0;
+        cursor_on     <= 1'b0;
+        vga_bg_colour <= 3'b000;
+        vga_fg_colour <= 3'b111;
+        vga_shift     <= 8'b00000000;
+        vga_red_o     <= 1'b0;
+        vga_green_o   <= 1'b0;
+        vga_blue_o    <= 1'b0;
       end
     else
       begin
         if (h_count[2:0] == 3'b000)
           begin
-            video_on  = video_on1;
-            cursor_on = (cursor_on1 | attr_data_out[3]) & blink_count[22];
-            vga_fg_colour = attr_data_out[2:0];
-            vga_bg_colour = attr_data_out[6:4];
-            if (!attr_data_out[7]) vga_shift = char_data_out;
-            else
-              case (v_count[3:2])
-                2'b00: vga_shift = { {4{vga_data_out[0]}}, {4{vga_data_out[1]}} };
-                2'b01: vga_shift = { {4{vga_data_out[2]}}, {4{vga_data_out[3]}} };
-                2'b10: vga_shift = { {4{vga_data_out[4]}}, {4{vga_data_out[5]}} };
-                default: vga_shift = { {4{vga_data_out[6]}}, {4{vga_data_out[7]}} };
-              endcase
+            video_on      <= video_on1;
+            cursor_on     <= (cursor_on1 | attr_data_out[7]) & blink_count[22];
+            vga_fg_colour <= attr_data_out[2:0];
+            vga_bg_colour <= attr_data_out[6:4];
+            intense       <= attr_data_out[3];
+            vga_shift     <= char_data_out;
           end
-        else vga_shift = { vga_shift[6:0], 1'b0 };
+        else vga_shift <= { vga_shift[6:0], 1'b0 };
 
         //
         // Colour mask is
         //  7  6  5  4  3  2  1  0
-        //  X BG BB BR  X FG FB FR
+        //  X BR BG BB  X FR FG FB
         //
-        vga_red_o    = fg_or_bg ? video_on & vga_fg_colour[0] 
-                                : video_on & vga_bg_colour[0];
-        vga_green_o  = fg_or_bg ? video_on & vga_fg_colour[1]
-                                : video_on & vga_bg_colour[1];
-        vga_blue_o   = fg_or_bg ? video_on & vga_fg_colour[2]
-                                : video_on & vga_bg_colour[2];
+        vga_blue_o   <= video_on ? (fg_or_bg ? { vga_fg_colour[0], intense }
+                                            : { vga_bg_colour[0], 1'b0 })
+                                : 2'b0;
+
+        // Green color exception with color brown
+        // http://en.wikipedia.org/wiki/Color_Graphics_Adapter#With_an_RGBI_monitor
+        vga_green_o  <= video_on ?
+           (fg_or_bg ? (brown_fg ? 2'b01 : { vga_fg_colour[1], intense })
+                     : (brown_bg ? 2'b01 : { vga_bg_colour[1], 1'b0 }))
+                                : 2'b0;
+        vga_red_o    <= video_on ? (fg_or_bg ? { vga_fg_colour[2], intense }
+                                            : { vga_bg_colour[2], 1'b0 })
+                                : 2'b0;
       end
 endmodule

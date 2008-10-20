@@ -26,6 +26,7 @@ module exec (
     output [15:0] x,
     output [15:0] y,
     output [15:0] aluo,
+    output [15:0] sp,
 `endif
     input [`IR_SIZE-1:0] ir,
     input [15:0]  off,
@@ -71,7 +72,11 @@ module exec (
   // Module instances
   alu     alu0( {c, a }, bus_b, aluout, t, func, alu_iflags, oflags, 
                alu_word, s, off, clk, dive);
-  regfile reg0( a, b, c, cs, ip, {aluout[31:16], omemalu}, s, flags, wr_reg, wrfl,
+  regfile reg0 (
+`ifdef DEBUG
+    sp,
+`endif
+    a, b, c, cs, ip, {aluout[31:16], omemalu}, s, flags, wr_reg, wrfl,
                 wr_high, clk, rst, addr_a, addr_b, addr_c, addr_d, addr_s, iflags,
                 ~byteop, a_byte, b_byte, c_byte, cx_zero, wrip0);
   jmp_cond jc0( logic_flags, addr_b, addr_c[0], c, jmp);
