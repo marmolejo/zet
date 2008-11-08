@@ -1,10 +1,10 @@
 // Video Display terminal
 // John Kent
-// 3th September 2004 
+// 3th September 2004
 // Assumes a pixel clock input of 50 MHz
 // Generates a 12.5MHz CPU Clock output
 //
-// Display Format is: 
+// Display Format is:
 // 80 characters across	by 25 characters down.
 // 8 horizonal pixels / character
 // 16 vertical scan lines / character (2 scan lines/row)
@@ -83,7 +83,7 @@ module vdu (
   reg   [6:0] hor_addr;  // 0 to 79
   reg   [6:0] ver_addr;  // 0 to 124
   reg         vga0_we;
-  reg         vga0_rw, vga1_rw, vga2_rw, vga3_rw;
+  reg         vga0_rw, vga1_rw, vga2_rw, vga3_rw, vga4_rw;
   reg         vga1_we;
   reg         vga2_we;
   reg         buff_we;
@@ -195,8 +195,8 @@ module vdu (
       end
     else
       begin
-        wb_dat_o <= vga3_rw ? out_data : wb_dat_o;
-        wb_ack_o <= vga3_rw ? 1'b1 : (wb_ack_o && stb);
+        wb_dat_o <= vga4_rw ? out_data : wb_dat_o;
+        wb_ack_o <= vga4_rw ? 1'b1 : (wb_ack_o && stb);
       end
 
   // Sync generation & timing process
@@ -217,15 +217,15 @@ module vdu (
     else
       begin
         h_count    <= (h_count==HOR_SCAN_END) ? 10'b0 : h_count + 10'b1;
-        horiz_sync <= (h_count==HOR_SYNC_BEG) ? 1'b0 
+        horiz_sync <= (h_count==HOR_SYNC_BEG) ? 1'b0
                     : ((h_count==HOR_SYNC_END) ? 1'b1 : horiz_sync);
-        v_count    <= (v_count==VER_SCAN_END && h_count==HOR_SCAN_END) ? 9'b0 
+        v_count    <= (v_count==VER_SCAN_END && h_count==HOR_SCAN_END) ? 9'b0
                     : ((h_count==HOR_SYNC_END) ? v_count + 9'b1 : v_count);
-        vert_sync  <= (v_count==VER_SYNC_BEG) ? 1'b0 
+        vert_sync  <= (v_count==VER_SYNC_BEG) ? 1'b0
                     : ((v_count==VER_SYNC_END) ? 1'b1 : vert_sync);
-        video_on_h <= (h_count==HOR_SCAN_END) ? 1'b1 
+        video_on_h <= (h_count==HOR_SCAN_END) ? 1'b1
                     : ((h_count==HOR_DISP_END) ? 1'b0 : video_on_h);
-        video_on_v <= (v_count==VER_SYNC_BEG) ? 1'b1 
+        video_on_v <= (v_count==VER_SYNC_BEG) ? 1'b1
                     : ((v_count==VER_DISP_END) ? 1'b0 : video_on_v);
         cursor_on_h <= (h_count[9:3] == reg_hcursor[6:0]);
         cursor_on_v <= (v_count[8:4] == reg_vcursor[4:0]);
@@ -249,6 +249,7 @@ module vdu (
         vga2_we  <= 1'b0;
         vga2_rw  <= 1'b0;
         vga3_rw  <= 1'b0;
+        vga4_rw  <= 1'b0;
         ver_addr <= 7'b0;
         hor_addr <= 7'b0;
 
@@ -263,7 +264,7 @@ module vdu (
         // all other cycles are reads
         case (h_count[2:0])
           3'b000:   // pipeline character write
-            begin 
+            begin
               vga0_we <= wb_we_i;
               vga0_rw <= stb;
             end
@@ -298,6 +299,7 @@ module vdu (
         buff_we   <= vga2_rw ? (buff0_we & vga2_we) : 1'b0;
         attr_we   <= vga2_rw ? (attr0_we & vga2_we) : 1'b0;
         vga3_rw   <= vga2_rw;
+        vga4_rw   <= vga3_rw;
       end
 
   // Video shift register
