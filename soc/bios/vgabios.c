@@ -12,6 +12,9 @@ static void           outw();
 
 static Bit16u         get_SS();
 
+// Output
+static void           printf();
+
 static Bit8u find_vga_entry();
 
 static void memsetb();
@@ -24,6 +27,7 @@ static void biosfn_set_cursor_pos();
 static void biosfn_get_cursor_pos();
 static void biosfn_scroll();
 static void biosfn_write_teletype();
+static void biosfn_load_text_8_16_pat();
 static void biosfn_write_string();
 extern Bit8u video_save_pointer_table[];
 
@@ -60,7 +64,7 @@ vgabios_start:
 
 
 vgabios_entry_point:
-           
+
   jmp vgabios_init_func
 
 vgabios_name:
@@ -110,7 +114,7 @@ vgabios_website:
 .byte	0x0a,0x0d
 .byte	0x0a,0x0d
 .byte	0x00
- 
+
 
 ;; ========================================================
 ;;
@@ -118,6 +122,9 @@ vgabios_website:
 ;;
 ;; ========================================================
 vgabios_init_func:
+
+;; init vga card
+  call init_vga_card
 
 ;; init basic bios vars
   call init_bios_area
@@ -144,6 +151,11 @@ ASM_END
 ASM_START
 vgabios_int10_handler:
   pushf
+int10_test_1103:
+  cmp   ax, #0x1103
+  jne   int10_normal
+  call  biosfn_set_text_block_specifier
+  jmp   int10_end
 
 int10_normal:
   push es
@@ -186,10 +198,45 @@ int10_end:
 ASM_END
 
 #include "vgatables.h"
+#include "vgafonts.h"
 
-// --------------------------------------------------------
 /*
- *  Boot time bios area inits 
+ * Boot time harware inits
+ */
+ASM_START
+init_vga_card:
+;; switch to color mode and enable CPU access 480 lines
+  mov dx, #0x3C2
+  mov al, #0xC3
+  outb dx,al
+
+;; more than 64k 3C4/04
+  mov dx, #0x3C4
+  mov al, #0x04
+  outb dx,al
+  mov dx, #0x3C5
+  mov al, #0x02
+  outb dx,al
+
+#if defined(USE_BX_INFO) || defined(DEBUG)
+  mov  bx, #msg_vga_init
+  push bx
+  call _printf
+#endif
+;  inc  sp
+;  inc  sp
+  ret
+
+#if defined(USE_BX_INFO) || defined(DEBUG)
+msg_vga_init:
+.ascii "VGABios $Id: vgabios.c,v 1.66 2006/07/10 07:47:51 vruppert Exp $"
+.byte 0x0d,0x0a,0x00
+#endif
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+/*
+ *  Boot time bios area inits
  */
 ASM_START
 init_bios_area:
@@ -212,7 +259,7 @@ init_bios_area:
   mov   al, #0x10
   mov   [bx], al
 
-;; Clear the screen 
+;; Clear the screen
   mov   bx, # BIOSMEM_VIDEO_CTL
   mov   al, #0x60
   mov   [bx], al
@@ -259,14 +306,12 @@ _video_save_pointer_table:
 
 ASM_END
 
-// --------------------------------------------------------
+// --------------------------------------------------------------------------------------------
 /*
  *  Boot time Splash screen
  */
 static void display_splash_screen()
 {
-  write_byte (0xb800, 0x0, 'H');
-//  write_byte (0xb800, 0x2, 'o');
 }
 
 // --------------------------------------------------------------------------------------------
@@ -307,7 +352,7 @@ ASM_START
  not cx
  xor al,al
  cld
- repne 
+ repne
   scasb
  not cx
  dec cx
@@ -365,6 +410,15 @@ static void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
      // We do output only on the current page !
      biosfn_write_teletype(GET_AL(),0xff,GET_BL(),NO_ATTR);
      break;
+   case 0x11:
+     switch(GET_AL())
+      {
+       case 0x04:
+       case 0x14:
+        biosfn_load_text_8_16_pat(GET_AL(),GET_BL());
+        break;
+      }
+     break;
    case 0x13:
      biosfn_write_string(GET_AL(),GET_BH(),GET_BL(),CX,GET_DH(),GET_DL(),ES,BP);
      break;
@@ -372,12 +426,12 @@ static void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
 }
 
 // ============================================================================================
-// 
+//
 // BIOS functions
-// 
+//
 // ============================================================================================
 
-static void biosfn_set_video_mode(mode) Bit8u mode; 
+static void biosfn_set_video_mode(mode) Bit8u mode;
 {// mode: Bit 7 is 1 if no clear screen
 
  // Should we clear the screen ?
@@ -400,7 +454,7 @@ static void biosfn_set_video_mode(mode) Bit8u mode;
  twidth=video_param_table[vpti].twidth;
  theightm1=video_param_table[vpti].theightm1;
  cheight=video_param_table[vpti].cheight;
- 
+
  // Read the bios vga control
  video_ctl=read_byte(BIOSMEM_SEG,BIOSMEM_VIDEO_CTL);
 
@@ -410,8 +464,112 @@ static void biosfn_set_video_mode(mode) Bit8u mode;
  // Read the bios mode set control
  modeset_ctl=read_byte(BIOSMEM_SEG,BIOSMEM_MODESET_CTL);
 
- // Set CRTC address VGA or MDA 
+ // Then we know the number of lines
+// FIXME
+
+ // if palette loading (bit 3 of modeset ctl = 0)
+ if((modeset_ctl&0x08)==0)
+  {// Set the PEL mask
+   outb(VGAREG_PEL_MASK,vga_modes[line].pelmask);
+
+   // Set the whole dac always, from 0
+   outb(VGAREG_DAC_WRITE_ADDRESS,0x00);
+
+   // From which palette
+   switch(vga_modes[line].dacmodel)
+    {case 0:
+      palette=&palette0;
+      break;
+     case 1:
+      palette=&palette1;
+      break;
+     case 2:
+      palette=&palette2;
+      break;
+     case 3:
+      palette=&palette3;
+      break;
+    }
+   // Always 256*3 values
+   for(i=0;i<0x0100;i++)
+    {if(i<=dac_regs[vga_modes[line].dacmodel])
+      {outb(VGAREG_DAC_DATA,palette[(i*3)+0]);
+       outb(VGAREG_DAC_DATA,palette[(i*3)+1]);
+       outb(VGAREG_DAC_DATA,palette[(i*3)+2]);
+      }
+     else
+      {outb(VGAREG_DAC_DATA,0);
+       outb(VGAREG_DAC_DATA,0);
+       outb(VGAREG_DAC_DATA,0);
+      }
+    }
+  }
+
+ // Reset Attribute Ctl flip-flop
+ inb(VGAREG_ACTL_RESET);
+
+ // Set Attribute Ctl
+ for(i=0;i<=0x13;i++)
+  {outb(VGAREG_ACTL_ADDRESS,i);
+   outb(VGAREG_ACTL_WRITE_DATA,video_param_table[vpti].actl_regs[i]);
+  }
+ outb(VGAREG_ACTL_ADDRESS,0x14);
+ outb(VGAREG_ACTL_WRITE_DATA,0x00);
+
+ // Set Sequencer Ctl
+ outb(VGAREG_SEQU_ADDRESS,0);
+ outb(VGAREG_SEQU_DATA,0x03);
+ for(i=1;i<=4;i++)
+  {outb(VGAREG_SEQU_ADDRESS,i);
+   outb(VGAREG_SEQU_DATA,video_param_table[vpti].sequ_regs[i - 1]);
+  }
+
+ // Set Grafx Ctl
+ for(i=0;i<=8;i++)
+  {outb(VGAREG_GRDC_ADDRESS,i);
+   outb(VGAREG_GRDC_DATA,video_param_table[vpti].grdc_regs[i]);
+  }
+
+ // Set CRTC address VGA or MDA
  crtc_addr=vga_modes[line].memmodel==MTEXT?VGAREG_MDA_CRTC_ADDRESS:VGAREG_VGA_CRTC_ADDRESS;
+
+ // Disable CRTC write protection
+ outw(crtc_addr,0x0011);
+ // Set CRTC regs
+ for(i=0;i<=0x18;i++)
+  {outb(crtc_addr,i);
+   outb(crtc_addr+1,video_param_table[vpti].crtc_regs[i]);
+  }
+
+ // Set the misc register
+ outb(VGAREG_WRITE_MISC_OUTPUT,video_param_table[vpti].miscreg);
+
+ // Enable video
+ outb(VGAREG_ACTL_ADDRESS,0x20);
+ inb(VGAREG_ACTL_RESET);
+
+ if(noclearmem==0x00)
+  {
+   if(vga_modes[line].class==TEXT)
+    {
+     memsetw(vga_modes[line].sstart,0,0x0720,0x4000); // 32k
+    }
+   else
+    {
+     if(mode<0x0d)
+      {
+       memsetw(vga_modes[line].sstart,0,0x0000,0x4000); // 32k
+      }
+     else
+      {
+       outb( VGAREG_SEQU_ADDRESS, 0x02 );
+       mmask = inb( VGAREG_SEQU_DATA );
+       outb( VGAREG_SEQU_DATA, 0x0f ); // all planes
+       memsetw(vga_modes[line].sstart,0,0x0000,0x8000); // 64k
+       outb( VGAREG_SEQU_DATA, mmask );
+      }
+    }
+  }
 
  // Set the BIOS mem
  write_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_MODE,mode);
@@ -432,11 +590,24 @@ static void biosfn_set_video_mode(mode) Bit8u mode;
  // FIXME
  write_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_MSR,0x00); // Unavailable on vanilla vga, but...
  write_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_PAL,0x00); // Unavailable on vanilla vga, but...
- 
+
+ // Write the fonts in memory
+ if(vga_modes[line].class==TEXT)
+  {
+ASM_START
+  ;; copy and activate 8x16 font
+  mov ax, #0x1104
+  mov bl, #0x00
+  int #0x10
+  mov ax, #0x1103
+  mov bl, #0x00
+  int #0x10
+ASM_END
+  }
 }
 
 // --------------------------------------------------------------------------------------------
-static void biosfn_set_cursor_pos (page, cursor) 
+static void biosfn_set_cursor_pos (page, cursor)
 Bit8u page;Bit16u cursor;
 {
  Bit8u xcurs,ycurs,current;
@@ -457,21 +628,22 @@ Bit8u page;Bit16u cursor;
    nbrows=read_byte(BIOSMEM_SEG,BIOSMEM_NB_ROWS)+1;
 
    xcurs=cursor&0x00ff;ycurs=(cursor&0xff00)>>8;
- 
+
    // Calculate the address knowing nbcols nbrows and page num
    address=SCREEN_IO_START(nbcols,nbrows,page)+xcurs+ycurs*nbcols;
-   
+
    // CRTC regs 0x0e and 0x0f
    crtc_addr=read_word(BIOSMEM_SEG,BIOSMEM_CRTC_ADDRESS);
    outb(crtc_addr,0x0e);
    outb(crtc_addr+1,(address&0xff00)>>8);
    outb(crtc_addr,0x0f);
    outb(crtc_addr+1,address&0x00ff);
+   outw(0xb800,cursor);
   }
 }
 
 // --------------------------------------------------------------------------------------------
-static void biosfn_get_cursor_pos (page,shape, pos) 
+static void biosfn_get_cursor_pos (page,shape, pos)
 Bit8u page;Bit16u *shape;Bit16u *pos;
 {
  Bit16u ss=get_SS();
@@ -555,7 +727,7 @@ Bit8u nblines;Bit8u attr;Bit8u rul;Bit8u cul;Bit8u rlr;Bit8u clr;Bit8u page;Bit8
 }
 
 // --------------------------------------------------------------------------------------------
-static void biosfn_write_teletype (car, page, attr, flag) 
+static void biosfn_write_teletype (car, page, attr, flag)
 Bit8u car;Bit8u page;Bit8u attr;Bit8u flag;
 {// flag = WITH_ATTR / NO_ATTR
 
@@ -611,10 +783,10 @@ Bit8u car;Bit8u page;Bit8u attr;Bit8u flag;
 
     if(vga_modes[line].class==TEXT)
      {
-      // Compute the address  
+      // Compute the address
       address=SCREEN_MEM_START(nbcols,nbrows,page)+(xcurs+ycurs*nbcols)*2;
 
-      // Write the char 
+      // Write the char
       write_byte(vga_modes[line].sstart,address,car);
 
       if(flag==WITH_ATTR)
@@ -638,14 +810,141 @@ Bit8u car;Bit8u page;Bit8u attr;Bit8u flag;
     }
    ycurs-=1;
   }
- 
+
  // Set the cursor for the page
  cursor=ycurs; cursor<<=8; cursor+=xcurs;
  biosfn_set_cursor_pos(page,cursor);
 }
 
 // --------------------------------------------------------------------------------------------
-static void biosfn_write_string (flag,page,attr,count,row,col,seg,offset) 
+static void get_font_access()
+{
+ASM_START
+ mov dx, # VGAREG_SEQU_ADDRESS
+ mov ax, #0x0100
+ out dx, ax
+ mov ax, #0x0402
+ out dx, ax
+ mov ax, #0x0704
+ out dx, ax
+ mov ax, #0x0300
+ out dx, ax
+ mov dx, # VGAREG_GRDC_ADDRESS
+ mov ax, #0x0204
+ out dx, ax
+ mov ax, #0x0005
+ out dx, ax
+ mov ax, #0x0406
+ out dx, ax
+ASM_END
+}
+
+static void release_font_access()
+{
+ASM_START
+ mov dx, # VGAREG_SEQU_ADDRESS
+ mov ax, #0x0100
+ out dx, ax
+ mov ax, #0x0302
+ out dx, ax
+ mov ax, #0x0304
+ out dx, ax
+ mov ax, #0x0300
+ out dx, ax
+ mov dx, # VGAREG_READ_MISC_OUTPUT
+ in  al, dx
+ and al, #0x01
+ push cx
+ mov cl,*2
+ shl al,cl
+ pop cx
+ or  al, #0x0a
+ mov ah, al
+ mov al, #0x06
+ mov dx, # VGAREG_GRDC_ADDRESS
+ out dx, ax
+ mov ax, #0x0004
+ out dx, ax
+ mov ax, #0x1005
+ out dx, ax
+ASM_END
+}
+
+ASM_START
+idiv_u:
+  xor dx,dx
+  div bx
+  ret
+ASM_END
+
+static void set_scan_lines(lines) Bit8u lines;
+{
+ Bit16u crtc_addr,cols,page,vde;
+ Bit8u crtc_r9,ovl,rows;
+
+ crtc_addr = read_word(BIOSMEM_SEG,BIOSMEM_CRTC_ADDRESS);
+ outb(crtc_addr, 0x09);
+ crtc_r9 = inb(crtc_addr+1);
+ crtc_r9 = (crtc_r9 & 0xe0) | (lines - 1);
+ outb(crtc_addr+1, crtc_r9);
+/*
+ if(lines==8)
+  {
+   biosfn_set_cursor_shape(0x06,0x07);
+  }
+ else
+  {
+   biosfn_set_cursor_shape(lines-4,lines-3);
+  }
+*/
+ write_word(BIOSMEM_SEG,BIOSMEM_CHAR_HEIGHT, lines);
+ outb(crtc_addr, 0x12);
+ vde = inb(crtc_addr+1);
+ outb(crtc_addr, 0x07);
+ ovl = inb(crtc_addr+1);
+ vde += (((ovl & 0x02) << 7) + ((ovl & 0x40) << 3) + 1);
+ rows = vde / lines;
+ write_byte(BIOSMEM_SEG,BIOSMEM_NB_ROWS, rows-1);
+ cols = read_word(BIOSMEM_SEG,BIOSMEM_NB_COLS);
+ write_word(BIOSMEM_SEG,BIOSMEM_PAGE_SIZE, rows * cols * 2);
+}
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_set_text_block_specifier:
+  push  ax
+  push  dx
+  mov   dx, # VGAREG_SEQU_ADDRESS
+  mov   ah, bl
+  mov   al, #0x03
+  out   dx, ax
+  pop   dx
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+static void biosfn_load_text_8_16_pat (AL,BL) Bit8u AL;Bit8u BL;
+{
+ Bit16u blockaddr,dest,i,src;
+
+ get_font_access();
+ blockaddr = ((BL & 0x03) << 14) + ((BL & 0x04) << 11);
+ for(i=0;i<0x100;i++)
+  {
+   src = i * 16;
+   dest = blockaddr + i * 32;
+   memcpyb(0xA000, dest, 0xC000, vgafont16+src, 16);
+  }
+ release_font_access();
+ if(AL>=0x10)
+  {
+   set_scan_lines(16);
+  }
+}
+
+// --------------------------------------------------------------------------------------------
+static void biosfn_write_string (flag,page,attr,count,row,col,seg,offset)
 Bit8u flag;Bit8u page;Bit8u attr;Bit16u count;Bit8u row;Bit8u col;Bit16u seg;Bit16u offset;
 {
  Bit16u newcurs,oldcurs,dummy;
@@ -662,7 +961,7 @@ Bit8u flag;Bit8u page;Bit8u attr;Bit16u count;Bit8u row;Bit8u col;Bit16u seg;Bit
 
  newcurs=row; newcurs<<=8; newcurs+=col;
  biosfn_set_cursor_pos(page,newcurs);
- 
+
  while(count--!=0)
   {
    car=read_byte(seg,offset++);
@@ -671,8 +970,8 @@ Bit8u flag;Bit8u page;Bit8u attr;Bit16u count;Bit8u row;Bit8u col;Bit16u seg;Bit
 
    biosfn_write_teletype(car,page,attr,WITH_ATTR);
   }
- 
- // Set back curs pos 
+
+ // Set back curs pos
  if((flag&0x01)==0)
   biosfn_set_cursor_pos(page,oldcurs);
 }
@@ -682,9 +981,9 @@ Bit8u flag;Bit8u page;Bit8u attr;Bit16u count;Bit8u row;Bit8u col;Bit16u seg;Bit
 // Video Utils
 //
 // ============================================================================================
- 
+
 // --------------------------------------------------------------------------------------------
-static Bit8u find_vga_entry(mode) 
+static Bit8u find_vga_entry(mode)
 Bit8u mode;
 {
  Bit8u i,line=0xFF;
@@ -725,6 +1024,52 @@ ASM_START
      stosw
 
 memsetw_end:
+    pop di
+    pop es
+    pop cx
+    pop ax
+
+  pop bp
+ASM_END
+}
+
+// --------------------------------------------------------------------------------------------
+static void memcpyb(dseg,doffset,sseg,soffset,count)
+  Bit16u dseg;
+  Bit16u doffset;
+  Bit16u sseg;
+  Bit16u soffset;
+  Bit16u count;
+{
+ASM_START
+  push bp
+  mov  bp, sp
+
+    push ax
+    push cx
+    push es
+    push di
+    push ds
+    push si
+
+    mov  cx, 12[bp] ; count
+    cmp  cx, #0x0000
+    je   memcpyb_end
+    mov  ax, 4[bp] ; dsegment
+    mov  es, ax
+    mov  ax, 6[bp] ; doffset
+    mov  di, ax
+    mov  ax, 8[bp] ; ssegment
+    mov  ds, ax
+    mov  ax, 10[bp] ; soffset
+    mov  si, ax
+    cld
+    rep
+     movsb
+
+memcpyb_end:
+    pop si
+    pop ds
     pop di
     pop es
     pop cx
@@ -968,9 +1313,61 @@ ASM_START
 ASM_END
 }
 
+void printf(s)
+  Bit8u *s;
+{
+  Bit8u c, format_char;
+  Boolean  in_format;
+  unsigned format_width, i;
+  Bit16u  *arg_ptr;
+  Bit16u   arg_seg, arg, digit, nibble, shift_count;
+
+  arg_ptr = &s;
+  arg_seg = get_SS();
+
+  in_format = 0;
+  format_width = 0;
+
+  while (c = read_byte(0xc000, s)) {
+    if ( c == '%' ) {
+      in_format = 1;
+      format_width = 0;
+      }
+    else if (in_format) {
+      if ( (c>='0') && (c<='9') ) {
+        format_width = (format_width * 10) + (c - '0');
+        }
+      else if (c == 'x') {
+        arg_ptr++; // increment to next arg
+        arg = read_word(arg_seg, arg_ptr);
+        if (format_width == 0)
+          format_width = 4;
+        i = 0;
+        digit = format_width - 1;
+        for (i=0; i<format_width; i++) {
+          nibble = (arg >> (4 * digit)) & 0x000f;
+          if (nibble <= 9)
+            outb(0x0500, nibble + '0');
+          else
+            outb(0x0500, (nibble - 10) + 'A');
+          digit--;
+          }
+        in_format = 0;
+        }
+      //else if (c == 'd') {
+      //  in_format = 0;
+      //  }
+      }
+    else {
+      outb(0x0500, c);
+      }
+    s ++;
+    }
+}
+
 // --------------------------------------------------------------------------------------------
 
-ASM_START 
+ASM_START
 ;; DATA_SEG_DEFS_HERE
 ASM_END
 

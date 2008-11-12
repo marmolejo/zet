@@ -26,7 +26,8 @@ module exec (
     output [15:0] x,
     output [15:0] y,
     output [15:0] aluo,
-    output [15:0] sp,
+    output [15:0] r1,
+    output [15:0] r2,
 `endif
     input [`IR_SIZE-1:0] ir,
     input [15:0]  off,
@@ -70,11 +71,11 @@ module exec (
   wire        dive;
 
   // Module instances
-  alu     alu0( {c, a }, bus_b, aluout, t, func, alu_iflags, oflags, 
+  alu     alu0( {c, a }, bus_b, aluout, t, func, alu_iflags, oflags,
                alu_word, s, off, clk, dive);
   regfile reg0 (
 `ifdef DEBUG
-    sp,
+    r1, r2,
 `endif
     a, b, c, cs, ip, {aluout[31:16], omemalu}, s, flags, wr_reg, wrfl,
                 wr_high, clk, rst, addr_a, addr_b, addr_c, addr_d, addr_s, iflags,
@@ -112,7 +113,7 @@ module exec (
   assign zf = flags[3];
 
   assign iflags = oflags;
-  assign alu_iflags = { 4'b0, flags[8:3], 1'b0, flags[2], 1'b0, flags[1], 
+  assign alu_iflags = { 4'b0, flags[8:3], 1'b0, flags[2], 1'b0, flags[1],
                         1'b1, flags[0] };
   assign logic_flags = { flags[8], flags[4], flags[3], flags[1], flags[0] };
 

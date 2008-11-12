@@ -1662,9 +1662,9 @@ module opcode_deco (
           dst <= 4'b0;
         end
 
-      default: // nop
+      default: // hlt
         begin
-          seq_addr <= `NOP;
+          seq_addr <= `HLT;
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;

@@ -429,9 +429,8 @@ typedef struct {
   Bit32u reserved;
   } ipl_entry_t;
 
-
-
-static Bit8u          inb_cmos();
+static Bit16u         inw();
+static void           outw();
 
 static Bit8u          read_byte();
 static Bit16u         read_word();
@@ -439,24 +438,80 @@ static void           write_byte();
 static void           write_word();
 static void           bios_printf();
 
+static void           int13_harddisk();
+static void           int13_diskette_function();
 static void           int19_function();
 static Bit16u         get_CS();
 static Bit16u         get_SS();
+static void           set_diskette_ret_status();
+static void           set_diskette_current_cyl();
 
 static void           print_bios_banner();
 static void           print_boot_device();
+static void           print_boot_failure();
 
-  Bit8u
-inb_cmos(cmos_reg)
-  Bit8u cmos_reg;
+#define SET_AL(val8) AX = ((AX & 0xff00) | (val8))
+#define SET_BL(val8) BX = ((BX & 0xff00) | (val8))
+#define SET_CL(val8) CX = ((CX & 0xff00) | (val8))
+#define SET_DL(val8) DX = ((DX & 0xff00) | (val8))
+#define SET_AH(val8) AX = ((AX & 0x00ff) | ((val8) << 8))
+#define SET_BH(val8) BX = ((BX & 0x00ff) | ((val8) << 8))
+#define SET_CH(val8) CX = ((CX & 0x00ff) | ((val8) << 8))
+#define SET_DH(val8) DX = ((DX & 0x00ff) | ((val8) << 8))
+
+#define GET_AL() ( AX & 0x00ff )
+#define GET_BL() ( BX & 0x00ff )
+#define GET_CL() ( CX & 0x00ff )
+#define GET_DL() ( DX & 0x00ff )
+#define GET_AH() ( AX >> 8 )
+#define GET_BH() ( BX >> 8 )
+#define GET_CH() ( CX >> 8 )
+#define GET_DH() ( DX >> 8 )
+
+#define GET_ELDL() ( ELDX & 0x00ff )
+#define GET_ELDH() ( ELDX >> 8 )
+
+#define SET_CF()     FLAGS |= 0x0001
+#define CLEAR_CF()   FLAGS &= 0xfffe
+#define GET_CF()     (FLAGS & 0x0001)
+
+#define SET_ZF()     FLAGS |= 0x0040
+#define CLEAR_ZF()   FLAGS &= 0xffbf
+#define GET_ZF()     (FLAGS & 0x0040)
+
+  Bit16u
+inw(port)
+  Bit16u port;
 {
 ASM_START
   push bp
   mov  bp, sp
 
-    mov  al, 4[bp] ;; cmos_reg
-    out 0x70, al
-    in  al, 0x71
+    push dx
+    mov  dx, 4[bp]
+    in   ax, dx
+    pop  dx
+
+  pop  bp
+ASM_END
+}
+
+  void
+outw(port, val)
+  Bit16u port;
+  Bit16u  val;
+{
+ASM_START
+  push bp
+  mov  bp, sp
+
+    push ax
+    push dx
+    mov  dx, 4[bp]
+    mov  ax, 6[bp]
+    out  dx, ax
+    pop  dx
+    pop  ax
 
   pop  bp
 ASM_END
@@ -820,7 +875,7 @@ print_bios_banner()
 // http://www.phoenix.com/en/Customer+Services/White+Papers-Specs/pc+industry+specifications.htm
 //--------------------------------------------------------------------------
 
-static char drivetypes[][10]={"", "Floppy","Hard Disk","CD-Rom", "Network"};
+static char drivetypes[][20]={"", "Floppy flash image" };
 
 static void
 init_boot_vectors()
@@ -835,9 +890,10 @@ init_boot_vectors()
   /* User selected device not set */
   write_word(IPL_SEG, IPL_BOOTFIRST_OFFSET, 0xFFFF);
 
-  /*
-   * Zet: We don't have support for floppy, hdd or cdrom
-   */
+  /* Floppy drive */
+  e.type = IPL_TYPE_FLOPPY; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
+  memcpyb(IPL_SEG, IPL_TABLE_OFFSET + count * sizeof (e), ss, &e, sizeof (e));
+  count++;
 
   /* Remember how many devices we have */
   write_word(IPL_SEG, IPL_COUNT_OFFSET, count);
@@ -884,7 +940,183 @@ print_boot_device(e)
     description[32] = 0;
     printf(" [%S]", ss, description);
   }
-  printf("...\n");
+  printf("...\n\n");
+}
+
+//--------------------------------------------------------------------------
+// print_boot_failure
+//   displays the reason why boot failed
+//--------------------------------------------------------------------------
+  void
+print_boot_failure(type, reason)
+  Bit16u type; Bit8u reason;
+{
+  if (type == 0 || type > 0x3) BX_PANIC("Bad drive type\n");
+
+  printf("Boot failed");
+  if (type < 4) {
+    /* Report the reason too */
+    if (reason==0)
+      printf(": not a bootable disk");
+    else
+      printf(": could not read the boot disk");
+  }
+  printf("\n\n");
+}
+
+
+#define SET_DISK_RET_STATUS(status) write_byte(0x0040, 0x0074, status)
+
+  void
+int13_harddisk(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
+  Bit16u DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS;
+{
+  write_byte(0x0040, 0x008e, 0);  // clear completion flag
+
+  switch (GET_AH()) {
+    case 0x08:
+      SET_AL(0);
+      SET_CH(0);
+      SET_CL(0);
+      SET_DH(0);
+      SET_DL(0); /* FIXME returns 0, 1, or n hard drives */
+
+      // FIXME should set ES & DI
+
+      goto int13_fail;
+      break;
+
+    default:
+      BX_INFO("int13_harddisk: function %02xh unsupported, returns fail\n", GET_AH());
+      goto int13_fail;
+      break;
+    }
+
+int13_fail:
+    SET_AH(0x01); // defaults to invalid function in AH or invalid parameter
+int13_fail_noah:
+    SET_DISK_RET_STATUS(GET_AH());
+int13_fail_nostatus:
+    SET_CF();     // error occurred
+    return;
+
+int13_success:
+    SET_AH(0x00); // no error
+int13_success_noah:
+    SET_DISK_RET_STATUS(0x00);
+    CLEAR_CF();   // no error
+    return;
+}
+
+  void
+int13_diskette_function(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
+  Bit16u DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS;
+{
+  Bit8u  drive, num_sectors, track, sector, head, status;
+  Bit16u base_address, base_count, base_es;
+  Bit8u  page, mode_register, val8, dor;
+  Bit8u  return_status[7];
+  Bit8u  drive_type, num_floppies, ah;
+  Bit16u es, last_addr;
+  Bit16u log_sector, tmp, i, j;
+
+  ah = GET_AH();
+
+  switch ( ah ) {
+    case 0x00: // diskette controller reset
+      SET_AH(0);
+      set_diskette_ret_status(0);
+      CLEAR_CF(); // successful
+      set_diskette_current_cyl(drive, 0); // current cylinder
+      return;
+
+    case 0x02: // Read Diskette Sectors
+      num_sectors = GET_AL();
+      track       = GET_CH();
+      sector      = GET_CL();
+      head        = GET_DH();
+      drive       = GET_ELDL();
+
+      if ((drive > 1) || (head > 1) || (sector == 0) ||
+          (num_sectors == 0) || (num_sectors > 72)) {
+        BX_INFO("int13_diskette: read/write/verify: parameter out of range\n");
+        SET_AH(1);
+        set_diskette_ret_status(1);
+        SET_AL(0); // no sectors read
+        SET_CF(); // error occurred
+        return;
+      }
+
+        page = (ES >> 12);   // upper 4 bits
+        base_es = (ES << 4); // lower 16bits contributed by ES
+        base_address = base_es + BX; // lower 16 bits of address
+                                     // contributed by ES:BX
+        if ( base_address < base_es ) {
+          // in case of carry, adjust page by 1
+          page++;
+        }
+        base_count = (num_sectors * 512) - 1;
+
+        // check for 64K boundary overrun
+        last_addr = base_address + base_count;
+        if (last_addr < base_address) {
+          SET_AH(0x09);
+          set_diskette_ret_status(0x09);
+          SET_AL(0); // no sectors read
+          SET_CF(); // error occurred
+          return;
+        }
+
+        log_sector = track * 36 + head * 18 + sector - 1;
+        last_addr = page << 12;
+
+        // Configure the sector address
+        for (j=0; j<num_sectors; j++)
+          {
+            outw(0xe000, log_sector+j);
+            base_count = base_address + (j << 9);
+              for (i=0; i<512; i+=2)
+              {
+                tmp = inw (0xe000+i);
+                write_word (last_addr, base_count+i, tmp);
+              }
+          }
+
+        // ??? should track be new val from return_status[3] ?
+        set_diskette_current_cyl(drive, track);
+        // AL = number of sectors read (same value as passed)
+        SET_AH(0x00); // success
+        CLEAR_CF();   // success
+        return;
+    default:
+        BX_INFO("int13_diskette: unsupported AH=%02x\n", GET_AH());
+
+      // if ( (ah==0x20) || ((ah>=0x41) && (ah<=0x49)) || (ah==0x4e) ) {
+        SET_AH(0x01); // ???
+        set_diskette_ret_status(1);
+        SET_CF();
+        return;
+      //   }
+    }
+}
+
+ void
+set_diskette_ret_status(value)
+  Bit8u value;
+{
+  write_byte(0x0040, 0x0041, value);
+}
+
+  void
+set_diskette_current_cyl(drive, cyl)
+  Bit8u drive;
+  Bit8u cyl;
+{
+/* TEMP HACK: FOR MSDOS */
+  if (drive > 1)
+    drive = 1;
+  /*  BX_PANIC("set_diskette_current_cyl(): drive > 1\n"); */
+  write_byte(0x0040, 0x0094+drive, cyl);
 }
 
 void
@@ -916,10 +1148,15 @@ Bit16u seq_nr;
   //     else : boot failure
 
   // Get the boot sequence
+/*
+ * Zet: we don't have a CMOS device
+ *
   bootdev = inb_cmos(0x3d);
   bootdev |= ((inb_cmos(0x38) & 0xf0) << 4);
   bootdev >>= 4 * seq_nr;
   bootdev &= 0xf;
+*/
+  bootdev = 0x1;
 
   /* Read user selected device */
   bootfirst = read_word(IPL_SEG, IPL_BOOTFIRST_OFFSET);
@@ -945,10 +1182,52 @@ Bit16u seq_nr;
   print_boot_device(&e);
 
   switch(e.type) {
-  case IPL_TYPE_BEV: /* Expansion ROM with a Bootstrap Entry Vector (a far pointer) */
-    bootseg = e.vector >> 16;
-    bootip = e.vector & 0xffff;
-    break;
+  case IPL_TYPE_FLOPPY: /* FDD */
+  case IPL_TYPE_HARDDISK: /* HDD */
+
+    bootdrv = (e.type == IPL_TYPE_HARDDISK) ? 0x80 : 0x00;
+    bootseg = 0x07c0;
+    status = 0;
+
+ASM_START
+    push bp
+    mov  bp, sp
+    push ax
+    push bx
+    push cx
+    push dx
+
+    mov  dl, _int19_function.bootdrv + 2[bp]
+    mov  ax, _int19_function.bootseg + 2[bp]
+    mov  es, ax         ;; segment
+    xor  bx, bx         ;; offset
+    mov  ah, #0x02      ;; function 2, read diskette sector
+    mov  al, #0x01      ;; read 1 sector
+    mov  ch, #0x00      ;; track 0
+    mov  cl, #0x01      ;; sector 1
+    mov  dh, #0x00      ;; head 0
+    int  #0x13          ;; read sector
+    jnc  int19_load_done
+    mov  ax, #0x0001
+    mov  _int19_function.status + 2[bp], ax
+
+int19_load_done:
+    pop  dx
+    pop  cx
+    pop  bx
+    pop  ax
+    pop  bp
+ASM_END
+
+    if (status != 0) {
+      print_boot_failure(e.type, 1);
+      return;
+    }
+
+    /* Canonicalize bootseg:bootip */
+    bootip = (bootseg & 0x0fff) << 4;
+    bootseg &= 0xf000;
+  break;
 
   default: return;
   }
@@ -980,6 +1259,71 @@ ASM_END
 }
 
 ASM_START
+;----------------------
+;- INT13h (relocated) -
+;----------------------
+;
+; int13_relocated is a little bit messed up since I played with it
+; I have to rewrite it:
+;   - call a function that detect which function to call
+;   - make all called C function get the same parameters list
+;
+int13_relocated:
+  push  ax
+  push  cx
+  push  dx
+  push  bx
+
+int13_legacy:
+
+  push  dx                   ;; push eltorito value of dx instead of sp
+
+  push  bp
+  push  si
+  push  di
+
+  push  es
+  push  ds
+  push  ss
+  pop   ds
+
+  ;; now the 16-bit registers can be restored with:
+  ;; pop ds; pop es; popa; iret
+  ;; arguments passed to functions should be
+  ;; DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS
+
+  test  dl, #0x80
+  jnz   int13_notfloppy
+
+  mov  ax, #int13_out
+  push ax
+  jmp _int13_diskette_function
+
+int13_notfloppy:
+
+int13_disk:
+  ;; int13_harddisk modifies high word of EAX
+;  shr   eax, #16
+;  push  ax
+  call  _int13_harddisk
+;  pop   ax
+;  shl   eax, #16
+
+int13_out:
+  pop ds
+  pop es
+  ; popa ; we do this instead:
+  pop di
+  pop si
+  pop bp
+  add sp, #2
+  pop bx
+  pop dx
+  pop cx
+  pop ax
+
+  iret
+
 ;----------
 ;- INT18h -
 ;----------
@@ -1036,6 +1380,13 @@ int19_next_boot:
 
   ;; Boot failed: invoke the boot recovery function
   int  #0x18
+
+;----------
+;- INT1Ch -
+;----------
+int1c_handler: ;; User Timer Tick
+  iret
+
 
 ;--------------------
 ;- POST: EBDA segment
@@ -1260,8 +1611,20 @@ post_default_ints:
   ;; Bootstrap Loader vector
   SET_INT_VECTOR(0x19, #0xF000, #int19_handler)
 
+  ;; User Timer Tick vector
+  SET_INT_VECTOR(0x1c, #0xF000, #int1c_handler)
+
+  ;; Memory Size Check vector
+  SET_INT_VECTOR(0x12, #0xF000, #int12_handler)
+
+  ;; Equipment Configuration Check vector
+  SET_INT_VECTOR(0x11, #0xF000, #int11_handler)
+
   ;; EBDA setup
   call ebda_post
+
+  ;; Keyboard
+  SET_INT_VECTOR(0x16, #0xF000, #int16_handler)
 
   ;; Video setup
   SET_INT_VECTOR(0x10, #0xF000, #int10_handler)
@@ -1273,6 +1636,9 @@ post_default_ints:
 
   call _print_bios_banner
 
+  ;; Floppy setup
+  SET_INT_VECTOR(0x13, #0xF000, #int13_handler)
+
   call _init_boot_vectors
 
   mov  cx, #0xc800  ;; init option roms
@@ -1282,6 +1648,16 @@ post_default_ints:
   sti        ;; enable interrupts
   int  #0x19
 
+;-------------------------------------------
+;- INT 13h Fixed Disk Services Entry Point -
+;-------------------------------------------
+.org 0xe3fe ; INT 13h Fixed Disk Services Entry Point
+int13_handler:
+  //JMPL(int13_relocated)
+  jmp int13_relocated
+
+.org 0xe401 ; Fixed Disk Parameter Table
+
 ;----------
 ;- INT19h -
 ;----------
@@ -1289,6 +1665,27 @@ post_default_ints:
 int19_handler:
 
   jmp int19_relocated
+
+;----------------------------------------
+;- INT 16h Keyboard Service Entry Point -
+;----------------------------------------
+.org 0xe82e
+int16_handler:
+  cmp   ah, #0x01
+  je    int16_01
+  cmp   ah, #0x02
+  je    int16_02
+  iret
+int16_02:
+  mov  al, #0x0
+  iret
+int16_01:
+  push bp
+  mov  bp, sp
+  //SEG SS
+  or   BYTE [bp + 0x06], #0x40
+  pop  bp
+  iret
 
 .org 0xf045 ; INT 10 Functions 0-Fh Entry Point
   ;; HALT(__LINE__)
@@ -1304,6 +1701,31 @@ int10_handler:
 
 .org 0xf0a4 ; MDA/CGA Video Parameter Table (INT 1Dh)
 
+;----------
+;- INT12h -
+;----------
+.org 0xf841 ; INT 12h Memory Size Service Entry Point
+; ??? different for Pentium (machine check)?
+int12_handler:
+  push ds
+  mov  ax, #0x0040
+  mov  ds, ax
+  mov  ax, 0x0013
+  pop  ds
+  iret
+
+;----------
+;- INT11h -
+;----------
+.org 0xf84d ; INT 11h Equipment List Service Entry Point
+int11_handler:
+  push ds
+  mov  ax, #0x0040
+  mov  ds, ax
+  mov  ax, 0x0010
+  pop  ds
+  iret
+
 ;------------------------------------------------
 ;- IRET Instruction for Dummy Interrupt Handler -
 ;------------------------------------------------
@@ -1312,6 +1734,7 @@ dummy_iret_handler:
   iret
 
 .org 0xfff0 ; Power-up Entry Point
+;  hlt
   jmp 0xf000:post
 
 .org 0xfff5 ; ASCII Date ROM was built - 8 characters in MM/DD/YY

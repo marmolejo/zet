@@ -22,7 +22,8 @@
 
 module regfile (
 `ifdef DEBUG
-    output [15:0] sp,
+    output [15:0] r1,
+    output [15:0] r2,
 `endif
 
     output [15:0] a,
@@ -60,7 +61,8 @@ module regfile (
 
   // Assignments
 `ifdef DEBUG
-  assign sp = r[4];
+  assign r1 = r[1];
+  assign r2 = r[7];
 `endif
   assign a = (a_byte & ~addr_a[3]) ? { {8{a8[7]}}, a8} : r[addr_a];
   assign a8 = addr_a[2] ? r[addr_a[1:0]][15:8] : r[addr_a][7:0];
@@ -81,19 +83,19 @@ module regfile (
   // Behaviour
   always @(posedge clk)
     if (rst) begin
-      r[0]  <= 16'd0; r[1]  <= 16'd0; 
-      r[2]  <= 16'd0; r[3]  <= 16'd0; 
-      r[4]  <= 16'd0; r[5]  <= 16'd0; 
-      r[6]  <= 16'd0; r[7]  <= 16'd0; 
+      r[0]  <= 16'd0; r[1]  <= 16'd0;
+      r[2]  <= 16'd0; r[3]  <= 16'd0;
+      r[4]  <= 16'd0; r[5]  <= 16'd0;
+      r[6]  <= 16'd0; r[7]  <= 16'd0;
       r[8]  <= 16'd0; r[9]  <= 16'hf000;
-      r[10] <= 16'd0; r[11] <= 16'd0; 
-      r[12] <= 16'd0; r[13] <= 16'd0; 
+      r[10] <= 16'd0; r[11] <= 16'd0;
+      r[12] <= 16'd0; r[13] <= 16'd0;
       r[14] <= 16'd0; r[15] <= 16'hfff0;
       flags <= 9'd0;
     end else
       begin
         if (wr) begin
-          if (word_op | addr_d[3:2]==2'b10) 
+          if (word_op | addr_d[3:2]==2'b10)
              r[addr_d] <= word_op ? d[15:0] : {{8{d[7]}},d[7:0]};
           else if (addr_d[3]~^addr_d[2]) r[addr_d][7:0] <= d[7:0];
           else r[{2'b0,addr_d[1:0]}][15:8] <= d[7:0];

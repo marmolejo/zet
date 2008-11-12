@@ -1,4 +1,0 @@
-* Hay que añadir la siguiente línea al archivo "zet.vo" justo antes de la
-* última línea del endmmodule:
-
-defparam \pll0|altpll_component|pll .sim_gate_lock_device_behavior = "on";

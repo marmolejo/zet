@@ -37,19 +37,31 @@ RELVERS = `pwd | sed "s-.*/--" | sed "s/vgabios//" | sed "s/-//"`
 VGABIOS_DATE = "-DVGABIOS_DATE=\"$(RELDATE)\""
 
 
-all: run
+all: bios.rom
 
-bios.bin: vgabios.rom ff.rom zet-bios.rom
-	cat vgabios.rom ff.rom zet-bios.rom > $@
+ff.out: ../../bin/ff
+	../../bin/ff 8192 >$@
 
-run: bios.bin
-	prf
+%.ml403: %.rom
+	hexdump -v -e '4/1 "%02X"' -e '"\n"' $< > ../../impl/virtex4-ml403ep/sim/$@
 
 %.rom: %.out
-	out2rom-ml403 < $< > $@
+	../../bin/out2rom-ml403 ff.out $< >$@
+
+#vgabios.rom: vgabios.out
+#	out2rom-ml403 ff.out $< >$@
+
+#hd.rom: hd.out
+#	out2rom-ml403 ff.out $< >$@
+
+bios.out: vgabios.out ff.out zet-bios.out
+	cat vgabios.out ff.out zet-bios.out > $@
+
+run: flash.rom
+	prf
 
 clean:
-	rm -f  *.o *.a *.s _rombios*_.c rombios*.txt rombios*.sym
+	rm -f  *.o *.a *.s _rombios*_.c rombios*.txt rombios*.sym *.out *.rom
 	rm -f  usage biossums vgasums
 	rm -f  *.ld86 \
           temp.awk.* vgabios*.orig _vgabios_* vgabios*.bin vgabios*.txt $(RELEASE).bin *.bak
@@ -78,12 +90,6 @@ vgabios.out: vgabios.c vgabios.h vgatables.h vgasums
 #	rm -f _vgabios_.s _vgabios_.c vgabios.s
 	mv vgabios.bin $@
 	./vgasums $@
-
-%.rom: %.out
-	out2rom-ml403 < $< > $@
-
-%.bin: %.rom
-	cat count.rom $< > $@
 
 %.rtlrom: %.out
 	hexdump -v -e '1/1 "%02X"' -e '"\n"' $< > ../../sim/$@
