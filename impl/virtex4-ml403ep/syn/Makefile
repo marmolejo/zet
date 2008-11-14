@@ -1,4 +1,4 @@
-all: Zet.ace
+all: kotku.bit
 
 Zet.ace: tmp/kotku_ml403.bit
 	(cd tmp/ && ../../ace/ml40x_bit2ace kotku_ml403.bit ../Zet.ace ../../ace/)

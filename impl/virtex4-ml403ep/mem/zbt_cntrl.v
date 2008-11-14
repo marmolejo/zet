@@ -1,10 +1,26 @@
-`timescale 1ns/10ps
+/*
+ *  Copyright (c) 2008  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ */
 
 `include "defines.v"
 
 module zbt_cntrl (
 `ifdef DEBUG
-    output reg [4:0] cnt,
+    output reg [2:0] cnt,
     output           op,
 `endif
 
@@ -35,7 +51,7 @@ module zbt_cntrl (
   wire        nload;
 
 `ifndef DEBUG
-  reg [ 4:0] cnt;
+  reg [ 2:0] cnt;
   wire       op;
 `endif
 
@@ -43,7 +59,7 @@ module zbt_cntrl (
   assign op   = wb_stb_i & wb_cyc_i;
   assign nload = (|cnt || wb_ack_o);
 
-  assign sram_clk_      = !wb_clk_i;
+  assign sram_clk_      = wb_clk_i;
   assign sram_adv_ld_n_ = 1'b0;
   assign sram_data_     = (op && wb_we_i) ? wr : 32'hzzzzzzzz;
 
@@ -51,15 +67,15 @@ module zbt_cntrl (
   // cnt
   always @(posedge wb_clk_i)
     cnt <= wb_rst_i ? 3'b0
-         : { cnt[3:0], nload ? 1'b0 : op };
+         : { cnt[1:0], nload ? 1'b0 : op };
 
   // wb_ack_o
   always @(posedge wb_clk_i)
-    wb_ack_o <= wb_rst_i ? 1'b0 : (wb_ack_o ? op : cnt[3]);
+    wb_ack_o <= wb_rst_i ? 1'b0 : (wb_ack_o ? op : cnt[2]);
 
   // wb_dat_o
   always @(posedge wb_clk_i)
-    wb_dat_o <= cnt[3] ? (wb_adr_i[1] ? sram_data_[31:16]
+    wb_dat_o <= cnt[2] ? (wb_adr_i[1] ? sram_data_[31:16]
                                       : sram_data_[15:0]) : wb_dat_o;
 
   // sram_addr_
@@ -68,7 +84,7 @@ module zbt_cntrl (
 
   // sram_we_n_
   always @(posedge wb_clk_i)
-    sram_we_n_ <= wb_we_i ? (cnt[1] ? !op : 1'b1) : 1'b1;
+    sram_we_n_ <= wb_we_i ? (nload ? 1'b1 : !op) : 1'b1;
 
   // sram_bw_
   always @(posedge wb_clk_i)
@@ -77,8 +93,7 @@ module zbt_cntrl (
 
   // sram_cen_
   always @(posedge wb_clk_i)
-    sram_cen_ <= wb_rst_i ? 1'b1
-      : (cnt[0] ? 1'b0 : (cnt[4] ? 1'b1 : sram_cen_));
+    sram_cen_ <= wb_rst_i ? 1'b1 : !op;
 
   // wr
   always @(posedge wb_clk_i)
