@@ -1,4 +1,7 @@
-all: kotku.bit
+all: Zet.ace
+
+Zet.ace: tmp/kotku_ml403.bit
+	(cd tmp/ && ../../ace/ml40x_bit2ace kotku_ml403.bit ../Zet.ace ../../ace/)
 
 tmp/mult.v: mult.xco
 	mkdir -p tmp
@@ -24,3 +27,6 @@ kotku.bit: tmp/kotku_ml403.bit
 
 clean:
 	rm -fR tmp/
+
+dist-clean:
+	rm -fR Zet.ace kotku.bit tmp/
