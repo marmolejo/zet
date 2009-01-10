@@ -1,13 +1,21 @@
-// Video Display terminal
-// John Kent
-// 3th September 2004
-// Assumes a pixel clock input of 50 MHz
-// Generates a 12.5MHz CPU Clock output
-//
-// Display Format is:
-// 80 characters across	by 25 characters down.
-// 8 horizonal pixels / character
-// 16 vertical scan lines / character (2 scan lines/row)
+/*
+ *  Copyright (c) 2008  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ */
+
 `timescale 1ns/10ps
 
 module vdu (
