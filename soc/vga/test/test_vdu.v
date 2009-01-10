@@ -1,21 +1,21 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    02:05:46 08/01/2008 
-// Design Name: 
-// Module Name:    test_vdu 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
+// Company:
+// Engineer:
 //
-// Dependencies: 
+// Create Date:    02:05:46 08/01/2008
+// Design Name:
+// Module Name:    test_vdu
+// Project Name:
+// Target Devices:
+// Tool versions:
+// Description:
 //
-// Revision: 
+// Dependencies:
+//
+// Revision:
 // Revision 0.01 - File Created
-// Additional Comments: 
+// Additional Comments:
 //
 //////////////////////////////////////////////////////////////////////////////////
 module test_vdu (
@@ -39,7 +39,7 @@ module test_vdu (
     .CLKDV_OUT  (tft_lcd_clk),
     .LOCKED_OUT (lock)
   );
-  
+
   vdu vdu0 (
     .wb_rst_i    (rst),
     .wb_clk_i    (tft_lcd_clk),     // 25MHz	VDU clock
@@ -49,8 +49,12 @@ module test_vdu (
     .horiz_sync  (tft_lcd_hsync),
     .vert_sync   (tft_lcd_vsync)
   );
-
+/*
+  assign tft_lcd_r[1] = 1'b0;
+  assign tft_lcd_g[1] = 1'b0;
+  assign tft_lcd_b[1] = 1'b0;
+*/
   // Continuous assignments
-  assign rst = !lock;  
+  assign rst = !lock;
   assign led = 1'b1;
 endmodule

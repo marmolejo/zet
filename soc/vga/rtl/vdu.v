@@ -34,17 +34,21 @@ module vdu (
 
   // Net, registers and parameters
 
-  // Synchronization constants
-  parameter HOR_DISP_END = 10'd640; // Last horizontal pixel displayed
-  parameter HOR_SYNC_BEG = 10'd679; // Start of horizontal synch pulse
-  parameter HOR_SYNC_END = 10'd775; // End of Horizontal Synch pulse
+  // Synchronization constants, these values are taken from:
+  //  http://tinyvga.com/vga-timing/640x400@70Hz
+
+  parameter HOR_DISP_END = 10'd639; // Last horizontal pixel displayed
+  parameter HOR_SYNC_BEG = 10'd655; // Start of horizontal synch pulse
+  parameter HOR_SYNC_END = 10'd751; // End of Horizontal Synch pulse
   parameter HOR_SCAN_END = 10'd799; // Last pixel in scan line
   parameter HOR_DISP_CHR = 80;      // Number of characters displayed per row
+  parameter HOR_VIDEO_ON = 10'd7;   // When to start displaying characters
+  parameter HOR_VIDEO_OFF = 10'd647; // When to stop displaying characters
 
   parameter VER_DISP_END = 9'd399;  // last row displayed
-  parameter VER_SYNC_BEG = 9'd413;  // start of vertical synch pulse
-  parameter VER_SYNC_END = 9'd414;  // end of vertical synch pulse
-  parameter VER_SCAN_END = 9'd450;  // Last scan row in the frame
+  parameter VER_SYNC_BEG = 9'd411;  // start of vertical synch pulse
+  parameter VER_SYNC_END = 9'd413;  // end of vertical synch pulse
+  parameter VER_SCAN_END = 9'd448;  // Last scan row in the frame
   parameter VER_DISP_CHR = 6'd25;   // Number of character rows displayed
 
   reg        cursor_on_v;
@@ -228,9 +232,9 @@ module vdu (
                     : ((h_count==HOR_SYNC_END) ? v_count + 9'b1 : v_count);
         vert_sync  <= (v_count==VER_SYNC_BEG) ? 1'b0
                     : ((v_count==VER_SYNC_END) ? 1'b1 : vert_sync);
-        video_on_h <= (h_count==HOR_SCAN_END) ? 1'b1
-                    : ((h_count==HOR_DISP_END) ? 1'b0 : video_on_h);
-        video_on_v <= (v_count==VER_SYNC_BEG) ? 1'b1
+        video_on_h <= (h_count==HOR_VIDEO_ON) ? 1'b1
+                    : ((h_count==HOR_VIDEO_OFF) ? 1'b0 : video_on_h);
+        video_on_v <= (v_count==VER_SCAN_END) ? 1'b1
                     : ((v_count==VER_DISP_END) ? 1'b0 : video_on_v);
         cursor_on_h <= (h_count[9:3] == reg_hcursor[6:0]);
         cursor_on_v <= (v_count[8:2] == { reg_vcursor[4:0], 2'b11 })

@@ -18,7 +18,15 @@ module vdu_tb;
     .vga_green_o (tft_lcd_g),
     .vga_blue_o  (tft_lcd_b),
     .horiz_sync  (tft_lcd_hsync),
-    .vert_sync   (tft_lcd_vsync)
+    .vert_sync   (tft_lcd_vsync),
+
+    .wb_dat_i    (16'h0),
+    .wb_adr_i    (11'h0),
+    .wb_we_i     (1'b0),
+    .wb_tga_i    (1'b0),
+    .wb_sel_i    (2'b0),
+    .wb_stb_i    (1'b0),
+    .wb_cyc_i    (1'b0)
   );
 
   always #20 clk <= ~clk;

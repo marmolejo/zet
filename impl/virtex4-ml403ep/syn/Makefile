@@ -1,4 +1,7 @@
-all: kotku.bit
+all: Zet.ace
+
+run: tmp/kotku_ml403.bit
+	(cd tmp/ && ../../../../bin/ml403 kotku_ml403.bit)
 
 Zet.ace: tmp/kotku_ml403.bit
 	(cd tmp/ && ../../ace/ml40x_bit2ace kotku_ml403.bit ../Zet.ace ../../ace/)
@@ -22,11 +25,5 @@ tmp/kotku_ml403-par.ncd: tmp/kotku_ml403.ncd
 tmp/kotku_ml403.bit: tmp/kotku_ml403-par.ncd
 	(cd tmp/ && bitgen -w kotku_ml403-par.ncd kotku_ml403.bit)
 
-kotku.bit: tmp/kotku_ml403.bit
-	cp tmp/kotku_ml403.bit ./kotku.bit
-
 clean:
-	rm -fR tmp/
-
-dist-clean:
-	rm -fR Zet.ace kotku.bit tmp/
+	rm -fR Zet.ace tmp/
