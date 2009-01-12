@@ -3,6 +3,17 @@ all: Zet.ace
 run: tmp/kotku_ml403.bit
 	(cd tmp/ && ../../../../bin/ml403 kotku_ml403.bit)
 
+debug: tmp/mult.v tmp/icon.v tmp/ila.v kotku-dbg.prj kotku-dbg.xst
+	(cd tmp/ && xst -ifn ../kotku-dbg.xst)
+
+tmp/icon.v: icon.xco
+	mkdir -p tmp
+	(cd tmp/ && coregen -b ../icon.xco)
+
+tmp/ila.v: ila.xco
+	mkdir -p tmp
+	(cd tmp/ && coregen -b ../ila.xco)
+
 Zet.ace: tmp/kotku_ml403.bit
 	(cd tmp/ && ../../ace/ml40x_bit2ace kotku_ml403.bit ../Zet.ace ../../ace/)
 

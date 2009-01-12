@@ -1,7 +1,7 @@
 #!/bin/bash
 cd /home/zeus/xilinx/p3
 cp etc/flash_hd.tcl etc/flash_params.tcl
-impact2 -batch <<EOF
+XIL_IMPACT_USE_LIBUSB=1 impact -batch <<EOF
 setMode -bscan
 setCable -p auto
 identify

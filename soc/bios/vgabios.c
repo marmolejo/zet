@@ -151,6 +151,11 @@ ASM_END
 ASM_START
 vgabios_int10_handler:
   pushf
+  cmp   ah, #0x0f
+  jne   int10_test_1A
+  call  biosfn_get_video_mode
+  jmp   int10_end
+int10_test_1A:
 int10_test_1103:
   cmp   ax, #0x1103
   jne   int10_normal
@@ -404,6 +409,12 @@ static void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
      break;
    case 0x03:
      biosfn_get_cursor_pos(GET_BH(),&CX,&DX);
+     break;
+   case 0x06:
+     biosfn_scroll(GET_AL(),GET_BH(),GET_CH(),GET_CL(),GET_DH(),GET_DL(),0xFF,SCROLL_UP);
+     break;
+   case 0x07:
+     biosfn_scroll(GET_AL(),GET_BH(),GET_CH(),GET_CL(),GET_DH(),GET_DL(),0xFF,SCROLL_DOWN);
      break;
    case 0x0E:
      // Ralf Brown Interrupt list is WRONG on bh(page)
@@ -815,6 +826,31 @@ Bit8u car;Bit8u page;Bit8u attr;Bit8u flag;
  cursor=ycurs; cursor<<=8; cursor+=xcurs;
  biosfn_set_cursor_pos(page,cursor);
 }
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_get_video_mode:
+  push  ds
+  mov   ax, # BIOSMEM_SEG
+  mov   ds, ax
+  push  bx
+  mov   bx, # BIOSMEM_CURRENT_PAGE
+  mov   al, [bx]
+  pop   bx
+  mov   bh, al
+  push  bx
+  mov   bx, # BIOSMEM_VIDEO_CTL
+  mov   ah, [bx]
+  and   ah, #0x80
+  mov   bx, # BIOSMEM_CURRENT_MODE
+  mov   al, [bx]
+  or    al, ah
+  mov   bx, # BIOSMEM_NB_COLS
+  mov   ah, [bx]
+  pop   bx
+  pop   ds
+  ret
+ASM_END
 
 // --------------------------------------------------------------------------------------------
 static void get_font_access()

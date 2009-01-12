@@ -266,7 +266,8 @@ module kotku_ml403 (
   assign pc = (cs << 4) + ip;
 `endif
 
-  assign io_dat_i = flash_io_arena ? flash_dat_o : 16'h0;
+  assign io_dat_i = flash_io_arena ? flash_dat_o
+                  : (vdu_io_arena ? vdu_dat_o : 16'h0);
   assign dat_i    = tga ? io_dat_i
                   : (vdu_mem_arena ? vdu_dat_o
                   : (flash_mem_arena ? flash_dat_o : zbt_dat_o));
@@ -276,7 +277,8 @@ module kotku_ml403 (
   assign flash_arena = (!tga & flash_mem_arena)
                      | (tga & flash_io_arena);
   assign vdu_mem_arena = (adr[19:12]==8'hb8);
-  assign vdu_io_arena  = (adr[15:8]==8'hb8);
+  assign vdu_io_arena  = (adr[15:8]==8'hb8 && we) ||
+                         (adr[15:1]==15'h01ed && !we);
   assign vdu_arena = (!tga & vdu_mem_arena)
                    | (tga & vdu_io_arena);
   assign flash_stb = flash_arena & stb & cyc;

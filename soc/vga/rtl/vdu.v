@@ -120,6 +120,9 @@ module vdu (
   wire        stb;
   wire        brown_bg;
   wire        brown_fg;
+  wire        status_reg1;
+  wire        vh_retrace;
+  wire        v_retrace;
 
   // Module instantiation
   char_rom vdu_char_rom (
@@ -171,6 +174,10 @@ module vdu (
 
   assign wr_pos = wb_tga_i & wb_stb_i & wb_cyc_i & wb_we_i;
 
+  assign v_retrace   = !video_on_v;
+  assign vh_retrace  = v_retrace | !video_on_h;
+  assign status_reg1 = { 11'b0, v_retrace, 3'b0, vh_retrace };
+
   // Behaviour
 
   // CPU write interface
@@ -205,10 +212,16 @@ module vdu (
         wb_ack_o <= 16'h0;
       end
     else
-      begin
-        wb_dat_o <= vga4_rw ? out_data : wb_dat_o;
-        wb_ack_o <= vga4_rw ? 1'b1 : (wb_ack_o && stb);
-      end
+      if (wb_tga_i)
+        begin
+          wb_dat_o <= status_reg1;
+          wb_ack_o <= stb;
+        end
+      else
+        begin
+          wb_dat_o <= vga4_rw ? out_data : wb_dat_o;
+          wb_ack_o <= vga4_rw ? 1'b1 : (wb_ack_o && stb);
+        end
 
   // Cursor pos register
   always @(posedge wb_clk_i)
