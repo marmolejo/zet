@@ -1693,7 +1693,7 @@ module micro_rom (
   assign q = rom[addr];
 
   // Behaviour
-	initial $readmemb("/home/zeus/zet/rtl-model/micro_rom.dat", rom);
+	initial $readmemb("micro_rom.dat", rom);
 endmodule
 
 module seq_rom (
@@ -1708,5 +1708,5 @@ module seq_rom (
   assign q = rom[addr];
 
   // Behaviour
-	initial $readmemb("/home/zeus/zet/rtl-model/seq_rom.dat", rom);
+	initial $readmemb("seq_rom.dat", rom);
 endmodule
