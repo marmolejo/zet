@@ -48,7 +48,9 @@ module exec (
     output        byteop,
     input         block,
     output        div_exc,
-    input         wrip0
+    input         wrip0,
+
+    output        ifl
   );
 
   // Net declarations
@@ -109,8 +111,9 @@ module exec (
   assign wr_data = c;
   assign wr_reg  = (wr | (jmp & wr_cnd)) && !block && !div_exc;
   assign wr_high = high && !block && !div_exc;
-  assign of = flags[8];
-  assign zf = flags[3];
+  assign of  = flags[8];
+  assign ifl = flags[6];
+  assign zf  = flags[3];
 
   assign iflags = oflags;
   assign alu_iflags = { 4'b0, flags[8:3], 1'b0, flags[2], 1'b0, flags[1],

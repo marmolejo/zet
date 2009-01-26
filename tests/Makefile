@@ -38,7 +38,7 @@ all: $(ml403roms)
 	hexdump -v -e '1/2 "%04X"' -e '"\n"' $< >>$@
 	for i in $$(seq $$(( $$(wc -l hd.img.rtl | cut -f1 -d\ )-65536))); do echo FFFF; done >$@
 %.rtlrom: %.out
-	hexdump -v -e '1/2 "%04X"' -e '"\n"' $< > ../../sim/$@
+	hexdump -v -e '1/2 "%04X"' -e '"\n"' $< > ../sim/$@
 
 %.rtlold: %.out
 	hexdump -v -e '1/1 "%02X"' -e '"\n"' $< > ../../sim/$@

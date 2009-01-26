@@ -1,4 +1,4 @@
-vdel -all -lib work
+#vdel -all -lib work
 vmap unisims /opt/Xilinx/10.1/modelsim/verilog/unisims
 vlib work
 vlog -work work -lint +incdir+../../rtl-model +incdir+.. ../../rtl-model/regfile.v ../../rtl-model/alu.v ../../rtl-model/cpu.v ../../rtl-model/exec.v ../../rtl-model/fetch.v ../../rtl-model/jmp_cond.v ../../rtl-model/util/primitives.v ../../rtl-model/util/div_su.v ../../rtl-model/util/div_uu.v ../../rtl-model/rotate.v
@@ -21,6 +21,11 @@ add wave -label need_imm /testbench/cpu0/fetch0/need_imm
 add wave -label ir /testbench/cpu0/fetch0/ir
 add wave -label imm -radix hexadecimal /testbench/cpu0/fetch0/imm
 add wave -label off -radix hexadecimal /testbench/cpu0/fetch0/off
+add wave -label intr -radix hexadecimal /testbench/intr
+add wave -label intr -radix hexadecimal /testbench/cpu0/fetch0/decode0/intr
+add wave -label inta -radix hexadecimal /testbench/inta
+add wave -label ext_int -radix hexadecimal /testbench/cpu0/fetch0/decode0/ext_int
+add wave -label repz_pr -radix hexadecimal /testbench/cpu0/fetch0/repz_pr
 add wave -divider mem
 add wave -label cs -radix hexadecimal /testbench/cpu0/wm0/cs
 add wave -label op -radix hexadecimal /testbench/cpu0/wm0/op
@@ -35,7 +40,6 @@ add wave -label cyc_o -radix hexadecimal /cpu0/wm0/wb_cyc_o
 add wave -label ack_i -radix hexadecimal /cpu0/wm0/wb_ack_i
 add wave -label we_o -radix hexadecimal /cpu0/wm0/wb_we_o
 add wave -label tga_o -radix hexadecimal /cpu0/wm0/wb_tga_o
-add wave -label cpu_dat_i -radix hexadecimal /cpu0/wm0/cpu_dat_i
 add wave -divider alu
 add wave -label x -radix hexadecimal /testbench/cpu0/exec0/a
 add wave -label y -radix hexadecimal /testbench/cpu0/exec0/bus_b
@@ -49,4 +53,13 @@ add wave -label wr /testbench/cpu0/exec0/reg0/wr
 add wave -label we /testbench/we
 add wave -label ack /testbench/ack
 add wave -label fetch_or_exec /testbench/cpu0/fetch_or_exec
-run 15us
+add wave -divider regfile
+add wave -label cx -radix hexadecimal /testbench/cpu0/exec0/reg0/r\[1\]
+add wave -label tmp -radix hexadecimal /testbench/cpu0/exec0/reg0/r\[13\]
+add wave -label cs -radix hexadecimal /testbench/cpu0/exec0/reg0/r\[9\]
+add wave -label ip -radix hexadecimal /testbench/cpu0/exec0/reg0/r\[15\]
+add wave -divider Wishbone-Master
+add wave -label cpu_dat_i -radix hexadecimal /cpu0/wm0/cpu_dat_i
+add wave -label cs -radix hexadecimal /cpu0/wm0/cs
+
+run 20us

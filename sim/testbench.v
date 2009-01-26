@@ -12,11 +12,14 @@ module testbench;
   wire        stb;
   wire        cyc;
   wire        ack, mem_ack, io_ack;
+  wire        inta;
 
   reg         clk;
   reg         rst;
 
   reg  [15:0] io_reg;
+
+  reg         intr;
 
   // Module instantiations
   memory mem0 (
@@ -43,13 +46,15 @@ module testbench;
     .wb_sel_o (sel),
     .wb_stb_o (stb),
     .wb_cyc_o (cyc),
-    .wb_ack_i (ack)
+    .wb_ack_i (ack),
+    .wb_tgc_i (intr),
+    .wb_tgc_o (inta)
   );
 
   // Assignments
   assign io_dat_i = (adr[15:1]==15'h5b) ? { io_reg[7:0], 8'h0 }
     : ((adr[15:1]==15'h5c) ? { 8'h0, io_reg[15:8] } : 16'h0);
-  assign dat_i = tga ? io_dat_i : mem_dat_i;
+  assign dat_i = inta ? 16'd3 : (tga ? io_dat_i : mem_dat_i);
 
   assign ack    = tga ? io_ack : mem_ack;
   assign io_ack = stb;
@@ -64,12 +69,17 @@ module testbench;
 
   always #1 clk = ~clk;
 
-  initial 
+  initial
     begin
+         intr <= 1'b0;
          clk <= 1'b1;
          rst <= 1'b0;
       #5 rst <= 1'b1;
       #2 rst <= 1'b0;
+
+      #1000 intr <= 1'b1;
+      @(posedge inta)
+      @(posedge clk) intr <= 1'b0;
     end
 
 endmodule

@@ -45,7 +45,9 @@ module kotku_ml403 (
     output [ 3:0] sram_bw_,
     output        sram_cen_,
     output        sram_adv_ld_n_,
-    output        flash_ce2_
+    output        flash_ce2_,
+
+    input         but2_
   );
 
   // Net declarations
@@ -79,6 +81,8 @@ module kotku_ml403 (
   wire [20:0] sram_addr_;
   wire        flash_we_n_;
   wire        sram_we_n_;
+  wire        intr;
+  wire        inta;
 
 `ifdef DEBUG
   wire [35:0] control0;
@@ -184,6 +188,14 @@ module kotku_ml403 (
     .sram_adv_ld_n_ (sram_adv_ld_n_)
   );
 
+  but_int but0 (
+    .clk  (clk),
+    .rst  (rst),
+    .but_ (but2_),
+    .intr (intr),
+    .inta (inta)
+  );
+
   cpu zet_proc (
 `ifdef DEBUG
     .cs         (cs),
@@ -210,7 +222,9 @@ module kotku_ml403 (
     .wb_sel_o (sel),
     .wb_stb_o (stb),
     .wb_cyc_o (cyc),
-    .wb_ack_i (ack)
+    .wb_ack_i (ack),
+    .wb_tgc_i (intr),
+    .wb_tgc_o (inta)
   );
 
 `ifdef DEBUG
@@ -268,9 +282,9 @@ module kotku_ml403 (
 
   assign io_dat_i = flash_io_arena ? flash_dat_o
                   : (vdu_io_arena ? vdu_dat_o : 16'h0);
-  assign dat_i    = tga ? io_dat_i
+  assign dat_i    = inta ? 16'd3 : (tga ? io_dat_i
                   : (vdu_mem_arena ? vdu_dat_o
-                  : (flash_mem_arena ? flash_dat_o : zbt_dat_o));
+                  : (flash_mem_arena ? flash_dat_o : zbt_dat_o)));
 
   assign flash_mem_arena = (adr[19:16]==4'hc || adr[19:16]==4'hf);
   assign flash_io_arena  = (adr[15:9]==7'b1110_000);

@@ -41,7 +41,9 @@ module fetch (
     output fetch_or_exec,
     input  block,
     input  div_exc,
-    output wr_ip0
+    output wr_ip0,
+    input  intr,
+    output inta
   );
 
   // Registers, nets and parameters
@@ -68,22 +70,23 @@ module fetch (
   reg [15:0] off_l, imm_l;
   reg [1:0] pref_l;
   reg [2:0] sop_l;
+  wire      ext_int;
 
   // Module instantiation
   decode decode0(opcode, modrm, off_l, imm_l, pref_l[1], clk, rst, block,
                  exec_st, div_exc, need_modrm, need_off, need_imm, off_size,
-                 imm_size, rom_ir, off, imm_d, end_seq, sop_l);
-  next_or_not nn0(pref_l, opcode[7:1], cx_zero, zf, next_in_opco,
+                 imm_size, rom_ir, off, imm_d, end_seq, sop_l, intr, inta, ext_int, pref_l[1]);
+  next_or_not nn0(pref_l, opcode[7:1], cx_zero, zf, ext_int, next_in_opco,
                   next_in_exec);
   nstate ns0(state, prefix, need_modrm, need_off, need_imm, end_seq,
              rom_ir[28:23], of, next_in_opco, next_in_exec, block, div_exc,
-             next_state);
+             intr, next_state);
 
   // Assignments
   assign pc = (cs << 4) + ip;
 
   assign ir     = (state == execu_st) ? rom_ir : `ADD_IP;
-  assign opcode = (state == opcod_st) ? data[7:0] :  opcode_l;
+  assign opcode = (state == opcod_st) ? data[7:0] : opcode_l;
   assign modrm  = (state == modrm_st) ? data[7:0] : modrm_l;
   assign fetch_or_exec = (state == execu_st);
   assign bytefetch = (state == offse_st) ? ~off_size
@@ -174,6 +177,7 @@ module nstate (
     input next_in_exec,
     input block,
     input div_exc,
+    input intr,
     output [2:0] next_state
   );
 
@@ -185,11 +189,12 @@ module nstate (
   parameter execu_st = 3'h4;
   wire into, end_instr, end_into;
   wire [2:0] n_state;
+  wire       ext_int;
 
   // Assignments
   assign into = (ftype==6'b111_010);
   assign end_into = into ? ~of : end_seq;
-  assign end_instr = !div_exc && end_into && !next_in_exec;
+  assign end_instr = !div_exc && !intr && end_into && !next_in_exec;
 
   assign n_state = (state == opcod_st) ? (prefix ? opcod_st
                          : (next_in_opco ? opcod_st
@@ -200,7 +205,7 @@ module nstate (
                                            : (need_imm ? immed_st : execu_st))
                      : (state == offse_st) ? (need_imm ? immed_st : execu_st)
                      : (state == immed_st) ? (execu_st)
-                     : (end_instr ? opcod_st : execu_st);
+   /* state == execu_st */ : (end_instr ? opcod_st : execu_st);
 
   assign next_state = block ? state : n_state;
 endmodule
@@ -210,6 +215,7 @@ module next_or_not (
     input [7:1] opcode,
     input cx_zero,
     input zf,
+    input ext_int,
     output next_in_opco,
     output next_in_exec
   );
@@ -223,11 +229,11 @@ module next_or_not (
                             : /* repnz */ (cmp_sca ? zf : 1'b0 );
   assign exit_rep = cx_zero | exit_z;
   assign valid_ops = (opcode[7:1]==7'b1010_010   // movs
-                    || opcode[7:1]==7'b1010_011   // cmps
-                    || opcode[7:1]==7'b1010_101   // stos
-                    || opcode[7:1]==7'b1010_110   // lods
-                    || opcode[7:1]==7'b1010_111); // scas
-  assign next_in_exec = prefix[1] && valid_ops && !exit_rep;
+                   || opcode[7:1]==7'b1010_011   // cmps
+                   || opcode[7:1]==7'b1010_101   // stos
+                   || opcode[7:1]==7'b1010_110   // lods
+                   || opcode[7:1]==7'b1010_111); // scas
+  assign next_in_exec = prefix[1] && valid_ops && !exit_rep && !ext_int;
   assign next_in_opco = prefix[1] && valid_ops && cx_zero;
 endmodule
 
@@ -254,7 +260,12 @@ module decode (
     output [15:0] imm_o,
     output end_seq,
 
-    input  [2:0] sop_l
+    input  [2:0] sop_l,
+
+    input        intr,
+    output reg   inta,
+    output reg   ext_int,
+    input        repz_pr
   );
 
   // Net declarations
@@ -274,7 +285,8 @@ module decode (
                      ir, off_o, imm_o);
 
   // Assignments
-  assign seq_addr = (dive ? `INTD : base_addr) + seq;
+  assign seq_addr = (dive ? `INTD
+    : (ext_int ? (repz_pr ? `EINTP : `EINT) : base_addr)) + seq;
 
   // Behaviour
   // seq
@@ -286,7 +298,21 @@ module decode (
   // dive
   always @(posedge clk)
     if (rst) dive <= 1'b0;
-    else dive <= block ? dive : (div_exc ? 1'b1 : (dive ? !end_seq : 1'b0));
+    else dive <= block ? dive
+     : (div_exc ? 1'b1 : (dive ? !end_seq : 1'b0));
+
+  // ext_int
+  always @(posedge clk)
+    if (rst) ext_int <= 1'b0;
+    else ext_int <= block ? ext_int
+      : ((intr && exec_st && end_seq) ? 1'b1
+        : (ext_int ? !end_seq : 1'b0));
+
+  // inta
+  always @(posedge clk)
+    if (rst) inta <= 1'b0;
+    else inta <= intr & ext_int;
+
 endmodule
 
 module opcode_deco (
@@ -1693,7 +1719,7 @@ module micro_rom (
   assign q = rom[addr];
 
   // Behaviour
-	initial $readmemb("micro_rom.dat", rom);
+  initial $readmemb("/home/zeus/zet/rtl-model/micro_rom.dat", rom);
 endmodule
 
 module seq_rom (
@@ -1708,5 +1734,5 @@ module seq_rom (
   assign q = rom[addr];
 
   // Behaviour
-	initial $readmemb("seq_rom.dat", rom);
+  initial $readmemb("/home/zeus/zet/rtl-model/seq_rom.dat", rom);
 endmodule

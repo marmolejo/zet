@@ -42,11 +42,13 @@ module cpu (
     output [15:0] wb_dat_o,
     output [19:1] wb_adr_o,
     output        wb_we_o,
-    output        wb_tga_o,
+    output        wb_tga_o,  // io/mem
     output [ 1:0] wb_sel_o,
     output        wb_stb_o,
     output        wb_cyc_o,
-    input         wb_ack_i
+    input         wb_ack_i,
+    input         wb_tgc_i,  // intr
+    output        wb_tgc_o   // inta
   );
 
   // Net declarations
@@ -62,6 +64,7 @@ module cpu (
   wire of, zf, cx_zero;
   wire div_exc;
   wire wr_ip0;
+  wire ifl;
 
   wire        cpu_byte_o;
   wire        cpu_m_io;
@@ -70,6 +73,7 @@ module cpu (
   wire [15:0] cpu_dat_i;
   wire [15:0] cpu_dat_o;
   wire        cpu_we_o;
+  wire [15:0] iid_dat_i;
 
   // Module instantiations
   fetch fetch0 (
@@ -95,7 +99,10 @@ module cpu (
     .block         (cpu_block),
     .div_exc       (div_exc),
 
-    .wr_ip0 (wr_ip0)
+    .wr_ip0  (wr_ip0),
+
+    .intr (wb_tgc_i & ifl),
+    .inta (wb_tgc_o)
   );
 
   exec exec0 (
@@ -116,7 +123,7 @@ module cpu (
     .cx_zero (cx_zero),
     .clk     (wb_clk_i),
     .rst     (wb_rst_i),
-    .memout  (cpu_dat_i),
+    .memout  (iid_dat_i),
     .wr_data (cpu_dat_o),
     .addr    (addr_exec),
     .we      (cpu_we_o),
@@ -124,7 +131,9 @@ module cpu (
     .byteop  (byte_exec),
     .block   (cpu_block),
     .div_exc (div_exc),
-    .wrip0   (wr_ip0)
+    .wrip0   (wr_ip0),
+
+    .ifl     (ifl)
   );
 
   wb_master wm0 (
@@ -153,6 +162,7 @@ module cpu (
   // Assignments
   assign cpu_adr_o  = fetch_or_exec ? addr_exec : addr_fetch;
   assign cpu_byte_o = fetch_or_exec ? byte_exec : byte_fetch;
+  assign iid_dat_i  = wb_tgc_o ? wb_dat_i : cpu_dat_i;
 
 `ifdef DEBUG
   assign iralu = ir[28:23];
