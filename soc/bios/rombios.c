@@ -438,17 +438,27 @@ static void           write_byte();
 static void           write_word();
 static void           bios_printf();
 
+static void           int09_function();
 static void           int13_harddisk();
 static void           int13_diskette_function();
+static void           int16_function();
 static void           int19_function();
 static Bit16u         get_CS();
 static Bit16u         get_SS();
+static unsigned int   enqueue_key();
+static unsigned int   dequeue_key();
 static void           set_diskette_ret_status();
 static void           set_diskette_current_cyl();
 
 static void           print_bios_banner();
 static void           print_boot_device();
 static void           print_boot_failure();
+
+#if DEBUG_INT16
+#  define BX_DEBUG_INT16(a...) BX_DEBUG(a)
+#else
+#  define BX_DEBUG_INT16(a...)
+#endif
 
 #define SET_AL(val8) AX = ((AX & 0xff00) | (val8))
 #define SET_BL(val8) BX = ((BX & 0xff00) | (val8))
@@ -478,6 +488,109 @@ static void           print_boot_failure();
 #define SET_ZF()     FLAGS |= 0x0040
 #define CLEAR_ZF()   FLAGS &= 0xffbf
 #define GET_ZF()     (FLAGS & 0x0040)
+
+#define UNSUPPORTED_FUNCTION 0x86
+
+#define none 0
+#define MAX_SCAN_CODE 0x58
+
+static struct {
+  Bit16u normal;
+  Bit16u shift;
+  Bit16u control;
+  Bit16u alt;
+  Bit8u lock_flags;
+  } scan_to_scanascii[MAX_SCAN_CODE + 1] = {
+      {   none,   none,   none,   none, none },
+      { 0x011b, 0x011b, 0x011b, 0x0100, none }, /* escape */
+      { 0x0231, 0x0221,   none, 0x7800, none }, /* 1! */
+      { 0x0332, 0x0340, 0x0300, 0x7900, none }, /* 2@ */
+      { 0x0433, 0x0423,   none, 0x7a00, none }, /* 3# */
+      { 0x0534, 0x0524,   none, 0x7b00, none }, /* 4$ */
+      { 0x0635, 0x0625,   none, 0x7c00, none }, /* 5% */
+      { 0x0736, 0x075e, 0x071e, 0x7d00, none }, /* 6^ */
+      { 0x0837, 0x0826,   none, 0x7e00, none }, /* 7& */
+      { 0x0938, 0x092a,   none, 0x7f00, none }, /* 8* */
+      { 0x0a39, 0x0a28,   none, 0x8000, none }, /* 9( */
+      { 0x0b30, 0x0b29,   none, 0x8100, none }, /* 0) */
+      { 0x0c2d, 0x0c5f, 0x0c1f, 0x8200, none }, /* -_ */
+      { 0x0d3d, 0x0d2b,   none, 0x8300, none }, /* =+ */
+      { 0x0e08, 0x0e08, 0x0e7f,   none, none }, /* backspace */
+      { 0x0f09, 0x0f00,   none,   none, none }, /* tab */
+      { 0x1071, 0x1051, 0x1011, 0x1000, 0x40 }, /* Q */
+      { 0x1177, 0x1157, 0x1117, 0x1100, 0x40 }, /* W */
+      { 0x1265, 0x1245, 0x1205, 0x1200, 0x40 }, /* E */
+      { 0x1372, 0x1352, 0x1312, 0x1300, 0x40 }, /* R */
+      { 0x1474, 0x1454, 0x1414, 0x1400, 0x40 }, /* T */
+      { 0x1579, 0x1559, 0x1519, 0x1500, 0x40 }, /* Y */
+      { 0x1675, 0x1655, 0x1615, 0x1600, 0x40 }, /* U */
+      { 0x1769, 0x1749, 0x1709, 0x1700, 0x40 }, /* I */
+      { 0x186f, 0x184f, 0x180f, 0x1800, 0x40 }, /* O */
+      { 0x1970, 0x1950, 0x1910, 0x1900, 0x40 }, /* P */
+      { 0x1a5b, 0x1a7b, 0x1a1b,   none, none }, /* [{ */
+      { 0x1b5d, 0x1b7d, 0x1b1d,   none, none }, /* ]} */
+      { 0x1c0d, 0x1c0d, 0x1c0a,   none, none }, /* Enter */
+      {   none,   none,   none,   none, none }, /* L Ctrl */
+      { 0x1e61, 0x1e41, 0x1e01, 0x1e00, 0x40 }, /* A */
+      { 0x1f73, 0x1f53, 0x1f13, 0x1f00, 0x40 }, /* S */
+      { 0x2064, 0x2044, 0x2004, 0x2000, 0x40 }, /* D */
+      { 0x2166, 0x2146, 0x2106, 0x2100, 0x40 }, /* F */
+      { 0x2267, 0x2247, 0x2207, 0x2200, 0x40 }, /* G */
+      { 0x2368, 0x2348, 0x2308, 0x2300, 0x40 }, /* H */
+      { 0x246a, 0x244a, 0x240a, 0x2400, 0x40 }, /* J */
+      { 0x256b, 0x254b, 0x250b, 0x2500, 0x40 }, /* K */
+      { 0x266c, 0x264c, 0x260c, 0x2600, 0x40 }, /* L */
+      { 0x273b, 0x273a,   none,   none, none }, /* ;: */
+      { 0x2827, 0x2822,   none,   none, none }, /* '" */
+      { 0x2960, 0x297e,   none,   none, none }, /* `~ */
+      {   none,   none,   none,   none, none }, /* L shift */
+      { 0x2b5c, 0x2b7c, 0x2b1c,   none, none }, /* |\ */
+      { 0x2c7a, 0x2c5a, 0x2c1a, 0x2c00, 0x40 }, /* Z */
+      { 0x2d78, 0x2d58, 0x2d18, 0x2d00, 0x40 }, /* X */
+      { 0x2e63, 0x2e43, 0x2e03, 0x2e00, 0x40 }, /* C */
+      { 0x2f76, 0x2f56, 0x2f16, 0x2f00, 0x40 }, /* V */
+      { 0x3062, 0x3042, 0x3002, 0x3000, 0x40 }, /* B */
+      { 0x316e, 0x314e, 0x310e, 0x3100, 0x40 }, /* N */
+      { 0x326d, 0x324d, 0x320d, 0x3200, 0x40 }, /* M */
+      { 0x332c, 0x333c,   none,   none, none }, /* ,< */
+      { 0x342e, 0x343e,   none,   none, none }, /* .> */
+      { 0x352f, 0x353f,   none,   none, none }, /* /? */
+      {   none,   none,   none,   none, none }, /* R Shift */
+      { 0x372a, 0x372a,   none,   none, none }, /* * */
+      {   none,   none,   none,   none, none }, /* L Alt */
+      { 0x3920, 0x3920, 0x3920, 0x3920, none }, /* space */
+      {   none,   none,   none,   none, none }, /* caps lock */
+      { 0x3b00, 0x5400, 0x5e00, 0x6800, none }, /* F1 */
+      { 0x3c00, 0x5500, 0x5f00, 0x6900, none }, /* F2 */
+      { 0x3d00, 0x5600, 0x6000, 0x6a00, none }, /* F3 */
+      { 0x3e00, 0x5700, 0x6100, 0x6b00, none }, /* F4 */
+      { 0x3f00, 0x5800, 0x6200, 0x6c00, none }, /* F5 */
+      { 0x4000, 0x5900, 0x6300, 0x6d00, none }, /* F6 */
+      { 0x4100, 0x5a00, 0x6400, 0x6e00, none }, /* F7 */
+      { 0x4200, 0x5b00, 0x6500, 0x6f00, none }, /* F8 */
+      { 0x4300, 0x5c00, 0x6600, 0x7000, none }, /* F9 */
+      { 0x4400, 0x5d00, 0x6700, 0x7100, none }, /* F10 */
+      {   none,   none,   none,   none, none }, /* Num Lock */
+      {   none,   none,   none,   none, none }, /* Scroll Lock */
+      { 0x4700, 0x4737, 0x7700,   none, 0x20 }, /* 7 Home */
+      { 0x4800, 0x4838,   none,   none, 0x20 }, /* 8 UP */
+      { 0x4900, 0x4939, 0x8400,   none, 0x20 }, /* 9 PgUp */
+      { 0x4a2d, 0x4a2d,   none,   none, none }, /* - */
+      { 0x4b00, 0x4b34, 0x7300,   none, 0x20 }, /* 4 Left */
+      { 0x4c00, 0x4c35,   none,   none, 0x20 }, /* 5 */
+      { 0x4d00, 0x4d36, 0x7400,   none, 0x20 }, /* 6 Right */
+      { 0x4e2b, 0x4e2b,   none,   none, none }, /* + */
+      { 0x4f00, 0x4f31, 0x7500,   none, 0x20 }, /* 1 End */
+      { 0x5000, 0x5032,   none,   none, 0x20 }, /* 2 Down */
+      { 0x5100, 0x5133, 0x7600,   none, 0x20 }, /* 3 PgDn */
+      { 0x5200, 0x5230,   none,   none, 0x20 }, /* 0 Ins */
+      { 0x5300, 0x532e,   none,   none, 0x20 }, /* Del */
+      {   none,   none,   none,   none, none },
+      {   none,   none,   none,   none, none },
+      { 0x565c, 0x567c,   none,   none, none }, /* \| */
+      { 0x5700, 0x5700,   none,   none, none }, /* F11 */
+      { 0x5800, 0x5800,   none,   none, none }  /* F12 */
+      };
 
   Bit16u
 inw(port)
@@ -962,6 +1075,369 @@ print_boot_failure(type, reason)
       printf(": could not read the boot disk");
   }
   printf("\n\n");
+}
+
+
+  void
+int16_function(DI, SI, BP, SP, BX, DX, CX, AX, FLAGS)
+  Bit16u DI, SI, BP, SP, BX, DX, CX, AX, FLAGS;
+{
+  Bit8u scan_code, ascii_code, shift_flags, led_flags, count;
+  Bit16u kbd_code, max;
+
+  shift_flags = read_byte(0x0040, 0x17);
+  led_flags = read_byte(0x0040, 0x97);
+
+  switch (GET_AH()) {
+    case 0x00: /* read keyboard input */
+
+      if ( !dequeue_key(&scan_code, &ascii_code, 1) ) {
+        BX_PANIC("KBD: int16h: out of keyboard input\n");
+        }
+      if (scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
+      else if (ascii_code == 0xE0) ascii_code = 0;
+      AX = (scan_code << 8) | ascii_code;
+      break;
+
+    case 0x01: /* check keyboard status */
+      if ( !dequeue_key(&scan_code, &ascii_code, 0) ) {
+        SET_ZF();
+        return;
+        }
+      if (scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
+      else if (ascii_code == 0xE0) ascii_code = 0;
+      AX = (scan_code << 8) | ascii_code;
+      CLEAR_ZF();
+      break;
+
+    case 0x02: /* get shift flag status */
+      shift_flags = read_byte(0x0040, 0x17);
+      SET_AL(shift_flags);
+      break;
+
+    case 0x05: /* store key-stroke into buffer */
+      if ( !enqueue_key(GET_CH(), GET_CL()) ) {
+        SET_AL(1);
+        }
+      else {
+        SET_AL(0);
+        }
+      break;
+
+    case 0x09: /* GET KEYBOARD FUNCTIONALITY */
+      // bit Bochs Description
+      //  7    0   reserved
+      //  6    0   INT 16/AH=20h-22h supported (122-key keyboard support)
+      //  5    1   INT 16/AH=10h-12h supported (enhanced keyboard support)
+      //  4    1   INT 16/AH=0Ah supported
+      //  3    0   INT 16/AX=0306h supported
+      //  2    0   INT 16/AX=0305h supported
+      //  1    0   INT 16/AX=0304h supported
+      //  0    0   INT 16/AX=0300h supported
+      //
+      SET_AL(0x30);
+      break;
+
+    case 0x10: /* read MF-II keyboard input */
+
+      if ( !dequeue_key(&scan_code, &ascii_code, 1) ) {
+        BX_PANIC("KBD: int16h: out of keyboard input\n");
+        }
+      if (scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
+      AX = (scan_code << 8) | ascii_code;
+      break;
+
+    case 0x11: /* check MF-II keyboard status */
+      if ( !dequeue_key(&scan_code, &ascii_code, 0) ) {
+        SET_ZF();
+        return;
+        }
+      if (scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
+      AX = (scan_code << 8) | ascii_code;
+      CLEAR_ZF();
+      break;
+
+    case 0x12: /* get extended keyboard status */
+      shift_flags = read_byte(0x0040, 0x17);
+      SET_AL(shift_flags);
+      shift_flags = read_byte(0x0040, 0x18) & 0x73;
+      shift_flags |= read_byte(0x0040, 0x96) & 0x0c;
+      SET_AH(shift_flags);
+      BX_DEBUG_INT16("int16: func 12 sending %04x\n",AX);
+      break;
+
+    case 0x92: /* keyboard capability check called by DOS 5.0+ keyb */
+      SET_AH(0x80); // function int16 ah=0x10-0x12 supported
+      break;
+
+    case 0xA2: /* 122 keys capability check called by DOS 5.0+ keyb */
+      // don't change AH : function int16 ah=0x20-0x22 NOT supported
+      break;
+
+    case 0x6F:
+      if (GET_AL() == 0x08)
+        SET_AH(0x02); // unsupported, aka normal keyboard
+
+    default:
+      BX_INFO("KBD: unsupported int 16h function %02x\n", GET_AH());
+    }
+}
+
+  unsigned int
+dequeue_key(scan_code, ascii_code, incr)
+  Bit8u *scan_code;
+  Bit8u *ascii_code;
+  unsigned int incr;
+{
+  Bit16u buffer_start, buffer_end, buffer_head, buffer_tail;
+  Bit16u ss;
+  Bit8u  acode, scode;
+
+#if BX_CPU < 2
+  buffer_start = 0x001E;
+  buffer_end   = 0x003E;
+#else
+  buffer_start = read_word(0x0040, 0x0080);
+  buffer_end   = read_word(0x0040, 0x0082);
+#endif
+
+  buffer_head = read_word(0x0040, 0x001a);
+  buffer_tail = read_word(0x0040, 0x001c);
+
+  if (buffer_head != buffer_tail) {
+    ss = get_SS();
+    acode = read_byte(0x0040, buffer_head);
+    scode = read_byte(0x0040, buffer_head+1);
+    write_byte(ss, ascii_code, acode);
+    write_byte(ss, scan_code, scode);
+
+    if (incr) {
+      buffer_head += 2;
+      if (buffer_head >= buffer_end)
+        buffer_head = buffer_start;
+      write_word(0x0040, 0x001a, buffer_head);
+      }
+    return(1);
+    }
+  else {
+    return(0);
+    }
+}
+
+  void
+int09_function(DI, SI, BP, SP, BX, DX, CX, AX)
+  Bit16u DI, SI, BP, SP, BX, DX, CX, AX;
+{
+  Bit8u scancode, asciicode, shift_flags;
+  Bit8u mf2_flags, mf2_state;
+
+  //
+  // DS has been set to F000 before call
+  //
+
+
+  scancode = GET_AL();
+
+  if (scancode == 0) {
+    BX_INFO("KBD: int09 handler: AL=0\n");
+    return;
+    }
+
+
+  shift_flags = read_byte(0x0040, 0x17);
+  mf2_flags = read_byte(0x0040, 0x18);
+  mf2_state = read_byte(0x0040, 0x96);
+  asciicode = 0;
+
+  switch (scancode) {
+    case 0x3a: /* Caps Lock press */
+      shift_flags ^= 0x40;
+      write_byte(0x0040, 0x17, shift_flags);
+      mf2_flags |= 0x40;
+      write_byte(0x0040, 0x18, mf2_flags);
+      break;
+    case 0xba: /* Caps Lock release */
+      mf2_flags &= ~0x40;
+      write_byte(0x0040, 0x18, mf2_flags);
+      break;
+
+    case 0x2a: /* L Shift press */
+      shift_flags |= 0x02;
+      write_byte(0x0040, 0x17, shift_flags);
+      break;
+    case 0xaa: /* L Shift release */
+      shift_flags &= ~0x02;
+      write_byte(0x0040, 0x17, shift_flags);
+      break;
+
+    case 0x36: /* R Shift press */
+      shift_flags |= 0x01;
+      write_byte(0x0040, 0x17, shift_flags);
+      break;
+    case 0xb6: /* R Shift release */
+      shift_flags &= ~0x01;
+      write_byte(0x0040, 0x17, shift_flags);
+      break;
+
+    case 0x1d: /* Ctrl press */
+      if ((mf2_state & 0x01) == 0) {
+        shift_flags |= 0x04;
+        write_byte(0x0040, 0x17, shift_flags);
+        if (mf2_state & 0x02) {
+          mf2_state |= 0x04;
+          write_byte(0x0040, 0x96, mf2_state);
+        } else {
+          mf2_flags |= 0x01;
+          write_byte(0x0040, 0x18, mf2_flags);
+        }
+      }
+      break;
+    case 0x9d: /* Ctrl release */
+      if ((mf2_state & 0x01) == 0) {
+        shift_flags &= ~0x04;
+        write_byte(0x0040, 0x17, shift_flags);
+        if (mf2_state & 0x02) {
+          mf2_state &= ~0x04;
+          write_byte(0x0040, 0x96, mf2_state);
+        } else {
+          mf2_flags &= ~0x01;
+          write_byte(0x0040, 0x18, mf2_flags);
+        }
+      }
+      break;
+
+    case 0x38: /* Alt press */
+      shift_flags |= 0x08;
+      write_byte(0x0040, 0x17, shift_flags);
+      if (mf2_state & 0x02) {
+        mf2_state |= 0x08;
+        write_byte(0x0040, 0x96, mf2_state);
+      } else {
+        mf2_flags |= 0x02;
+        write_byte(0x0040, 0x18, mf2_flags);
+      }
+      break;
+    case 0xb8: /* Alt release */
+      shift_flags &= ~0x08;
+      write_byte(0x0040, 0x17, shift_flags);
+      if (mf2_state & 0x02) {
+        mf2_state &= ~0x08;
+        write_byte(0x0040, 0x96, mf2_state);
+      } else {
+        mf2_flags &= ~0x02;
+        write_byte(0x0040, 0x18, mf2_flags);
+      }
+      break;
+
+    case 0x45: /* Num Lock press */
+      if ((mf2_state & 0x03) == 0) {
+        mf2_flags |= 0x20;
+        write_byte(0x0040, 0x18, mf2_flags);
+        shift_flags ^= 0x20;
+        write_byte(0x0040, 0x17, shift_flags);
+      }
+      break;
+    case 0xc5: /* Num Lock release */
+      if ((mf2_state & 0x03) == 0) {
+        mf2_flags &= ~0x20;
+        write_byte(0x0040, 0x18, mf2_flags);
+      }
+      break;
+
+    case 0x46: /* Scroll Lock press */
+      mf2_flags |= 0x10;
+      write_byte(0x0040, 0x18, mf2_flags);
+      shift_flags ^= 0x10;
+      write_byte(0x0040, 0x17, shift_flags);
+      break;
+
+    case 0xc6: /* Scroll Lock release */
+      mf2_flags &= ~0x10;
+      write_byte(0x0040, 0x18, mf2_flags);
+      break;
+
+    default:
+      if (scancode & 0x80) {
+        break; /* toss key releases ... */
+      }
+      if (scancode > MAX_SCAN_CODE) {
+        BX_INFO("KBD: int09h_handler(): unknown scancode read: 0x%02x!\n", scancode);
+        return;
+      }
+      if (shift_flags & 0x08) { /* ALT */
+        asciicode = scan_to_scanascii[scancode].alt;
+        scancode = scan_to_scanascii[scancode].alt >> 8;
+      } else if (shift_flags & 0x04) { /* CONTROL */
+        asciicode = scan_to_scanascii[scancode].control;
+        scancode = scan_to_scanascii[scancode].control >> 8;
+      } else if (((mf2_state & 0x02) > 0) && ((scancode >= 0x47) && (scancode <= 0x53))) {
+        /* extended keys handling */
+        asciicode = 0xe0;
+        scancode = scan_to_scanascii[scancode].normal >> 8;
+      } else if (shift_flags & 0x03) { /* LSHIFT + RSHIFT */
+        /* check if lock state should be ignored
+         * because a SHIFT key are pressed */
+
+        if (shift_flags & scan_to_scanascii[scancode].lock_flags) {
+          asciicode = scan_to_scanascii[scancode].normal;
+          scancode = scan_to_scanascii[scancode].normal >> 8;
+        } else {
+          asciicode = scan_to_scanascii[scancode].shift;
+          scancode = scan_to_scanascii[scancode].shift >> 8;
+        }
+      } else {
+        /* check if lock is on */
+        if (shift_flags & scan_to_scanascii[scancode].lock_flags) {
+          asciicode = scan_to_scanascii[scancode].shift;
+          scancode = scan_to_scanascii[scancode].shift >> 8;
+        } else {
+          asciicode = scan_to_scanascii[scancode].normal;
+          scancode = scan_to_scanascii[scancode].normal >> 8;
+        }
+      }
+      if (scancode==0 && asciicode==0) {
+        BX_INFO("KBD: int09h_handler(): scancode & asciicode are zero?\n");
+      }
+      enqueue_key(scancode, asciicode);
+      break;
+  }
+  if ((scancode & 0x7f) != 0x1d) {
+    mf2_state &= ~0x01;
+  }
+  mf2_state &= ~0x02;
+  write_byte(0x0040, 0x96, mf2_state);
+}
+
+  unsigned int
+enqueue_key(scan_code, ascii_code)
+  Bit8u scan_code, ascii_code;
+{
+  Bit16u buffer_start, buffer_end, buffer_head, buffer_tail, temp_tail;
+
+#if BX_CPU < 2
+  buffer_start = 0x001E;
+  buffer_end   = 0x003E;
+#else
+  buffer_start = read_word(0x0040, 0x0080);
+  buffer_end   = read_word(0x0040, 0x0082);
+#endif
+
+  buffer_head = read_word(0x0040, 0x001A);
+  buffer_tail = read_word(0x0040, 0x001C);
+
+  temp_tail = buffer_tail;
+  buffer_tail += 2;
+  if (buffer_tail >= buffer_end)
+    buffer_tail = buffer_start;
+
+  if (buffer_tail == buffer_head) {
+    return(0);
+    }
+
+   write_byte(0x0040, temp_tail, ascii_code);
+   write_byte(0x0040, temp_tail+1, scan_code);
+   write_word(0x0040, 0x001C, buffer_tail);
+   return(1);
 }
 
 
@@ -1624,7 +2100,34 @@ post_default_ints:
   call ebda_post
 
   ;; Keyboard
+  SET_INT_VECTOR(0x09, #0xF000, #int09_handler)
   SET_INT_VECTOR(0x16, #0xF000, #int16_handler)
+
+  xor  ax, ax
+  mov  ds, ax
+  mov  0x0417, al /* keyboard shift flags, set 1 */
+  mov  0x0418, al /* keyboard shift flags, set 2 */
+  mov  0x0419, al /* keyboard alt-numpad work area */
+  mov  0x0471, al /* keyboard ctrl-break flag */
+  mov  0x0497, al /* keyboard status flags 4 */
+  mov  al, #0x10
+  mov  0x0496, al /* keyboard status flags 3 */
+
+
+  /* keyboard head of buffer pointer */
+  mov  bx, #0x001E
+  mov  0x041A, bx
+
+  /* keyboard end of buffer pointer */
+  mov  0x041C, bx
+
+  /* keyboard pointer to start of buffer */
+  mov  bx, #0x001E
+  mov  0x0480, bx
+
+  /* keyboard pointer to end of buffer */
+  mov  bx, #0x003E
+  mov  0x0482, bx
 
   ;; Video setup
   SET_INT_VECTOR(0x10, #0xF000, #int10_handler)
@@ -1666,20 +2169,59 @@ int19_handler:
 
   jmp int19_relocated
 
+
 ;----------------------------------------
 ;- INT 16h Keyboard Service Entry Point -
 ;----------------------------------------
 .org 0xe82e
 int16_handler:
-  cmp   ah, #0x01
-  je    int16_01
-  cmp   ah, #0x02
-  je    int16_02
+
+  sti
+  push  ds
+  pushf
+  ;pusha ; we do this instead:
+  push ax
+  push cx
+  push dx
+  push bx
+  push sp
+  mov  bx, sp
+  add  [bx], #10
+  mov  bx, [bx+2]
+  push bp
+  push si
+  push di
+
+  cmp   ah, #0x00
+  je    int16_F00
+  cmp   ah, #0x10
+  je    int16_F00
+
+  mov  bx, #0xf000
+  mov  ds, bx
+  call _int16_function
+  ; popa ; we do this instead:
+  pop di
+  pop si
+  pop bp
+  add sp, #2
+  pop bx
+  pop dx
+  pop cx
+  pop ax
+  popf
+  pop  ds
+  jz   int16_zero_set
+
+int16_zero_clear:
+  push bp
+  mov  bp, sp
+  //SEG SS
+  and  BYTE [bp + 0x06], #0xbf
+  pop  bp
   iret
-int16_02:
-  mov  al, #0x0
-  iret
-int16_01:
+
+int16_zero_set:
   push bp
   mov  bp, sp
   //SEG SS
@@ -1687,9 +2229,120 @@ int16_01:
   pop  bp
   iret
 
-.org 0xf045 ; INT 10 Functions 0-Fh Entry Point
-  ;; HALT(__LINE__)
+int16_F00:
+  mov  bx, #0x0040
+  mov  ds, bx
+
+int16_wait_for_key:
+  cli
+  mov  bx, 0x001a
+  cmp  bx, 0x001c
+  jne  int16_key_found
+  sti
+  nop
+#if 0
+                           /* no key yet, call int 15h, function AX=9002 */
+  0x50,                    /* push AX */
+  0xb8, 0x02, 0x90,        /* mov AX, #0x9002 */
+  0xcd, 0x15,              /* int 15h */
+  0x58,                    /* pop  AX */
+  0xeb, 0xea,              /* jmp   WAIT_FOR_KEY */
+#endif
+  jmp  int16_wait_for_key
+
+int16_key_found:
+  mov  bx, #0xf000
+  mov  ds, bx
+  call _int16_function
+  ; popa ; we do this instead:
+  pop di
+  pop si
+  pop bp
+  add sp, #2
+  pop bx
+  pop dx
+  pop cx
+  pop ax
+  popf
+  pop  ds
+#if 0
+                           /* notify int16 complete w/ int 15h, function AX=9102 */
+  0x50,                    /* push AX */
+  0xb8, 0x02, 0x91,        /* mov AX, #0x9102 */
+  0xcd, 0x15,              /* int 15h */
+  0x58,                    /* pop  AX */
+#endif
   iret
+
+
+
+;-------------------------------------------------
+;- INT09h : Keyboard Hardware Service Entry Point -
+;-------------------------------------------------
+.org 0xe987
+int09_handler:
+  cli
+  push ax
+
+  in  al, #0x60             ;;read key from keyboard controller
+  sti
+  push  ds
+  ;pusha ; we do this instead:
+
+  push ax
+  push cx
+  push dx
+  push bx
+  push sp
+  mov  bx, sp
+  add  [bx], #10
+  mov  bx, [bx+2]
+  push bp
+  push si
+  push di
+
+  ;; check for extended key
+  cmp  al, #0xe0
+  jne int09_check_pause
+  xor  ax, ax
+  mov  ds, ax
+  mov  al, BYTE [0x496]     ;; mf2_state |= 0x02
+  or   al, #0x02
+  mov  BYTE [0x496], al
+  jmp int09_done
+
+int09_check_pause: ;; check for pause key
+  cmp  al, #0xe1
+  jne int09_process_key
+  xor  ax, ax
+  mov  ds, ax
+  mov  al, BYTE [0x496]     ;; mf2_state |= 0x01
+  or   al, #0x01
+  mov  BYTE [0x496], al
+  jmp int09_done
+
+int09_process_key:
+  mov   bx, #0xf000
+  mov   ds, bx
+  call  _int09_function
+
+int09_done:
+  ; popa ; we do this instead:
+  pop di
+  pop si
+  pop bp
+  add sp, #2
+  pop bx
+  pop dx
+  pop cx
+  pop ax
+
+  pop   ds
+  cli
+
+  pop ax
+  iret
+
 
 ;----------
 ;- INT10h -

@@ -47,7 +47,8 @@ module kotku_ml403 (
     output        sram_adv_ld_n_,
     output        flash_ce2_,
 
-    input         but2_
+    inout         ps2_clk_,
+    inout         ps2_data_
   );
 
   // Net declarations
@@ -63,6 +64,10 @@ module kotku_ml403 (
   wire [15:0] io_dat_i;
   wire [ 1:0] sel;
   wire        cyc;
+  wire [ 7:0] keyb_dat_o;
+  wire        keyb_io_arena;
+  wire        keyb_arena;
+
   wire [15:0] vdu_dat_o;
   wire        vdu_ack_o;
   wire        vdu_mem_arena;
@@ -83,6 +88,7 @@ module kotku_ml403 (
   wire        sram_we_n_;
   wire        intr;
   wire        inta;
+  wire        clk_100M;
 
 `ifdef DEBUG
   wire [35:0] control0;
@@ -90,7 +96,6 @@ module kotku_ml403 (
   wire [ 2:0] state, next_state;
   wire [15:0] x, y;
   wire [15:0] imm;
-  wire        clk_100M;
   wire [63:0] f1, f2;
   wire [15:0] m1, m2;
   wire [19:0] pc;
@@ -111,9 +116,7 @@ module kotku_ml403 (
 
   // Module instantiations
   clock c0 (
-`ifdef DEBUG
     .clk_100M    (clk_100M),
-`endif
     .sys_clk_in_ (sys_clk_in_),
     .clk         (clk),
     .vdu_clk     (tft_lcd_clk_),
@@ -188,12 +191,20 @@ module kotku_ml403 (
     .sram_adv_ld_n_ (sram_adv_ld_n_)
   );
 
-  but_int but0 (
-    .clk  (clk),
-    .rst  (rst),
-    .but_ (but2_),
-    .intr (intr),
-    .inta (inta)
+  ps2_keyb #(5900, // number of clks for 60usec.
+             13,   // number of bits needed for 60usec. timer
+             126,  // number of clks for debounce
+             7,    // number of bits needed for debounce timer
+             0     // Trap the shift keys, no event generated
+            ) keyboard0 (      // Instance name
+    .wb_clk_i (clk_100M),
+    .wb_rst_i (rst),
+    .wb_dat_o (keyb_dat_o),
+    .wb_tgc_o (intr),
+    .wb_tgc_i (inta),
+
+    .ps2_clk_  (ps2_clk_),
+    .ps2_data_ (ps2_data_)
   );
 
   cpu zet_proc (
@@ -281,20 +292,26 @@ module kotku_ml403 (
 `endif
 
   assign io_dat_i = flash_io_arena ? flash_dat_o
-                  : (vdu_io_arena ? vdu_dat_o : 16'h0);
-  assign dat_i    = inta ? 16'd3 : (tga ? io_dat_i
+                  : (vdu_io_arena ? vdu_dat_o
+                  : (keyb_io_arena ? keyb_dat_o : 16'h0));
+  assign dat_i    = inta ? 16'd9 : (tga ? io_dat_i
                   : (vdu_mem_arena ? vdu_dat_o
                   : (flash_mem_arena ? flash_dat_o : zbt_dat_o)));
 
   assign flash_mem_arena = (adr[19:16]==4'hc || adr[19:16]==4'hf);
-  assign flash_io_arena  = (adr[15:9]==7'b1110_000);
-  assign flash_arena = (!tga & flash_mem_arena)
-                     | (tga & flash_io_arena);
   assign vdu_mem_arena = (adr[19:12]==8'hb8);
+
+  assign flash_io_arena  = (adr[15:9]==7'b1110_000);
   assign vdu_io_arena  = (adr[15:8]==8'hb8 && we) ||
                          (adr[15:1]==15'h01ed && !we);
+  assign keyb_io_arena = (adr[15:1]==15'h0030 && !we);
+
+  assign flash_arena = (!tga & flash_mem_arena)
+                     | (tga & flash_io_arena);
   assign vdu_arena = (!tga & vdu_mem_arena)
                    | (tga & vdu_io_arena);
+  assign keyb_arena = (tga & keyb_io_arena);
+
   assign flash_stb = flash_arena & stb & cyc;
   assign zbt_stb   = !vdu_mem_arena & !flash_mem_arena
                    & !tga & stb & cyc;
