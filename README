@@ -5,9 +5,7 @@ top level module for the complete SOC system.
 
 For building the system (Xilinx tools must be installed):
 $ source /opt/Xilinx/10.1/ISE/settings64.sh  # (or equivalent)
-$ cd rtl-model/
-$ ../bin/web2rom      # (php-cli package must be installed)
-$ cd ../impl/virtex4-ml403ep/syn/
+$ cd impl/virtex4-ml403ep/syn/
 $ make
 
 As a result, you will have a file named "kotku.bit", which is the conf-
