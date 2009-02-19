@@ -25,7 +25,11 @@ module kotku_ml403 (
     output        rw_,
     output        e_,
     output  [7:4] db_,
-    input         but_,
+    input         butc_,
+    input         bute_,
+    input         butw_,
+    input         butn_,
+    input         buts_,
 `endif
 
     output        tft_lcd_clk_,
@@ -89,6 +93,18 @@ module kotku_ml403 (
   wire        intr;
   wire        inta;
   wire        clk_100M;
+  wire        rst;
+  wire [15:0] vdu_dat_i;
+  wire [11:1] vdu_adr_i;
+  wire        vdu_we_i;
+  wire [ 1:0] vdu_sel_i;
+  wire        vdu_stb_i;
+  wire        vdu_tga_i;
+
+  wire [19:1] zbt_adr_i;
+  wire        zbt_we_i;
+  wire [ 1:0] zbt_sel_i;
+  wire        zbt_stb_i;
 
 `ifdef DEBUG
   wire [35:0] control0;
@@ -104,9 +120,18 @@ module kotku_ml403 (
   wire [ 2:0] cnt;
   wire        op;
   wire [15:0] r1, r2;
-  reg         rst;
-`else
-  wire        rst;
+
+  wire [15:0] dbg_vdu_dat_o;
+  wire [11:1] dbg_vdu_adr_o;
+  wire        dbg_vdu_we_o;
+  wire        dbg_vdu_stb_o;
+  wire [ 1:0] dbg_vdu_sel_o;
+  wire        dbg_vdu_tga_o;
+
+  wire [19:1] dbg_zbt_adr_o;
+  wire        dbg_zbt_we_o;
+  wire [ 1:0] dbg_zbt_sel_o;
+  wire        dbg_zbt_stb_o;
 `endif
 
   // Register declarations
@@ -126,13 +151,13 @@ module kotku_ml403 (
   vdu vdu0 (
     // Wishbone signals
     .wb_clk_i (tft_lcd_clk_), // 25 Mhz VDU clock
-    .wb_rst_i (rst),
-    .wb_dat_i (dat_o),
+    .wb_rst_i (rst_lck),
+    .wb_dat_i (vdu_dat_i),
     .wb_dat_o (vdu_dat_o),
-    .wb_adr_i (adr[11:1]),
-    .wb_we_i  (we),
-    .wb_tga_i (tga),
-    .wb_sel_i (sel),
+    .wb_adr_i (vdu_adr_i),
+    .wb_we_i  (vdu_we_i),
+    .wb_tga_i (vdu_tga_i),
+    .wb_sel_i (vdu_sel_i),
     .wb_stb_i (vdu_stb_sync[1]),
     .wb_cyc_i (vdu_stb_sync[1]),
     .wb_ack_o (vdu_ack_o),
@@ -151,7 +176,7 @@ module kotku_ml403 (
     .wb_rst_i (rst),
     .wb_dat_i (dat_o),
     .wb_dat_o (flash_dat_o),
-    .wb_adr_i (adr[17:1]),
+    .wb_adr_i (adr[16:1]),
     .wb_we_i  (we),
     .wb_tga_i (tga),
     .wb_stb_i (flash_stb),
@@ -171,14 +196,14 @@ module kotku_ml403 (
     .op     (op),
 `endif
     .wb_clk_i (clk),
-    .wb_rst_i (rst),
+    .wb_rst_i (rst_lck),
     .wb_dat_i (dat_o),
     .wb_dat_o (zbt_dat_o),
-    .wb_adr_i (adr),
-    .wb_we_i  (we),
-    .wb_sel_i (sel),
-    .wb_stb_i (zbt_stb),
-    .wb_cyc_i (zbt_stb),
+    .wb_adr_i (zbt_adr_i),
+    .wb_we_i  (zbt_we_i),
+    .wb_sel_i (zbt_sel_i),
+    .wb_stb_i (zbt_stb_i),
+    .wb_cyc_i (zbt_stb_i),
     .wb_ack_o (zbt_ack),
 
     // Pad signals
@@ -282,6 +307,32 @@ module kotku_ml403 (
     .lcd_dat_ (db_)
   );
 
+  hw_dbg dbg0 (
+    .clk     (clk),
+    .rst_lck (rst_lck),
+    .rst     (rst),
+    .butc_   (butc_),
+    .bute_   (bute_),
+    .butw_   (butw_),
+    .butn_   (butn_),
+    .buts_   (buts_),
+
+    .vdu_dat_o (dbg_vdu_dat_o),
+    .vdu_adr_o (dbg_vdu_adr_o),
+    .vdu_we_o  (dbg_vdu_we_o),
+    .vdu_stb_o (dbg_vdu_stb_o),
+    .vdu_sel_o (dbg_vdu_sel_o),
+    .vdu_tga_o (dbg_vdu_tga_o),
+    .vdu_ack_i (vdu_ack_sync[1]),
+
+    .zbt_dat_i (zbt_dat_o),
+    .zbt_adr_o (dbg_zbt_adr_o),
+    .zbt_we_o  (dbg_zbt_we_o),
+    .zbt_sel_o (dbg_zbt_sel_o),
+    .zbt_stb_o (dbg_zbt_stb_o),
+    .zbt_ack_i (zbt_ack)
+  );
+
   // Continuous assignments
   assign f1 = { 3'b0, rst, 4'h0, io_reg, 4'h0, dat_o, 7'h0, tga, 7'h0, ack, 4'h0 };
   assign f2 = { adr, 7'h0, we, 3'h0, stb, 3'h0, cyc, 8'h0, pc };
@@ -289,6 +340,28 @@ module kotku_ml403 (
   assign m2 = 16'b1111101110011111;
 
   assign pc = (cs << 4) + ip;
+
+  assign vdu_dat_i = rst ? dbg_vdu_dat_o : dat_o;
+  assign vdu_adr_i = rst ? dbg_vdu_adr_o : adr[11:1];
+  assign vdu_we_i  = rst ? dbg_vdu_we_o : we;
+  assign vdu_sel_i = rst ? dbg_vdu_sel_o : sel;
+  assign vdu_stb_i = rst ? dbg_vdu_stb_o : stb & cyc & vdu_arena;
+  assign vdu_tga_i = rst ? dbg_vdu_tga_o : tga;
+  assign zbt_adr_i = rst ? dbg_zbt_adr_o : adr;
+  assign zbt_we_i  = rst ? dbg_zbt_we_o  : we;
+  assign zbt_sel_i = rst ? dbg_zbt_sel_o : sel;
+  assign zbt_stb_i = rst ? dbg_zbt_stb_o : zbt_stb;
+`else
+  assign vdu_dat_i = dat_o;
+  assign vdu_adr_i = adr[11:1];
+  assign vdu_we_i  = we;
+  assign vdu_sel_i = sel;
+  assign vdu_stb_i = stb & cyc & vdu_arena;
+  assign vdu_tga_i = tga;
+  assign zbt_adr_i = adr;
+  assign zbt_we_i  = we;
+  assign zbt_sel_i = sel;
+  assign zbt_stb_i = zbt_stb;
 `endif
 
   assign io_dat_i = flash_io_arena ? flash_dat_o
@@ -330,7 +403,7 @@ module kotku_ml403 (
   // Behaviour
   // vdu_stb_sync[0]
   always @(posedge tft_lcd_clk_)
-    vdu_stb_sync[0] <= stb & cyc & vdu_arena;
+    vdu_stb_sync[0] <= vdu_stb_i;
 
   // vdu_stb_sync[1]
   always @(posedge clk)
@@ -348,11 +421,7 @@ module kotku_ml403 (
 	   : ((tga && stb && cyc && we && adr[15:8]==8'hf1) ?
 		  dat_o : io_reg );
 
-`ifdef DEBUG
-  // rst
-  always @(posedge clk)
-    rst <= rst_lck ? 1'b1 : (but_ ? 1'b0 : rst );
-`else
+`ifndef DEBUG
   assign rst = rst_lck;
 `endif
 endmodule

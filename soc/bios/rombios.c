@@ -2101,7 +2101,7 @@ post_default_ints:
 
   ;; Keyboard
   SET_INT_VECTOR(0x09, #0xF000, #int09_handler)
-  SET_INT_VECTOR(0x16, #0xF000, #int16_handler)
+  ;SET_INT_VECTOR(0x16, #0xF000, #int16_handler)
 
   xor  ax, ax
   mov  ds, ax

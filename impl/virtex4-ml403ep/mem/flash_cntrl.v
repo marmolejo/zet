@@ -22,7 +22,7 @@ module flash_cntrl (
     input             wb_rst_i,
     input      [15:0] wb_dat_i,
     output     [15:0] wb_dat_o,
-    input      [17:1] wb_adr_i,
+    input      [16:1] wb_adr_i,
     input             wb_we_i,
     input             wb_tga_i,
     input             wb_stb_i,
@@ -51,8 +51,7 @@ module flash_cntrl (
   // flash_addr, 21 bits
   always @(posedge wb_clk_i)
     flash_addr_ <= wb_tga_i ? { 1'b1, base, wb_adr_i[8:1] }
-                            : { 5'h0, wb_adr_i[17],
-                                      wb_adr_i[15:1] };
+                            : { 5'h0, wb_adr_i[16:1] };
 
   always @(posedge wb_clk_i) flash_ce2_ <= op;
   always @(posedge wb_clk_i) wb_ack_o   <= op;

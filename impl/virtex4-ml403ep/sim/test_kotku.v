@@ -37,7 +37,9 @@ module testbench;
     .sram_bw_         (s_bw),
     .sram_cen_        (s_ce),
     .sram_adv_ld_n_   (s_adv),
-    .flash_ce2_       (f_ce)
+    .flash_ce2_       (f_ce),
+
+    .but_             (1'b0)
   );
 
   flash_stub fs0 (
