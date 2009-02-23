@@ -8,6 +8,7 @@ module testbench;
   wire        lcd_hsync;
   wire        lcd_vsync;
   reg         clk;
+  reg         but;
   wire        s_clk;
   wire [20:0] sf_addr;
   wire [15:0] sf_data;
@@ -39,7 +40,11 @@ module testbench;
     .sram_adv_ld_n_   (s_adv),
     .flash_ce2_       (f_ce),
 
-    .but_             (1'b0)
+    .butc_ (but),
+    .bute_ (1'b0),
+    .butw_ (1'b0),
+    .butn_ (1'b0),
+    .buts_ (1'b0)
   );
 
   flash_stub fs0 (
@@ -72,6 +77,10 @@ module testbench;
   initial
     begin
          clk <= 1'b1;
+         but <= 1'b0;
+         #100000 but <= 1'b1;
+         #700000 but <= 1'b0;
+         #700000 but <= 1'b1;
     end
 
 endmodule

@@ -30,6 +30,8 @@ module kotku_ml403 (
     input         butw_,
     input         butn_,
     input         buts_,
+
+    output        trx_,
 `endif
 
     output        tft_lcd_clk_,
@@ -120,6 +122,7 @@ module kotku_ml403 (
   wire [ 2:0] cnt;
   wire        op;
   wire [15:0] r1, r2;
+  wire        block;
 
   wire [15:0] dbg_vdu_dat_o;
   wire [11:1] dbg_vdu_adr_o;
@@ -245,6 +248,7 @@ module kotku_ml403 (
     .aluo       (aluo),
     .r1         (r1),
     .r2         (r2),
+    .dbg_block  (block),
 `endif
 
     // Wishbone master interface
@@ -265,6 +269,7 @@ module kotku_ml403 (
 
 `ifdef DEBUG
   // Module instantiations
+/*
   icon icon0 (
     .CONTROL0 (control0)
   );
@@ -306,7 +311,7 @@ module kotku_ml403 (
     .lcd_e_   (e_),
     .lcd_dat_ (db_)
   );
-
+*/
   hw_dbg dbg0 (
     .clk     (clk),
     .rst_lck (rst_lck),
@@ -331,6 +336,17 @@ module kotku_ml403 (
     .zbt_sel_o (dbg_zbt_sel_o),
     .zbt_stb_o (dbg_zbt_stb_o),
     .zbt_ack_i (zbt_ack)
+  );
+
+  pc_trace pc0 (
+    .trx_ (trx_),
+
+    .clk_100M (clk_100M),
+    .clk      (clk),
+    .rst      (rst_lck),
+    .pc       (pc),
+    .zet_st   (state),
+    .block    (block)
   );
 
   // Continuous assignments

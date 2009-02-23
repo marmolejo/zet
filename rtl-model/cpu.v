@@ -33,6 +33,7 @@ module cpu (
     output [15:0] aluo,
     output [15:0] r1,
     output [15:0] r2,
+    input         dbg_block,
 `endif
 
     // Wishbone master interface
@@ -70,6 +71,7 @@ module cpu (
   wire        cpu_m_io;
   wire [19:0] cpu_adr_o;
   wire        cpu_block;
+  wire        wb_block;
   wire [15:0] cpu_dat_i;
   wire [15:0] cpu_dat_o;
   wire        cpu_we_o;
@@ -141,7 +143,7 @@ module cpu (
     .cpu_memop  (ir[`MEM_OP]),
     .cpu_m_io   (cpu_m_io),
     .cpu_adr_o  (cpu_adr_o),
-    .cpu_block  (cpu_block),
+    .cpu_block  (wb_block),
     .cpu_dat_i  (cpu_dat_i),
     .cpu_dat_o  (cpu_dat_o),
     .cpu_we_o   (cpu_we_o),
@@ -166,6 +168,9 @@ module cpu (
 
 `ifdef DEBUG
   assign iralu = ir[28:23];
+  assign cpu_block = wb_block | dbg_block;
+`else
+  assign cpu_block = wb_block;
 `endif
 endmodule
 

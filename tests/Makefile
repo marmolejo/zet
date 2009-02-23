@@ -31,7 +31,7 @@ all: $(ml403roms)
 #	paste -d\\ hd.img.rtl $< >../../impl/virtex4-ml403ep/sim/$@
 
 %.ml403: %.rom
-	hexdump -v -e '4/1 "%02X"' -e '"\n"' $< > ../../impl/virtex4-ml403ep/sim/$@
+	hexdump -v -e '4/1 "%02X"' -e '"\n"' $< > ../impl/virtex4-ml403ep/sim/$@
 
 %.fout: %.out hd.img.rtl
 	for i in $$(seq 32768); do echo FFFF; done >$@

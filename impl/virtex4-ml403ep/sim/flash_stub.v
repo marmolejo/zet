@@ -16,7 +16,7 @@ module flash_stub (
   assign flash_data_ = flash_ce2_ ? dat_o : 31'hzzzzzzzz;
 
   // Behaviour
-  initial $readmemh("data.ml403", rom, 21'h0);
+  initial $readmemh("00_dbg.ml403", rom, 21'h0);
   initial $readmemh("hd.ml403",   rom, 21'h100000);
 
   always @(*) dat_o <= #110
