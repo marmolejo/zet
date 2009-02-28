@@ -31,9 +31,22 @@ module cpu (
     output [15:0] y,
     output [15:0] imm,
     output [15:0] aluo,
-    output [15:0] r1,
-    output [15:0] r2,
+    output [15:0] ax,
+    output [15:0] dx,
+    output [15:0] bp,
+    output [15:0] si,
+    output [15:0] es,
     input         dbg_block,
+    output [15:0] c,
+    output [ 3:0] addr_c,
+    output [15:0] cpu_dat_o,
+    output [15:0] d,
+    output [ 3:0] addr_d,
+    output        byte_exec,
+    output [ 8:0] flags,
+    output        end_seq,
+    output        ext_int,
+    output        cpu_block,
 `endif
 
     // Wishbone master interface
@@ -56,12 +69,15 @@ module cpu (
 `ifndef DEBUG
   wire [15:0] cs, ip;
   wire [15:0] imm;
+  wire [15:0] cpu_dat_o;
+  wire        byte_exec;
+  wire        cpu_block;
 `endif
   wire [`IR_SIZE-1:0] ir;
   wire [15:0] off;
 
   wire [19:0] addr_exec, addr_fetch;
-  wire byte_fetch, byte_exec, fetch_or_exec;
+  wire byte_fetch, fetch_or_exec;
   wire of, zf, cx_zero;
   wire div_exc;
   wire wr_ip0;
@@ -70,10 +86,8 @@ module cpu (
   wire        cpu_byte_o;
   wire        cpu_m_io;
   wire [19:0] cpu_adr_o;
-  wire        cpu_block;
   wire        wb_block;
   wire [15:0] cpu_dat_i;
-  wire [15:0] cpu_dat_o;
   wire        cpu_we_o;
   wire [15:0] iid_dat_i;
 
@@ -82,6 +96,8 @@ module cpu (
 `ifdef DEBUG
     .state      (state),
     .next_state (next_state),
+    .ext_int    (ext_int),
+    .end_seq    (end_seq),
 `endif
     .clk  (wb_clk_i),
     .rst  (wb_rst_i),
@@ -103,7 +119,8 @@ module cpu (
 
     .wr_ip0  (wr_ip0),
 
-    .intr (wb_tgc_i & ifl),
+    .intr (wb_tgc_i),
+    .ifl  (ifl),
     .inta (wb_tgc_o)
   );
 
@@ -112,8 +129,16 @@ module cpu (
     .x    (x),
     .y    (y),
     .aluo (aluo),
-    .r1   (r1),
-    .r2   (r2),
+    .ax   (ax),
+    .dx   (dx),
+    .bp   (bp),
+    .si   (si),
+    .es   (es),
+    .c    (c),
+    .addr_c (addr_c),
+    .omemalu (d),
+    .addr_d (addr_d),
+    .flags  (flags),
 `endif
     .ir      (ir),
     .off     (off),

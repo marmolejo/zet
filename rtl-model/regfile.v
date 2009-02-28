@@ -22,8 +22,11 @@
 
 module regfile (
 `ifdef DEBUG
-    output [15:0] r1,
-    output [15:0] r2,
+    output [15:0] ax,
+    output [15:0] dx,
+    output [15:0] bp,
+    output [15:0] si,
+    output [15:0] es,
 `endif
 
     output [15:0] a,
@@ -61,8 +64,11 @@ module regfile (
 
   // Assignments
 `ifdef DEBUG
-  assign r1 = r[1];
-  assign r2 = r[7];
+  assign ax = r[0];
+  assign dx = r[2];
+  assign bp = r[5];
+  assign si = r[6];
+  assign es = r[8];
 `endif
   assign a = (a_byte & ~addr_a[3]) ? { {8{a8[7]}}, a8} : r[addr_a];
   assign a8 = addr_a[2] ? r[addr_a[1:0]][15:8] : r[addr_a][7:0];

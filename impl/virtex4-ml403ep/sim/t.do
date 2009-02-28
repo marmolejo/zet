@@ -18,10 +18,20 @@ add wave -label seq_addr /testbench/kotku/zet_proc/fetch0/decode0/seq_addr
 add wave -label end_seq /testbench/kotku/zet_proc/fetch0/end_seq
 add wave -label need_modrm /testbench/kotku/zet_proc/fetch0/need_modrm
 add wave -label need_off /testbench/kotku/zet_proc/fetch0/need_off
+add wave -label off_size /testbench/kotku/zet_proc/fetch0/off_size
 add wave -label need_imm /testbench/kotku/zet_proc/fetch0/need_imm
+add wave -label imm_size /testbench/kotku/zet_proc/fetch0/imm_size
 add wave -label ir /testbench/kotku/zet_proc/fetch0/ir
 add wave -label imm -radix hexadecimal /testbench/kotku/zet_proc/fetch0/imm
 add wave -label off -radix hexadecimal /testbench/kotku/zet_proc/fetch0/off
+add wave -divider regfile
+add wave -label ax -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/r\[0\]
+add wave -label cx -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/r\[1\]
+add wave -label dx -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/r\[2\]
+add wave -label si -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/r\[6\]
+add wave -label tmp -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/r\[13\]
+add wave -label d -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/d\[15:0\]
+add wave -label wr -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/wr
 add wave -divider wb_master
 add wave -label cs -radix hexadecimal /testbench/kotku/zet_proc/wm0/cs
 add wave -label op -radix hexadecimal /testbench/kotku/zet_proc/wm0/op
@@ -49,7 +59,6 @@ add wave -label x -radix hexadecimal /testbench/kotku/zet_proc/exec0/a
 add wave -label y -radix hexadecimal /testbench/kotku/zet_proc/exec0/bus_b
 add wave -label t -radix hexadecimal /testbench/kotku/zet_proc/exec0/alu0/t
 add wave -label func -radix hexadecimal /testbench/kotku/zet_proc/exec0/alu0/func
-add wave -label r\[1\] -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/r\[1\]
 add wave -label d -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/d
 add wave -label addr_a /testbench/kotku/zet_proc/exec0/reg0/addr_a
 add wave -label addr_d /testbench/kotku/zet_proc/exec0/reg0/addr_d
@@ -57,6 +66,6 @@ add wave -label wr /testbench/kotku/zet_proc/exec0/reg0/wr
 add wave -label we /testbench/kotku/we
 add wave -label ack /testbench/kotku/ack
 add wave -label fetch_or_exec /testbench/kotku/zet_proc/fetch_or_exec
-add wave -divider pc_trace
-add wave -radix hexadecimal -r /testbench/kotku/pc0/*
-run 1ms
+add wave -divider zbt
+add wave -radix hexadecimal -r /testbench/kotku/zbt0/*
+run 300us

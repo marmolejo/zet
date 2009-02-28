@@ -26,6 +26,9 @@ static void biosfn_set_video_mode();
 static void biosfn_set_cursor_pos();
 static void biosfn_get_cursor_pos();
 static void biosfn_scroll();
+static void biosfn_read_char_attr();
+static void biosfn_write_char_attr();
+static void biosfn_write_char_only();
 static void biosfn_write_teletype();
 static void biosfn_load_text_8_16_pat();
 static void biosfn_write_string();
@@ -173,8 +176,10 @@ int10_normal:
   push bx
   push sp
   mov  bx, sp
-  add  [bx], #10
-  mov  bx, [bx+2]
+  sseg
+    add  [bx], #10
+  sseg
+    mov  bx, [bx+2]
   push bp
   push si
   push di
@@ -415,6 +420,15 @@ static void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
      break;
    case 0x07:
      biosfn_scroll(GET_AL(),GET_BH(),GET_CH(),GET_CL(),GET_DH(),GET_DL(),0xFF,SCROLL_DOWN);
+     break;
+   case 0x08:
+     biosfn_read_char_attr(GET_BH(),&AX);
+     break;
+   case 0x09:
+     biosfn_write_char_attr(GET_AL(),GET_BH(),GET_BL(),CX);
+     break;
+   case 0x0A:
+     biosfn_write_char_only(GET_AL(),GET_BH(),GET_BL(),CX);
      break;
    case 0x0E:
      // Ralf Brown Interrupt list is WRONG on bh(page)
@@ -734,6 +748,91 @@ Bit8u nblines;Bit8u attr;Bit8u rul;Bit8u cul;Bit8u rlr;Bit8u clr;Bit8u page;Bit8
         }
       }
     }
+  }
+}
+
+// --------------------------------------------------------------------------------------------
+static void biosfn_read_char_attr (page,car)
+Bit8u page;Bit16u *car;
+{Bit16u ss=get_SS();
+ Bit8u xcurs,ycurs,mode,line;
+ Bit16u nbcols,nbrows,address;
+ Bit16u cursor,dummy;
+
+ // Get the mode
+ mode=read_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_MODE);
+ line=find_vga_entry(mode);
+ if(line==0xFF)return;
+
+ // Get the cursor pos for the page
+ biosfn_get_cursor_pos(page,&dummy,&cursor);
+ xcurs=cursor&0x00ff;ycurs=(cursor&0xff00)>>8;
+
+ // Get the dimensions
+ nbrows=read_byte(BIOSMEM_SEG,BIOSMEM_NB_ROWS)+1;
+ nbcols=read_word(BIOSMEM_SEG,BIOSMEM_NB_COLS);
+
+ // Compute the address
+ address=SCREEN_MEM_START(nbcols,nbrows,page)+(xcurs+ycurs*nbcols)*2;
+
+ write_word(ss,car,read_word(vga_modes[line].sstart,address));
+}
+
+// --------------------------------------------------------------------------------------------
+static void biosfn_write_char_attr (car,page,attr,count)
+Bit8u car;Bit8u page;Bit8u attr;Bit16u count;
+{
+ Bit8u cheight,xcurs,ycurs,mode,line,bpp;
+ Bit16u nbcols,nbrows,address;
+ Bit16u cursor,dummy;
+
+ // Get the mode
+ mode=read_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_MODE);
+ line=find_vga_entry(mode);
+ if(line==0xFF)return;
+
+ // Get the cursor pos for the page
+ biosfn_get_cursor_pos(page,&dummy,&cursor);
+ xcurs=cursor&0x00ff;ycurs=(cursor&0xff00)>>8;
+
+ // Get the dimensions
+ nbrows=read_byte(BIOSMEM_SEG,BIOSMEM_NB_ROWS)+1;
+ nbcols=read_word(BIOSMEM_SEG,BIOSMEM_NB_COLS);
+
+ // Compute the address
+ address=SCREEN_MEM_START(nbcols,nbrows,page)+(xcurs+ycurs*nbcols)*2;
+
+ dummy=((Bit16u)attr<<8)+car;
+ memsetw(vga_modes[line].sstart,address,dummy,count);
+}
+
+// --------------------------------------------------------------------------------------------
+static void biosfn_write_char_only (car,page,attr,count)
+Bit8u car;Bit8u page;Bit8u attr;Bit16u count;
+{
+ Bit8u cheight,xcurs,ycurs,mode,line,bpp;
+ Bit16u nbcols,nbrows,address;
+ Bit16u cursor,dummy;
+
+ // Get the mode
+ mode=read_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_MODE);
+ line=find_vga_entry(mode);
+ if(line==0xFF)return;
+
+ // Get the cursor pos for the page
+ biosfn_get_cursor_pos(page,&dummy,&cursor);
+ xcurs=cursor&0x00ff;ycurs=(cursor&0xff00)>>8;
+
+ // Get the dimensions
+ nbrows=read_byte(BIOSMEM_SEG,BIOSMEM_NB_ROWS)+1;
+ nbcols=read_word(BIOSMEM_SEG,BIOSMEM_NB_COLS);
+
+ // Compute the address
+ address=SCREEN_MEM_START(nbcols,nbrows,page)+(xcurs+ycurs*nbcols)*2;
+
+ while(count-->0)
+  {write_byte(vga_modes[line].sstart,address,car);
+   address+=2;
   }
 }
 

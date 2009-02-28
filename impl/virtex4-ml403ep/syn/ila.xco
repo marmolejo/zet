@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version K.39
-# Date: Fri Nov  7 05:42:19 2008
+# Date: Sat Feb 28 12:16:13 2009
 #
 ##############################################################
 #
@@ -36,7 +36,7 @@ SELECT ILA_(ChipScope_Pro_-_Integrated_Logic_Analyzer) family Xilinx,_Inc. 1.02.
 # END Select
 # BEGIN Parameters
 CSET component_name=ila
-CSET counter_width_1=Disabled
+CSET counter_width_1=32
 CSET counter_width_10=Disabled
 CSET counter_width_11=16
 CSET counter_width_12=Disabled
@@ -79,7 +79,7 @@ CSET match_type_12=basic
 CSET match_type_13=basic
 CSET match_type_14=basic
 CSET match_type_15=basic
-CSET match_type_16=basic
+CSET match_type_16=range
 CSET match_type_2=basic
 CSET match_type_3=basic
 CSET match_type_4=basic
@@ -127,5 +127,5 @@ CSET trigger_port_width_9=32
 CSET use_rpms=true
 # END Parameters
 GENERATE
-# CRC: 1d7360fb
+# CRC: c1a9a9f1
 

@@ -11,6 +11,8 @@
 
 #include "rombios.h"
 
+#define BX_CPU           0
+
    /* model byte 0xFC = AT */
 #define SYS_MODEL_ID     0xFC
 
@@ -2101,7 +2103,7 @@ post_default_ints:
 
   ;; Keyboard
   SET_INT_VECTOR(0x09, #0xF000, #int09_handler)
-  ;SET_INT_VECTOR(0x16, #0xF000, #int16_handler)
+  SET_INT_VECTOR(0x16, #0xF000, #int16_handler)
 
   xor  ax, ax
   mov  ds, ax
@@ -2112,7 +2114,6 @@ post_default_ints:
   mov  0x0497, al /* keyboard status flags 4 */
   mov  al, #0x10
   mov  0x0496, al /* keyboard status flags 3 */
-
 
   /* keyboard head of buffer pointer */
   mov  bx, #0x001E
@@ -2186,8 +2187,10 @@ int16_handler:
   push bx
   push sp
   mov  bx, sp
-  add  [bx], #10
-  mov  bx, [bx+2]
+  sseg
+    add  [bx], #10
+  sseg
+    mov  bx, [bx+2]
   push bp
   push si
   push di
@@ -2283,9 +2286,9 @@ int16_key_found:
 int09_handler:
   cli
   push ax
-
   in  al, #0x60             ;;read key from keyboard controller
   sti
+
   push  ds
   ;pusha ; we do this instead:
 
@@ -2295,8 +2298,10 @@ int09_handler:
   push bx
   push sp
   mov  bx, sp
-  add  [bx], #10
-  mov  bx, [bx+2]
+  sseg
+    add  [bx], #10
+  sseg
+    mov  bx, [bx+2]
   push bp
   push si
   push di
@@ -2325,7 +2330,6 @@ int09_process_key:
   mov   bx, #0xf000
   mov   ds, bx
   call  _int09_function
-
 int09_done:
   ; popa ; we do this instead:
   pop di
@@ -2338,8 +2342,8 @@ int09_done:
   pop ax
 
   pop   ds
-  cli
 
+  cli
   pop ax
   iret
 

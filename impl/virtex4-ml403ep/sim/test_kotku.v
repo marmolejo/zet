@@ -11,7 +11,7 @@ module testbench;
   reg         but;
   wire        s_clk;
   wire [20:0] sf_addr;
-  wire [15:0] sf_data;
+  wire [31:0] sf_data;
   wire        sf_oe;
   wire        sf_we;
   wire [ 3:0] s_bw;

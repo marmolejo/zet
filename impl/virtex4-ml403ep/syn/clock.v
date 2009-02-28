@@ -8,7 +8,6 @@ module clock (
 
   // Register declarations
   reg [6:0] count;
-  reg [3:0] div;
 
   // Net declarations
   wire ref_clk;
@@ -20,7 +19,6 @@ module clock (
   wire fpga_fb;
   wire fpga_fb0;
   wire fpga_clk0;
-  wire clk_div;
 
   // Module instantiations
   IBUFG ref_buf (
@@ -70,22 +68,18 @@ module clock (
   );
 
   BUFG b_fpga_clk (
-    .O (clk_div),
+    .O (clk),
     .I (fpga_clk0)
   );
 
   // Continuous assignments
   assign rst    = (count!=7'h7f);
   assign lock   = vdu_lock & fpga_lock;
-  assign clk    = div[3];
 
   // Behavioral description
   // count
-  always @(posedge clk_div)
+  always @(posedge clk)
     if (!lock) count <= 7'b0;
     else count <= (count==7'h7f) ? count : (count + 7'h1);
-
-  always @(posedge clk_div)
-    div <= lock ? div + 4'b1 : 4'b0;
 
 endmodule

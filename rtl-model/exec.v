@@ -26,8 +26,16 @@ module exec (
     output [15:0] x,
     output [15:0] y,
     output [15:0] aluo,
-    output [15:0] r1,
-    output [15:0] r2,
+    output [15:0] ax,
+    output [15:0] dx,
+    output [15:0] bp,
+    output [15:0] si,
+    output [15:0] es,
+    output [15:0] c,
+    output [ 3:0] addr_c,
+    output [15:0] omemalu,
+    output [ 3:0] addr_d,
+    output [ 8:0] flags,
 `endif
     input [`IR_SIZE-1:0] ir,
     input [15:0]  off,
@@ -54,9 +62,16 @@ module exec (
   );
 
   // Net declarations
-  wire [15:0] a, b, c, s, alu_iflags, omemalu, bus_b;
+`ifndef DEBUG
+  wire [15:0] c;
+  wire [15:0] omemalu;
+  wire [ 3:0] addr_c;
+  wire [ 3:0] addr_d;
+  wire  [8:0] flags;
+`endif
+  wire [15:0] a, b, s, alu_iflags, bus_b;
   wire [31:0] aluout;
-  wire [3:0]  addr_a, addr_b, addr_c, addr_d;
+  wire [3:0]  addr_a, addr_b;
   wire [2:0]  t, func;
   wire [1:0]  addr_s;
   wire        wrfl, high, memalu, r_byte, c_byte;
@@ -64,7 +79,7 @@ module exec (
   wire        wr_cnd;
   wire        jmp;
   wire        b_imm;
-  wire  [8:0] flags, iflags, oflags;
+  wire  [8:0] iflags, oflags;
   wire  [4:0] logic_flags;
   wire        alu_word;
   wire        a_byte;
@@ -77,7 +92,7 @@ module exec (
                alu_word, s, off, clk, dive);
   regfile reg0 (
 `ifdef DEBUG
-    r1, r2,
+    ax, dx, bp, si, es,
 `endif
     a, b, c, cs, ip, {aluout[31:16], omemalu}, s, flags, wr_reg, wrfl,
                 wr_high, clk, rst, addr_a, addr_b, addr_c, addr_d, addr_s, iflags,

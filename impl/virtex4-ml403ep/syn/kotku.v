@@ -72,6 +72,7 @@ module kotku_ml403 (
   wire        cyc;
   wire [ 7:0] keyb_dat_o;
   wire        keyb_io_arena;
+  wire        keyb_io_status;
   wire        keyb_arena;
 
   wire [15:0] vdu_dat_o;
@@ -109,6 +110,7 @@ module kotku_ml403 (
   wire        zbt_stb_i;
 
 `ifdef DEBUG
+  reg  [31:0] cnt_time;
   wire [35:0] control0;
   wire [ 5:0] funct;
   wire [ 2:0] state, next_state;
@@ -121,8 +123,19 @@ module kotku_ml403 (
   wire [15:0] aluo;
   wire [ 2:0] cnt;
   wire        op;
-  wire [15:0] r1, r2;
   wire        block;
+  wire        cpu_block;
+  wire        sys_clk;
+  wire        rst2;
+  wire        clk_921600;
+  wire [15:0] ax, dx, bp, si, es;
+  wire [15:0] c;
+  wire [ 3:0] addr_c;
+  wire [15:0] cpu_dat_o;
+  wire [15:0] d;
+  wire [ 3:0] addr_d;
+  wire        byte_op;
+  wire [ 8:0] flags;
 
   wire [15:0] dbg_vdu_dat_o;
   wire [11:1] dbg_vdu_adr_o;
@@ -135,6 +148,19 @@ module kotku_ml403 (
   wire        dbg_zbt_we_o;
   wire [ 1:0] dbg_zbt_sel_o;
   wire        dbg_zbt_stb_o;
+
+  wire [ 2:0] old_zet_st;
+  wire [ 4:0] pack;
+  wire [19:0] tr_dat;
+  wire        tr_new_pc;
+  wire        tr_st;
+  wire        tr_stb;
+  wire        tr_ack;
+  wire        addr_st;
+
+  wire        end_seq;
+  wire        ext_int;
+  wire        cpu_block2;
 `endif
 
   // Register declarations
@@ -146,7 +172,7 @@ module kotku_ml403 (
   clock c0 (
     .clk_100M    (clk_100M),
     .sys_clk_in_ (sys_clk_in_),
-    .clk         (clk),
+    .clk         (sys_clk),
     .vdu_clk     (tft_lcd_clk_),
     .rst         (rst_lck)
   );
@@ -154,7 +180,7 @@ module kotku_ml403 (
   vdu vdu0 (
     // Wishbone signals
     .wb_clk_i (tft_lcd_clk_), // 25 Mhz VDU clock
-    .wb_rst_i (rst_lck),
+    .wb_rst_i (rst2),
     .wb_dat_i (vdu_dat_i),
     .wb_dat_o (vdu_dat_o),
     .wb_adr_i (vdu_adr_i),
@@ -199,7 +225,7 @@ module kotku_ml403 (
     .op     (op),
 `endif
     .wb_clk_i (clk),
-    .wb_rst_i (rst_lck),
+    .wb_rst_i (rst2),
     .wb_dat_i (dat_o),
     .wb_dat_o (zbt_dat_o),
     .wb_adr_i (zbt_adr_i),
@@ -234,7 +260,14 @@ module kotku_ml403 (
     .ps2_clk_  (ps2_clk_),
     .ps2_data_ (ps2_data_)
   );
-
+/*
+  timer timer0 (
+    .wb_clk_i (clk),
+    .wb_rst_i (rst),
+    .wb_tgc_o (intr),
+    .wb_tgc_i (inta)
+  );
+*/
   cpu zet_proc (
 `ifdef DEBUG
     .cs         (cs),
@@ -246,9 +279,22 @@ module kotku_ml403 (
     .y          (y),
     .imm        (imm),
     .aluo       (aluo),
-    .r1         (r1),
-    .r2         (r2),
-    .dbg_block  (block),
+    .ax         (ax),
+    .dx         (dx),
+    .bp         (bp),
+    .si         (si),
+    .es         (es),
+    .dbg_block  (cpu_block),
+    .c          (c),
+    .addr_c     (addr_c),
+    .cpu_dat_o  (cpu_dat_o),
+    .d          (d),
+    .byte_exec  (byte_op),
+    .addr_d     (addr_d),
+    .flags      (flags),
+    .end_seq    (end_seq),
+    .ext_int    (ext_int),
+    .cpu_block  (cpu_block2),
 `endif
 
     // Wishbone master interface
@@ -269,22 +315,24 @@ module kotku_ml403 (
 
 `ifdef DEBUG
   // Module instantiations
-/*
+
   icon icon0 (
     .CONTROL0 (control0)
   );
 
   ila ila0 (
     .CONTROL (control0),
-    .CLK     (clk_100M),
+    .CLK     (clk),
     .TRIG0   (adr),
     .TRIG1   ({dat_o,dat_i}),
     .TRIG2   (pc),
     .TRIG3   ({clk,we,tga,cyc,stb,ack}),
     .TRIG4   (funct),
     .TRIG5   ({state,next_state}),
-    .TRIG6   (io_reg),
-    .TRIG7   (imm),
+    .TRIG6   ({intr,inta,flags,byte_op,addr_d}),
+//    .TRIG7   (imm),
+//    .TRIG7   (tr_dat[15:0]),
+    .TRIG7   (d),
     .TRIG8   ({x,y}),
     .TRIG9   (aluo),
     .TRIG10  (sram_flash_addr_),
@@ -293,7 +341,8 @@ module kotku_ml403 (
                sram_cen_, sram_adv_ld_n_, flash_ce2_}),
     .TRIG13  (cnt),
     .TRIG14  ({vdu_mem_arena,flash_mem_arena,flash_stb,zbt_stb,op}),
-    .TRIG15  ({r1,r2})
+    .TRIG15  (cnt_time)
+//    .TRIG15  ({block,trx_,rst2,rst,tr_ack,tr_stb,tr_st,tr_new_pc,addr_st,11'h0,pack,old_zet_st,tr_dat[19:16]})
   );
 
   lcd_display lcd0 (
@@ -311,10 +360,10 @@ module kotku_ml403 (
     .lcd_e_   (e_),
     .lcd_dat_ (db_)
   );
-*/
+
   hw_dbg dbg0 (
     .clk     (clk),
-    .rst_lck (rst_lck),
+    .rst_lck (rst2),
     .rst     (rst),
     .butc_   (butc_),
     .bute_   (bute_),
@@ -338,12 +387,29 @@ module kotku_ml403 (
     .zbt_ack_i (zbt_ack)
   );
 
+  clk_uart clk0 (
+    .clk_100M   (clk_100M),
+    .rst        (rst_lck),
+    .clk_921600 (clk_921600),
+    .rst2       (rst2)
+  );
+
   pc_trace pc0 (
+`ifdef DEBUG
+    .old_zet_st (old_zet_st),
+
+    .dat    (tr_dat),
+    .new_pc (tr_new_pc),
+    .st     (tr_st),
+    .stb    (tr_stb),
+    .ack    (tr_ack),
+    .pack   (pack),
+    .addr_st (addr_st),
+`endif
     .trx_ (trx_),
 
-    .clk_100M (clk_100M),
     .clk      (clk),
-    .rst      (rst_lck),
+    .rst      (rst2),
     .pc       (pc),
     .zet_st   (state),
     .block    (block)
@@ -367,6 +433,11 @@ module kotku_ml403 (
   assign zbt_we_i  = rst ? dbg_zbt_we_o  : we;
   assign zbt_sel_i = rst ? dbg_zbt_sel_o : sel;
   assign zbt_stb_i = rst ? dbg_zbt_stb_o : zbt_stb;
+`ifdef DEBUG_TRACE
+   assign cpu_block = block;
+`else
+   assign cpu_block = 1'b0;
+`endif
 `else
   assign vdu_dat_i = dat_o;
   assign vdu_adr_i = adr[11:1];
@@ -380,9 +451,16 @@ module kotku_ml403 (
   assign zbt_stb_i = zbt_stb;
 `endif
 
+`ifdef DEBUG_TRACE
+  assign clk = clk_921600;
+`else
+  assign clk = sys_clk;
+`endif
+
   assign io_dat_i = flash_io_arena ? flash_dat_o
                   : (vdu_io_arena ? vdu_dat_o
-                  : (keyb_io_arena ? keyb_dat_o : 16'h0));
+                  : (keyb_io_arena ? keyb_dat_o
+                  : (keyb_io_status ? 16'h10 : 16'h0)));
   assign dat_i    = inta ? 16'd9 : (tga ? io_dat_i
                   : (vdu_mem_arena ? vdu_dat_o
                   : (flash_mem_arena ? flash_dat_o : zbt_dat_o)));
@@ -394,6 +472,9 @@ module kotku_ml403 (
   assign vdu_io_arena  = (adr[15:8]==8'hb8 && we) ||
                          (adr[15:1]==15'h01ed && !we);
   assign keyb_io_arena = (adr[15:1]==15'h0030 && !we);
+
+  // MS-DOS is reading IO address 0x64 to check the inhibit bit
+  assign keyb_io_status = (adr[15:1]==15'h0032 && !we);
 
   assign flash_arena = (!tga & flash_mem_arena)
                      | (tga & flash_io_arena);
@@ -437,7 +518,11 @@ module kotku_ml403 (
 	   : ((tga && stb && cyc && we && adr[15:8]==8'hf1) ?
 		  dat_o : io_reg );
 
-`ifndef DEBUG
+`ifdef DEBUG
+  // cnt_time
+  always @(posedge clk)
+    cnt_time <= rst ? 32'h0 : (cnt_time + 32'h1);
+`else
   assign rst = rst_lck;
 `endif
 endmodule
