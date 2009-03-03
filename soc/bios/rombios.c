@@ -442,6 +442,7 @@ static void           bios_printf();
 
 static void           int09_function();
 static void           int13_harddisk();
+static void           transf_sect();
 static void           int13_diskette_function();
 static void           int16_function();
 static void           int19_function();
@@ -1487,6 +1488,49 @@ int13_success_noah:
 }
 
   void
+transf_sect(seg, offset)
+  Bit16u seg;
+  Bit16u offset;
+{
+ASM_START
+  push bp
+  mov  bp, sp
+
+    push ax
+    push bx
+    push cx
+    push dx
+    push di
+    push ds
+
+    mov  ax, 4[bp] ; segment
+    mov  ds, ax
+    mov  bx, 6[bp] ; offset
+    mov  dx, #0xe000
+    mov  cx, #256
+    xor  di, di
+
+one_sect:
+    in   ax, dx    ; read word from flash
+    mov  [bx+di], ax ; write word
+    inc  dx
+    inc  dx
+    inc  di
+    inc  di
+    loop one_sect
+
+    pop  ds
+    pop  di
+    pop  dx
+    pop  cx
+    pop  bx
+    pop  ax
+
+  pop  bp
+ASM_END
+}
+
+  void
 int13_diskette_function(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
   Bit16u DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS;
 {
@@ -1553,11 +1597,7 @@ int13_diskette_function(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
           {
             outw(0xe000, log_sector+j);
             base_count = base_address + (j << 9);
-              for (i=0; i<512; i+=2)
-              {
-                tmp = inw (0xe000+i);
-                write_word (last_addr, base_count+i, tmp);
-              }
+            transf_sect (last_addr, base_count);
           }
 
         // ??? should track be new val from return_status[3] ?
@@ -2103,7 +2143,7 @@ post_default_ints:
 
   ;; Keyboard
   SET_INT_VECTOR(0x09, #0xF000, #int09_handler)
-  SET_INT_VECTOR(0x16, #0xF000, #int16_handler)
+  ;SET_INT_VECTOR(0x16, #0xF000, #int16_handler)
 
   xor  ax, ax
   mov  ds, ax
