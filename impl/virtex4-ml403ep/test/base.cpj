@@ -1,7 +1,7 @@
 #ChipScope Pro Analyzer Project File, Version 3.0
-#Sat Feb 28 19:48:19 GMT+01:00 2009
+#Wed Mar 04 02:05:54 GMT+01:00 2009
 device.2.configFileDir=/home/zeus/tmp
-device.2.configFilename=kotku_ml403.bit
+device.2.configFilename=kotku_ml403-debug.bit
 deviceChain.deviceName0=System_ACE_CF
 deviceChain.deviceName1=XCF32P
 deviceChain.deviceName2=XC4VFX12
@@ -50,7 +50,7 @@ unit.2.0.MFBitsA12=XXXXXXXXX
 unit.2.0.MFBitsA13=XXX
 unit.2.0.MFBitsA14=XXXXX
 unit.2.0.MFBitsA15=01001011111111111001100110000000
-unit.2.0.MFBitsA2=00110101110111001000
+unit.2.0.MFBitsA2=00000000001111100000
 unit.2.0.MFBitsA3=X1XX1X
 unit.2.0.MFBitsA4=XXXXXX
 unit.2.0.MFBitsA5=XXX000

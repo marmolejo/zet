@@ -423,6 +423,56 @@ lcmp_b_and_lt:
 
   ASM_END
 
+// for access to RAM area which is used by interrupt vectors
+// and BIOS Data Area
+
+typedef struct {
+  unsigned char filler1[0x400];
+  unsigned char filler2[0x6c];
+  Bit16u ticks_low;
+  Bit16u ticks_high;
+  Bit8u  midnight_flag;
+  } bios_data_t;
+
+#define BiosData ((bios_data_t  *) 0)
+
+typedef struct {
+  union {
+    struct {
+      Bit16u di, si, bp, sp;
+      Bit16u bx, dx, cx, ax;
+      } r16;
+    struct {
+      Bit16u filler[4];
+      Bit8u  bl, bh, dl, dh, cl, ch, al, ah;
+      } r8;
+    } u;
+  } pusha_regs_t;
+
+typedef struct {
+  union {
+    struct {
+      Bit16u flags;
+      } r16;
+    struct {
+      Bit8u  flagsl;
+      Bit8u  flagsh;
+      } r8;
+    } u;
+  } flags_t;
+
+#define SetCF(x)   x.u.r8.flagsl |= 0x01
+#define SetZF(x)   x.u.r8.flagsl |= 0x40
+#define ClearCF(x) x.u.r8.flagsl &= 0xfe
+#define ClearZF(x) x.u.r8.flagsl &= 0xbf
+#define GetCF(x)   (x.u.r8.flagsl & 0x01)
+
+typedef struct {
+  Bit16u ip;
+  Bit16u cs;
+  flags_t flags;
+  } iret_addr_t;
+
 typedef struct {
   Bit16u type;
   Bit16u flags;
@@ -446,6 +496,7 @@ static void           transf_sect();
 static void           int13_diskette_function();
 static void           int16_function();
 static void           int19_function();
+static void           int1a_function();
 static Bit16u         get_CS();
 static Bit16u         get_SS();
 static unsigned int   enqueue_key();
@@ -1776,6 +1827,39 @@ ASM_START
 ASM_END
 }
 
+  void
+int1a_function(regs, ds, iret_addr)
+  pusha_regs_t regs; // regs pushed from PUSHA instruction
+  Bit16u ds; // previous DS:, DS set to 0x0000 by asm wrapper
+  iret_addr_t  iret_addr; // CS,IP,Flags pushed from original INT call
+{
+  Bit8u val8;
+
+  ASM_START
+  sti
+  ASM_END
+
+  switch (regs.u.r8.ah) {
+    case 0: // get current clock count
+      ASM_START
+      cli
+      ASM_END
+      regs.u.r16.cx = BiosData->ticks_high;
+      regs.u.r16.dx = BiosData->ticks_low;
+      regs.u.r8.al  = BiosData->midnight_flag;
+      BiosData->midnight_flag = 0; // reset flag
+      ASM_START
+      sti
+      ASM_END
+      // AH already 0
+      ClearCF(iret_addr.flags); // OK
+      break;
+
+    default:
+      SetCF(iret_addr.flags); // Unsupported
+    }
+}
+
 ASM_START
 ;----------------------
 ;- INT13h (relocated) -
@@ -2143,7 +2227,7 @@ post_default_ints:
 
   ;; Keyboard
   SET_INT_VECTOR(0x09, #0xF000, #int09_handler)
-  ;SET_INT_VECTOR(0x16, #0xF000, #int16_handler)
+  SET_INT_VECTOR(0x16, #0xF000, #int16_handler)
 
   xor  ax, ax
   mov  ds, ax
@@ -2169,6 +2253,9 @@ post_default_ints:
   /* keyboard pointer to end of buffer */
   mov  bx, #0x003E
   mov  0x0482, bx
+
+  ;; CMOS RTC
+  SET_INT_VECTOR(0x1A, #0xF000, #int1a_handler)
 
   ;; Video setup
   SET_INT_VECTOR(0x10, #0xF000, #int10_handler)
@@ -2420,6 +2507,44 @@ int11_handler:
   mov  ax, #0x0040
   mov  ds, ax
   mov  ax, 0x0010
+  pop  ds
+  iret
+
+;----------
+;- INT1Ah -
+;----------
+.org 0xfe6e ; INT 1Ah Time-of-day Service Entry Point
+int1a_handler:
+  push ds
+  ;pusha ; we do this instead:
+  push ax
+  push cx
+  push dx
+  push bx
+  push sp
+  mov  bx, sp
+  sseg
+    add  [bx], #10
+  sseg
+    mov  bx, [bx+2]
+  push bp
+  push si
+  push di
+
+  xor  ax, ax
+  mov  ds, ax
+int1a_callfunction:
+  call _int1a_function
+  ; popa ; we do this instead:
+  pop di
+  pop si
+  pop bp
+  add sp, #2
+  pop bx
+  pop dx
+  pop cx
+  pop ax
+
   pop  ds
   iret
 
