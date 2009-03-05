@@ -53,7 +53,7 @@ module vdu (
   parameter HOR_VIDEO_ON = 10'd7;   // When to start displaying characters
   parameter HOR_VIDEO_OFF = 10'd647; // When to stop displaying characters
 
-  parameter VER_DISP_END = 9'd399;  // last row displayed
+  parameter VER_DISP_END = 9'd400;  // last row displayed
   parameter VER_SYNC_BEG = 9'd411;  // start of vertical synch pulse
   parameter VER_SYNC_END = 9'd413;  // end of vertical synch pulse
   parameter VER_SCAN_END = 9'd448;  // Last scan row in the frame
@@ -75,10 +75,19 @@ module vdu (
   wire [7:0]  char_data_out;
 
   // Control registers
+  reg [3:0] reg_adr;
   reg [6:0] reg_hcursor; // 80 columns
   reg [4:0] reg_vcursor; // 25 rows
+  reg [3:0] reg_cur_start;
+  reg [3:0] reg_cur_end;
 
-  wire      wr_pos;
+  wire      wr_adr;
+  wire      wr_reg;
+  wire      write;
+  wire      wr_hcursor;
+  wire      wr_vcursor;
+  wire      wr_cur_start;
+  wire      wr_cur_end;
 
   // Video shift register
   reg [7:0] vga_shift;
@@ -172,7 +181,14 @@ module vdu (
   assign brown_fg    = (vga_fg_colour==3'd6) && !intense;
   assign brown_bg    = (vga_bg_colour==3'd6);
 
-  assign wr_pos = wb_tga_i & wb_stb_i & wb_cyc_i & wb_we_i;
+  // Control registers
+  assign write        = wb_tga_i & wb_stb_i & wb_cyc_i & wb_we_i;
+  assign wr_adr       = write & wb_sel_i[0];
+  assign wr_reg       = write & wb_sel_i[1];
+  assign wr_hcursor   = wr_reg & (reg_adr==4'hf);
+  assign wr_vcursor   = wr_reg & (reg_adr==4'he);
+  assign wr_cur_start = wr_reg & (reg_adr==4'ha);
+  assign wr_cur_end   = wr_reg & (reg_adr==4'hb);
 
   assign v_retrace   = !video_on_v;
   assign vh_retrace  = v_retrace | !video_on_h;
@@ -223,11 +239,26 @@ module vdu (
           wb_ack_o <= vga4_rw ? 1'b1 : (wb_ack_o && stb);
         end
 
-  // Cursor pos register
+  // Control registers
   always @(posedge wb_clk_i)
-    {reg_vcursor, reg_hcursor} <= wb_rst_i ? 12'h0
-      : (wr_pos ? {wb_dat_i[12:8], wb_dat_i[6:0]}
-                : {reg_vcursor, reg_hcursor});
+    reg_adr <= wb_rst_i ? 4'h0
+      : (wr_adr ? wb_dat_i[3:0] : reg_adr);
+
+  always @(posedge wb_clk_i)
+    reg_hcursor <= wb_rst_i ? 7'h0
+      : (wr_hcursor ? wb_dat_i[14:8] : reg_hcursor);
+
+  always @(posedge wb_clk_i)
+    reg_vcursor <= wb_rst_i ? 5'h0
+      : (wr_vcursor ? wb_dat_i[12:8] : reg_vcursor);
+
+  always @(posedge wb_clk_i)
+    reg_cur_start <= wb_rst_i ? 4'he
+      : (wr_cur_start ? wb_dat_i[11:8] : reg_cur_start);
+
+  always @(posedge wb_clk_i)
+    reg_cur_end <= wb_rst_i ? 4'hf
+      : (wr_cur_end ? wb_dat_i[11:8] : reg_cur_end);
 
   // Sync generation & timing process
   // Generate horizontal and vertical timing signals for video signal
@@ -255,11 +286,12 @@ module vdu (
                     : ((v_count==VER_SYNC_END) ? 1'b1 : vert_sync);
         video_on_h <= (h_count==HOR_VIDEO_ON) ? 1'b1
                     : ((h_count==HOR_VIDEO_OFF) ? 1'b0 : video_on_h);
-        video_on_v <= (v_count==VER_SCAN_END) ? 1'b1
+        video_on_v <= (v_count==9'h0) ? 1'b1
                     : ((v_count==VER_DISP_END) ? 1'b0 : video_on_v);
         cursor_on_h <= (h_count[9:3] == reg_hcursor[6:0]);
-        cursor_on_v <= (v_count[8:2] == { reg_vcursor[4:0], 2'b11 })
-                    && (v_count[1] ^ v_count[0]);
+        cursor_on_v <= (v_count[8:4] == reg_vcursor[4:0])
+                    && (v_count[3:0] >= reg_cur_start)
+                    && (v_count[3:0] <= reg_cur_end);
         blink_count <= blink_count + 22'd1;
       end
 

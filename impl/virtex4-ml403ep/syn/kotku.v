@@ -59,6 +59,8 @@ module kotku_ml403 (
 
   // Net declarations
   wire        clk;
+  wire        sys_clk;
+  wire        rst2;
   wire        rst_lck;
   wire [15:0] dat_i;
   wire [15:0] dat_o;
@@ -125,8 +127,6 @@ module kotku_ml403 (
   wire        op;
   wire        block;
   wire        cpu_block;
-  wire        sys_clk;
-  wire        rst2;
   wire        clk_921600;
   wire [15:0] ax, dx, bp, si, es;
   wire [15:0] c;
@@ -395,7 +395,6 @@ module kotku_ml403 (
   );
 
   pc_trace pc0 (
-`ifdef DEBUG
     .old_zet_st (old_zet_st),
 
     .dat    (tr_dat),
@@ -405,7 +404,6 @@ module kotku_ml403 (
     .ack    (tr_ack),
     .pack   (pack),
     .addr_st (addr_st),
-`endif
     .trx_ (trx_),
 
     .clk      (clk),
@@ -449,6 +447,7 @@ module kotku_ml403 (
   assign zbt_we_i  = we;
   assign zbt_sel_i = sel;
   assign zbt_stb_i = zbt_stb;
+  assign rst2 = rst_lck;
 `endif
 
 `ifdef DEBUG_TRACE
@@ -469,8 +468,10 @@ module kotku_ml403 (
   assign vdu_mem_arena = (adr[19:12]==8'hb8);
 
   assign flash_io_arena  = (adr[15:9]==7'b1110_000);
-  assign vdu_io_arena  = (adr[15:8]==8'hb8 && we) ||
-                         (adr[15:1]==15'h01ed && !we);
+  assign vdu_io_arena  = (adr[15:4]==12'h03d) &&
+                         ((adr[3:1]==3'h2 && we)
+                       || (adr[3:1]==3'h5 && !we));
+
   assign keyb_io_arena = (adr[15:1]==15'h0030 && !we);
 
   // MS-DOS is reading IO address 0x64 to check the inhibit bit

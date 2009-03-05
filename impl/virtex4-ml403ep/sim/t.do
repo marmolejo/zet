@@ -35,7 +35,6 @@ add wave -label wr -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/wr
 add wave -divider wb_master
 add wave -label cs -radix hexadecimal /testbench/kotku/zet_proc/wm0/cs
 add wave -label op -radix hexadecimal /testbench/kotku/zet_proc/wm0/op
-add wave -label dbg_block /testbench/kotku/zet_proc/dbg_block
 add wave -label wb_block /testbench/kotku/zet_proc/wb_block
 add wave -label dat_o -radix hexadecimal sim:/testbench/kotku/dat_o
 add wave -label dat_i -radix hexadecimal sim:/testbench/kotku/dat_i
@@ -66,6 +65,6 @@ add wave -label wr /testbench/kotku/zet_proc/exec0/reg0/wr
 add wave -label we /testbench/kotku/we
 add wave -label ack /testbench/kotku/ack
 add wave -label fetch_or_exec /testbench/kotku/zet_proc/fetch_or_exec
-add wave -divider zbt
-add wave -radix hexadecimal -r /testbench/kotku/zbt0/*
-run 300us
+add wave -divider vdu
+add wave -radix hexadecimal -r /testbench/kotku/vdu0/*
+run 35us

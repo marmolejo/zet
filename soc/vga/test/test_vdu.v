@@ -49,11 +49,7 @@ module test_vdu (
     .horiz_sync  (tft_lcd_hsync),
     .vert_sync   (tft_lcd_vsync)
   );
-/*
-  assign tft_lcd_r[1] = 1'b0;
-  assign tft_lcd_g[1] = 1'b0;
-  assign tft_lcd_b[1] = 1'b0;
-*/
+
   // Continuous assignments
   assign rst = !lock;
   assign led = 1'b1;

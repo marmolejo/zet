@@ -23,6 +23,7 @@ static void memcpyb();
 static void memcpyw();
 
 static void biosfn_set_video_mode();
+static void biosfn_set_cursor_shape();
 static void biosfn_set_cursor_pos();
 static void biosfn_get_cursor_pos();
 static void biosfn_scroll();
@@ -409,6 +410,9 @@ static void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
         SET_AL(0x20);
       }
      break;
+   case 0x01:
+     biosfn_set_cursor_shape(GET_CH(),GET_CL());
+     break;
    case 0x02:
      biosfn_set_cursor_pos(GET_BH(),DX);
      break;
@@ -616,6 +620,15 @@ static void biosfn_set_video_mode(mode) Bit8u mode;
  write_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_MSR,0x00); // Unavailable on vanilla vga, but...
  write_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_PAL,0x00); // Unavailable on vanilla vga, but...
 
+ if(vga_modes[line].class==TEXT)
+  {
+   biosfn_set_cursor_shape(0x06,0x07);
+  }
+
+ // Set cursor pos for page 0..7
+ for(i=0;i<8;i++)
+  biosfn_set_cursor_pos(i,0x0000);
+
  // Write the fonts in memory
  if(vga_modes[line].class==TEXT)
   {
@@ -632,11 +645,46 @@ ASM_END
 }
 
 // --------------------------------------------------------------------------------------------
+static void biosfn_set_cursor_shape (CH,CL)
+Bit8u CH;Bit8u CL;
+{Bit16u cheight,curs,crtc_addr;
+ Bit8u modeset_ctl;
+
+ CH&=0x3f;
+ CL&=0x1f;
+
+ curs=(CH<<8)+CL;
+ write_word(BIOSMEM_SEG,BIOSMEM_CURSOR_TYPE,curs);
+
+ modeset_ctl=read_byte(BIOSMEM_SEG,BIOSMEM_MODESET_CTL);
+ cheight = read_word(BIOSMEM_SEG,BIOSMEM_CHAR_HEIGHT);
+ if((modeset_ctl&0x01) && (cheight>8) && (CL<8) && (CH<0x20))
+  {
+   if(CL!=(CH+1))
+    {
+     CH = ((CH+1) * cheight / 8) -1;
+    }
+   else
+    {
+     CH = ((CL+1) * cheight / 8) - 2;
+    }
+   CL = ((CL+1) * cheight / 8) - 1;
+  }
+
+ // CTRC regs 0x0a and 0x0b
+ crtc_addr=read_word(BIOSMEM_SEG,BIOSMEM_CRTC_ADDRESS);
+ outb(crtc_addr,0x0a);
+ outb(crtc_addr+1,CH);
+ outb(crtc_addr,0x0b);
+ outb(crtc_addr+1,CL);
+}
+
+// --------------------------------------------------------------------------------------------
 static void biosfn_set_cursor_pos (page, cursor)
 Bit8u page;Bit16u cursor;
 {
- Bit8u xcurs,ycurs,current;
- Bit16u nbcols,nbrows,address,crtc_addr;
+ Bit8u current;
+ Bit16u crtc_addr;
 
  // Should not happen...
  if(page>7)return;
@@ -648,22 +696,12 @@ Bit8u page;Bit16u cursor;
  current=read_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_PAGE);
  if(page==current)
   {
-   // Get the dimensions
-   nbcols=read_word(BIOSMEM_SEG,BIOSMEM_NB_COLS);
-   nbrows=read_byte(BIOSMEM_SEG,BIOSMEM_NB_ROWS)+1;
-
-   xcurs=cursor&0x00ff;ycurs=(cursor&0xff00)>>8;
-
-   // Calculate the address knowing nbcols nbrows and page num
-   address=SCREEN_IO_START(nbcols,nbrows,page)+xcurs+ycurs*nbcols;
-
    // CRTC regs 0x0e and 0x0f
    crtc_addr=read_word(BIOSMEM_SEG,BIOSMEM_CRTC_ADDRESS);
    outb(crtc_addr,0x0e);
-   outb(crtc_addr+1,(address&0xff00)>>8);
+   outb(crtc_addr+1,(cursor&0xff00)>>8);
    outb(crtc_addr,0x0f);
-   outb(crtc_addr+1,address&0x00ff);
-   outw(0xb800,cursor);
+   outb(crtc_addr+1,cursor&0x00ff);
   }
 }
 
