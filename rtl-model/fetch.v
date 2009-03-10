@@ -917,18 +917,7 @@ module opcode_deco (
           dst <= { 1'b0, rm };
         end
 
-      8'b1001_0000: // 90h: nop
-        begin
-          seq_addr <= `NOP;
-          need_modrm <= 1'b0;
-          need_off <= 1'b0;
-          need_imm <= 1'b0;
-          imm_size <= 1'b0;
-          src <= 4'b0;
-          dst <= 4'b0;
-        end
-
-      8'b1001_0xxx: // xchg acum
+      8'b1001_0xxx: // nop, xchg acum
         begin
           seq_addr <= `XCHRRW;
           need_modrm <= 1'b0;

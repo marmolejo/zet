@@ -9,6 +9,7 @@ module testbench;
   wire        lcd_vsync;
   reg         clk;
   reg         but;
+  reg         ace_clk;
   wire        s_clk;
   wire [20:0] sf_addr;
   wire [31:0] sf_data;
@@ -18,6 +19,14 @@ module testbench;
   wire        s_ce;
   wire        s_adv;
   wire        f_ce;
+
+  wire [ 6:1] aceusb_a_;
+  wire [15:0] aceusb_d_;
+  wire        aceusb_oe_n_;
+  wire        aceusb_we_n_;
+  wire        ace_mpce_n_;
+  wire        usb_cs_n_;
+  wire        usb_hpi_reset_n_;
 
   // Module instances
   kotku_ml403 kotku (
@@ -38,13 +47,18 @@ module testbench;
     .sram_bw_         (s_bw),
     .sram_cen_        (s_ce),
     .sram_adv_ld_n_   (s_adv),
-    .flash_ce2_       (f_ce) /*,
+    .flash_ce2_       (f_ce),
 
-    .butc_ (but),
-    .bute_ (1'b0),
-    .butw_ (1'b0),
-    .butn_ (1'b0),
-    .buts_ (1'b0) */
+    .aceusb_a_ (aceusb_a_),
+    .aceusb_d_ (aceusb_d_),
+    .aceusb_oe_n_ (aceusb_oe_n_),
+    .aceusb_we_n_ (aceusb_we_n_),
+
+    .ace_clkin_ (ace_clk),
+    .ace_mpce_n_ (ace_mpce_n_),
+
+    .usb_cs_n_ (usb_cs_n_),
+    .usb_hpi_reset_n_ (usb_hpi_reset_n_)
   );
 
   flash_stub fs0 (
@@ -72,11 +86,13 @@ module testbench;
 
   // Behaviour
   // Clock generation
-  always #5 clk = ~clk;
+  always  #5 clk = ~clk;
+  always #15 ace_clk = ~ace_clk;
 
   initial
     begin
-         clk <= 1'b1;
+         clk <= 1'b0;
+         ace_clk <= 1'b0;
          but <= 1'b0;
          #100000 but <= 1'b1;
          #700000 but <= 1'b0;

@@ -421,6 +421,16 @@ lcmp_b_and_lt:
     dec     bx
     ret
 
+lincl:
+lincul:
+    inc     word ptr [bx]
+    je      LINC_HIGH_WORD
+    ret
+    .even
+LINC_HIGH_WORD:
+    inc     word ptr 2[bx]
+    ret
+
   ASM_END
 
 // for access to RAM area which is used by interrupt vectors
@@ -1014,7 +1024,7 @@ ASM_END
     }
 }
 
-static char bios_svn_version_string[] = "$Revision: 46 $ $Date: 2008-10-13 02:19:35 +0200 (lun, 13 oct 2008) $";
+static char bios_svn_version_string[] = "$Version: 0.4.3 $ $Date: Tue, 10 Mar 2009 21:02:08 +0100 $";
 
 //--------------------------------------------------------------------------
 // print_bios_banner
@@ -1042,7 +1052,7 @@ print_bios_banner()
 // http://www.phoenix.com/en/Customer+Services/White+Papers-Specs/pc+industry+specifications.htm
 //--------------------------------------------------------------------------
 
-static char drivetypes[][20]={"", "Floppy flash image" };
+static char drivetypes[][20]={"", "Floppy flash image", "Compact Flash" };
 
 static void
 init_boot_vectors()
@@ -1059,6 +1069,11 @@ init_boot_vectors()
 
   /* Floppy drive */
   e.type = IPL_TYPE_FLOPPY; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
+  memcpyb(IPL_SEG, IPL_TABLE_OFFSET + count * sizeof (e), ss, &e, sizeof (e));
+  count++;
+
+  /* First HDD */
+  e.type = IPL_TYPE_HARDDISK; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
   memcpyb(IPL_SEG, IPL_TABLE_OFFSET + count * sizeof (e), ss, &e, sizeof (e));
   count++;
 
@@ -1501,19 +1516,485 @@ enqueue_key(scan_code, ascii_code)
 int13_harddisk(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
   Bit16u DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS;
 {
+  Bit8u    drive, num_sectors, sector, head, status;
+  Bit8u    drive_map;
+  Bit8u    n_drives;
+  Bit16u   max_cylinder, cylinder;
+  Bit16u   hd_cylinders;
+  Bit8u    hd_heads, hd_sectors;
+  Bit8u    sector_count;
+  Bit16u   tempbx;
+
+  Bit32u   log_sector;
+
   write_byte(0x0040, 0x008e, 0);  // clear completion flag
 
+  /* at this point, DL is >= 0x80 to be passed from the floppy int13h
+     handler code */
+  /* check how many disks first (cmos reg 0x12), return an error if
+     drive not present */
+  drive_map = 1;
+  n_drives = 1;
+
+  if (!(drive_map & (1<<(GET_ELDL()&0x7f)))) { /* allow 0, 1, or 2 disks */
+    SET_AH(0x01);
+    SET_DISK_RET_STATUS(0x01);
+    SET_CF(); /* error occurred */
+    return;
+    }
+
   switch (GET_AH()) {
+
+    case 0x00: /* disk controller reset */
+
+      SET_AH(0);
+      SET_DISK_RET_STATUS(0);
+      set_diskette_ret_status(0);
+      set_diskette_current_cyl(0, 0); /* current cylinder, diskette 1 */
+      set_diskette_current_cyl(1, 0); /* current cylinder, diskette 2 */
+      CLEAR_CF(); /* successful */
+      return;
+      break;
+
+    case 0x01: /* read disk status */
+      status = read_byte(0x0040, 0x0074);
+      SET_AH(status);
+      SET_DISK_RET_STATUS(0);
+      /* set CF if error status read */
+      if (status) SET_CF();
+      else        CLEAR_CF();
+      return;
+      break;
+
+    case 0x04: // verify disk sectors
+    case 0x02: // read disk sectors
+      drive = GET_ELDL();
+
+      // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
+      // fixed geometry:
+      hd_cylinders = 993;
+      hd_heads     = 16;
+      hd_sectors   = 63;
+
+      num_sectors = GET_AL();
+      cylinder    = (GET_CL() & 0x00c0) << 2 | GET_CH();
+      sector      = (GET_CL() & 0x3f);
+      head        = GET_DH();
+
+      if ( (cylinder >= hd_cylinders) ||
+           (sector > hd_sectors) ||
+           (head >= hd_heads) ) {
+        SET_AH(1);
+        SET_DISK_RET_STATUS(1);
+        SET_CF(); /* error occurred */
+        return;
+        }
+
+      if ( GET_AH() == 0x04 ) {
+        SET_AH(0);
+        SET_DISK_RET_STATUS(0);
+        CLEAR_CF();
+        return;
+        }
+
+      log_sector = ((Bit32u)cylinder) * ((Bit32u)hd_heads) * ((Bit32u)hd_sectors)
+                 + ((Bit32u)head) * ((Bit32u)hd_sectors)
+                 + ((Bit32u)sector) - 1;
+
+      sector_count = 0;
+      tempbx = BX;
+
+ASM_START
+  sti  ;; enable higher priority interrupts
+ASM_END
+
+      while (1) {
+ASM_START
+        ;; store temp bx in real DI register
+        push bp
+        mov  bp, sp
+        mov  di, _int13_harddisk.tempbx + 2 [bp]
+        pop  bp
+
+        ;; adjust if there will be an overrun
+        cmp   di, #0xfe00
+        jbe   i13_f02_no_adjust
+i13_f02_adjust:
+        sub   di, #0x0200 ; sub 512 bytes from offset
+        mov   ax, es
+        add   ax, #0x0020 ; add 512 to segment
+        mov   es, ax
+
+i13_f02_no_adjust:
+        ; timeout = TIMEOUT;
+        mov   cx, #0xffff
+
+        ; while((timeout > 0) && (!(CSR_ACE_STATUSL & ACE_STATUSL_CFCMDRDY))) timeout--;
+        mov   dx, #0xe204
+
+i13_f02_ace_statusl2:
+        in    ax, dx
+        and   ax, #0x100
+        loopz i13_f02_ace_statusl2
+
+        ; if(timeout == 0) return 0;
+        cmp   cx, #0
+        jnz   i13_f02_success2
+ASM_END
+        printf("i13_f02(1): Timeout\n");
+ASM_START
+        jmp   _int13_fail
+
+i13_f02_success2:
+        ; CSR_ACE_MLBAL = blocknr & 0x0000ffff;
+        push  bp
+        mov   bp, sp
+        mov   ax, _int13_harddisk.log_sector + 2 [bp]
+        mov   dx, #0xe210
+        out   dx, ax
+
+        ; CSR_ACE_MLBAH = (blocknr & 0x0fff0000) >> 16;
+        mov   ax, _int13_harddisk.log_sector + 4 [bp]
+        mov   dx, #0xe212
+        out   dx, ax
+        pop   bp
+
+        ; CSR_ACE_SECCMD = ACE_SECCMD_READ|0x01;
+        mov   ax, #0x0301
+        mov   dx, #0xe214
+        out   dx, ax
+
+        ; CSR_ACE_CTLL |= ACE_CTLL_CFGRESET;
+        mov   dx, #0xe218
+        in    ax, dx
+        or    ax, #0x0080
+        out   dx, ax
+
+        ; buffer_count = 16;
+        mov   si, #16
+
+        ; while(buffer_count > 0) {
+i13_f02_cond_loop:
+        cmp   si, #0
+        jbe   i13_f02_exit_loop
+
+        ; timeout = TIMEOUT;
+        mov   cx, #0xffff
+        mov   bx, #0x000f
+
+        ; while((timeout > 0) && (!(CSR_ACE_STATUSL & ACE_STATUSL_DATARDY))) timeout--;
+        mov   dx, #0xe204
+i13_f02_ace_statusl3:
+        in    ax, dx
+        and   ax, #0x20
+        loopz i13_f02_ace_statusl3
+
+        ; if(timeout == 0) return 0;
+        cmp   cx, #0
+        jnz  i13_f02_success3
+        dec   bx
+        mov   cx, #0xffff
+        jne   i13_f02_ace_statusl3
+ASM_END
+        printf("i13_f02(2): Timeout\n");
+ASM_START
+        jmp   _int13_fail
+
+i13_f02_success3:
+        ; for(i=0;i<16;i++) {
+        mov   cx, #16
+        ; *bufw = CSR_ACE_DATA;
+        mov   dx, #0xe240
+i13_f02_ace_data:
+        in    ax, dx
+        eseg
+              mov   [di], ax
+        ; bufw++;
+        add   di, #2
+        ; }
+        loop  i13_f02_ace_data
+
+        ; buffer_count--;
+        dec   si
+        jmp   i13_f02_cond_loop
+
+        ; }
+
+i13_f02_exit_loop:
+        ; CSR_ACE_CTLL &= ~ACE_CTLL_CFGRESET;
+        mov   dx, #0xe218
+        in    ax, dx
+        and   ax, #0xff7f
+        out   dx, ax
+
+i13_f02_done:
+        ;; store real DI register back to temp bx
+        push bp
+        mov  bp, sp
+        mov  _int13_harddisk.tempbx + 2 [bp], di
+        pop  bp
+ASM_END
+
+        sector_count++;
+        log_sector++;
+        num_sectors--;
+        if (num_sectors) continue;
+        else break;
+      }
+
+      SET_AH(0);
+      SET_DISK_RET_STATUS(0);
+      SET_AL(sector_count);
+      CLEAR_CF(); /* successful */
+      return;
+      break;
+
+    case 0x03: /* write disk sectors */
+      drive = GET_ELDL ();
+
+      // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
+      // fixed geometry:
+      hd_cylinders = 993;
+      hd_heads     = 16;
+      hd_sectors   = 63;
+
+      num_sectors = GET_AL();
+      cylinder    = GET_CH();
+      cylinder    |= ( ((Bit16u) GET_CL()) << 2) & 0x300;
+      sector      = (GET_CL() & 0x3f);
+      head        = GET_DH();
+
+      if ( (cylinder >= hd_cylinders) ||
+           (sector > hd_sectors) ||
+           (head >= hd_heads) ) {
+        SET_AH( 1);
+        SET_DISK_RET_STATUS(1);
+        SET_CF(); /* error occurred */
+        return;
+        }
+
+      log_sector = ((Bit32u)cylinder) * ((Bit32u)hd_heads) * ((Bit32u)hd_sectors)
+                 + ((Bit32u)head) * ((Bit32u)hd_sectors)
+                 + ((Bit32u)sector) - 1;
+
+      sector_count = 0;
+      tempbx = BX;
+
+ASM_START
+  sti  ;; enable higher priority interrupts
+ASM_END
+
+      while (1) {
+ASM_START
+        ;; store temp bx in real SI register
+        push bp
+        mov  bp, sp
+        mov  si, _int13_harddisk.tempbx + 2 [bp]
+        pop  bp
+
+        ;; adjust if there will be an overrun
+        cmp   si, #0xfe00
+        jbe   i13_f03_no_adjust
+i13_f03_adjust:
+        sub   si, #0x0200 ; sub 512 bytes from offset
+        mov   ax, es
+        add   ax, #0x0020 ; add 512 to segment
+        mov   es, ax
+
+i13_f03_no_adjust:
+        ; timeout = TIMEOUT;
+        mov   cx, #0xffff
+
+        ; while((timeout > 0) && (!(CSR_ACE_STATUSL & ACE_STATUSL_CFCMDRDY))) timeout--;
+        mov   dx, #0xe204
+
+i13_f03_ace_statusl2:
+        in    ax, dx
+        and   ax, #0x100
+        loopz i13_f03_ace_statusl2
+
+        ; if(timeout == 0) return 0;
+        cmp   cx, #0
+        jnz   i13_f03_success2
+ASM_END
+        printf("i13_f03(1): Timeout\n");
+ASM_START
+        jmp   _int13_fail
+
+i13_f03_success2:
+        ; CSR_ACE_MLBAL = blocknr & 0x0000ffff;
+        push  bp
+        mov   bp, sp
+        mov   ax, _int13_harddisk.log_sector + 2 [bp]
+        mov   dx, #0xe210
+        out   dx, ax
+
+        ; CSR_ACE_MLBAH = (blocknr & 0x0fff0000) >> 16;
+        mov   ax, _int13_harddisk.log_sector + 4 [bp]
+        mov   dx, #0xe212
+        out   dx, ax
+        pop   bp
+
+        ; CSR_ACE_SECCMD = ACE_SECCMD_WRITE|0x01;
+        mov   ax, #0x0401
+        mov   dx, #0xe214
+        out   dx, ax
+
+        ; CSR_ACE_CTLL |= ACE_CTLL_CFGRESET;
+        mov   dx, #0xe218
+        in    ax, dx
+        or    ax, #0x0080
+        out   dx, ax
+
+        ; buffer_count = 16;
+        mov   di, #16
+
+        ; while(buffer_count > 0) {
+i13_f03_cond_loop:
+        cmp   di, #0
+        jbe   i13_f03_exit_loop
+
+        ; timeout = TIMEOUT;
+        mov   cx, #0xffff
+        mov   bx, #0x000f
+
+        ; while((timeout > 0) && (!(CSR_ACE_STATUSL & ACE_STATUSL_DATARDY))) timeout--;
+        mov   dx, #0xe204
+i13_f03_ace_statusl3:
+        in    ax, dx
+        and   ax, #0x20
+        loopz i13_f03_ace_statusl3
+
+        ; if(timeout == 0) return 0;
+        cmp   cx, #0
+        jnz   i13_f03_success3
+        dec   bx
+        mov   cx, #0xffff
+        jne   i13_f03_ace_statusl3
+ASM_END
+        printf("i13_f03(2): Timeout\n");
+ASM_START
+        jmp   _int13_fail
+
+i13_f03_success3:
+        ; for(i=0;i<16;i++) {
+        mov   cx, #16
+        ; *bufw = CSR_ACE_DATA;
+        mov   dx, #0xe240
+i13_f03_ace_data:
+        eseg
+              mov   ax, [si]
+        out   dx, ax
+        ; bufw++;
+        add   si, #2
+        ; }
+        loop  i13_f03_ace_data
+
+        ; buffer_count--;
+        dec   di
+        jmp   i13_f03_cond_loop
+
+        ; }
+
+i13_f03_exit_loop:
+        ; CSR_ACE_CTLL &= ~ACE_CTLL_CFGRESET;
+        mov   dx, #0xe218
+        in    ax, dx
+        and   ax, #0xff7f
+        out   dx, ax
+
+i13_f03_done:
+        ;; store real SI register back to temp bx
+        push bp
+        mov  bp, sp
+        mov  _int13_harddisk.tempbx + 2 [bp], si
+        pop  bp
+ASM_END
+
+        sector_count++;
+        log_sector++;
+        num_sectors--;
+        if (num_sectors) continue;
+        else break;
+      }
+
+      SET_AH(0);
+      SET_DISK_RET_STATUS(0);
+      SET_AL(sector_count);
+      CLEAR_CF(); /* successful */
+      return;
+      break;
+
     case 0x08:
+
+      drive = GET_ELDL ();
+
+      // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
+      // fixed geometry:
+      hd_cylinders = 993;
+      hd_heads     = 16;
+      hd_sectors   = 63;
+
+      max_cylinder = hd_cylinders - 2; /* 0 based */
       SET_AL(0);
-      SET_CH(0);
-      SET_CL(0);
-      SET_DH(0);
-      SET_DL(0); /* FIXME returns 0, 1, or n hard drives */
+      SET_CH(max_cylinder & 0xff);
+      SET_CL(((max_cylinder >> 2) & 0xc0) | (hd_sectors & 0x3f));
+      SET_DH(hd_heads - 1);
+      SET_DL(n_drives); /* returns 0, 1, or 2 hard drives */
+      SET_AH(0);
+      SET_DISK_RET_STATUS(0);
+      CLEAR_CF(); /* successful */
 
-      // FIXME should set ES & DI
+      return;
+      break;
 
-      goto int13_fail;
+    case 0x09: /* initialize drive parameters */
+    case 0x0c: /* seek to specified cylinder */
+    case 0x0d: /* alternate disk reset */
+    case 0x10: /* check drive ready */
+    case 0x11: /* recalibrate */
+      SET_AH(0);
+      SET_DISK_RET_STATUS(0);
+      CLEAR_CF(); /* successful */
+      return;
+      break;
+
+    case 0x14: /* controller internal diagnostic */
+      SET_AH(0);
+      SET_DISK_RET_STATUS(0);
+      CLEAR_CF(); /* successful */
+      SET_AL(0);
+      return;
+      break;
+
+    case 0x15: /* read disk drive size */
+      drive = GET_ELDL();
+      // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
+      // fixed geometry:
+      hd_cylinders = 993;
+      hd_heads     = 16;
+      hd_sectors   = 63;
+
+ASM_START
+      push bp
+      mov  bp, sp
+      mov  al, _int13_harddisk.hd_heads + 2 [bp]
+      mov  ah, _int13_harddisk.hd_sectors + 2 [bp]
+      mul  al, ah ;; ax = heads * sectors
+      mov  bx, _int13_harddisk.hd_cylinders + 2 [bp]
+      dec  bx     ;; use (cylinders - 1) ???
+      mul  ax, bx ;; dx:ax = (cylinders -1) * (heads * sectors)
+      ;; now we need to move the 32bit result dx:ax to what the
+      ;; BIOS wants which is cx:dx.
+      ;; and then into CX:DX on the stack
+      mov  _int13_harddisk.CX + 2 [bp], dx
+      mov  _int13_harddisk.DX + 2 [bp], ax
+      pop  bp
+ASM_END
+      SET_AH(3);  // hard disk accessible
+      SET_DISK_RET_STATUS(0); // ??? should this be 0
+      CLEAR_CF(); // successful
+      return;
       break;
 
     default:
@@ -1521,7 +2002,9 @@ int13_harddisk(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
       goto int13_fail;
       break;
     }
-
+ASM_START
+_int13_fail:
+ASM_END
 int13_fail:
     SET_AH(0x01); // defaults to invalid function in AH or invalid parameter
 int13_fail_noah:
@@ -1681,9 +2164,9 @@ set_diskette_current_cyl(drive, cyl)
   Bit8u drive;
   Bit8u cyl;
 {
-/* TEMP HACK: FOR MSDOS */
+/* TEMP HACK: FOR MSDOS
   if (drive > 1)
-    drive = 1;
+    drive = 1; */
   /*  BX_PANIC("set_diskette_current_cyl(): drive > 1\n"); */
   write_byte(0x0040, 0x0094+drive, cyl);
 }
@@ -1725,7 +2208,7 @@ Bit16u seq_nr;
   bootdev >>= 4 * seq_nr;
   bootdev &= 0xf;
 */
-  bootdev = 0x1;
+  bootdev = 0x2;  // 1: flopy disk, 2: hard disk
 
   /* Read user selected device */
   bootfirst = read_word(IPL_SEG, IPL_BOOTFIRST_OFFSET);
@@ -1989,6 +2472,79 @@ int19_next_boot:
 int1c_handler: ;; User Timer Tick
   iret
 
+;--------------------
+;- POST: HARD DRIVE -
+;--------------------
+; relocated here because the primary POST area isnt big enough.
+hard_drive_post:
+  // IRQ 14 = INT 76h
+  // INT 76h calls INT 15h function ax=9100
+
+  xor  ax, ax
+  mov  ds, ax
+  mov  0x0474, al /* hard disk status of last operation */
+  mov  0x0477, al /* hard disk port offset (XT only ???) */
+  mov  0x048c, al /* hard disk status register */
+  mov  0x048d, al /* hard disk error register */
+  mov  0x048e, al /* hard disk task complete flag */
+  mov  al, #0x01
+  mov  0x0475, al /* hard disk number attached */
+  mov  al, #0xc0
+  mov  0x0476, al /* hard disk control byte */
+  SET_INT_VECTOR(0x13, #0xF000, #int13_handler)
+  SET_INT_VECTOR(0x76, #0xF000, #int76_handler)
+
+  ;; Initialize the sysace controller
+  ; CSR_ACE_BUSMODE = ACE_BUSMODE_16BIT;
+  mov  dx, #0xe200
+  mov  ax, #0x0001
+  out  dx, ax
+
+  ; if(!(CSR_ACE_STATUSL & ACE_STATUSL_CFDETECT)) return 0;
+  mov  dx, #0xe204
+  in   ax,  dx
+  and  ax, #0x0010
+  jne  cf_detect
+  hlt  ;; error
+
+cf_detect:
+  ; if((CSR_ACE_ERRORL != 0) || (CSR_ACE_ERRORH != 0)) return 0;
+  mov  dx, #0xe208
+  in   ax, dx
+  cmp  ax, #0x0
+jne  error_l
+  mov  dx, #0xe20a
+  in   ax, dx
+  cmp  ax, #0x0
+  je   lock_req
+error_l:
+  hlt
+
+lock_req:
+  ; CSR_ACE_CTLL |= ACE_CTLL_LOCKREQ;
+  mov  dx, #0xe218
+  in   ax, dx
+  or   ax, #0x2
+  out  dx, ax
+
+  ; timeout = TIMEOUT;
+  mov  cx, #0xffff
+
+  ; while((timeout > 0) && (!(CSR_ACE_STATUSL & ACE_STATUSL_MPULOCK))) timeout--;
+  mov  dx, #0xe204
+ace_statusl:
+  in   ax, dx
+  and  ax, #0x2
+  loopz ace_statusl
+
+  ; if(timeout == 0) return 0;
+  cmp  cx, #0x0
+  jnz  success
+  hlt  ;; error obtaining lock
+
+success:
+  ret
+
 
 ;--------------------
 ;- POST: EBDA segment
@@ -1999,6 +2555,20 @@ ebda_post:
   mov ds, ax
   mov word ptr [0x40E], #EBDA_SEG
   ret;;
+
+;--------------------
+int76_handler:
+  ;; record completion in BIOS task complete flag
+  push  ax
+  push  ds
+  mov   ax, #0x0040
+  mov   ds, ax
+  mov   0x008E, #0xff
+;  call  eoi_both_pics
+  pop   ds
+  pop   ax
+  iret
+
 
 rom_checksum:
   push ax
@@ -2267,8 +2837,10 @@ post_default_ints:
 
   call _print_bios_banner
 
-  ;; Floppy setup
-  SET_INT_VECTOR(0x13, #0xF000, #int13_handler)
+  ;;
+  ;; Hard Drive setup
+  ;;
+  call hard_drive_post
 
   call _init_boot_vectors
 

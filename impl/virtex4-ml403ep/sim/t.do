@@ -2,7 +2,7 @@ quit -sim
 vdel -all -lib work
 vmap unisims /opt/Xilinx/10.1/modelsim/verilog/unisims
 vlib work
-vlog -work work -lint +incdir+../../../rtl-model +incdir+../../../sim ../syn/kotku.v ../syn/clock.v ../../../rtl-model/regfile.v ../../../rtl-model/alu.v ../../../rtl-model/cpu.v ../../../rtl-model/exec.v ../../../rtl-model/fetch.v ../../../rtl-model/jmp_cond.v ../../../rtl-model/util/primitives.v ../../../rtl-model/util/div_su.v ../../../rtl-model/util/div_uu.v ../../../rtl-model/rotate.v test_kotku.v flash_stub.v ../../../sim/mult.v ../../../soc/vga/rtl/vdu.v ../../../soc/vga/rtl/char_rom_b16.v ../../../soc/vga/rtl/ram2k_b16_attr.v ../../../soc/vga/rtl/ram2k_b16.v ../mem/flash_cntrl.v ../mem/zbt_cntrl.v CY7C1354BV25.v ../../../soc/keyb/rtl/ps2_keyb.v ../dbg/hw_dbg.v ../dbg/pc_trace.v ../dbg/clk_uart.v ../dbg/send_addr.v ../dbg/send_serial.v
+vlog -work work -lint +incdir+../../../rtl-model +incdir+../../../sim ../syn/kotku.v ../syn/clock.v ../../../rtl-model/regfile.v ../../../rtl-model/alu.v ../../../rtl-model/cpu.v ../../../rtl-model/exec.v ../../../rtl-model/fetch.v ../../../rtl-model/jmp_cond.v ../../../rtl-model/util/primitives.v ../../../rtl-model/util/div_su.v ../../../rtl-model/util/div_uu.v ../../../rtl-model/rotate.v test_kotku.v flash_stub.v ../../../sim/mult.v ../../../soc/vga/rtl/vdu.v ../../../soc/vga/rtl/char_rom_b16.v ../../../soc/vga/rtl/ram2k_b16_attr.v ../../../soc/vga/rtl/ram2k_b16.v ../mem/flash_cntrl.v ../mem/zbt_cntrl.v CY7C1354BV25.v ../../../soc/keyb/rtl/ps2_keyb.v ../../../soc/aceusb/rtl/aceusb_access.v ../../../soc/aceusb/rtl/aceusb_sync.v ../../../soc/aceusb/rtl/aceusb.v ../dbg/hw_dbg.v ../dbg/pc_trace.v ../dbg/clk_uart.v ../dbg/send_addr.v ../dbg/send_serial.v
 vlog -work unisims /opt/Xilinx/10.1/ISE/verilog/src/glbl.v
 vsim -L /opt/Xilinx/10.1/modelsim/verilog/unisims -novopt -t ps work.testbench work.glbl
 add wave -label clk100 /testbench/clk
@@ -65,6 +65,6 @@ add wave -label wr /testbench/kotku/zet_proc/exec0/reg0/wr
 add wave -label we /testbench/kotku/we
 add wave -label ack /testbench/kotku/ack
 add wave -label fetch_or_exec /testbench/kotku/zet_proc/fetch_or_exec
-add wave -divider vdu
-add wave -radix hexadecimal -r /testbench/kotku/vdu0/*
-run 35us
+add wave -divider ace_cf
+add wave -radix hexadecimal -r /testbench/kotku/ace_cf/*
+run 1ms

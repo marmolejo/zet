@@ -21,18 +21,18 @@
 
 module kotku_ml403 (
 `ifdef DEBUG
+  (* LOC="B6"  *) input butc_,
+  (* LOC="F10" *) input bute_,
+  (* LOC="E9"  *) input butw_,
+  (* LOC="E7"  *) input butn_,
+  (* LOC="A6"  *) input buts_,
+`endif
     output        rs_,
     output        rw_,
     output        e_,
-    output  [7:4] db_,
-    input         butc_,
-    input         bute_,
-    input         butw_,
-    input         butn_,
-    input         buts_,
+    output [ 7:4] db_,
 
     output        trx_,
-`endif
 
     output        tft_lcd_clk_,
     output [ 1:0] tft_lcd_r_,
@@ -54,7 +54,18 @@ module kotku_ml403 (
     output        flash_ce2_,
 
     inout         ps2_clk_,
-    inout         ps2_data_
+    inout         ps2_data_,
+
+    output [ 6:1] aceusb_a_,
+    inout  [15:0] aceusb_d_,
+    output        aceusb_oe_n_,
+    output        aceusb_we_n_,
+
+    input         ace_clkin_,
+    output        ace_mpce_n_,
+
+    output        usb_cs_n_,
+    output        usb_hpi_reset_n_
   );
 
   // Net declarations
@@ -110,6 +121,12 @@ module kotku_ml403 (
   wire        zbt_we_i;
   wire [ 1:0] zbt_sel_i;
   wire        zbt_stb_i;
+
+  wire [15:0] ace_dat_o;
+  wire        ace_ack;
+  wire        ace_stb;
+  wire        ace_io_arena;
+  wire        ace_arena;
 
 `ifdef DEBUG
   reg  [31:0] cnt_time;
@@ -268,6 +285,30 @@ module kotku_ml403 (
     .wb_tgc_i (inta)
   );
 */
+
+  aceusb ace_cf (
+    .wb_clk_i (clk),
+    .wb_rst_i (rst),
+    .wb_adr_i (adr[6:1]),
+    .wb_dat_i (dat_o),
+    .wb_dat_o (ace_dat_o),
+    .wb_cyc_i (ace_stb),
+    .wb_stb_i (ace_stb),
+    .wb_we_i  (we),
+    .wb_ack_o (ace_ack),
+
+    .aceusb_a_    (aceusb_a_),
+    .aceusb_d_    (aceusb_d_),
+    .aceusb_oe_n_ (aceusb_oe_n_),
+    .aceusb_we_n_ (aceusb_we_n_),
+
+    .ace_clkin_  (ace_clkin_),
+    .ace_mpce_n_ (ace_mpce_n_),
+
+    .usb_cs_n_        (usb_cs_n_),
+    .usb_hpi_reset_n_ (usb_hpi_reset_n_)
+  );
+
   cpu zet_proc (
 `ifdef DEBUG
     .cs         (cs),
@@ -330,19 +371,16 @@ module kotku_ml403 (
     .TRIG4   (funct),
     .TRIG5   ({state,next_state}),
     .TRIG6   ({intr,inta,flags,byte_op,addr_d}),
-//    .TRIG7   (imm),
-//    .TRIG7   (tr_dat[15:0]),
     .TRIG7   (d),
     .TRIG8   ({x,y}),
     .TRIG9   (aluo),
-    .TRIG10  (sram_flash_addr_),
-    .TRIG11  (sram_flash_data_),
-    .TRIG12  ({sram_flash_oe_n_, sram_flash_we_n_, sram_bw_,
-               sram_cen_, sram_adv_ld_n_, flash_ce2_}),
+    .TRIG10  ({ace_mpce_n_,aceusb_we_n_,aceusb_oe_n_,
+               ace_ack,ace_stb,ace_dat_o}),
+    .TRIG11  (aceusb_d_),
+    .TRIG12  ({1'b0,usb_cs_n_,usb_hpi_reset_n_,aceusb_a_}),
     .TRIG13  (cnt),
     .TRIG14  ({vdu_mem_arena,flash_mem_arena,flash_stb,zbt_stb,op}),
     .TRIG15  (cnt_time)
-//    .TRIG15  ({block,trx_,rst2,rst,tr_ack,tr_stb,tr_st,tr_new_pc,addr_st,11'h0,pack,old_zet_st,tr_dat[19:16]})
   );
 
   lcd_display lcd0 (
@@ -363,7 +401,7 @@ module kotku_ml403 (
 
   hw_dbg dbg0 (
     .clk     (clk),
-    .rst_lck (rst2),
+    .rst_lck (rst_lck),
     .rst     (rst),
     .butc_   (butc_),
     .bute_   (bute_),
@@ -448,6 +486,12 @@ module kotku_ml403 (
   assign zbt_sel_i = sel;
   assign zbt_stb_i = zbt_stb;
   assign rst2 = rst_lck;
+
+  assign rs_  = 1'b1;
+  assign e_   = 1'b0;
+  assign rw_  = 1'b1;
+  assign db_  = 4'h0;
+  assign trx_ = 1'b1;
 `endif
 
 `ifdef DEBUG_TRACE
@@ -459,7 +503,8 @@ module kotku_ml403 (
   assign io_dat_i = flash_io_arena ? flash_dat_o
                   : (vdu_io_arena ? vdu_dat_o
                   : (keyb_io_arena ? keyb_dat_o
-                  : (keyb_io_status ? 16'h10 : 16'h0)));
+                  : (keyb_io_status ? 16'h10
+                  : (ace_io_arena ? ace_dat_o : 16'h0))));
   assign dat_i    = inta ? 16'd9 : (tga ? io_dat_i
                   : (vdu_mem_arena ? vdu_dat_o
                   : (flash_mem_arena ? flash_dat_o : zbt_dat_o)));
@@ -473,6 +518,7 @@ module kotku_ml403 (
                        || (adr[3:1]==3'h5 && !we));
 
   assign keyb_io_arena = (adr[15:1]==15'h0030 && !we);
+  assign ace_io_arena = (adr[15:7]==9'b1110_0010_0);
 
   // MS-DOS is reading IO address 0x64 to check the inhibit bit
   assign keyb_io_status = (adr[15:1]==15'h0032 && !we);
@@ -482,13 +528,16 @@ module kotku_ml403 (
   assign vdu_arena = (!tga & vdu_mem_arena)
                    | (tga & vdu_io_arena);
   assign keyb_arena = (tga & keyb_io_arena);
+  assign ace_arena  = (tga & ace_io_arena);
 
   assign flash_stb = flash_arena & stb & cyc;
   assign zbt_stb   = !vdu_mem_arena & !flash_mem_arena
                    & !tga & stb & cyc;
+  assign ace_stb   = ace_arena & stb & cyc;
 
   assign ack    = tga ? (flash_io_arena ? flash_ack
-                      : (vdu_io_arena ? vdu_ack_sync[1] : (stb & cyc)))
+                      : (vdu_io_arena ? vdu_ack_sync[1]
+                      : (ace_io_arena ? ace_ack : (stb & cyc))))
                 : (vdu_mem_arena ? vdu_ack_sync[1]
                 : (flash_mem_arena ? flash_ack : zbt_ack));
 
