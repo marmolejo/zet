@@ -215,8 +215,8 @@ module kotku_ml403 (
     .wb_we_i  (vdu_we_i),
     .wb_tga_i (vdu_tga_i),
     .wb_sel_i (vdu_sel_i),
-    .wb_stb_i (vdu_stb_sync[1]),
-    .wb_cyc_i (vdu_stb_sync[1]),
+    .wb_stb_i (vdu_stb_i),
+    .wb_cyc_i (vdu_stb_i),
     .wb_ack_o (vdu_ack_o),
 
     // VGA pad signals
@@ -228,7 +228,7 @@ module kotku_ml403 (
   );
 
   flash_cntrl #(
-    .timeout (2)
+    .timeout (4)
     ) fc0 (
      // Wishbone slave interface
     .wb_clk_i (clk),
@@ -275,10 +275,10 @@ module kotku_ml403 (
     .sram_adv_ld_n_ (sram_adv_ld_n_)
   );
 
-  ps2_keyb #(750, // number of clks for 60usec.
-             10,  // number of bits needed for 60usec. timer
-             60,  // number of clks for debounce
-             6    // number of bits needed for debounce timer
+  ps2_keyb #(1500, // number of clks for 60usec.
+             11,   // number of bits needed for 60usec. timer
+             120,  // number of clks for debounce
+             7     // number of bits needed for debounce timer
             ) keyboard0 (      // Instance name
 `ifdef DEBUG
     .rx_output_strobe (rx_output_strobe),
@@ -295,7 +295,7 @@ module kotku_ml403 (
   );
 
   timer #(
-    .res   (33),
+    .res   (34),
     .phase (12507)
     ) timer0 (
     .wb_clk_i (clk),
@@ -526,7 +526,8 @@ module kotku_ml403 (
 `ifdef DEBUG_TRACE
   assign clk = clk_921600;
 `else
-  assign clk = sys_clk;
+//  assign clk = sys_clk;
+  assign clk = tft_lcd_clk_;
 `endif
 
   assign io_dat_i = flash_io_arena ? flash_dat_o
@@ -566,9 +567,9 @@ module kotku_ml403 (
   assign ace_stb   = ace_arena & stb & cyc;
 
   assign ack    = tga ? (flash_io_arena ? flash_ack
-                      : (vdu_io_arena ? vdu_ack_sync[1]
+                      : (vdu_io_arena ? vdu_ack_o
                       : (ace_io_arena ? ace_ack : (stb & cyc))))
-                : (vdu_mem_arena ? vdu_ack_sync[1]
+                : (vdu_mem_arena ? vdu_ack_o
                 : (flash_mem_arena ? flash_ack : zbt_ack));
 
   assign sram_flash_oe_n_ = 1'b0;
