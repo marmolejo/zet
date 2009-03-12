@@ -1,4 +1,6 @@
-module clock (
+module clock #(
+    parameter div = 16  // main clock divider
+  ) (
     input  sys_clk_in_,
     output clk,
     output clk_100M,
@@ -59,7 +61,7 @@ module clock (
     .LOCKED (fpga_lock)
   );
   defparam fpga_dcm.CLKIN_PERIOD = 10.000;
-  defparam fpga_dcm.CLKDV_DIVIDE = 16;
+  defparam fpga_dcm.CLKDV_DIVIDE = div;
   defparam fpga_dcm.DCM_AUTOCALIBRATION = "FALSE";
 
   BUFG b_fpga_fb (

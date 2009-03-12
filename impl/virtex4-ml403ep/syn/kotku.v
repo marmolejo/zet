@@ -195,7 +195,9 @@ module kotku_ml403 (
   reg  [ 1:0] vdu_ack_sync;
 
   // Module instantiations
-  clock c0 (
+  clock #(
+    .div (8)
+    ) c0 (
     .clk_100M    (clk_100M),
     .sys_clk_in_ (sys_clk_in_),
     .clk         (sys_clk),
@@ -225,8 +227,10 @@ module kotku_ml403 (
     .vert_sync   (tft_lcd_vsync_)
   );
 
-  flash_cntrl fc0 (
-    // Wishbone slave interface
+  flash_cntrl #(
+    .timeout (2)
+    ) fc0 (
+     // Wishbone slave interface
     .wb_clk_i (clk),
     .wb_rst_i (rst),
     .wb_dat_i (dat_o),
@@ -271,10 +275,10 @@ module kotku_ml403 (
     .sram_adv_ld_n_ (sram_adv_ld_n_)
   );
 
-  ps2_keyb #(375, // number of clks for 60usec.
-             9,   // number of bits needed for 60usec. timer
-             30,  // number of clks for debounce
-             5    // number of bits needed for debounce timer
+  ps2_keyb #(750, // number of clks for 60usec.
+             10,  // number of bits needed for 60usec. timer
+             60,  // number of clks for debounce
+             6    // number of bits needed for debounce timer
             ) keyboard0 (      // Instance name
 `ifdef DEBUG
     .rx_output_strobe (rx_output_strobe),
@@ -290,7 +294,10 @@ module kotku_ml403 (
     .ps2_data_ (ps2_data_)
   );
 
-  timer timer0 (
+  timer #(
+    .res   (33),
+    .phase (12507)
+    ) timer0 (
     .wb_clk_i (clk),
     .wb_rst_i (rst),
     .wb_tgc_o (int[0])

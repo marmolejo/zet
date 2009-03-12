@@ -16,18 +16,20 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module flash_cntrl (
+module flash_cntrl #(
+    parameter timeout = 2  // read timeout (default: 2 cycles)
+  ) (
     // Wishbone slave interface
-    input             wb_clk_i,
-    input             wb_rst_i,
-    input      [15:0] wb_dat_i,
-    output     [15:0] wb_dat_o,
-    input      [16:1] wb_adr_i,
-    input             wb_we_i,
-    input             wb_tga_i,
-    input             wb_stb_i,
-    input             wb_cyc_i,
-    output reg        wb_ack_o,
+    input         wb_clk_i,
+    input         wb_rst_i,
+    input  [15:0] wb_dat_i,
+    output [15:0] wb_dat_o,
+    input  [16:1] wb_adr_i,
+    input         wb_we_i,
+    input         wb_tga_i,
+    input         wb_stb_i,
+    input         wb_cyc_i,
+    output        wb_ack_o,
 
     // Pad signals
     output reg [20:0] flash_addr_,
@@ -37,7 +39,9 @@ module flash_cntrl (
   );
 
   // Registers and nets
-  reg  [11:0] base;
+  reg  [       11:0] base;
+  reg  [timeout-1:0] sft_cnt;
+
   wire        op;
   wire        opbase;
 
@@ -46,6 +50,7 @@ module flash_cntrl (
   assign flash_we_n_ = 1'b1;
   assign op          = wb_cyc_i & wb_stb_i;
   assign opbase      = op & wb_tga_i & wb_we_i;
+  assign wb_ack_o    = sft_cnt[timeout-1];
 
   // Behaviour
   // flash_addr, 21 bits
@@ -54,7 +59,11 @@ module flash_cntrl (
                             : { 5'h0, wb_adr_i[16:1] };
 
   always @(posedge wb_clk_i) flash_ce2_ <= op;
-  always @(posedge wb_clk_i) wb_ack_o   <= op;
+
+  // sft_cnt
+  always @(posedge wb_clk_i)
+    sft_cnt <= wb_rst_i ? 0
+      : (op ? { sft_cnt[timeout-2:0], op } : 0);
 
   // base
   always @(posedge wb_clk_i)
