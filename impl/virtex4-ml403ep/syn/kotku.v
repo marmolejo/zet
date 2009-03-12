@@ -128,6 +128,9 @@ module kotku_ml403 (
   wire        ace_io_arena;
   wire        ace_arena;
 
+  wire [ 1:0] int;
+  wire        iid;
+
 `ifdef DEBUG
   reg  [31:0] cnt_time;
   wire [35:0] control0;
@@ -178,6 +181,12 @@ module kotku_ml403 (
   wire        end_seq;
   wire        ext_int;
   wire        cpu_block2;
+
+  wire [ 1:0] irr;
+
+  wire        rx_output_strobe;
+  wire        rx_shifting_done;
+  wire        released;
 `endif
 
   // Register declarations
@@ -262,29 +271,42 @@ module kotku_ml403 (
     .sram_adv_ld_n_ (sram_adv_ld_n_)
   );
 
-  ps2_keyb #(5900, // number of clks for 60usec.
-             13,   // number of bits needed for 60usec. timer
-             126,  // number of clks for debounce
-             7,    // number of bits needed for debounce timer
-             0     // Trap the shift keys, no event generated
+  ps2_keyb #(375, // number of clks for 60usec.
+             9,   // number of bits needed for 60usec. timer
+             30,  // number of clks for debounce
+             5    // number of bits needed for debounce timer
             ) keyboard0 (      // Instance name
-    .wb_clk_i (clk_100M),
+`ifdef DEBUG
+    .rx_output_strobe (rx_output_strobe),
+    .rx_shifting_done (rx_shifting_done),
+    .released         (released),
+`endif
+    .wb_clk_i (clk),
     .wb_rst_i (rst),
     .wb_dat_o (keyb_dat_o),
-    .wb_tgc_o (intr),
-    .wb_tgc_i (inta),
+    .wb_tgc_o (int[1]),
 
     .ps2_clk_  (ps2_clk_),
     .ps2_data_ (ps2_data_)
   );
-/*
+
   timer timer0 (
     .wb_clk_i (clk),
     .wb_rst_i (rst),
-    .wb_tgc_o (intr),
-    .wb_tgc_i (inta)
+    .wb_tgc_o (int[0])
   );
-*/
+
+  simple_pic pic0 (
+`ifdef DEBUG
+    .irr  (irr),
+`endif
+    .clk  (clk),
+    .rst  (rst),
+    .int  (int),
+    .inta (inta),
+    .intr (intr),
+    .iid  (iid)
+  );
 
   aceusb ace_cf (
     .wb_clk_i (clk),
@@ -377,7 +399,7 @@ module kotku_ml403 (
     .TRIG10  ({ace_mpce_n_,aceusb_we_n_,aceusb_oe_n_,
                ace_ack,ace_stb,ace_dat_o}),
     .TRIG11  (aceusb_d_),
-    .TRIG12  ({1'b0,usb_cs_n_,usb_hpi_reset_n_,aceusb_a_}),
+    .TRIG12  ({1'b0,rx_output_strobe,rx_shifting_done,released,int,irr,iid}),
     .TRIG13  (cnt),
     .TRIG14  ({vdu_mem_arena,flash_mem_arena,flash_stb,zbt_stb,op}),
     .TRIG15  (cnt_time)
@@ -505,7 +527,8 @@ module kotku_ml403 (
                   : (keyb_io_arena ? keyb_dat_o
                   : (keyb_io_status ? 16'h10
                   : (ace_io_arena ? ace_dat_o : 16'h0))));
-  assign dat_i    = inta ? 16'd9 : (tga ? io_dat_i
+  assign dat_i    = inta ? { 15'b0000_0000_0000_100, iid }
+                  : (tga ? io_dat_i
                   : (vdu_mem_arena ? vdu_dat_o
                   : (flash_mem_arena ? flash_dat_o : zbt_dat_o)));
 

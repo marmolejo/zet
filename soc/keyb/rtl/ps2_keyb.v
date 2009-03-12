@@ -19,6 +19,8 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
+`include "defines.v"
+
 `timescale 1ns/100ps
 
 `define TOTAL_BITS   11
@@ -27,12 +29,16 @@
 `define RIGHT_SHIFT  16'h59
 
 module ps2_keyb (
+`ifdef DEBUG
+    output           rx_output_strobe,
+    output           released,
+    output           rx_shifting_done,
+`endif
     // Wishbone slave interface
     input            wb_clk_i,
     input            wb_rst_i,
     output reg [7:0] wb_dat_o,   // scancode
     output reg       wb_tgc_o,   // intr
-    input            wb_tgc_i,   // inta
 
     // PS2 PAD signals
     inout            ps2_clk_,
@@ -77,14 +83,14 @@ module ps2_keyb (
 
   // Nets and registers
   wire rx_output_event;
-  wire rx_output_strobe;
-  wire rx_shifting_done;
   wire tx_shifting_done;
   wire timer_60usec_done;
   wire timer_5usec_done;
-
+`ifndef DEBUG
+  wire rx_output_strobe;
+  wire rx_shifting_done;
   wire released;
-
+`endif
   wire [6:0] xt_code;
 
   reg [3:0] bit_count;
@@ -141,11 +147,9 @@ module ps2_keyb (
   assign released = (q[8:1] == `RELEASE_CODE) && rx_shifting_done;
 
   // Behaviour
-  // intr
+  // wb_tgc_o
   always @(posedge wb_clk_i)
-    wb_tgc_o <= wb_rst_i ? 1'b0
-      : ((rx_output_strobe & !wb_tgc_i) ? 1'b1
-      : (wb_tgc_o ? !wb_tgc_i : 1'b0));
+    wb_tgc_o <= wb_rst_i ? 1'b0 : rx_output_strobe;
 
   // This is the shift register
   always @(posedge wb_clk_i)

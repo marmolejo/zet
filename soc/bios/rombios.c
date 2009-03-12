@@ -1026,6 +1026,8 @@ ASM_END
 
 static char bios_svn_version_string[] = "$Version: 0.4.3 $ $Date: Tue, 10 Mar 2009 21:02:08 +0100 $";
 
+#define BIOS_COPYRIGHT_STRING "(c) 2009 Zeus Gomez Marmolejo and (c) 2002 MandrakeSoft S.A."
+
 //--------------------------------------------------------------------------
 // print_bios_banner
 //   displays a the bios version
@@ -2395,6 +2397,16 @@ int13_disk:
 ;  shl   eax, #16
 
 int13_out:
+;
+; ZEUS HACK: put IF flag on.
+;  Seems that MS-DOS does a 'cli' before calling this
+;  but after int13 it doesn't set the interrupts back
+;
+  mov bp, sp
+  mov ax, 24[bp]  ; FLAGS location
+  or  ax, #0x0200 ; IF on
+  mov 24[bp], ax
+
   pop ds
   pop es
   ; popa ; we do this instead:
@@ -2795,6 +2807,10 @@ post_default_ints:
   ;; EBDA setup
   call ebda_post
 
+  ;; PIT setup
+  SET_INT_VECTOR(0x08, #0xF000, #int08_handler)
+  ;; int 1C already points at dummy_iret_handler (above)
+
   ;; Keyboard
   SET_INT_VECTOR(0x09, #0xF000, #int09_handler)
   SET_INT_VECTOR(0x16, #0xF000, #int16_handler)
@@ -3119,6 +3135,67 @@ int1a_callfunction:
 
   pop  ds
   iret
+
+;---------
+;- INT08 -
+;---------
+.org 0xfea5 ; INT 08h System Timer ISR Entry Point
+int08_handler:
+  sti
+  push ax
+  push bx
+  push ds
+  xor ax, ax
+  mov ds, ax
+
+  mov ax, 0x046c ;; get ticks dword
+  mov bx, 0x046e
+  inc ax
+  jne i08_linc_done
+  inc bx         ;; inc high word
+
+i08_linc_done:
+  push bx
+  ;; compare eax to one days worth of timer ticks at 18.2 hz
+  sub bx, #0x0018
+  jne i08_lcmp_done
+  cmp ax, #0x00B0
+  jb  i08_lcmp_b_and_lt
+  jge i08_lcmp_done
+  inc bx
+  jmp i08_lcmp_done
+
+i08_lcmp_b_and_lt:
+  dec bx
+
+i08_lcmp_done:
+  pop bx
+  jb  int08_store_ticks
+  ;; there has been a midnight rollover at this point
+  xor ax, ax      ;; zero out counter
+  xor bx, bx
+  inc BYTE 0x0470 ;; increment rollover flag
+
+int08_store_ticks:
+  mov 0x046c, ax ;; store new ticks dword
+  mov 0x046e, bx
+  ;; chain to user timer tick INT #0x1c
+  //pushf
+  //;; call_ep [ds:loc]
+  //CALL_EP( 0x1c << 2 )
+  int #0x1c
+  cli
+  ;; call eoi_master_pic
+  pop ds
+  pop bx
+  pop ax
+  iret
+
+.org 0xfef3 ; Initial Interrupt Vector Offsets Loaded by POST
+
+
+.org 0xff00
+.ascii BIOS_COPYRIGHT_STRING
 
 ;------------------------------------------------
 ;- IRET Instruction for Dummy Interrupt Handler -
