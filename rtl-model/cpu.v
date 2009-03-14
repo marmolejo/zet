@@ -224,6 +224,7 @@ module wb_master (
 
   // Register and nets declarations
   reg  [ 1:0] cs; // current state
+  reg  [ 1:0] ns; // next state
 
   wire        op; // in an operation
   wire        odd_word; // unaligned word
@@ -234,11 +235,10 @@ module wb_master (
   wire [ 1:0] sel_o; // bus byte select
 
   // Declare the symbolic names for states
-  parameter [1:0]
-    cyc0_lo = 3'd0,
-    stb1_hi = 3'd1,
-    stb1_lo = 3'd2,
-    stb2_hi = 3'd3;
+  localparam [1:0]
+    IDLE = 2'd0,
+    stb1_lo = 2'd1,
+    stb2_hi = 2'd2;
 
   // Assignments
   assign op       = (cpu_memop | cpu_m_io);
@@ -257,7 +257,7 @@ module wb_master (
   // Behaviour
   // cpu_dat_i
   always @(posedge wb_clk_i)
-    cpu_dat_i <= (cs == cyc0_lo) ?
+    cpu_dat_i <= (cs == IDLE) ?
                    (wb_ack_i ?
                      (a0 ? bhw : (cpu_byte_o ? blw : wb_dat_i))
                    : cpu_dat_i)
@@ -275,14 +275,6 @@ module wb_master (
           wb_sel_o  <= sel_o;
           wb_stb_o  <= op;
           wb_cyc_o  <= op;
-        end
-      stb1_hi:
-        begin
-          cpu_block <= odd_word | wb_ack_i;
-          wb_adr_o  <= cpu_adr_o[19:1];
-          wb_sel_o  <= sel_o;
-          wb_stb_o  <= 1'b0;
-          wb_cyc_o  <= odd_word;
         end
       stb1_lo:
         begin
@@ -303,16 +295,18 @@ module wb_master (
     endcase
 
   // state machine
+  // cs - current state
   always @(posedge wb_clk_i)
-    if (wb_rst_i) cs <= cyc0_lo;
-    else
-      case (cs)
-        default:  cs <= wb_ack_i ? (op ? stb1_hi : cyc0_lo)
-                                 : cyc0_lo;
-        stb1_hi:  cs <= wb_ack_i ? stb1_hi
-                                 : (odd_word ? stb1_lo : cyc0_lo);
-        stb1_lo:  cs <= wb_ack_i ? stb2_hi : stb1_lo;
-        stb2_hi:  cs <= wb_ack_i ? stb2_hi : cyc0_lo;
-      endcase
+    cs <= wb_rst_i ? IDLE : ns;
+
+  // ns - next state
+  always @(*)
+    case (cs)
+      default:  ns <= wb_ack_i ?
+                      (op ? (odd_word ? stb1_lo : stb2_hi) : IDLE)
+                    : IDLE;
+      stb1_lo:  ns <= wb_ack_i ? stb2_hi : stb1_lo;
+      stb2_hi:  ns <= wb_ack_i ? stb2_hi : IDLE;
+    endcase
 
 endmodule

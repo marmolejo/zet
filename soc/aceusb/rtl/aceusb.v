@@ -111,13 +111,12 @@ aceusb_sync sync_ack(
 
 /* Main FSM */
 
-reg [1:0] state;
-reg [1:0] next_state;
+reg  state;
+reg  next_state;
 
 localparam
-  IDLE = 2'd0,
-  WAIT = 2'd1,
-  ACK  = 2'd2;
+  IDLE = 1'd0,
+  WAIT = 1'd1;
 
   assign op = wb_cyc_i & wb_stb_i;
 
@@ -154,13 +153,6 @@ always @(state or op or wb_we_i or access_ack) begin
         access_write = 1'b0;
         load_adr_dat = 1'b0;
         access_read = 1'b0;
-        next_state = ACK;
-      end
-    end
-
-    ACK: begin
-      if(!op) begin
-        wb_ack_o = 1'b0;
         next_state = IDLE;
       end
     end

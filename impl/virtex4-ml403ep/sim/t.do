@@ -2,7 +2,7 @@ quit -sim
 vdel -all -lib work
 vmap unisims /opt/Xilinx/10.1/modelsim/verilog/unisims
 vlib work
-vlog -work work -lint +incdir+../../../rtl-model +incdir+../../../sim ../syn/kotku.v ../syn/clock.v ../../../rtl-model/regfile.v ../../../rtl-model/alu.v ../../../rtl-model/cpu.v ../../../rtl-model/exec.v ../../../rtl-model/fetch.v ../../../rtl-model/jmp_cond.v ../../../rtl-model/util/primitives.v ../../../rtl-model/util/div_su.v ../../../rtl-model/util/div_uu.v ../../../rtl-model/rotate.v test_kotku.v flash_stub.v ../../../sim/mult.v ../../../soc/vga/rtl/vdu.v ../../../soc/vga/rtl/char_rom_b16.v ../../../soc/vga/rtl/ram2k_b16_attr.v ../../../soc/vga/rtl/ram2k_b16.v ../mem/flash_cntrl.v ../mem/zbt_cntrl.v CY7C1354BV25.v ../../../soc/keyb/rtl/ps2_keyb.v ../../../soc/aceusb/rtl/aceusb_access.v ../../../soc/aceusb/rtl/aceusb_sync.v ../../../soc/aceusb/rtl/aceusb.v ../dbg/hw_dbg.v ../dbg/pc_trace.v ../dbg/clk_uart.v ../dbg/send_addr.v ../dbg/send_serial.v
+vlog -work work -lint +incdir+../../../rtl-model +incdir+../../../sim ../syn/kotku.v ../syn/clock.v ../../../rtl-model/regfile.v ../../../rtl-model/alu.v ../../../rtl-model/cpu.v ../../../rtl-model/exec.v ../../../rtl-model/fetch.v ../../../rtl-model/jmp_cond.v ../../../rtl-model/util/primitives.v ../../../rtl-model/util/div_su.v ../../../rtl-model/util/div_uu.v ../../../rtl-model/rotate.v test_kotku.v flash_stub.v ../../../sim/mult.v ../../../soc/vga/rtl/vdu.v ../../../soc/vga/rtl/char_rom_b16.v ../../../soc/vga/rtl/ram2k_b16_attr.v ../../../soc/vga/rtl/ram2k_b16.v ../mem/flash_cntrl.v ../mem/zbt_cntrl.v CY7C1354BV25.v ../../../soc/keyb/rtl/ps2_keyb.v ../../../soc/aceusb/rtl/aceusb_access.v ../../../soc/timer.v ../../../soc/simple_pic.v ../../../soc/aceusb/rtl/aceusb_sync.v ../../../soc/aceusb/rtl/aceusb.v ../dbg/hw_dbg.v ../dbg/pc_trace.v ../dbg/clk_uart.v ../dbg/send_addr.v ../dbg/send_serial.v
 vlog -work unisims /opt/Xilinx/10.1/ISE/verilog/src/glbl.v
 vsim -L /opt/Xilinx/10.1/modelsim/verilog/unisims -novopt -t ps work.testbench work.glbl
 add wave -label clk100 /testbench/clk
@@ -34,11 +34,13 @@ add wave -label d -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/d\[15:
 add wave -label wr -radix hexadecimal /testbench/kotku/zet_proc/exec0/reg0/wr
 add wave -divider wb_master
 add wave -label cs -radix hexadecimal /testbench/kotku/zet_proc/wm0/cs
+add wave -label ns -radix hexadecimal /testbench/kotku/zet_proc/wm0/ns
 add wave -label op -radix hexadecimal /testbench/kotku/zet_proc/wm0/op
 add wave -label wb_block /testbench/kotku/zet_proc/wb_block
 add wave -label dat_o -radix hexadecimal sim:/testbench/kotku/dat_o
 add wave -label dat_i -radix hexadecimal sim:/testbench/kotku/dat_i
 add wave -label adr -radix hexadecimal /testbench/kotku/adr
+add wave -label odd_word -radix hexadecimal /testbench/kotku/zet_proc/wm0/odd_word
 add wave -label byte_o -radix hexadecimal /testbench/kotku/zet_proc/wm0/cpu_byte_o
 add wave -label sel_o -radix hexadecimal /testbench/kotku/zet_proc/wm0/wb_sel_o
 add wave -label stb_o -radix hexadecimal /testbench/kotku/zet_proc/wm0/wb_stb_o
@@ -65,6 +67,6 @@ add wave -label wr /testbench/kotku/zet_proc/exec0/reg0/wr
 add wave -label we /testbench/kotku/we
 add wave -label ack /testbench/kotku/ack
 add wave -label fetch_or_exec /testbench/kotku/zet_proc/fetch_or_exec
-add wave -divider ace_cf
-add wave -radix hexadecimal -r /testbench/kotku/ace_cf/*
-run 1ms
+add wave -divider zbt
+add wave -radix hexadecimal -r /testbench/kotku/zbt0/*
+run 50us

@@ -63,7 +63,8 @@ module flash_cntrl #(
   // sft_cnt
   always @(posedge wb_clk_i)
     sft_cnt <= wb_rst_i ? 0
-      : (op ? { sft_cnt[timeout-2:0], op } : 0);
+      : (op ? ((|sft_cnt) ? { sft_cnt[timeout-2:0], 1'b0 }
+                          : { sft_cnt[timeout-2:0], 1'b1 }) : 0);
 
   // base
   always @(posedge wb_clk_i)

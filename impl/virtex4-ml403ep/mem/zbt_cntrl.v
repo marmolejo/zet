@@ -34,7 +34,7 @@ module zbt_cntrl (
     input      [ 1:0] wb_sel_i,
     input             wb_stb_i,
     input             wb_cyc_i,
-    output reg        wb_ack_o,
+    output            wb_ack_o,
 
     // Pad signals
     output            sram_clk_,
@@ -51,27 +51,24 @@ module zbt_cntrl (
   wire        nload;
 
 `ifndef DEBUG
-  reg [ 2:0] cnt;
+  reg [ 3:0] cnt;
   wire       op;
 `endif
 
   // Continuous assignments
   assign op   = wb_stb_i & wb_cyc_i;
-  assign nload = (|cnt || wb_ack_o);
+  assign nload = |cnt;
 
   assign sram_clk_      = wb_clk_i;
   assign sram_adv_ld_n_ = 1'b0;
   assign sram_data_     = (op && wb_we_i) ? wr : 32'hzzzzzzzz;
+  assign wb_ack_o       = cnt[3];
 
   // Behaviour
   // cnt
   always @(posedge wb_clk_i)
-    cnt <= wb_rst_i ? 3'b0
-         : { cnt[1:0], nload ? 1'b0 : op };
-
-  // wb_ack_o
-  always @(posedge wb_clk_i)
-    wb_ack_o <= wb_rst_i ? 1'b0 : (wb_ack_o ? op : cnt[2]);
+    cnt <= wb_rst_i ? 4'b0
+         : { cnt[2:0], nload ? 1'b0 : op };
 
   // wb_dat_o
   always @(posedge wb_clk_i)
