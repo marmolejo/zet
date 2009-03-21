@@ -61,6 +61,8 @@ movw -3(%bx,%si), %ax
 movw $0x0, %dx
 movw %dx, %ds
 movw %ax, (0)
+movw $0xf100, %dx
+outw %ax, %dx
 hlt
 
 .org 65520
