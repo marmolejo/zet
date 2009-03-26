@@ -12,10 +12,11 @@ vmap altera_mf_ver ./verilog_libs/altera_mf_ver
 vlog -vlog01compat -work altera_mf_ver {/opt/altera9.0/quartus/eda/sim_lib/altera_mf.v}
 
 vlib work
-vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../rtl/kotku.v ../rtl/flash.v ../rtl/pll.v ../rtl/sdram_pll.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../rtl/kotku.v ../rtl/flash.v ../rtl/pll.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/zet/rtl/regfile.v ../../../cores/zet/rtl/alu.v ../../../cores/zet/rtl/cpu.v ../../../cores/zet/rtl/exec.v ../../../cores/zet/rtl/fetch.v ../../../cores/zet/rtl/jmp_cond.v ../../../cores/zet/rtl/util/primitives.v ../../../cores/zet/rtl/util/div_su.v ../../../cores/zet/rtl/util/div_uu.v ../../../cores/zet/rtl/rotate.v  ../../../cores/zet/rtl/util/signmul17.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/yadmc/rtl/yadmc.v ../../../cores/yadmc/rtl/yadmc_sync.v ../../../cores/yadmc/rtl/yadmc_spram.v ../../../cores/yadmc/rtl/yadmc_sdram16.v ../../../cores/yadmc/rtl/yadmc_dpram.v
-vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/sram/rtl/wb_sram-reg.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/sram/rtl/wb_dpsram.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/vga/rtl/vdu-new.v ../../../cores/vga/rtl/char_rom.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim test_kotku.v s29al032d_00.v ../../../cores/sram/sim/IS61LV25616.v ../../../cores/yadmc/sim/mt48lc16m16a2.v
 
 vsim -L altera_mf_ver -novopt -t ps work.test_kotku
@@ -85,6 +86,6 @@ add wave -label ack /test_kotku/kotku/ack
 add wave -label fetch_or_exec /test_kotku/kotku/zet_proc/fetch_or_exec
 add wave -divider sram
 add wave -radix hexadecimal -r /test_kotku/kotku/sram/*
-add wave -divider issi
-add wave -radix hexadecimal -r /test_kotku/sram/*
-run 11.8us
+add wave -divider vdu
+add wave -radix hexadecimal -r /test_kotku/kotku/vdu/*
+run 100us

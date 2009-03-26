@@ -212,8 +212,11 @@ set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS OUTPUT DRIVING GROUND"
 set_global_assignment -name ENABLE_CLOCK_LATENCY ON
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS OUTPUT DRIVING AN UNSPECIFIED SIGNAL"
-set_global_assignment -name VERILOG_FILE ../../../cores/sram/rtl/wb_sram.v
-set_global_assignment -name VERILOG_FILE ../rtl/sdram_pll.v
+set_global_assignment -name USE_TIMEQUEST_TIMING_ANALYZER OFF
+
+set_global_assignment -name VERILOG_FILE ../../../cores/sram/rtl/wb_dpsram.v
+set_global_assignment -name VERILOG_FILE "../../../cores/vga/rtl/vdu-new.v"
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/char_rom.v
 set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_dpram.v
 set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_sync.v
 set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_sdram16.v
@@ -235,4 +238,11 @@ set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/regfile.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/rom_def.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/alu.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
-set_global_assignment -name USE_TIMEQUEST_TIMING_ANALYZER OFF
+set_location_assignment PIN_B10 -to tft_lcd_b_[1]
+set_location_assignment PIN_A10 -to tft_lcd_b_[0]
+set_location_assignment PIN_A8 -to tft_lcd_g_[1]
+set_location_assignment PIN_B9 -to tft_lcd_g_[0]
+set_location_assignment PIN_A11 -to tft_lcd_hsync_
+set_location_assignment PIN_B7 -to tft_lcd_r_[1]
+set_location_assignment PIN_A7 -to tft_lcd_r_[0]
+set_location_assignment PIN_B11 -to tft_lcd_vsync_

@@ -20,7 +20,6 @@
 
 module kotku (
     input        clk_50_,
-    input        clk_27_,
     output [9:0] ledr_,
     output [7:0] ledg_,
     input  [9:0] sw_,
@@ -50,7 +49,14 @@ module kotku (
     output        sram_we_n_,
     output        sram_oe_n_,
     output        sram_ce_n_,
-    output [ 1:0] sram_bw_n_
+    output [ 1:0] sram_bw_n_,
+
+    // VGA signals
+    output [1:0] tft_lcd_r_,
+    output [1:0] tft_lcd_g_,
+    output [1:0] tft_lcd_b_,
+    output       tft_lcd_hsync_,
+    output       tft_lcd_vsync_
   );
 
   // Registers and nets
@@ -70,8 +76,6 @@ module kotku (
   wire        flash_arena;
   wire        flash_mem_arena;
   wire [15:0] flash_dat_o;
-  wire        lock1;
-  wire        lock2;
   wire        lock;
   reg  [15:0] io_reg;
   wire [15:0] ip;
@@ -93,17 +97,23 @@ module kotku (
   wire        sram_mem_arena;
   wire        sram_arena;
 
+  wire        vdu_clk;
+  wire [15:0] vdu_dat_i;
+  wire [ 6:0] h_vdu_adr;
+  wire [11:1] vdu_adr_o;
+  wire        vdu_we_o;
+  wire [ 1:0] vdu_sel_o;
+  wire        vdu_stb_o;
+  wire        vdu_cyc_o;
+  wire        vdu_ack_i;
+
   // Module instantiations
   pll pll (
-    .inclk0 (clk_27_),
-    .c0     (clk),
-    .locked (lock1)
-  );
-
-  sdram_pll sdram_pll (
     .inclk0 (clk_50_),
     .c0     (sdram_clk),
-    .locked (lock2)
+    .c1     (vdu_clk),
+    .c2     (clk),
+    .locked (lock)
   );
 
   flash flash (
@@ -161,17 +171,29 @@ module kotku (
   );
 
   wb_sram sram (
-    // Wishbone slave interface
+    // Wishbone common signals
     .wb_clk_i (clk),
     .wb_rst_i (rst),
-    .wb_dat_i (dat_o),
-    .wb_dat_o (sram_dat_o),
-    .wb_adr_i ({adr[19],adr[17:1]}),
-    .wb_we_i  (we),
-    .wb_sel_i (sel),
-    .wb_stb_i (sram_stb),
-    .wb_cyc_i (sram_stb),
-    .wb_ack_o (sram_ack),
+
+    // Wishbone slave interface 0 - higher priority
+    .wb0_dat_i (16'h0),
+    .wb0_dat_o (vdu_dat_i),
+    .wb0_adr_i ({h_vdu_adr,vdu_adr_o}),
+    .wb0_we_i  (vdu_we_o),
+    .wb0_sel_i (vdu_sel_o),
+    .wb0_stb_i (vdu_stb_o),
+    .wb0_cyc_i (vdu_cyc_o),
+    .wb0_ack_o (vdu_ack_i),
+
+    // Wishbone slave interface 1 - lower priority
+    .wb1_dat_i (dat_o),
+    .wb1_dat_o (sram_dat_o),
+    .wb1_adr_i ({adr[19],adr[17:1]}),
+    .wb1_we_i  (we),
+    .wb1_sel_i (sel),
+    .wb1_stb_i (sram_stb),
+    .wb1_cyc_i (sram_stb),
+    .wb1_ack_o (sram_ack),
 
     // Pad signals
     .sram_addr_ (sram_addr_),
@@ -180,6 +202,28 @@ module kotku (
     .sram_oe_n_ (sram_oe_n_),
     .sram_ce_n_ (sram_ce_n_),
     .sram_bw_n_ (sram_bw_n_)
+  );
+
+  vdu vdu (
+    // Wishbone common signals
+    .wb_rst_i (rst),
+    .wb_clk_i (vdu_clk), // 25MHz	VDU clock
+
+    // Wishbone master interface
+    .wbm_adr_o (vdu_adr_o),
+    .wbm_dat_i (vdu_dat_i),
+    .wbm_we_o  (vdu_we_o),
+    .wbm_sel_o (vdu_sel_o),
+    .wbm_stb_o (vdu_stb_o),
+    .wbm_cyc_o (vdu_cyc_o),
+    .wbm_ack_i (vdu_ack_i),
+
+    // VGA pad signals
+    .vga_red_o   (tft_lcd_r_),
+    .vga_green_o (tft_lcd_g_),
+    .vga_blue_o  (tft_lcd_b_),
+    .horiz_sync  (tft_lcd_hsync_),
+    .vert_sync   (tft_lcd_vsync_)
   );
 
   cpu zet_proc (
@@ -227,7 +271,7 @@ module kotku (
                    : (sram_mem_arena ? sram_dat_o
                    : sdram_dat_o[15:0]);
 
-  assign lock = lock1 & lock2;
+  assign h_vdu_adr = 7'b111_1000;
 
   // Behaviour
   // leds

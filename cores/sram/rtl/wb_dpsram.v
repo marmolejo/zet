@@ -29,7 +29,7 @@ module wb_sram (
     input  [ 1:0] wb0_sel_i,
     input         wb0_stb_i,
     input         wb0_cyc_i,
-    output        wb0_ack_o,
+    output reg    wb0_ack_o,
 
     // Wishbone slave interface 1 - lower priority
     input  [15:0] wb1_dat_i,
@@ -39,15 +39,15 @@ module wb_sram (
     input  [ 1:0] wb1_sel_i,
     input         wb1_stb_i,
     input         wb1_cyc_i,
-    output        wb1_ack_o,
+    output reg    wb1_ack_o,
 
     // Pad signals
-    output [17:0] sram_addr_,
-    inout  [15:0] sram_data_,
-    output        sram_we_n_,
-    output        sram_oe_n_,
-    output        sram_ce_n_,
-    output [ 1:0] sram_bw_n_
+    output reg [17:0] sram_addr_,
+    inout      [15:0] sram_data_,
+    output reg        sram_we_n_,
+    output reg        sram_oe_n_,
+    output            sram_ce_n_,
+    output reg [ 1:0] sram_bw_n_
   );
 
   // Nets
@@ -55,7 +55,7 @@ module wb_sram (
   wire op0;
   wire op1;
 
-  wire [15:0] ww;
+  reg [15:0] ww;
 
   // Continuous assingments
   assign op0 = wb0_stb_i & wb0_cyc_i;
@@ -64,15 +64,37 @@ module wb_sram (
 
   assign wb0_dat_o = sram_data_;
   assign wb1_dat_o = sram_data_;
-  assign wb0_ack_o = op0;
-  assign wb1_ack_o = arb;
 
   assign sram_data_ = sram_we_n_ ? 16'hzzzz : ww;
-  assign ww         = arb ? wb1_dat_i : wb0_dat_i;
-  assign sram_addr_ = arb ? wb1_adr_i : wb0_adr_i;
-  assign sram_we_n_ = arb ? ~wb1_we_i : !(wb0_we_i & op0);
-  assign sram_bw_n_ = arb ? ~wb1_sel_i : ~wb0_sel_i;
-  assign sram_oe_n_ = arb ? wb1_we_i : (wb0_we_i & op0);
   assign sram_ce_n_ = 1'b0;
+
+  // Behaviour
+  // sram_addr_
+  always @(posedge wb_clk_i)
+    sram_addr_ <= arb ? wb1_adr_i : wb0_adr_i;
+
+  // sram_we_n_
+  always @(posedge wb_clk_i)
+    sram_we_n_ <= arb ? ~wb1_we_i : !(wb0_we_i & op0);
+
+  // ww
+  always @(posedge wb_clk_i)
+    ww <= arb ? wb1_dat_i : wb0_dat_i;
+
+  // sram_bw_n_
+  always @(posedge wb_clk_i)
+    sram_bw_n_ = arb ? ~wb1_sel_i : ~wb0_sel_i;
+
+  // sram_oe_n_
+  always @(posedge wb_clk_i)
+    sram_oe_n_ <= arb ? wb1_we_i : (wb0_we_i & op0);
+
+  // wb0_ack_o
+  always @(posedge wb_clk_i)
+    wb0_ack_o <= wb_rst_i ? 1'b0 : (wb0_ack_o ? 1'b0 : op0);
+
+  // wb1_ack_o
+  always @(posedge wb_clk_i)
+    wb1_ack_o <= wb_rst_i ? 1'b0 : (wb1_ack_o ? 1'b0 : arb);
 
 endmodule
