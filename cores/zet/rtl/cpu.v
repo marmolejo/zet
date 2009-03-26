@@ -230,13 +230,13 @@ module wb_master (
   // Register and nets declarations
   reg  [ 1:0] cs; // current state
   reg  [ 1:0] ns; // next state
+  reg  [19:1] adr1; // next address (for unaligned acc)
 
   wire        op; // in an operation
   wire        odd_word; // unaligned word
   wire        a0;  // address 0 pin
   wire [15:0] blw; // low byte (sign extended)
   wire [15:0] bhw; // high byte (sign extended)
-  wire [19:1] adr1; // next address (for unaligned acc)
   wire [ 1:0] sel_o; // bus byte select
 
   // Declare the symbolic names for states
@@ -251,8 +251,6 @@ module wb_master (
   assign a0       = cpu_adr_o[0];
   assign blw      = { {8{wb_dat_i[7]}}, wb_dat_i[7:0] };
   assign bhw      = { {8{wb_dat_i[15]}}, wb_dat_i[15:8] };
-  assign adr1     = a0 ? (cpu_adr_o[19:1] + 1'b1)
-                       : cpu_adr_o[19:1];
   assign wb_dat_o = a0 ? { cpu_dat_o[7:0], cpu_dat_o[15:8] }
                        : cpu_dat_o;
   assign wb_we_o  = cpu_we_o;
@@ -269,6 +267,10 @@ module wb_master (
                  : ((cs == stb1_lo && wb_ack_i) ?
                      { wb_dat_i[7:0], cpu_dat_i[7:0] }
                    : cpu_dat_i);
+
+  // adr1
+  always @(posedge wb_clk_i)
+    adr1 <= cpu_adr_o[19:1] + 1'b1;
 
   // outputs setup
   always @(*)
@@ -292,7 +294,7 @@ module wb_master (
       stb2_hi:
         begin
           cpu_block <= wb_ack_i;
-          wb_adr_o  <= adr1;
+          wb_adr_o  <= cpu_adr_o[19:1];
           wb_sel_o  <= 2'b01;
           wb_stb_o  <= 1'b0;
           wb_cyc_o  <= 1'b0;

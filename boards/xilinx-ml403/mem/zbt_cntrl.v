@@ -20,7 +20,7 @@
 
 module zbt_cntrl (
 `ifdef DEBUG
-    output reg [2:0] cnt,
+    output reg [3:0] cnt,
     output           op,
 `endif
 

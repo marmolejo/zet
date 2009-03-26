@@ -45,6 +45,13 @@ module test_kotku;
   wire        sdram_we_n;
   wire        sdram_cs_n;
 
+  wire [17:0] sram_addr_;
+  wire [15:0] sram_data_;
+  wire        sram_we_n_;
+  wire        sram_oe_n_;
+  wire        sram_ce_n_;
+  wire [ 1:0] sram_bw_n_;
+
   // Module instantiations
   kotku kotku (
     .clk_50_ (clk_50),
@@ -70,7 +77,15 @@ module test_kotku;
     .sdram_ce_    (sdram_ce),
     .sdram_clk_   (sdram_clk),
     .sdram_we_n_  (sdram_we_n),
-    .sdram_cs_n_  (sdram_cs_n)
+    .sdram_cs_n_  (sdram_cs_n),
+
+    // sram signals
+    .sram_addr_ (sram_addr_),
+    .sram_data_ (sram_data_),
+    .sram_we_n_ (sram_we_n_),
+    .sram_oe_n_ (sram_oe_n_),
+    .sram_ce_n_ (sram_ce_n_),
+    .sram_bw_n_ (sram_bw_n_)
   );
 
   s29al032d_00 flash (
@@ -125,6 +140,16 @@ module test_kotku;
     .Cas_n (sdram_cas_n),
     .We_n  (sdram_we_n),
     .Dqm   (sdram_dqm)
+  );
+
+  IS61LV25616 sram (
+    .A   (sram_addr_),
+    .IO  (sram_data_),
+    .CE_ (sram_ce_n_),
+    .OE_ (sram_oe_n_),
+    .WE_ (sram_we_n_),
+    .LB_ (sram_bw_n_[0]),
+    .UB_ (sram_bw_n_[1])
   );
 
   // Behaviour

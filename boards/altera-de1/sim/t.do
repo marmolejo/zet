@@ -9,13 +9,14 @@ if ![file isdirectory verilog_libs] {
 
 vlib verilog_libs/altera_mf_ver
 vmap altera_mf_ver ./verilog_libs/altera_mf_ver
-#vlog -vlog01compat -work altera_mf_ver {/opt/altera9.0/quartus/eda/sim_lib/altera_mf.v}
+vlog -vlog01compat -work altera_mf_ver {/opt/altera9.0/quartus/eda/sim_lib/altera_mf.v}
 
 vlib work
-vlog -work work -lint +incdir+../../../rtl-model +incdir+../../../sim ../rtl/kotku.v ../rtl/flash.v ../rtl/pll.v ../rtl/sdram_pll.v
-vlog -work work -lint +incdir+../../../rtl-model +incdir+../../../sim ../../../rtl-model/regfile.v ../../../rtl-model/alu.v ../../../rtl-model/cpu.v ../../../rtl-model/exec.v ../../../rtl-model/fetch.v ../../../rtl-model/jmp_cond.v ../../../rtl-model/util/primitives.v ../../../rtl-model/util/div_su.v ../../../rtl-model/util/div_uu.v ../../../rtl-model/rotate.v  ../../../sim/signmul17.v
-vlog -work work -lint +incdir+../../../rtl-model +incdir+../../../sim ../../../soc/yadmc/rtl/yadmc.v ../../../soc/yadmc/rtl/yadmc_sync.v ../../../soc/yadmc/rtl/yadmc_spram.v ../../../soc/yadmc/rtl/yadmc_sdram16.v ../../../soc/yadmc/rtl/yadmc_dpram.v
-vlog -work work -lint +incdir+../../../rtl-model +incdir+../../../sim test_kotku.v s29al032d_00.v ../../../soc/yadmc/test/mt48lc16m16a2.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../rtl/kotku.v ../rtl/flash.v ../rtl/pll.v ../rtl/sdram_pll.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/zet/rtl/regfile.v ../../../cores/zet/rtl/alu.v ../../../cores/zet/rtl/cpu.v ../../../cores/zet/rtl/exec.v ../../../cores/zet/rtl/fetch.v ../../../cores/zet/rtl/jmp_cond.v ../../../cores/zet/rtl/util/primitives.v ../../../cores/zet/rtl/util/div_su.v ../../../cores/zet/rtl/util/div_uu.v ../../../cores/zet/rtl/rotate.v  ../../../cores/zet/rtl/util/signmul17.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/yadmc/rtl/yadmc.v ../../../cores/yadmc/rtl/yadmc_sync.v ../../../cores/yadmc/rtl/yadmc_spram.v ../../../cores/yadmc/rtl/yadmc_sdram16.v ../../../cores/yadmc/rtl/yadmc_dpram.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/sram/rtl/wb_sram-reg.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim test_kotku.v s29al032d_00.v ../../../cores/sram/sim/IS61LV25616.v ../../../cores/yadmc/sim/mt48lc16m16a2.v
 
 vsim -L altera_mf_ver -novopt -t ps work.test_kotku
 
@@ -43,6 +44,7 @@ add wave -label ax -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[0
 add wave -label cx -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[1\]
 add wave -label dx -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[2\]
 add wave -label si -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[6\]
+add wave -label di -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[7\]
 add wave -label tmp -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[13\]
 add wave -label d -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/d\[15:0\]
 add wave -label wr -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/wr
@@ -81,6 +83,8 @@ add wave -label wr /test_kotku/kotku/zet_proc/exec0/reg0/wr
 add wave -label we /test_kotku/kotku/we
 add wave -label ack /test_kotku/kotku/ack
 add wave -label fetch_or_exec /test_kotku/kotku/zet_proc/fetch_or_exec
-add wave -divider sdram
-add wave -radix hexadecimal -r /test_kotku/kotku/yadmc/*
-run 10us
+add wave -divider sram
+add wave -radix hexadecimal -r /test_kotku/kotku/sram/*
+add wave -divider issi
+add wave -radix hexadecimal -r /test_kotku/sram/*
+run 11.8us

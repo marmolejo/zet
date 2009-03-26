@@ -16,7 +16,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-`define DEBUG 1
+//`define DEBUG 1
 
 module kotku (
     input        clk_50_,
@@ -42,7 +42,15 @@ module kotku (
     output        sdram_ce_,
     output        sdram_clk_,
     output        sdram_we_n_,
-    output        sdram_cs_n_
+    output        sdram_cs_n_,
+
+    // sram signals
+    output [17:0] sram_addr_,
+    inout  [15:0] sram_data_,
+    output        sram_we_n_,
+    output        sram_oe_n_,
+    output        sram_ce_n_,
+    output [ 1:0] sram_bw_n_
   );
 
   // Registers and nets
@@ -71,11 +79,19 @@ module kotku (
   reg         dbg_block;
 
   wire [31:0] sdram_dat_o;
-  wire        sdram_ack;
   wire        sdram_stb;
+  wire        sdram_ack;
+  wire        sdram_mem_arena;
+  wire        sdram_arena;
   wire        sdram_clk;
   wire [1:0]  state0;
   wire [4:0]  state1;
+
+  wire [15:0] sram_dat_o;
+  wire        sram_stb;
+  wire        sram_ack;
+  wire        sram_mem_arena;
+  wire        sram_arena;
 
   // Module instantiations
   pll pll (
@@ -144,6 +160,28 @@ module kotku (
     .sdram_dq    (sdram_data_)
   );
 
+  wb_sram sram (
+    // Wishbone slave interface
+    .wb_clk_i (clk),
+    .wb_rst_i (rst),
+    .wb_dat_i (dat_o),
+    .wb_dat_o (sram_dat_o),
+    .wb_adr_i ({adr[19],adr[17:1]}),
+    .wb_we_i  (we),
+    .wb_sel_i (sel),
+    .wb_stb_i (sram_stb),
+    .wb_cyc_i (sram_stb),
+    .wb_ack_o (sram_ack),
+
+    // Pad signals
+    .sram_addr_ (sram_addr_),
+    .sram_data_ (sram_data_),
+    .sram_we_n_ (sram_we_n_),
+    .sram_oe_n_ (sram_oe_n_),
+    .sram_ce_n_ (sram_ce_n_),
+    .sram_bw_n_ (sram_bw_n_)
+  );
+
   cpu zet_proc (
 `ifdef DEBUG
     .ip (ip),
@@ -169,13 +207,25 @@ module kotku (
   assign flash_mem_arena = (adr[19:16]==4'hc || adr[19:16]==4'hf);
   assign flash_arena     = !tga & flash_mem_arena;
   assign flash_stb       = flash_arena & stb & cyc;
-  assign ack             = tga ? (stb & cyc) : (flash_mem_arena ? flash_ack : sdram_ack);
+
+  assign sram_mem_arena  = !adr[18];
+  assign sram_arena      = !tga & sram_mem_arena;
+  assign sram_stb        = sram_arena & stb & cyc;
+
+  assign sdram_mem_arena = !flash_mem_arena & !sram_mem_arena;
+  assign sdram_arena     = !tga & sdram_mem_arena;
+  assign sdram_stb       = sdram_arena & stb & cyc;
+
+  assign ack             = tga ? (stb & cyc)
+                         : (flash_mem_arena ? flash_ack
+                         : (sram_mem_arena ? sram_ack : sdram_ack));
   assign { ledr_,ledg_ } = { 2'b0, io_reg };
   assign rst             = !lock;
   assign sdram_clk_      = sdram_clk;
 
-  assign sdram_stb = !flash_mem_arena & !tga & stb & cyc;
-  assign dat_i     = flash_mem_arena ? flash_dat_o : sdram_dat_o[15:0];
+  assign dat_i     = flash_mem_arena ? flash_dat_o
+                   : (sram_mem_arena ? sram_dat_o
+                   : sdram_dat_o[15:0]);
 
   assign lock = lock1 & lock2;
 
@@ -186,8 +236,10 @@ module kotku (
       : ((tga && stb && cyc && we && adr[15:8]==8'hf1) ?
         dat_o : io_reg );
 
+`ifdef DEBUG
   // dbg_block
   always @(posedge clk)
     dbg_block <= rst ? 1'b0 : (ip[9:0]==sw_);
+`endif
 
 endmodule

@@ -209,16 +209,15 @@ module kotku_ml403 (
     // Wishbone signals
     .wb_clk_i (tft_lcd_clk_), // 25 Mhz VDU clock
     .wb_rst_i (rst2),
-
-    .wbs_dat_i (vdu_dat_i),
-    .wbs_dat_o (vdu_dat_o),
-//    .wbs_adr_i (vdu_adr_i),
-    .wbs_we_i  (vdu_we_i),
-//    .wbs_tga_i (vdu_tga_i),
-    .wbs_sel_i (vdu_sel_i),
-    .wbs_stb_i (vdu_stb_i),
-    .wbs_cyc_i (vdu_stb_i),
-    .wbs_ack_o (vdu_ack_o),
+    .wb_dat_i (vdu_dat_i),
+    .wb_dat_o (vdu_dat_o),
+    .wb_adr_i (vdu_adr_i),
+    .wb_we_i  (vdu_we_i),
+    .wb_tga_i (vdu_tga_i),
+    .wb_sel_i (vdu_sel_i),
+    .wb_stb_i (vdu_stb_i),
+    .wb_cyc_i (vdu_stb_i),
+    .wb_ack_o (vdu_ack_o),
 
     // VGA pad signals
     .vga_red_o   (tft_lcd_r_),
@@ -542,7 +541,7 @@ module kotku_ml403 (
                   : (flash_mem_arena ? flash_dat_o : zbt_dat_o)));
 
   assign flash_mem_arena = (adr[19:16]==4'hc || adr[19:16]==4'hf);
-  assign vdu_mem_arena = 1'b0; //(adr[19:12]==8'hb8);
+  assign vdu_mem_arena = (adr[19:12]==8'hb8);
 
   assign flash_io_arena  = (adr[15:9]==7'b1110_000);
   assign vdu_io_arena  = (adr[15:4]==12'h03d) &&
@@ -557,8 +556,8 @@ module kotku_ml403 (
 
   assign flash_arena = (!tga & flash_mem_arena)
                      | (tga & flash_io_arena);
-  assign vdu_arena = /* (!tga & vdu_mem_arena)
-                   | */ (tga & vdu_io_arena);
+  assign vdu_arena = (!tga & vdu_mem_arena)
+                   | (tga & vdu_io_arena);
   assign keyb_arena = (tga & keyb_io_arena);
   assign ace_arena  = (tga & ace_io_arena);
 

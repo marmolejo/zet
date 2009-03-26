@@ -36,11 +36,17 @@ movb $0x00, %dh         # (10) mov byte
 movw %dx, %di           # (7)  mov word
 
 movw $0x2506, %bp       # (10) mov word
+movw $0xf100, %dx
+movw $0x9535, %ax
+outw %ax, %dx
 
 jmp *-22(%bp,%di)       # (3)  jmp mem
-hlt                     # m[0x12501] = 0xfbe1
+hlt                     # m[0x12501] = 0xffe1
 
 .org 0x3001
+movw $0xf100, %dx
+movw $0x2536, %ax
+outw %ax, %dx
 .byte 0xc7,0xc0        # (12) movw $0x4001, %ax
 .word 0x4001           # [not in a default codification]
 movw $0x2501, %bx

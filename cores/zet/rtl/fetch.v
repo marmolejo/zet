@@ -26,7 +26,7 @@ module fetch (
     output [2:0] next_state,
     output       ext_int,
     output       end_seq,
-    
+
     output [`SEQ_DATA_WIDTH-2:0] micro_addr,
 `endif
     input clk,
@@ -72,6 +72,7 @@ module fetch (
   wire prefix, repz_pr, sovr_pr;
   wire next_in_opco, next_in_exec;
   wire need_modrm, need_off, need_imm, off_size, imm_size;
+  wire ld_base;
 
   reg [7:0] opcode_l, modrm_l;
   reg [15:0] off_l, imm_l;
@@ -82,11 +83,11 @@ module fetch (
   decode decode0(
 `ifdef DEBUG
                  micro_addr,
-`endif                 
+`endif
                  opcode, modrm, off_l, imm_l, pref_l[1], clk, rst, block,
                  exec_st, div_exc, need_modrm, need_off, need_imm, off_size,
-                 imm_size, rom_ir, off, imm_d, end_seq, sop_l, intr, ifl,
-                 inta, ext_int, pref_l[1]);
+                 imm_size, rom_ir, off, imm_d, ld_base, end_seq, sop_l,
+                 intr, ifl, inta, ext_int, pref_l[1]);
   next_or_not nn0(pref_l, opcode[7:1], cx_zero, zf, ext_int, next_in_opco,
                   next_in_exec);
   nstate ns0(state, prefix, need_modrm, need_off, need_imm, end_seq,
@@ -112,6 +113,7 @@ module fetch (
   assign sovr_pr = (opcode[7:5]==3'b001 && opcode[2:0]==3'b110);
   assign repz_pr = (opcode[7:1]==7'b1111_001);
   assign prefix  = sovr_pr || repz_pr;
+  assign ld_base = (next_state == execu_st);
 
   // Behaviour
   always @(posedge clk)
@@ -274,6 +276,7 @@ module decode (
     output [`IR_SIZE-1:0] ir,
     output [15:0] off_o,
     output [15:0] imm_o,
+    input  ld_base,
     output end_seq,
 
     input  [2:0] sop_l,
@@ -295,6 +298,7 @@ module decode (
   reg  [`SEQ_ADDR_WIDTH-1:0] seq;
   reg  dive;
   reg  old_ext_int;
+//  reg  [`SEQ_ADDR_WIDTH-1:0] base_l;
 
   // Module instantiations
   opcode_deco opcode_deco0 (opcode, modrm, rep, sop_l, base_addr, need_modrm,
@@ -314,7 +318,13 @@ module decode (
     if (rst) seq <= `SEQ_ADDR_WIDTH'd0;
     else if (!block)
       seq <= (exec_st && !end_seq && !rst) ? (seq + `SEQ_ADDR_WIDTH'd1)
-                                : `SEQ_ADDR_WIDTH'd0;
+                                           : `SEQ_ADDR_WIDTH'd0;
+
+/* In Altera Quartus II, this latch doesn't work properly
+  // base_l
+  always @(posedge clk)
+    base_l <= rst ? `NOP : (ld_base ? base_addr : base_l);
+*/
   // dive
   always @(posedge clk)
     if (rst) dive <= 1'b0;

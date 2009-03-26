@@ -1,11 +1,12 @@
 .code16
 start:
 movw $0x7654, %ax
+movw $0x1, %bx
 movw %ax, (%bx)
 movw $0xf100, %dx
 movw $0x1234, %ax
 outw %ax, %dx
-movw (0), %cx
+movw (1), %cx
 movw %cx, %ax
 outw %ax, %dx
 hlt
