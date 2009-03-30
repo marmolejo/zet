@@ -20,8 +20,11 @@ module flash (
     // Wishbone slave interface
     input         wb_clk_i,
     input         wb_rst_i,
+    input  [15:0] wb_dat_i,
     output [15:0] wb_dat_o,
     input  [16:1] wb_adr_i,
+    input         wb_we_i,
+    input         wb_tga_i,
     input         wb_stb_i,
     input         wb_cyc_i,
     input  [ 1:0] wb_sel_i,
@@ -36,14 +39,17 @@ module flash (
   );
 
   // Registers and nets
-  wire       op;
-  wire       word;
-  wire       op_word;
-  reg        st;
-  reg  [7:0] lb;
+  wire        op;
+  wire        opbase;
+  wire        word;
+  wire        op_word;
+  reg         st;
+  reg  [ 7:0] lb;
+  reg  [11:0] base;
 
   // Continuous assignments
   assign op      = wb_stb_i & wb_cyc_i;
+  assign opbase  = op & wb_tga_i & wb_we_i;
   assign word    = wb_sel_i==2'b11;
   assign op_word = op & word;
 
@@ -51,8 +57,11 @@ module flash (
   assign flash_we_n_  = 1'b1;
   assign flash_oe_n_  = !op;
 
-  assign flash_addr_  = { 5'h0, wb_adr_i,
-                          (wb_sel_i==2'b10) | (word & st) };
+  assign flash_addr_[21:1] =
+    wb_tga_i ? { 1'b1, base, wb_adr_i[8:1] }
+             : { 5'h0, wb_adr_i };
+
+  assign flash_addr_[0] = (wb_sel_i==2'b10) | (word & st);
 
   assign wb_ack_o = op & (word ? st : 1'b1);
   assign wb_dat_o = wb_sel_i[1] ? { flash_data_, lb }
@@ -66,5 +75,9 @@ module flash (
   // lb - low byte
   always @(posedge wb_clk_i)
     lb <= wb_rst_i ? 8'h0 : (op_word ? flash_data_ : 8'h0);
+
+  // base
+  always @(posedge wb_clk_i)
+    base <= wb_rst_i ? 12'h0: ((opbase) ? wb_dat_i[11:0] : base);
 
 endmodule

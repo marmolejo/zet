@@ -2,11 +2,9 @@
 
 srcdir = .
 
+ROMBIOS = rombios-de1.c
 
 SHELL = /bin/sh
-
-
-
 CXX = g++
 CXXFLAGS = -g3 -O0 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES
 CC      = gcc
@@ -72,7 +70,7 @@ bios-clean:
 .cc.o:
 	$(CXX) -c $(BX_INCDIRS) $(CXXFLAGS) $(LOCAL_CXXFLAGS) $< -o $@
 
-zet-bios.out: rombios.c biossums rombios.h
+zet-bios.out: $(ROMBIOS) biossums rombios.h
 	$(GCC32) $(BIOS_BUILD_DATE) -DLEGACY -E -P $< > _rombiosl_.c
 	$(BCC) -o rombiosl.s -C-c -D__i86__ -0 -S _rombiosl_.c
 	sed -e 's/^\.text//' -e 's/^\.data//' rombiosl.s > _rombiosl_.s

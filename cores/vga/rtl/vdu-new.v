@@ -26,9 +26,7 @@ module vdu (
     // Wishbone slave interface
     input      [15:0] wbs_dat_i,
     output reg [15:0] wbs_dat_o,
-    input      [11:1] wbs_adr_i,
     input             wbs_we_i,
-    input             wbs_tga_i,
     input      [ 1:0] wbs_sel_i,
     input             wbs_stb_i,
     input             wbs_cyc_i,
