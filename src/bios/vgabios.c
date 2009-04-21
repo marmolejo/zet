@@ -160,6 +160,10 @@ vgabios_int10_handler:
   call  biosfn_get_video_mode
   jmp   int10_end
 int10_test_1A:
+  cmp   ah, #0x1a
+  jne   int10_test_1103
+  call  biosfn_group_1A
+  jmp   int10_end
 int10_test_1103:
   cmp   ax, #0x1103
   jne   int10_normal
@@ -1148,6 +1152,43 @@ Bit8u flag;Bit8u page;Bit8u attr;Bit16u count;Bit8u row;Bit8u col;Bit16u seg;Bit
  if((flag&0x01)==0)
   biosfn_set_cursor_pos(page,oldcurs);
 }
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_group_1A:
+  cmp   al, #0x00
+  je    biosfn_read_display_code
+  cmp   al, #0x01
+  je    biosfn_set_display_code
+  ret
+biosfn_read_display_code:
+  push  ds
+  push  ax
+  mov   ax, # BIOSMEM_SEG
+  mov   ds, ax
+  mov   bx, # BIOSMEM_DCC_INDEX
+  mov   al, [bx]
+  mov   bl, al
+  xor   bh, bh
+  pop   ax
+  mov   al, ah
+  pop   ds
+  ret
+biosfn_set_display_code:
+  push  ds
+  push  ax
+  push  bx
+  mov   ax, # BIOSMEM_SEG
+  mov   ds, ax
+  mov   ax, bx
+  mov   bx, # BIOSMEM_DCC_INDEX
+  mov   [bx], al
+  pop   bx
+  pop   ax
+  mov   al, ah
+  pop   ds
+  ret
+ASM_END
 
 // ============================================================================================
 //

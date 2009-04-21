@@ -16,17 +16,19 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-//`define DEBUG 1
+`define DEBUG 1
 
 module kotku (
-`ifdef DEBUG
+`ifdef DEBUG_TRACE
     output       trx_,
 `endif
 
     input        clk_50_,
+    input        clk_27_,
     output [9:0] ledr_,
     output [7:0] ledg_,
     input  [9:0] sw_,
+    input        but0_,
     output [6:0] hex0_,
     output [6:0] hex1_,
     output [6:0] hex2_,
@@ -37,6 +39,7 @@ module kotku (
     input  [ 7:0] flash_data_,
     output        flash_we_n_,
     output        flash_oe_n_,
+    output        flash_ce_n_,
     output        flash_rst_n_,
 
     // sdram signals
@@ -91,11 +94,11 @@ module kotku (
   wire        flash_mem_arena;
   wire        flash_io_arena;
   wire [15:0] flash_dat_o;
-  wire        lock;
+  wire        lock, lock0, lock1;
   reg  [15:0] io_reg;
   wire [15:0] imm;
   reg         dbg_block;
-  wire        block;
+  wire        block, block_trace;
   wire [15:0] io_dat_i;
 
   wire [31:0] sdram_dat_o;
@@ -107,12 +110,6 @@ module kotku (
   wire [1:0]  state0;
   wire [4:0]  state1;
 
-  wire [15:0] sram_dat_o;
-  wire        sram_stb;
-  wire        sram_ack;
-  wire        sram_mem_arena;
-  wire        sram_arena;
-
   wire        vdu_clk;
   wire [15:0] vdum_dat_i;
   wire [ 6:0] h_vdu_adr;
@@ -123,8 +120,9 @@ module kotku (
   wire        vdum_cyc_o;
   wire        vdum_ack_i;
   wire [15:0] vdu_dat_o;
-  wire        vdu_ack_o;
+  wire        vdu_ack;
   wire        vdu_stb;
+  wire        vdu_mem_arena;
   wire        vdu_io_arena;
   wire        vdu_arena;
 
@@ -142,9 +140,13 @@ module kotku (
   wire [15:0] ip;
   wire [19:0] pc;
   wire [15:0] cs;
-  wire [ 2:0] state;
+  wire [ 2:0] state, next_state;
   wire        clk_s;
   wire        rst_s;
+  wire [ 5:0] funct;
+  wire [ 3:0] addr_d;
+  wire        byte_op;
+  wire [ 8:0] flags;
 `endif
 
   // Module instantiations
@@ -153,9 +155,15 @@ module kotku (
     .c0     (sdram_clk),
     .c1     (vdu_clk),
     .c2     (sys_clk),
-    .locked (lock)
+    .locked (lock0)
   );
-
+/*
+  sys_pll sys_pll (
+    .inclk0 (clk_27_),
+    .c0     (sys_clk),
+    .locked (lock1)
+  );
+*/
   flash flash (
     // Wishbone slave interface
     .wb_clk_i (clk),
@@ -175,6 +183,7 @@ module kotku (
     .flash_data_  (flash_data_),
     .flash_we_n_  (flash_we_n_),
     .flash_oe_n_  (flash_oe_n_),
+    .flash_ce_n_  (flash_ce_n_),
     .flash_rst_n_ (flash_rst_n_)
   );
 
@@ -213,69 +222,34 @@ module kotku (
     .sdram_dq    (sdram_data_)
   );
 
-  wb_sram sram (
-    // Wishbone common signals
-    .wb_clk_i (clk),
-    .wb_rst_i (rst),
-
-    // Wishbone slave interface 0 - higher priority
-    .wb0_dat_i (16'h0),
-    .wb0_dat_o (vdum_dat_i),
-    .wb0_adr_i ({h_vdu_adr,vdum_adr_o}),
-    .wb0_we_i  (vdum_we_o),
-    .wb0_sel_i (vdum_sel_o),
-    .wb0_stb_i (vdum_stb_o /* 1'b0 */),
-    .wb0_cyc_i (vdum_cyc_o),
-    .wb0_ack_o (vdum_ack_i),
-
-    // Wishbone slave interface 1 - lower priority
-    .wb1_dat_i (dat_o),
-    .wb1_dat_o (sram_dat_o),
-    .wb1_adr_i ({adr[19],adr[17:1]}),
-    .wb1_we_i  (we),
-    .wb1_sel_i (sel),
-    .wb1_stb_i (sram_stb),
-    .wb1_cyc_i (sram_stb),
-    .wb1_ack_o (sram_ack),
-
-    // Pad signals
-    .sram_addr_ (sram_addr_),
-    .sram_data_ (sram_data_),
-    .sram_we_n_ (sram_we_n_),
-    .sram_oe_n_ (sram_oe_n_),
-    .sram_ce_n_ (sram_ce_n_),
-    .sram_bw_n_ (sram_bw_n_)
-  );
-
   vdu vdu (
-    // Wishbone common signals
-    .wb_rst_i (rst),
-    .wb_clk_i (vdu_clk), // 25MHz	VDU clock
-
     // Wishbone slave interface
-    .wbs_dat_i (dat_o),
-    .wbs_dat_o (vdu_dat_o),
-    .wbs_we_i  (we),
-    .wbs_sel_i (sel),
-    .wbs_stb_i (vdu_stb),
-    .wbs_cyc_i (vdu_stb),
-    .wbs_ack_o (vdu_ack_o),
-
-    // Wishbone master interface
-    .wbm_adr_o (vdum_adr_o),
-    .wbm_dat_i (vdum_dat_i),
-    .wbm_we_o  (vdum_we_o),
-    .wbm_sel_o (vdum_sel_o),
-    .wbm_stb_o (vdum_stb_o),
-    .wbm_cyc_o (vdum_cyc_o),
-    .wbm_ack_i (vdum_ack_i),
+    .wb_rst_i (rst),
+    .wb_clk_i (vdu_clk), // 25MHz VDU clock
+    .wb_dat_i (dat_o),
+    .wb_dat_o (vdu_dat_o),
+    .wb_adr_i (adr[11:1]),
+    .wb_we_i  (we),
+    .wb_tga_i (tga),
+    .wb_sel_i (sel),
+    .wb_stb_i (vdu_stb),
+    .wb_cyc_i (vdu_stb),
+    .wb_ack_o (vdu_ack),
 
     // VGA pad signals
     .vga_red_o   (tft_lcd_r_),
     .vga_green_o (tft_lcd_g_),
     .vga_blue_o  (tft_lcd_b_),
     .horiz_sync  (tft_lcd_hsync_),
-    .vert_sync   (tft_lcd_vsync_)
+    .vert_sync   (tft_lcd_vsync_),
+
+    // SRAM pad signals
+    .sram_addr_ (sram_addr_),
+    .sram_data_ (sram_data_),
+    .sram_we_n_ (sram_we_n_),
+    .sram_oe_n_ (sram_oe_n_),
+    .sram_ce_n_ (sram_ce_n_),
+    .sram_bw_n_ (sram_bw_n_)
   );
 
   ps2_keyb #(
@@ -313,11 +287,16 @@ module kotku (
 
   cpu zet_proc (
 `ifdef DEBUG
-    .ip        (ip),
-    .cs        (cs),
-    .dbg_block (block),
-    .state     (state),
-    .imm       (imm),
+    .ip         (ip),
+    .cs         (cs),
+    .state      (state),
+    .next_state (next_state),
+    .iralu      (funct),
+    .dbg_block  (block),
+    .imm        (imm),
+    .addr_d     (addr_d),
+    .flags      (flags),
+    .byte_exec  (byte_op),
 `endif
     // Wishbone master interface
     .wb_clk_i (clk),
@@ -346,6 +325,7 @@ module kotku (
     .hex3 (hex3_)
   );
 
+`ifdef DEBUG_TRACE
   clk_uart #(
     .bits  (26),
     .value (154619) // phase counter
@@ -363,8 +343,9 @@ module kotku (
     .rst      (rst),
     .pc       (pc),
     .zet_st   (state),
-    .block    (block)
+    .block    (block_trace)
   );
+`endif
 `endif
 
   // Continuous assignments
@@ -374,18 +355,16 @@ module kotku (
                          | (tga & flash_io_arena);
   assign flash_stb       = flash_arena & stb & cyc;
 
-  assign sram_mem_arena  = !adr[18];
-  assign sram_arena      = !tga & sram_mem_arena;
-  assign sram_stb        = sram_arena & stb & cyc;
-
-  assign sdram_mem_arena = !flash_mem_arena & !sram_mem_arena;
+  assign sdram_mem_arena = !flash_mem_arena & !vdu_mem_arena;
   assign sdram_arena     = !tga & sdram_mem_arena;
   assign sdram_stb       = sdram_arena & stb & cyc;
 
+  assign vdu_mem_arena   = (adr[19:12]==8'hb8);
   assign vdu_io_arena    = (adr[15:4]==12'h03d) &&
                            ((adr[3:1]==3'h2 && we)
                             || (adr[3:1]==3'h5 && !we));
-  assign vdu_arena       = (tga & vdu_io_arena);
+  assign vdu_arena       = (!tga & vdu_mem_arena)
+                         | (tga & vdu_io_arena);
   assign vdu_stb         = vdu_arena & stb & cyc;
 
   // MS-DOS is reading IO address 0x64 to check the inhibit bit
@@ -394,28 +373,37 @@ module kotku (
   assign keyb_arena      = (tga & keyb_io_arena);
 
   assign ack             = tga ? (flash_io_arena ? flash_ack
-                               : (vdu_io_arena ? vdu_ack_o : (stb & cyc)))
-                         : (flash_mem_arena ? flash_ack
-                         : (sram_mem_arena ? sram_ack : sdram_ack));
+                               : (vdu_io_arena ? vdu_ack : (stb & cyc)))
+                         : (vdu_mem_arena ? vdu_ack
+                         : (flash_mem_arena ? flash_ack : sdram_ack));
+  assign lock            = lock0;
   assign rst_lck         = !lock;
   assign sdram_clk_      = sdram_clk;
 
   assign io_dat_i  = flash_io_arena ? flash_dat_o
                    : (vdu_io_arena ? vdu_dat_o
                    : (keyb_io_arena ? keyb_dat_o
-                   : (keyb_io_status ? 16'h10 : 16'h0)));
+                   : (keyb_io_status ? 16'h10 : 16'hffff)));
 
   assign dat_i     = inta ? { 15'b0000_0000_0000_100, iid }
                    : (tga ? io_dat_i
+                   : (vdu_mem_arena ? vdu_dat_o
                    : (flash_mem_arena ? flash_dat_o
-                   : (sram_mem_arena ? sram_dat_o
                    : sdram_dat_o[15:0])));
 
   assign h_vdu_adr = 7'b111_1000;
-`ifdef DEBUG
   assign pc  = (cs << 4) + ip;
+
+`ifdef DEBUG
+`ifdef DEBUG_TRACE
   assign clk = clk_s;
   assign rst = rst_s;
+  assign block = block_trace;
+`else
+  assign clk = sys_clk;
+  assign rst = sw_[0] | rst_lck;
+  assign block = 1'b0;
+`endif
   assign { ledr_,ledg_ } = { io_reg[13:0], pc[3:0] };
 `else
   assign clk = sys_clk;

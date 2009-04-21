@@ -38,7 +38,7 @@
 
 set_global_assignment -name FAMILY "Cyclone II"
 set_global_assignment -name DEVICE EP2C20F484C7
-set_global_assignment -name TOP_LEVEL_ENTITY test_sram
+set_global_assignment -name TOP_LEVEL_ENTITY read_sram
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "18:50:09  MARCH 23, 2009"
 set_global_assignment -name LAST_QUARTUS_VERSION 9.0
@@ -48,11 +48,6 @@ set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda
 set_global_assignment -name USE_GENERATED_PHYSICAL_CONSTRAINTS OFF -section_id eda_blast_fpga
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
-set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_location_assignment PIN_Y21 -to ledg_[7]
 set_location_assignment PIN_Y22 -to ledg_[6]
@@ -123,5 +118,10 @@ set_location_assignment PIN_L21 -to sw_[1]
 set_location_assignment PIN_L22 -to sw_[0]
 set_global_assignment -name MISC_FILE /home/zeus/zet/cores/sram/test/syn/test_sram.dpf
 set_location_assignment PIN_D12 -to clk_27_
-set_global_assignment -name VERILOG_FILE ../test_sram.v
-set_global_assignment -name VERILOG_FILE "../../../../boards/altera-de1/rtl/pll.v"
+set_global_assignment -name MISC_FILE /home/zeus/zet/cores/sram/test/test_sram.dpf
+set_global_assignment -name VERILOG_FILE read_sram.v
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
+set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

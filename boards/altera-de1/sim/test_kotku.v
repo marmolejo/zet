@@ -55,7 +55,7 @@ module test_kotku;
   // Module instantiations
   kotku kotku (
     .clk_50_ (clk_50),
-//    .clk_27_ (clk_27),
+    .clk_27_ (clk_27),
     .ledr_   (ledr),
     .ledg_   (ledg),
     .sw_     (sw),

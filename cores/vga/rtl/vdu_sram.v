@@ -18,35 +18,37 @@
 
 `timescale 1ns/10ps
 
-module vdu (
-    // Wishbone common signals
+module vdu #(
+    parameter ack_delay = 1
+  )
+  (
+    // Wishbone signals
     input             wb_clk_i,     // 25 Mhz VDU clock
     input             wb_rst_i,
-
-    // Wishbone slave interface
-    input      [15:0] wbs_dat_i,
-    output reg [15:0] wbs_dat_o,
-    input             wbs_we_i,
-    input      [ 1:0] wbs_sel_i,
-    input             wbs_stb_i,
-    input             wbs_cyc_i,
-    output            wbs_ack_o,
-
-    // Wishbone master interface
-    output     [11:1] wbm_adr_o,
-    input      [15:0] wbm_dat_i,
-    output            wbm_we_o,
-    output     [ 1:0] wbm_sel_o,
-    output            wbm_stb_o,
-    output            wbm_cyc_o,
-    input             wbm_ack_i,
+    input      [15:0] wb_dat_i,
+    output reg [15:0] wb_dat_o,
+    input      [11:1] wb_adr_i,
+    input             wb_we_i,
+    input             wb_tga_i,
+    input      [ 1:0] wb_sel_i,
+    input             wb_stb_i,
+    input             wb_cyc_i,
+    output            wb_ack_o,
 
     // VGA pad signals
     output reg [ 1:0] vga_red_o,
     output reg [ 1:0] vga_green_o,
     output reg [ 1:0] vga_blue_o,
     output reg        horiz_sync,
-    output reg        vert_sync
+    output reg        vert_sync,
+
+    // SRAM pad signals
+    output [17:0] sram_addr_,
+    inout  [15:0] sram_data_,
+    output        sram_we_n_,
+    output        sram_oe_n_,
+    output        sram_ce_n_,
+    output [ 1:0] sram_bw_n_
   );
 
   // Net, registers and parameters
@@ -81,6 +83,8 @@ module vdu (
   wire        char_we;
   wire [11:0] char_addr;
   wire [7:0]  char_data_in;
+  wire [7:0]  char_data_out;
+//  wire [7:0]  char_data_out1;
 
   // Control registers
   reg [3:0] reg_adr;
@@ -113,7 +117,27 @@ module vdu (
   reg   [4:0] row1_addr; // 0 to 49 (25 * 2 - 1)
   reg   [6:0] hor_addr;  // 0 to 79
   reg   [6:0] ver_addr;  // 0 to 124
+  reg         vga0_we;
+  reg         vga0_rw, vga1_rw, vga2_rw, vga3_rw, vga4_rw, vga5_rw;
+  reg         vga1_we;
+  reg         vga2_we;
+  reg         buff_we;
+  reg         attr_we;
+  reg         buff_sel;
+  reg         attr_sel;
+  reg   [7:0] buff_data_in;
+  reg   [7:0] attr_data_in;
+  reg  [10:0] csr_adr;
+  reg         attr0_we;
+  reg  [10:0] cpu_addr;
+  reg         buff0_we;
   reg         intense;
+  reg         vga5_rw_l;
+  wire        vga_cs;
+  wire  [7:0] vga_data_out;
+  wire  [7:0] attr_data_out;
+  wire [10:0] vga_addr;  // 2K byte character buffer
+  wire [15:0] out_data;
   wire        fg_or_bg;
   wire        stb;
   wire        brown_bg;
@@ -121,24 +145,31 @@ module vdu (
   wire [15:0] status_reg1;
   wire        vh_retrace;
   wire        v_retrace;
-  wire        vga_cs;
-  wire [10:0] vga_addr;
-  wire        attr_we;
-
-  reg         wbm_stb;
-
-  wire [ 7:0] char_data_out1;
-  reg  [ 7:0] char_data_out;
-  reg  [ 7:0] vga_data_out;
-  reg  [ 7:0] attr_data_out;
-
-  reg  [10:0] buff_addr;
-  reg  [10:0] attr_addr;
 
   // Module instantiation
   char_rom vdu_char_rom (
+    .clk  (wb_clk_i),
     .addr (char_addr),
-    .q    (char_data_out1)
+    .q    (char_data_out)
+  );
+
+  csr_sram sram (
+    .sys_clk (wb_clk_i),
+
+    // CSR slave interface
+    .csr_adr_i ({5'b11000,csr_adr}), // from b8000 to b8fff
+    .csr_sel_i ({attr_sel,buff_sel}),
+    .csr_we_i  (attr_we|buff_we),
+    .csr_dat_i ({attr_data_in,buff_data_in}),
+    .csr_dat_o ({attr_data_out,vga_data_out}),
+
+    // Pad signals
+    .sram_addr_ (sram_addr_),
+    .sram_data_ (sram_data_),
+    .sram_we_n_ (sram_we_n_),
+    .sram_oe_n_ (sram_oe_n_),
+    .sram_ce_n_ (sram_ce_n_),
+    .sram_bw_n_ (sram_bw_n_)
   );
 
   // Assignments
@@ -148,18 +179,20 @@ module vdu (
   assign char_we    = 1'b0;
   assign char_data_in = 8'b0;
   assign char_addr  = { vga_data_out, v_count[3:0] };
-  assign wbm_adr_o  = { 4'b0, hor_addr} + { ver_addr, 4'b0 };
+  assign vga_addr   = { 4'b0, hor_addr} + { ver_addr, 4'b0 };
+  assign out_data   = {attr_data_out, vga_data_out};
 
-  assign stb        = wbs_stb_i && wbs_cyc_i;
+  assign vga_cs     = 1'b1;
+  assign stb        = wb_stb_i && wb_cyc_i;
 
   assign fg_or_bg    = vga_shift[7] ^ cursor_on;
   assign brown_fg    = (vga_fg_colour==3'd6) && !intense;
   assign brown_bg    = (vga_bg_colour==3'd6);
 
   // Control registers
-  assign write        = wbs_stb_i & wbs_cyc_i & wbs_we_i;
-  assign wr_adr       = write & wbs_sel_i[0];
-  assign wr_reg       = write & wbs_sel_i[1];
+  assign write        = wb_tga_i & wb_stb_i & wb_cyc_i & wb_we_i;
+  assign wr_adr       = write & wb_sel_i[0];
+  assign wr_reg       = write & wb_sel_i[1];
   assign wr_hcursor   = wr_reg & (reg_adr==4'hf);
   assign wr_vcursor   = wr_reg & (reg_adr==4'he);
   assign wr_cur_start = wr_reg & (reg_adr==4'ha);
@@ -168,41 +201,72 @@ module vdu (
   assign v_retrace   = !video_on_v;
   assign vh_retrace  = v_retrace | !video_on_h;
   assign status_reg1 = { 11'b0, v_retrace, 3'b0, vh_retrace };
-  assign wbs_ack_o   = stb;
-
-  assign wbm_we_o  = 1'b0;
-  assign wbm_sel_o = 2'b11;
-  assign wbm_cyc_o = wbm_stb;
-  assign wbm_stb_o = wbm_stb;
+  assign wb_ack_o    = wb_tga_i ? stb
+                     : (ack_delay==1 ? (vga5_rw | vga5_rw_l) : vga5_rw);
 
   // Behaviour
 
-  // CPU read interface
-  // wbs_dat_o
+  // This register is for holding the wb_ack_o 2 cycles due to the
+  // double frequency of the VGA
+  // vga5_rw_l
   always @(posedge wb_clk_i)
-    wbs_dat_o <= wb_rst_i ? 16'h0 : status_reg1;
+    vga5_rw_l <= wb_rst_i ? 1'b0 : vga5_rw;
+
+  // CPU write interface
+  always @(posedge wb_clk_i)
+    if (wb_rst_i)
+      begin
+        attr0_we      <= 1'b0;
+        attr_data_in  <= 8'h0;
+        cpu_addr      <= 11'b0;
+        buff0_we      <= 1'b0;
+        buff_data_in  <= 8'h0;
+      end
+    else
+      begin
+        if (stb && !wb_tga_i)
+          begin
+            attr0_we     <= wb_we_i & wb_sel_i[1];
+            attr_data_in <= wb_dat_i[15:8];
+            cpu_addr     <= wb_adr_i;
+            buff0_we     <= wb_we_i & wb_sel_i[0];
+            buff_data_in <= wb_dat_i[7:0];
+          end
+      end
+
+  // CPU read interface
+  // wb_dat_o
+  always @(posedge wb_clk_i)
+    wb_dat_o <= wb_rst_i ? 16'h0 : (wb_tga_i ? status_reg1
+                                 : (vga4_rw ? out_data : wb_dat_o));
 
   // Control registers
   always @(posedge wb_clk_i)
     reg_adr <= wb_rst_i ? 4'h0
-      : (wr_adr ? wbs_dat_i[3:0] : reg_adr);
+      : (wr_adr ? wb_dat_i[3:0] : reg_adr);
 
   always @(posedge wb_clk_i)
     reg_hcursor <= wb_rst_i ? 7'h0
-      : (wr_hcursor ? wbs_dat_i[14:8] : reg_hcursor);
+      : (wr_hcursor ? wb_dat_i[14:8] : reg_hcursor);
 
   always @(posedge wb_clk_i)
     reg_vcursor <= wb_rst_i ? 5'h0
-      : (wr_vcursor ? wbs_dat_i[12:8] : reg_vcursor);
+      : (wr_vcursor ? wb_dat_i[12:8] : reg_vcursor);
 
   always @(posedge wb_clk_i)
     reg_cur_start <= wb_rst_i ? 4'he
-      : (wr_cur_start ? wbs_dat_i[11:8] : reg_cur_start);
+      : (wr_cur_start ? wb_dat_i[11:8] : reg_cur_start);
 
   always @(posedge wb_clk_i)
     reg_cur_end <= wb_rst_i ? 4'hf
-      : (wr_cur_end ? wbs_dat_i[11:8] : reg_cur_end);
+      : (wr_cur_end ? wb_dat_i[11:8] : reg_cur_end);
 
+  // char_data_out
+/*
+  always @(posedge wb_clk_i)
+    char_data_out <= wb_rst_i ? 8'h0
+      : ((h_count[2:0]==3'b111) ? char_data_out1 : char_data_out);
+*/
   // Sync generation & timing process
   // Generate horizontal and vertical timing signals for video signal
   always @(posedge wb_clk_i)
@@ -238,58 +302,77 @@ module vdu (
         blink_count <= blink_count + 22'd1;
       end
 
-
-
   // Video memory access
   always @(posedge wb_clk_i)
     if (wb_rst_i)
       begin
+        vga0_we <= 1'b0;
+        vga0_rw <= 1'b1;
         row_addr <= 5'b0;
         col_addr <= 7'b0;
 
+        vga1_we  <= 1'b0;
+        vga1_rw  <= 1'b1;
         row1_addr <= 5'b0;
         col1_addr <= 7'b0;
 
+        vga2_we  <= 1'b0;
+        vga2_rw  <= 1'b0;
+        vga3_rw  <= 1'b0;
+        vga4_rw  <= 1'b0;
+        vga5_rw  <= 1'b0;
         ver_addr <= 7'b0;
         hor_addr <= 7'b0;
+
+        csr_adr <= 10'b0;
+        buff_we   <= 1'b0;
+        attr_we   <= 1'b0;
       end
     else
       begin
-        // on vdu_clk round off row address
-        // row1_addr = (row_addr % 80)
-        row1_addr <= (v_count[8:4] < VER_DISP_CHR) ? v_count[8:4]
-                      : v_count[8:4] - VER_DISP_CHR;
-        col1_addr <= h_count[9:3];
+        // on h_count = 0 initiate character write
+        // all other cycles are reads
+        case (h_count[2:0])
+          3'b000:   // pipeline character write
+            begin
+              vga0_we <= wb_we_i;
+              vga0_rw <= stb;
+            end
+          default:  // other 6 cycles free
+            begin
+              vga0_we <= 1'b0;
+              vga0_rw <= 1'b0;
+              col_addr <= h_count[9:3];
+              row_addr <= v_count[8:4];
+            end
+        endcase
 
-        // on vdu_clk + 1 calculate vertical address
+        // on vdu_clk + 1 round off row address
+        // row1_addr = (row_addr % 80)
+        vga1_we <= vga0_we;
+        vga1_rw <= vga0_rw;
+        row1_addr <= (row_addr < VER_DISP_CHR) ? row_addr
+                    : row_addr - VER_DISP_CHR;
+        col1_addr <= col_addr;
+
+        // on vdu_clk + 2 calculate vertical address
         // ver_addr = (row_addr % 80) x 5
+        vga2_we <= vga1_we;
+        vga2_rw <= vga1_rw;
         ver_addr <= { 2'b00, row1_addr } + { row1_addr, 2'b00 }; // x5
         hor_addr <= col1_addr;
 
-        // on vdu_clk + 2 calculate memory address
-        // wbm_adr_o = (row_addr % 80) * 80 + hor_addr
+        // on vdu_clk + 3 calculate memory address
+        // vga_addr = (row_addr % 80) * 80 + hor_addr
+        csr_adr   <= vga2_rw ? cpu_addr : vga_addr;
+        buff_we   <= vga2_rw ? (buff0_we & vga2_we) : 1'b0;
+        attr_we   <= vga2_rw ? (attr0_we & vga2_we) : 1'b0;
+        buff_sel  <= vga2_rw ? (buff0_we | !vga2_we) : 1'b1;
+        attr_sel  <= vga2_rw ? (attr0_we | !vga2_we) : 1'b1;
+        vga3_rw   <= vga2_rw;
+        vga4_rw   <= vga3_rw;
+        vga5_rw   <= vga4_rw;
       end
-
-  // wbm_stb
-  always @(posedge wb_clk_i)
-    wbm_stb <= wb_rst_i ? 1'b0
-      : (wbm_stb ? (!wbm_ack_i /* && h_count[2:0]!=3'b111 */)
-                 : h_count[2:0]==3'b001);
-
-  // char_data_out
-  always @(posedge wb_clk_i)
-    char_data_out <= wb_rst_i ? 8'h0
-      : ((h_count[2:0]==3'b111) ? char_data_out1 : char_data_out);
-
-  // attr_data_out
-  always @(posedge wb_clk_i)
-    attr_data_out <= wb_rst_i ? 8'h0
-      : (wbm_ack_i /*(h_count[2:0]==3'b110)*/ ? wbm_dat_i[15:8] : attr_data_out);
-
-  // vga_data_out
-  always @(posedge wb_clk_i)
-    vga_data_out <= wb_rst_i ? 8'h0
-      : (wbm_ack_i /*(h_count[2:0]==3'b110)*/ ? wbm_dat_i[7:0] : vga_data_out);
 
   // Video shift register
   always @(posedge wb_clk_i)

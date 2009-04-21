@@ -70,7 +70,7 @@ module alu (
   );
 
   bitlog log4 (x[15:0], y, log, func, cf_log, of_log);
-  shifts shi5 (x[15:0], y[4:0], shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
+  shifts shi5 (x[15:0], y[7:0], shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
   rotate rot6 (x[15:0], y[4:0], func[1:0], cfi, word_op, rot, cf_rot, ofi, of_rot);
   othop  oth7 (x[15:0], y, seg, off, iflags, func, word_op, oth, othflags);
 
@@ -315,7 +315,7 @@ endmodule
 module shifts(x, y, out, func, word_op, cfi, ofi, cfo, ofo);
   // IO ports
   input  [15:0] x;
-  input  [ 4:0] y;
+  input  [ 7:0] y;
   input   [1:0] func;
   input         word_op;
   output [15:0] out;

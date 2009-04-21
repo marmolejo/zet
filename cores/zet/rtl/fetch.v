@@ -788,6 +788,28 @@ module opcode_deco (
           dst <= { 1'b0, op[2:0] };
         end
 
+      8'b0110_10x0: // push imm
+        begin
+          seq_addr <= `PUSHI;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b1;
+          imm_size <= !op[1];
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
+
+      8'b0110_10x1: // imul imm
+        begin
+          seq_addr <= (mod==2'b11) ? `IMULIR : `IMULIM;
+          need_modrm <= 1'b1;
+          need_off <= need_off_mod;
+          need_imm <= 1'b1;
+          imm_size <= !op[1];
+          src <= { 1'b0, rm };
+          dst <= { 1'b0, regm };
+        end
+
       8'b0111_xxxx: // jcc
         begin
           seq_addr <= `JCC;
@@ -1133,6 +1155,40 @@ module opcode_deco (
           dst <= { 1'b0, op[2:0] };
         end
 
+      8'b1100_0000: // ror/rol/rcr/rcl/sal/shl/sar/shr imm8
+        begin
+          seq_addr <=  (regm==3'b000) ? ((mod==2'b11) ? `ROLIRB : `ROLIMB)
+                    : ((regm==3'b001) ? ((mod==2'b11) ? `RORIRB : `RORIMB)
+                    : ((regm==3'b010) ? ((mod==2'b11) ? `RCLIRB : `RCLIMB)
+                    : ((regm==3'b011) ? ((mod==2'b11) ? `RCRIRB : `RCRIMB)
+                    : ((regm==3'b100) ? ((mod==2'b11) ? `SALIRB : `SALIMB)
+                    : ((regm==3'b101) ? ((mod==2'b11) ? `SHRIRB : `SHRIMB)
+                                      : ((mod==2'b11) ? `SARIRB : `SARIMB))))));
+          need_modrm <= 1'b1;
+          need_off <= need_off_mod;
+          need_imm <= 1'b1;
+          imm_size <= 1'b0;
+          src <= rm;
+          dst <= rm;
+        end
+
+      8'b1100_0001: // ror/rol/rcr/rcl/sal/shl/sar/shr imm16
+        begin
+          seq_addr <=  (regm==3'b000) ? ((mod==2'b11) ? `ROLIRW : `ROLIMW)
+                    : ((regm==3'b001) ? ((mod==2'b11) ? `RORIRW : `RORIMW)
+                    : ((regm==3'b010) ? ((mod==2'b11) ? `RCLIRW : `RCLIMW)
+                    : ((regm==3'b011) ? ((mod==2'b11) ? `RCRIRW : `RCRIMW)
+                    : ((regm==3'b100) ? ((mod==2'b11) ? `SALIRW : `SALIMW)
+                    : ((regm==3'b101) ? ((mod==2'b11) ? `SHRIRW : `SHRIMW)
+                                      : ((mod==2'b11) ? `SARIRW : `SARIMW))))));
+          need_modrm <= 1'b1;
+          need_off <= need_off_mod;
+          need_imm <= 1'b1;
+          imm_size <= 1'b0;
+          src <= rm;
+          dst <= rm;
+        end
+
       8'b1100_0010: // ret near with value
         begin
           seq_addr <= `RETNV;
@@ -1188,6 +1244,28 @@ module opcode_deco (
 
           src <= 4'b0;
           dst <= { 1'b0, rm };
+        end
+
+      8'b1100_1000: // enter
+        begin
+          seq_addr <= `ENTER;
+          need_modrm <= 1'b0;
+          need_off <= need_off_mod;
+          need_imm <= 1'b1;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
+
+      8'b1100_1001: // leave
+        begin
+          seq_addr <= `LEAVE;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
         end
 
       8'b1100_1010: // ret far with value
@@ -1738,7 +1816,7 @@ module micro_rom (
   assign q = rom[addr];
 
   // Behaviour
-  initial $readmemb("/home/zeus/zet/cores/zet/rtl/micro_rom.dat", rom);
+  initial $readmemb("micro_rom.dat", rom);
 endmodule
 
 module seq_rom (
@@ -1753,5 +1831,5 @@ module seq_rom (
   assign q = rom[addr];
 
   // Behaviour
-  initial $readmemb("/home/zeus/zet/cores/zet/rtl/seq_rom.dat", rom);
+  initial $readmemb("seq_rom.dat", rom);
 endmodule

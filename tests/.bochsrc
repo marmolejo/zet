@@ -1,4 +1,5 @@
-romimage: file=00_test2.out
+#romimage: file=00_mov.out
+romimage: file=/home/zeus/zet/src/bios/zet-bios.out
 cpu: count=1, ips=10000000, reset_on_triple_fault=1
 megs: 2
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
