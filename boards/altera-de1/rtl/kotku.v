@@ -468,9 +468,7 @@ module kotku (
                                : (vdu_io_arena ? vdu_ack
                                : (sd_io_arena ? sd_ack
                                : (com1_io_arena ? com1_ack_o
-                               : (ems_io_arena ? ems_ack_o
-                               : (com1_io_arena ? com1_ack_o
-                               : (ems_io_arena ? ems_ack_o : (stb & cyc))))))))
+                               : (ems_io_arena ? ems_ack_o : (stb & cyc))))))
                          : (vdu_mem_arena ? vdu_ack
                          : (flash_mem_arena ? flash_ack : sdram_ack));
   assign lock            = lock0;
