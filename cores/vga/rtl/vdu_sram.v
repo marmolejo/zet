@@ -56,19 +56,19 @@ module vdu #(
   // Synchronization constants, these values are taken from:
   //  http://tinyvga.com/vga-timing/640x400@70Hz
 
-  parameter HOR_DISP_END = 10'd639; // Last horizontal pixel displayed
-  parameter HOR_SYNC_BEG = 10'd655; // Start of horizontal synch pulse
-  parameter HOR_SYNC_END = 10'd751; // End of Horizontal Synch pulse
-  parameter HOR_SCAN_END = 10'd799; // Last pixel in scan line
-  parameter HOR_DISP_CHR = 80;      // Number of characters displayed per row
-  parameter HOR_VIDEO_ON = 10'd7;   // When to start displaying characters
-  parameter HOR_VIDEO_OFF = 10'd647; // When to stop displaying characters
+  localparam HOR_DISP_END = 10'd639; // Last horizontal pixel displayed
+  localparam HOR_SYNC_BEG = 10'd655; // Start of horizontal synch pulse
+  localparam HOR_SYNC_END = 10'd751; // End of Horizontal Synch pulse
+  localparam HOR_SCAN_END = 10'd799; // Last pixel in scan line
+  localparam HOR_DISP_CHR = 80;      // Number of characters displayed per row
+  localparam HOR_VIDEO_ON = 10'd7;   // When to start displaying characters
+  localparam HOR_VIDEO_OFF = 10'd647; // When to stop displaying characters
 
-  parameter VER_DISP_END = 9'd400;  // last row displayed
-  parameter VER_SYNC_BEG = 9'd411;  // start of vertical synch pulse
-  parameter VER_SYNC_END = 9'd413;  // end of vertical synch pulse
-  parameter VER_SCAN_END = 9'd448;  // Last scan row in the frame
-  parameter VER_DISP_CHR = 6'd25;   // Number of character rows displayed
+  localparam VER_DISP_END = 9'd400;  // last row displayed
+  localparam VER_SYNC_BEG = 9'd411;  // start of vertical synch pulse
+  localparam VER_SYNC_END = 9'd413;  // end of vertical synch pulse
+  localparam VER_SCAN_END = 9'd448;  // Last scan row in the frame
+  localparam VER_DISP_CHR = 6'd25;   // Number of character rows displayed
 
   reg        cursor_on_v;
   reg        cursor_on_h;

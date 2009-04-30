@@ -28,7 +28,7 @@ module kotku (
     output [9:0] ledr_,
     output [7:0] ledg_,
     input  [9:0] sw_,
-    input        but0_,
+    input  [3:0] key_,
     output [6:0] hex0_,
     output [6:0] hex1_,
     output [6:0] hex2_,
@@ -69,6 +69,10 @@ module kotku (
     output       tft_lcd_hsync_,
     output       tft_lcd_vsync_,
 
+    // UART signals
+    input         uart_rxd_,
+    output        uart_txd_,
+
     // PS2 signals
     inout         ps2_clk_,
     inout         ps2_data_,
@@ -102,7 +106,7 @@ module kotku (
   wire [15:0] flash_dat_o;
   wire        lock, lock0, lock1;
   reg  [15:0] io_reg;
-  wire        block, block_trace;
+  wire        block_trace;
   wire [15:0] io_dat_i;
 
   wire [31:0] sdram_dat_o;
@@ -128,13 +132,26 @@ module kotku (
   wire        vdu_io_arena;
   wire        vdu_arena;
 
+  wire        com1_stb;
+  wire [ 7:0] com1_dat_i;
+  wire [ 7:0] com1_dat_o;
+  wire        com1_ack_o;
+  wire        com1_io_arena;
+  wire        com1_arena;
+
+  wire        ems_stb;
+  wire [15:0] ems_dat_o;
+  wire        ems_ack_o;
+  wire        ems_io_arena;
+  wire        ems_arena;
+  wire [31:0] ems_sdram_adr;
+
   wire [ 7:0] keyb_dat_o;
   wire        keyb_io_arena;
   wire        keyb_io_status;
-  wire        keyb_arena;
 
-  wire [ 1:0] intv;
-  wire        iid;
+  wire [ 7:0] intv;
+  wire [ 2:0] iid;
   wire        intr;
   wire        inta;
 
@@ -197,7 +214,7 @@ module kotku (
     // Wishbone slave interface
     .sys_clk  (clk),
     .sys_rst  (rst),
-    .wb_adr_i ({11'h0,adr,2'b00}),
+    .wb_adr_i (ems_sdram_adr),
     .wb_dat_i ({16'h0,dat_o}),
     .wb_dat_o (sdram_dat_o),
     .wb_sel_i ({2'b00,sel}),
@@ -247,6 +264,56 @@ module kotku (
     .sram_oe_n_ (sram_oe_n_),
     .sram_ce_n_ (sram_ce_n_),
     .sram_bw_n_ (sram_bw_n_)
+  );
+
+  uart_top com1 (
+    // Wishbone slave interface
+    .wb_clk_i (clk),
+    .wb_rst_i (rst),
+    .wb_adr_i ({adr[2:1],~sel[0]}),
+    .wb_dat_i (com1_dat_i),
+    .wb_dat_o (com1_dat_o),
+    .wb_we_i  (we),
+    .wb_stb_i (com1_stb),
+    .wb_cyc_i (cyc),
+    .wb_ack_o (com1_ack_o),
+    .wb_sel_i (4'b0),
+    .int_o    (intv[4]), // interrupt request
+
+    // UART signals
+    // serial input/output
+    .stx_pad_o  (uart_txd_),
+    .srx_pad_i  (uart_rxd_),
+
+    // modem signals
+    //.rts_pad_o,
+    .cts_pad_i  (1'b1),
+    //.dtr_pad_o,
+    .dsr_pad_i  (1'b1),
+    .ri_pad_i   (1'b0),
+    .dcd_pad_i  (1'b0)
+    //, baud_o
+  );
+
+  ems #(
+    .IO_BASE_ADDR (16'h0208)
+    ) ems_card (
+    // Wishbone slave interface
+    .wb_clk_i (clk),
+    .wb_rst_i (rst),
+    .wb_adr_i (adr[15:1]),
+    .wb_dat_i (dat_o),
+    .wb_dat_o (ems_dat_o),
+    .wb_sel_i (sel),
+    .wb_cyc_i (cyc),
+    .wb_stb_i (ems_stb),
+    .wb_we_i (we),
+    .wb_ack_o (ems_ack_o),
+    .ems_io_area (ems_io_arena),
+
+    // sdram address interface
+    .sdram_adr_i (adr),
+    .sdram_adr_o (ems_sdram_adr)
   );
 
   ps2_keyb #(
@@ -376,10 +443,20 @@ module kotku (
                          | (tga & vdu_io_arena);
   assign vdu_stb         = vdu_arena & stb & cyc;
 
+  // com1
+  assign com1_io_arena   = (adr[15:4]==12'h03f && adr[3]==1'b1);
+  assign com1_arena      = (tga & com1_io_arena);
+  assign com1_stb        = com1_arena & stb & cyc;
+  assign com1_dat_i      = (sel[0] ? dat_o[7:0] : dat_o[15:8]);
+
+  // EMS gets its I/O address from "dipswitches" (parameter) on the EMS module
+  //assign ems_io_arena   = {adr[15:4]==12'h020 && adr[3]==1'b1};
+  assign ems_arena      = (tga & ems_io_arena);
+  assign ems_stb        = ems_arena & stb & cyc;
+
   // MS-DOS is reading IO address 0x64 to check the inhibit bit
   assign keyb_io_status  = (adr[15:1]==15'h0032 && !we);
   assign keyb_io_arena   = (adr[15:1]==15'h0030 && !we);
-  assign keyb_arena      = (tga & keyb_io_arena);
 
   assign sd_io_arena     = (adr[15:1]==15'h0080);
   assign sd_arena        = sd_io_arena & tga;
@@ -390,7 +467,10 @@ module kotku (
   assign ack             = tga ? (flash_io_arena ? flash_ack
                                : (vdu_io_arena ? vdu_ack
                                : (sd_io_arena ? sd_ack
-                                              : (stb & cyc))))
+                               : (com1_io_arena ? com1_ack_o
+                               : (ems_io_arena ? ems_ack_o
+                               : (com1_io_arena ? com1_ack_o
+                               : (ems_io_arena ? ems_ack_o : (stb & cyc))))))))
                          : (vdu_mem_arena ? vdu_ack
                          : (flash_mem_arena ? flash_ack : sdram_ack));
   assign lock            = lock0;
@@ -399,29 +479,28 @@ module kotku (
 
   assign io_dat_i  = flash_io_arena ? flash_dat_o
                    : (vdu_io_arena ? vdu_dat_o
+                   : (com1_io_arena ? {com1_dat_o, com1_dat_o}
+                   : (ems_io_arena ? ems_dat_o
                    : (keyb_io_arena ? keyb_dat_o
                    : (keyb_io_status ? 16'h10
                    : (sd_io_arena ? {8'h0,sd_dat_o}
-                   : (sw_arena ? sw_[7:0] : 16'hffff)))));
+                   : (sw_arena ? sw_[7:0] : 16'hffff)))))));
 
-  assign dat_i     = inta ? { 15'b0000_0000_0000_100, iid }
+  assign dat_i     = inta ? { 13'b0000_0000_0000_1, iid }
                    : (tga ? io_dat_i
                    : (vdu_mem_arena ? vdu_dat_o
                    : (flash_mem_arena ? flash_dat_o
                    : sdram_dat_o[15:0])));
 
-  assign h_vdu_adr = 7'b111_1000;
   assign pc  = (cs << 4) + ip;
 
 `ifdef DEBUG
 `ifdef DEBUG_TRACE
   assign clk = clk_s;
   assign rst = rst_s;
-  assign block = block_trace;
 `else
   assign clk = sys_clk;
   assign rst = sw_[0] | rst_lck;
-  assign block = 1'b0;
 `endif
   assign { ledr_,ledg_ } = { io_reg[13:0], pc[3:0] };
 `else
