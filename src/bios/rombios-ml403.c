@@ -2307,6 +2307,7 @@ ASM_START
     mov  ds, bx
     mov  es, bx
     mov  bp, bx
+
     ;; Go!
     iret
 ASM_END

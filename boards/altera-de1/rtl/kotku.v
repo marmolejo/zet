@@ -71,7 +71,13 @@ module kotku (
 
     // PS2 signals
     inout         ps2_clk_,
-    inout         ps2_data_
+    inout         ps2_data_,
+
+    // SD card signals
+    output        sd_sclk_,
+    input         sd_miso_,
+    output        sd_mosi_,
+    output        sd_ss_
   );
 
   // Registers and nets
@@ -96,8 +102,6 @@ module kotku (
   wire [15:0] flash_dat_o;
   wire        lock, lock0, lock1;
   reg  [15:0] io_reg;
-  wire [15:0] imm;
-  reg         dbg_block;
   wire        block, block_trace;
   wire [15:0] io_dat_i;
 
@@ -107,8 +111,6 @@ module kotku (
   wire        sdram_mem_arena;
   wire        sdram_arena;
   wire        sdram_clk;
-  wire [1:0]  state0;
-  wire [4:0]  state1;
 
   wire        vdu_clk;
   wire [15:0] vdum_dat_i;
@@ -136,17 +138,21 @@ module kotku (
   wire        intr;
   wire        inta;
 
+  wire [ 7:0] sd_dat_o;
+  wire        sd_io_arena;
+  wire        sd_arena;
+  wire        sd_ack;
+  wire        sd_stb;
+
+  wire        sw_arena;
+
 `ifdef DEBUG
   wire [15:0] ip;
   wire [19:0] pc;
   wire [15:0] cs;
-  wire [ 2:0] state, next_state;
+  wire [ 2:0] state;
   wire        clk_s;
   wire        rst_s;
-  wire [ 5:0] funct;
-  wire [ 3:0] addr_d;
-  wire        byte_op;
-  wire [ 8:0] flags;
 `endif
 
   // Module instantiations
@@ -157,13 +163,7 @@ module kotku (
     .c2     (sys_clk),
     .locked (lock0)
   );
-/*
-  sys_pll sys_pll (
-    .inclk0 (clk_27_),
-    .c0     (sys_clk),
-    .locked (lock1)
-  );
-*/
+
   flash flash (
     // Wishbone slave interface
     .wb_clk_i (clk),
@@ -193,11 +193,8 @@ module kotku (
     .sdram_adrwires    (12),
     .cache_depth       (4)
     ) yadmc (
+
     // Wishbone slave interface
-`ifdef DEBUG
-    .state  (state0),
-    .statey (state1),
-`endif
     .sys_clk  (clk),
     .sys_rst  (rst),
     .wb_adr_i ({11'h0,adr,2'b00}),
@@ -285,18 +282,30 @@ module kotku (
     .iid  (iid)
   );
 
+  sdspi sdspi (
+    // Serial pad signal
+    .sclk  (sd_sclk_),
+    .miso  (sd_miso_),
+    .mosi  (sd_mosi_),
+    .ss    (sd_ss_),
+
+    // Wishbone slave interface
+    .wb_clk_i (clk),
+    .wb_rst_i (rst),
+    .wb_dat_i (dat_o),
+    .wb_dat_o (sd_dat_o),
+    .wb_we_i  (we),
+    .wb_sel_i (sel),
+    .wb_stb_i (sd_stb),
+    .wb_cyc_i (sd_stb),
+    .wb_ack_o (sd_ack)
+  );
+
   cpu zet_proc (
 `ifdef DEBUG
     .ip         (ip),
     .cs         (cs),
     .state      (state),
-    .next_state (next_state),
-    .iralu      (funct),
-    .dbg_block  (block),
-    .imm        (imm),
-    .addr_d     (addr_d),
-    .flags      (flags),
-    .byte_exec  (byte_op),
 `endif
     // Wishbone master interface
     .wb_clk_i (clk),
@@ -372,8 +381,16 @@ module kotku (
   assign keyb_io_arena   = (adr[15:1]==15'h0030 && !we);
   assign keyb_arena      = (tga & keyb_io_arena);
 
+  assign sd_io_arena     = (adr[15:1]==15'h0080);
+  assign sd_arena        = sd_io_arena & tga;
+  assign sd_stb          = sd_arena & stb & cyc;
+
+  assign sw_arena        = (adr[15:1]==15'h0081);
+
   assign ack             = tga ? (flash_io_arena ? flash_ack
-                               : (vdu_io_arena ? vdu_ack : (stb & cyc)))
+                               : (vdu_io_arena ? vdu_ack
+                               : (sd_io_arena ? sd_ack
+                                              : (stb & cyc))))
                          : (vdu_mem_arena ? vdu_ack
                          : (flash_mem_arena ? flash_ack : sdram_ack));
   assign lock            = lock0;
@@ -383,7 +400,9 @@ module kotku (
   assign io_dat_i  = flash_io_arena ? flash_dat_o
                    : (vdu_io_arena ? vdu_dat_o
                    : (keyb_io_arena ? keyb_dat_o
-                   : (keyb_io_status ? 16'h10 : 16'hffff)));
+                   : (keyb_io_status ? 16'h10
+                   : (sd_io_arena ? {8'h0,sd_dat_o}
+                   : (sw_arena ? sw_[7:0] : 16'hffff)))));
 
   assign dat_i     = inta ? { 15'b0000_0000_0000_100, iid }
                    : (tga ? io_dat_i
@@ -417,11 +436,4 @@ module kotku (
     io_reg <= rst ? 16'h0
       : ((tga && stb && cyc && we && adr[15:8]==8'hf1) ?
         dat_o : io_reg );
-
-`ifdef DEBUG
-  // dbg_block
-  always @(posedge clk)
-    dbg_block <= rst ? 1'b0 : (ip[9:0]==sw_);
-`endif
-
 endmodule

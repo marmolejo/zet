@@ -8,3 +8,8 @@
 #define printf(format, p...)  bios_printf(BIOS_PRINTF_SCREEN, format, ##p)
 #define BX_INFO(format, p...)   bios_printf(BIOS_PRINTF_INFO, format, ##p)
 #define BX_PANIC(format, p...)  bios_printf(BIOS_PRINTF_DEBHALT, format, ##p)
+
+
+#define HD_CYLINDERS  8322 // For a 4 Gb SD card
+#define HD_HEADS      16
+#define HD_SECTORS    63

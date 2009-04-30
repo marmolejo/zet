@@ -35,7 +35,7 @@ RELVERS = `pwd | sed "s-.*/--" | sed "s/vgabios//" | sed "s/-//"`
 VGABIOS_DATE = "-DVGABIOS_DATE=\"$(RELDATE)\""
 
 
-all: bios.rom
+all: de1
 de1: bios.out
 
 ../../bin/ff: ../tools/ff.c

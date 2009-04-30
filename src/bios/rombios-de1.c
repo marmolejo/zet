@@ -656,6 +656,23 @@ static struct {
       { 0x5800, 0x5800,   none,   none, none }  /* F12 */
       };
 
+  Bit8u
+inb(port)
+  Bit16u port;
+{
+ASM_START
+  push bp
+  mov  bp, sp
+
+    push dx
+    mov  dx, 4[bp]
+    in   al, dx
+    pop  dx
+
+  pop  bp
+ASM_END
+}
+
   Bit16u
 inw(port)
   Bit16u port;
@@ -1054,7 +1071,7 @@ print_bios_banner()
 // http://www.phoenix.com/en/Customer+Services/White+Papers-Specs/pc+industry+specifications.htm
 //--------------------------------------------------------------------------
 
-static char drivetypes[][20]={"", "Floppy flash image", "Compact Flash" };
+static char drivetypes[][20]={"", "Floppy flash image", "SD card" };
 
 static void
 init_boot_vectors()
@@ -1075,11 +1092,10 @@ init_boot_vectors()
   count++;
 
   /* First HDD */
-/*
   e.type = IPL_TYPE_HARDDISK; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
   memcpyb(IPL_SEG, IPL_TABLE_OFFSET + count * sizeof (e), ss, &e, sizeof (e));
   count++;
-*/
+
   /* Remember how many devices we have */
   write_word(IPL_SEG, IPL_COUNT_OFFSET, count);
   /* Not tried booting anything yet */
@@ -1519,48 +1535,6 @@ enqueue_key(scan_code, ascii_code)
 int13_harddisk(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
   Bit16u DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS;
 {
-  write_byte(0x0040, 0x008e, 0);  // clear completion flag
-
-  switch (GET_AH()) {
-    case 0x08:
-      SET_AL(0);
-      SET_CH(0);
-      SET_CL(0);
-      SET_DH(0);
-      SET_DL(0); /* FIXME returns 0, 1, or n hard drives */
-
-      // FIXME should set ES & DI
-
-      goto int13_fail;
-      break;
-
-    default:
-      BX_INFO("int13_harddisk: function %02xh unsupported, returns fail\n", GET_AH());
-      goto int13_fail;
-      break;
-    }
-
-int13_fail:
-    SET_AH(0x01); // defaults to invalid function in AH or invalid parameter
-int13_fail_noah:
-    SET_DISK_RET_STATUS(GET_AH());
-int13_fail_nostatus:
-    SET_CF();     // error occurred
-    return;
-
-int13_success:
-    SET_AH(0x00); // no error
-int13_success_noah:
-    SET_DISK_RET_STATUS(0x00);
-    CLEAR_CF();   // no error
-    return;
-}
-
-#if 0
-  void
-int13_harddisk2(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
-  Bit16u DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS;
-{
   Bit8u    drive, num_sectors, sector, head, status;
   Bit8u    drive_map;
   Bit8u    n_drives;
@@ -1569,6 +1543,7 @@ int13_harddisk2(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
   Bit8u    hd_heads, hd_sectors;
   Bit8u    sector_count;
   Bit16u   tempbx;
+  Bit16u   addr_l, addr_h;
 
   Bit32u   log_sector;
 
@@ -1591,7 +1566,6 @@ int13_harddisk2(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
   switch (GET_AH()) {
 
     case 0x00: /* disk controller reset */
-
       SET_AH(0);
       SET_DISK_RET_STATUS(0);
       set_diskette_ret_status(0);
@@ -1617,9 +1591,9 @@ int13_harddisk2(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
 
       // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
       // fixed geometry:
-      hd_cylinders = 993;
-      hd_heads     = 16;
-      hd_sectors   = 63;
+      hd_cylinders = HD_CYLINDERS;
+      hd_heads     = HD_HEADS;
+      hd_sectors   = HD_SECTORS;
 
       num_sectors = GET_AL();
       cylinder    = (GET_CL() & 0x00c0) << 2 | GET_CH();
@@ -1654,6 +1628,10 @@ ASM_START
 ASM_END
 
       while (1) {
+
+        addr_l = ((Bit16u) log_sector) << 9;
+        addr_h = (Bit16u) (log_sector >> 7);
+
 ASM_START
         ;; store temp bx in real DI register
         push bp
@@ -1671,106 +1649,62 @@ i13_f02_adjust:
         mov   es, ax
 
 i13_f02_no_adjust:
-        ; timeout = TIMEOUT;
-        mov   cx, #0xffff
+        ;; ES: destination segment
+        ;; DI: destination offset
 
-        ; while((timeout > 0) && (!(CSR_ACE_STATUSL & ACE_STATUSL_CFCMDRDY))) timeout--;
-        mov   dx, #0xe204
-
-i13_f02_ace_statusl2:
-        in    ax, dx
-        and   ax, #0x100
-        loopz i13_f02_ace_statusl2
-
-        ; if(timeout == 0) return 0;
-        cmp   cx, #0
-        jnz   i13_f02_success2
-ASM_END
-        printf("i13_f02(1): Timeout\n");
-ASM_START
-        jmp   _int13_fail
-
-i13_f02_success2:
-        ; CSR_ACE_MLBAL = blocknr & 0x0000ffff;
         push  bp
         mov   bp, sp
-        mov   ax, _int13_harddisk.log_sector + 2 [bp]
-        mov   dx, #0xe210
-        out   dx, ax
-
-        ; CSR_ACE_MLBAH = (blocknr & 0x0fff0000) >> 16;
-        mov   ax, _int13_harddisk.log_sector + 4 [bp]
-        mov   dx, #0xe212
-        out   dx, ax
+        mov   bx, _int13_harddisk.addr_l + 2 [bp]
+        mov   cx, _int13_harddisk.addr_h + 2 [bp]
         pop   bp
 
-        ; CSR_ACE_SECCMD = ACE_SECCMD_READ|0x01;
-        mov   ax, #0x0301
-        mov   dx, #0xe214
+        ; SD card command CMD17
+        mov   dx, #0x0100
+        mov   ax, #0x51   ; CS = 0, CMD17
         out   dx, ax
+        mov   al, ch      ; addr[31:24]
+        out   dx, al
+        mov   al, cl      ; addr[23:16]
+        out   dx, al
+        mov   al, bh      ; addr[15:8]
+        out   dx, al
+        mov   al, bl      ; addr[7:0]
+        out   dx, al
+        mov   al, #0xff   ; CRC (not used)
+        out   dx, al
+        out   dx, al      ; wait
 
-        ; CSR_ACE_CTLL |= ACE_CTLL_CFGRESET;
-        mov   dx, #0xe218
-        in    ax, dx
-        or    ax, #0x0080
-        out   dx, ax
+i13_f02_read_res_cmd17:
+        in    al, dx     ; card response
+        cmp   al, #0
+        jne   i13_f02_read_res_cmd17
 
-        ; buffer_count = 16;
-        mov   si, #16
+        ; read data token: 0xfe
+i13_f02_read_tok_cmd17:
+        in    al, dx
+        cmp   al, #0xfe
+        jne   i13_f02_read_tok_cmd17
 
-        ; while(buffer_count > 0) {
-i13_f02_cond_loop:
-        cmp   si, #0
-        jbe   i13_f02_exit_loop
+        mov   cx, #0x100
+i13_f02_read_bytes:
+        in    al, dx     ; low byte
+        mov   bl, al
+        in    al, dx     ; high byte
+        mov   bh, al
 
-        ; timeout = TIMEOUT;
-        mov   cx, #0xffff
-        mov   bx, #0x000f
-
-        ; while((timeout > 0) && (!(CSR_ACE_STATUSL & ACE_STATUSL_DATARDY))) timeout--;
-        mov   dx, #0xe204
-i13_f02_ace_statusl3:
-        in    ax, dx
-        and   ax, #0x20
-        loopz i13_f02_ace_statusl3
-
-        ; if(timeout == 0) return 0;
-        cmp   cx, #0
-        jnz  i13_f02_success3
-        dec   bx
-        mov   cx, #0xffff
-        jne   i13_f02_ace_statusl3
-ASM_END
-        printf("i13_f02(2): Timeout\n");
-ASM_START
-        jmp   _int13_fail
-
-i13_f02_success3:
-        ; for(i=0;i<16;i++) {
-        mov   cx, #16
-        ; *bufw = CSR_ACE_DATA;
-        mov   dx, #0xe240
-i13_f02_ace_data:
-        in    ax, dx
         eseg
-              mov   [di], ax
-        ; bufw++;
-        add   di, #2
-        ; }
-        loop  i13_f02_ace_data
+              mov   [di], bx
 
-        ; buffer_count--;
-        dec   si
-        jmp   i13_f02_cond_loop
+        add di, #2
+        loop  i13_f02_read_bytes
 
-        ; }
-
-i13_f02_exit_loop:
-        ; CSR_ACE_CTLL &= ~ACE_CTLL_CFGRESET;
-        mov   dx, #0xe218
-        in    ax, dx
-        and   ax, #0xff7f
-        out   dx, ax
+        ; we are done, retrieve checksum
+        mov   ax, #0xffff
+        out   dx, al     ; Checksum, 1st byte
+        out   dx, al     ; Checksum, 2nd byte
+        out   dx, al     ; wait
+        out   dx, al     ; wait
+        out   dx, ax     ; CS = 1 (disable SD)
 
 i13_f02_done:
         ;; store real DI register back to temp bx
@@ -1799,9 +1733,9 @@ ASM_END
 
       // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
       // fixed geometry:
-      hd_cylinders = 993;
-      hd_heads     = 16;
-      hd_sectors   = 63;
+      hd_cylinders = HD_CYLINDERS;
+      hd_heads     = HD_HEADS;
+      hd_sectors   = HD_SECTORS;
 
       num_sectors = GET_AL();
       cylinder    = GET_CH();
@@ -1830,6 +1764,10 @@ ASM_START
 ASM_END
 
       while (1) {
+
+        addr_l = ((Bit16u) log_sector) << 9;
+        addr_h = (Bit16u) (log_sector >> 7);
+
 ASM_START
         ;; store temp bx in real SI register
         push bp
@@ -1847,106 +1785,75 @@ i13_f03_adjust:
         mov   es, ax
 
 i13_f03_no_adjust:
-        ; timeout = TIMEOUT;
-        mov   cx, #0xffff
+        ;; ES: source segment
+        ;; SI: source offset
 
-        ; while((timeout > 0) && (!(CSR_ACE_STATUSL & ACE_STATUSL_CFCMDRDY))) timeout--;
-        mov   dx, #0xe204
-
-i13_f03_ace_statusl2:
-        in    ax, dx
-        and   ax, #0x100
-        loopz i13_f03_ace_statusl2
-
-        ; if(timeout == 0) return 0;
-        cmp   cx, #0
-        jnz   i13_f03_success2
-ASM_END
-        printf("i13_f03(1): Timeout\n");
-ASM_START
-        jmp   _int13_fail
-
-i13_f03_success2:
-        ; CSR_ACE_MLBAL = blocknr & 0x0000ffff;
         push  bp
         mov   bp, sp
-        mov   ax, _int13_harddisk.log_sector + 2 [bp]
-        mov   dx, #0xe210
-        out   dx, ax
-
-        ; CSR_ACE_MLBAH = (blocknr & 0x0fff0000) >> 16;
-        mov   ax, _int13_harddisk.log_sector + 4 [bp]
-        mov   dx, #0xe212
-        out   dx, ax
+        mov   bx, _int13_harddisk.addr_l + 2 [bp]
+        mov   cx, _int13_harddisk.addr_h + 2 [bp]
         pop   bp
 
-        ; CSR_ACE_SECCMD = ACE_SECCMD_WRITE|0x01;
-        mov   ax, #0x0401
-        mov   dx, #0xe214
+        ; SD card command CMD24
+        mov   dx, #0x0100
+        mov   ax, #0x58   ; CS = 0, CMD24
         out   dx, ax
+        mov   al, ch      ; addr[31:24]
+        out   dx, al
+        mov   al, cl      ; addr[23:16]
+        out   dx, al
+        mov   al, bh      ; addr[15:8]
+        out   dx, al
+        mov   al, bl      ; addr[7:0]
+        out   dx, al
+        mov   al, #0xff   ; CRC (not used)
+        out   dx, al
+        out   dx, al      ; wait
 
-        ; CSR_ACE_CTLL |= ACE_CTLL_CFGRESET;
-        mov   dx, #0xe218
-        in    ax, dx
-        or    ax, #0x0080
-        out   dx, ax
+i13_f03_read_res_cmd24:
+        in    al, dx      ; command response
+        cmp   al, #0
+        jne   i13_f03_read_res_cmd24
 
-        ; buffer_count = 16;
-        mov   di, #16
+        mov   al, #0xff   ; wait
+        out   dx, al
+        mov   al, #0xfe   ; start of block: token 0xfe
+        out   dx, al
 
-        ; while(buffer_count > 0) {
-i13_f03_cond_loop:
-        cmp   di, #0
-        jbe   i13_f03_exit_loop
-
-        ; timeout = TIMEOUT;
-        mov   cx, #0xffff
-        mov   bx, #0x000f
-
-        ; while((timeout > 0) && (!(CSR_ACE_STATUSL & ACE_STATUSL_DATARDY))) timeout--;
-        mov   dx, #0xe204
-i13_f03_ace_statusl3:
-        in    ax, dx
-        and   ax, #0x20
-        loopz i13_f03_ace_statusl3
-
-        ; if(timeout == 0) return 0;
-        cmp   cx, #0
-        jnz   i13_f03_success3
-        dec   bx
-        mov   cx, #0xffff
-        jne   i13_f03_ace_statusl3
-ASM_END
-        printf("i13_f03(2): Timeout\n");
-ASM_START
-        jmp   _int13_fail
-
-i13_f03_success3:
-        ; for(i=0;i<16;i++) {
-        mov   cx, #16
-        ; *bufw = CSR_ACE_DATA;
-        mov   dx, #0xe240
-i13_f03_ace_data:
+        mov   cx, #0x100
+i13_f03_write_bytes:
         eseg
               mov   ax, [si]
-        out   dx, ax
-        ; bufw++;
+        out   dx, al
+        mov   al, ah
+        out   dx, al
+
         add   si, #2
-        ; }
-        loop  i13_f03_ace_data
+        loop  i13_f03_write_bytes
 
-        ; buffer_count--;
-        dec   di
-        jmp   i13_f03_cond_loop
+        ; send dummy checksum
+        mov   al, #0xff
+        out   dx, al
+        out   dx, al
 
-        ; }
+        ; data response
+        in    al, dx
+        and   al, #0xf
+        cmp   al, #0x5
+        je    i13_f03_good_write
+        hlt               ; problem writing
 
-i13_f03_exit_loop:
-        ; CSR_ACE_CTLL &= ~ACE_CTLL_CFGRESET;
-        mov   dx, #0xe218
-        in    ax, dx
-        and   ax, #0xff7f
-        out   dx, ax
+        ; write finished?
+i13_f03_good_write:
+        in    al, dx
+        cmp   al, #0
+        je    i13_f03_good_write
+
+        ; goodbye mr. writer!
+        mov   ax, #0xffff
+        out   dx, al     ; wait
+        out   dx, al     ; wait
+        out   dx, ax     ; CS = 1 (disable SD)
 
 i13_f03_done:
         ;; store real SI register back to temp bx
@@ -1970,15 +1877,15 @@ ASM_END
       return;
       break;
 
-    case 0x08:
+   case 0x08:
 
       drive = GET_ELDL ();
 
       // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
       // fixed geometry:
-      hd_cylinders = 993;
-      hd_heads     = 16;
-      hd_sectors   = 63;
+      hd_cylinders = HD_CYLINDERS;
+      hd_heads     = HD_HEADS;
+      hd_sectors   = HD_SECTORS;
 
       max_cylinder = hd_cylinders - 2; /* 0 based */
       SET_AL(0);
@@ -2016,9 +1923,9 @@ ASM_END
       drive = GET_ELDL();
       // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
       // fixed geometry:
-      hd_cylinders = 993;
-      hd_heads     = 16;
-      hd_sectors   = 63;
+      hd_cylinders = HD_CYLINDERS;
+      hd_heads     = HD_HEADS;
+      hd_sectors   = HD_SECTORS;
 
 ASM_START
       push bp
@@ -2065,7 +1972,7 @@ int13_success_noah:
     CLEAR_CF();   // no error
     return;
 }
-#endif
+
   void
 transf_sect(seg, offset)
   Bit16u seg;
@@ -2208,9 +2115,9 @@ set_diskette_current_cyl(drive, cyl)
   Bit8u drive;
   Bit8u cyl;
 {
-/* TEMP HACK: FOR MSDOS */
+/* TEMP HACK: FOR MSDOS
   if (drive > 1)
-    drive = 1;
+    drive = 1; */
   /*  BX_PANIC("set_diskette_current_cyl(): drive > 1\n"); */
   write_byte(0x0040, 0x0094+drive, cyl);
 }
@@ -2227,7 +2134,6 @@ Bit16u seq_nr;
   Bit16u bootip;
   Bit16u status;
   Bit16u bootfirst;
-Bit16u ww;
 
   ipl_entry_t e;
 
@@ -2244,16 +2150,10 @@ Bit16u ww;
   //     0x04 - 0x0f : PnP expansion ROMs (e.g. Etherboot)
   //     else : boot failure
 
-  // Get the boot sequence
-/*
- * Zet: we don't have a CMOS device
- *
-  bootdev = inb_cmos(0x3d);
-  bootdev |= ((inb_cmos(0x38) & 0xf0) << 4);
-  bootdev >>= 4 * seq_nr;
-  bootdev &= 0xf;
-*/
-  bootdev = 0x1;  // 1: flopy disk, 2: hard disk
+  // Get the boot sequence from the switches
+  bootdev = inb(0x102);
+  if(bootdev) bootdev = 1;   // 1: flopy disk, 2: hard disk
+  else        bootdev = 2;
 
   /* Read user selected device */
   bootfirst = read_word(IPL_SEG, IPL_BOOTFIRST_OFFSET);
@@ -2550,55 +2450,80 @@ hard_drive_post:
   SET_INT_VECTOR(0x13, #0xF000, #int13_handler)
   SET_INT_VECTOR(0x76, #0xF000, #int76_handler)
 
-  ;; Initialize the sysace controller
-  ; CSR_ACE_BUSMODE = ACE_BUSMODE_16BIT;
-  mov  dx, #0xe200
-  mov  ax, #0x0001
+  ;; Initialize the SD card controller
+  mov  al, #0xff
+  mov  dx, #0x0100
+  mov  cx, #10
+
+  ; 80 cycles of initialization
+hd_post_init80:
+  out  dx, al
+  loop hd_post_init80
+
+  ; CMD0: reset the SD card
+  mov  ax, #0x40  ; CS = 0, CMD0
   out  dx, ax
+  xor  al, al
+  out  dx, al     ; 32-bit zero value
+  out  dx, al
+  out  dx, al
+  out  dx, al
+  mov  al, #0x95
+  out  dx, al     ; CRC fixed value
+  mov  al, #0xff
+  out  dx, al     ; wait
+  in   al, dx     ; status
+  mov  cl, al
+  mov  ax, #0xffff
+  out  dx, ax     ; CS = 1
 
-  ; if(!(CSR_ACE_STATUSL & ACE_STATUSL_CFDETECT)) return 0;
-  mov  dx, #0xe204
-  in   ax,  dx
-  and  ax, #0x0010
-  jne  cf_detect
-  hlt  ;; error
-
-cf_detect:
-  ; if((CSR_ACE_ERRORL != 0) || (CSR_ACE_ERRORH != 0)) return 0;
-  mov  dx, #0xe208
-  in   ax, dx
-  cmp  ax, #0x0
-jne  error_l
-  mov  dx, #0xe20a
-  in   ax, dx
-  cmp  ax, #0x0
-  je   lock_req
-error_l:
+  cmp  cl, #1
+  je   hd_post_cmd1
   hlt
 
-lock_req:
-  ; CSR_ACE_CTLL |= ACE_CTLL_LOCKREQ;
-  mov  dx, #0xe218
-  in   ax, dx
-  or   ax, #0x2
+hd_post_cmd1:
+  ; CMD1: activate the init sequence
+  mov  ax, #0x41  ; CS = 0, CMD1
   out  dx, ax
+  xor  al, al
+  out  dx, al     ; 32-bit zero value
+  out  dx, al
+  out  dx, al
+  out  dx, al
+  mov  al, #0xff
+  out  dx, al     ; CRC (not used)
+  out  dx, al     ; wait
+  in   al, dx     ; status
+  mov  cl, al
+  mov  ax, #0xffff
+  out  dx, ax     ; CS = 1
 
-  ; timeout = TIMEOUT;
-  mov  cx, #0xffff
+  test cl, #0xff
+  jnz  hd_post_cmd1
 
-  ; while((timeout > 0) && (!(CSR_ACE_STATUSL & ACE_STATUSL_MPULOCK))) timeout--;
-  mov  dx, #0xe204
-ace_statusl:
-  in   ax, dx
-  and  ax, #0x2
-  loopz ace_statusl
+  ; CMD16: set block length
+  mov  ax, #0x50  ; CS = 0, CMD16
+  out  dx, ax
+  xor  al, al
+  out  dx, al     ; 32-bit value
+  out  dx, al
+  mov  al, #2     ; 512 bytes
+  out  dx, al
+  xor  al, al
+  out  dx, al
+  mov  al, #0xff
+  out  dx, al     ; CRC (not used)
+  out  dx, al     ; wait
+  in   al, dx     ; status
+  mov  cl, al
+  mov  ax, #0xffff
+  out  dx, ax     ; CS = 1
 
-  ; if(timeout == 0) return 0;
-  cmp  cx, #0x0
-  jnz  success
-  hlt  ;; error obtaining lock
+  test cl, #0xff
+  jz hd_post_success
+  hlt
 
-success:
+hd_post_success:
   ret
 
 
@@ -2900,8 +2825,7 @@ post_default_ints:
   ;;
   ;; Hard Drive setup
   ;;
-;  call hard_drive_post
-  SET_INT_VECTOR(0x13, #0xF000, #int13_handler)
+  call hard_drive_post
 
   call _init_boot_vectors
 
