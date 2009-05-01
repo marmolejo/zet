@@ -163,7 +163,8 @@ module test_kotku;
 
       clk_50 <= 1'b0;
       clk_27 <= 1'b0;
-      sw <= 10'h0;
+      sw <= 10'h1;
+      #300 sw <= 10'h0;
     end
 
 endmodule

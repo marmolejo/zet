@@ -131,6 +131,8 @@ module kotku (
   wire        vdu_mem_arena;
   wire        vdu_io_arena;
   wire        vdu_arena;
+  reg  [ 1:0] vdu_stb_sync;
+  reg  [ 1:0] vdu_ack_sync;
 
   wire        com1_stb;
   wire [ 7:0] com1_dat_i;
@@ -246,8 +248,8 @@ module kotku (
     .wb_we_i  (we),
     .wb_tga_i (tga),
     .wb_sel_i (sel),
-    .wb_stb_i (vdu_stb),
-    .wb_cyc_i (vdu_stb),
+    .wb_stb_i (vdu_stb_sync[1]),
+    .wb_cyc_i (vdu_stb_sync[1]),
     .wb_ack_o (vdu_ack),
 
     // VGA pad signals
@@ -373,6 +375,7 @@ module kotku (
     .ip         (ip),
     .cs         (cs),
     .state      (state),
+    .dbg_block  (1'b0),
 `endif
     // Wishbone master interface
     .wb_clk_i (clk),
@@ -465,11 +468,11 @@ module kotku (
   assign sw_arena        = (adr[15:1]==15'h0081);
 
   assign ack             = tga ? (flash_io_arena ? flash_ack
-                               : (vdu_io_arena ? vdu_ack
+                               : (vdu_io_arena ? vdu_ack_sync[1]
                                : (sd_io_arena ? sd_ack
                                : (com1_io_arena ? com1_ack_o
                                : (ems_io_arena ? ems_ack_o : (stb & cyc))))))
-                         : (vdu_mem_arena ? vdu_ack
+                         : (vdu_mem_arena ? vdu_ack_sync[1]
                          : (flash_mem_arena ? flash_ack : sdram_ack));
   assign lock            = lock0;
   assign rst_lck         = !lock;
@@ -513,4 +516,13 @@ module kotku (
     io_reg <= rst ? 16'h0
       : ((tga && stb && cyc && we && adr[15:8]==8'hf1) ?
         dat_o : io_reg );
+
+  // vdu_stb_sync
+  always @(posedge vdu_clk)
+    vdu_stb_sync <= { vdu_stb_sync[0], vdu_stb };
+
+  // vdu_ack_sync
+  always @(posedge clk)
+    vdu_ack_sync <= { vdu_ack_sync[0], vdu_ack };
+
 endmodule

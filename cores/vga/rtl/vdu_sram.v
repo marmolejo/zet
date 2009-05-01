@@ -33,7 +33,7 @@ module vdu #(
     input      [ 1:0] wb_sel_i,
     input             wb_stb_i,
     input             wb_cyc_i,
-    output            wb_ack_o,
+    output reg        wb_ack_o,
 
     // VGA pad signals
     output reg [ 1:0] vga_red_o,
@@ -118,7 +118,7 @@ module vdu #(
   reg   [6:0] hor_addr;  // 0 to 79
   reg   [6:0] ver_addr;  // 0 to 124
   reg         vga0_we;
-  reg         vga0_rw, vga1_rw, vga2_rw, vga3_rw, vga4_rw, vga5_rw;
+  reg         vga0_rw, vga1_rw, vga2_rw, vga3_rw, vga4_rw;
   reg         vga1_we;
   reg         vga2_we;
   reg         buff_we;
@@ -132,7 +132,6 @@ module vdu #(
   reg  [10:0] cpu_addr;
   reg         buff0_we;
   reg         intense;
-  reg         vga5_rw_l;
   wire        vga_cs;
   wire  [7:0] vga_data_out;
   wire  [7:0] attr_data_out;
@@ -201,17 +200,8 @@ module vdu #(
   assign v_retrace   = !video_on_v;
   assign vh_retrace  = v_retrace | !video_on_h;
   assign status_reg1 = { 11'b0, v_retrace, 3'b0, vh_retrace };
-  assign wb_ack_o    = wb_tga_i ? stb
-                     : (ack_delay==1 ? (vga5_rw | vga5_rw_l) : vga5_rw);
 
   // Behaviour
-
-  // This register is for holding the wb_ack_o 2 cycles due to the
-  // double frequency of the VGA
-  // vga5_rw_l
-  always @(posedge wb_clk_i)
-    vga5_rw_l <= wb_rst_i ? 1'b0 : vga5_rw;
-
   // CPU write interface
   always @(posedge wb_clk_i)
     if (wb_rst_i)
@@ -237,8 +227,22 @@ module vdu #(
   // CPU read interface
   // wb_dat_o
   always @(posedge wb_clk_i)
-    wb_dat_o <= wb_rst_i ? 16'h0 : (wb_tga_i ? status_reg1
-                                 : (vga4_rw ? out_data : wb_dat_o));
+    if (wb_rst_i)
+      begin
+        wb_dat_o <= 16'h0;
+        wb_ack_o <= 16'h0;
+      end
+    else
+      if (wb_tga_i)
+        begin
+          wb_dat_o <= status_reg1;
+          wb_ack_o <= stb;
+        end
+      else
+        begin
+          wb_dat_o <= vga4_rw ? out_data : wb_dat_o;
+          wb_ack_o <= vga4_rw ? 1'b1 : (wb_ack_o && stb);
+        end
 
   // Control registers
   always @(posedge wb_clk_i)
@@ -320,7 +324,6 @@ module vdu #(
         vga2_rw  <= 1'b0;
         vga3_rw  <= 1'b0;
         vga4_rw  <= 1'b0;
-        vga5_rw  <= 1'b0;
         ver_addr <= 7'b0;
         hor_addr <= 7'b0;
 
@@ -371,7 +374,6 @@ module vdu #(
         attr_sel  <= vga2_rw ? (attr0_we | !vga2_we) : 1'b1;
         vga3_rw   <= vga2_rw;
         vga4_rw   <= vga3_rw;
-        vga5_rw   <= vga4_rw;
       end
 
   // Video shift register

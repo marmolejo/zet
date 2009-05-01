@@ -267,9 +267,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_tfifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_rfifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
-set_global_assignment -name VERILOG_FILE ../dbg/signaltap.v
-set_global_assignment -name VERILOG_FILE ../rtl/sys_pll.v
-set_global_assignment -name VERILOG_FILE ../rtl/domain_sync.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vdu_sram.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sram/rtl/csr_sram.v
 set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
