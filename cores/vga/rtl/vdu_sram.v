@@ -216,10 +216,10 @@ module vdu #(
       begin
         if (stb && !wb_tga_i)
           begin
-            attr0_we     <= wb_we_i & wb_sel_i[1];
+            attr0_we     <= wb_ack_o ? 1'b0 : (wb_we_i & wb_sel_i[1]);
             attr_data_in <= wb_dat_i[15:8];
             cpu_addr     <= wb_adr_i;
-            buff0_we     <= wb_we_i & wb_sel_i[0];
+            buff0_we     <= wb_ack_o ? 1'b0 : (wb_we_i & wb_sel_i[0]);
             buff_data_in <= wb_dat_i[7:0];
           end
       end
