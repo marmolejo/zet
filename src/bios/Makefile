@@ -39,7 +39,7 @@ all: de1
 de1: bios.out
 
 ../../bin/ff: ../tools/ff.c
-	gcc ../tools/ff.c -o ../tools/ff
+	$(CC) ../tools/ff.c -o ../tools/ff
 	cp ../tools/ff ../../bin/ff
 
 ff.out: ../../bin/ff
