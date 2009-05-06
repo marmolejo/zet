@@ -90,8 +90,8 @@ module vdu #(
   reg [3:0] reg_adr;
   reg [6:0] reg_hcursor; // 80 columns
   reg [4:0] reg_vcursor; // 25 rows
-  reg [3:0] reg_cur_start;
-  reg [3:0] reg_cur_end;
+  reg [5:0] reg_cur_start;
+  reg [5:0] reg_cur_end;
 
   wire      wr_adr;
   wire      wr_reg;
@@ -258,12 +258,12 @@ module vdu #(
       : (wr_vcursor ? wb_dat_i[12:8] : reg_vcursor);
 
   always @(posedge wb_clk_i)
-    reg_cur_start <= wb_rst_i ? 4'he
-      : (wr_cur_start ? wb_dat_i[11:8] : reg_cur_start);
+    reg_cur_start <= wb_rst_i ? 6'he
+      : (wr_cur_start ? wb_dat_i[13:8] : reg_cur_start);
 
   always @(posedge wb_clk_i)
-    reg_cur_end <= wb_rst_i ? 4'hf
-      : (wr_cur_end ? wb_dat_i[11:8] : reg_cur_end);
+    reg_cur_end <= wb_rst_i ? 6'hf
+      : (wr_cur_end ? wb_dat_i[13:8] : reg_cur_end);
 
   // char_data_out
 /*
@@ -301,8 +301,8 @@ module vdu #(
                     : ((v_count==VER_DISP_END) ? 1'b0 : video_on_v);
         cursor_on_h <= (h_count[9:3] == reg_hcursor[6:0]);
         cursor_on_v <= (v_count[8:4] == reg_vcursor[4:0])
-                    && (v_count[3:0] >= reg_cur_start)
-                    && (v_count[3:0] <= reg_cur_end);
+                    && ({2'b00, v_count[3:0]} >= reg_cur_start)
+                    && ({2'b00, v_count[3:0]} <= reg_cur_end);
         blink_count <= blink_count + 22'd1;
       end
 
