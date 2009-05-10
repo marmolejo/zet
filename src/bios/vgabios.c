@@ -26,6 +26,7 @@ static void biosfn_set_video_mode();
 static void biosfn_set_cursor_shape();
 static void biosfn_set_cursor_pos();
 static void biosfn_get_cursor_pos();
+static void biosfn_set_active_page();
 static void biosfn_scroll();
 static void biosfn_read_char_attr();
 static void biosfn_write_char_attr();
@@ -423,6 +424,9 @@ static void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
    case 0x03:
      biosfn_get_cursor_pos(GET_BH(),&CX,&DX);
      break;
+   case 0x05:
+     biosfn_set_active_page(GET_AL());
+     break;
    case 0x06:
      biosfn_scroll(GET_AL(),GET_BH(),GET_CH(),GET_CL(),GET_DH(),GET_DL(),0xFF,SCROLL_UP);
      break;
@@ -633,6 +637,9 @@ static void biosfn_set_video_mode(mode) Bit8u mode;
  for(i=0;i<8;i++)
   biosfn_set_cursor_pos(i,0x0000);
 
+ // Set active page 0
+ biosfn_set_active_page(0x00);
+
  // Write the fonts in memory
  if(vga_modes[line].class==TEXT)
   {
@@ -723,6 +730,56 @@ Bit8u page;Bit16u *shape;Bit16u *pos;
  // FIXME should handle VGA 14/16 lines
  write_word(ss,shape,read_word(BIOSMEM_SEG,BIOSMEM_CURSOR_TYPE));
  write_word(ss,pos,read_word(BIOSMEM_SEG,BIOSMEM_CURSOR_POS+page*2));
+}
+
+// --------------------------------------------------------------------------------------------
+static void biosfn_set_active_page (page)
+Bit8u page;
+{
+ Bit16u cursor,dummy,crtc_addr;
+ Bit16u nbcols,nbrows,address;
+ Bit8u mode,line;
+
+ if(page>7)return;
+
+ // Get the mode
+ mode=read_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_MODE);
+ line=find_vga_entry(mode);
+ if(line==0xFF)return;
+
+ // Get pos curs pos for the right page
+ biosfn_get_cursor_pos(page,&dummy,&cursor);
+
+ if(vga_modes[line].class==TEXT)
+  {
+   // Get the dimensions
+   nbcols=read_word(BIOSMEM_SEG,BIOSMEM_NB_COLS);
+   nbrows=read_byte(BIOSMEM_SEG,BIOSMEM_NB_ROWS)+1;
+
+   // Calculate the address knowing nbcols nbrows and page num
+   address=SCREEN_MEM_START(nbcols,nbrows,page);
+   write_word(BIOSMEM_SEG,BIOSMEM_CURRENT_START,address);
+
+   // Start address
+   address=SCREEN_IO_START(nbcols,nbrows,page);
+  }
+ else
+  {
+   address = page * (*(Bit16u *)&video_param_table[line_to_vpti[line]].slength_l);
+  }
+
+ // CRTC regs 0x0c and 0x0d
+ crtc_addr=read_word(BIOSMEM_SEG,BIOSMEM_CRTC_ADDRESS);
+ outb(crtc_addr,0x0c);
+ outb(crtc_addr+1,(address&0xff00)>>8);
+ outb(crtc_addr,0x0d);
+ outb(crtc_addr+1,address&0x00ff);
+
+ // And change the BIOS page
+ write_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_PAGE,page);
+
+ // Display the cursor, now the page is active
+ biosfn_set_cursor_pos(page,cursor);
 }
 
 // --------------------------------------------------------------------------------------------

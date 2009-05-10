@@ -244,7 +244,7 @@ module kotku (
     .wb_clk_i (vdu_clk), // 25MHz VDU clock
     .wb_dat_i (dat_o),
     .wb_dat_o (vdu_dat_o),
-    .wb_adr_i (adr[11:1]),
+    .wb_adr_i (adr[14:1]),    // 32K
     .wb_we_i  (we),
     .wb_tga_i (tga),
     .wb_sel_i (sel),
@@ -438,7 +438,7 @@ module kotku (
   assign sdram_arena     = !tga & sdram_mem_arena;
   assign sdram_stb       = sdram_arena & stb & cyc;
 
-  assign vdu_mem_arena   = (adr[19:12]==8'hb8);
+  assign vdu_mem_arena   = (adr[19:15]==5'b1011_1);  // B8000h-BFFFFh -- 32K
   assign vdu_io_arena    = (adr[15:4]==12'h03d) &&
                            ((adr[3:1]==3'h2 && we)
                             || (adr[3:1]==3'h5 && !we));

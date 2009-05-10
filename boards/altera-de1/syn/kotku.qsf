@@ -201,10 +201,8 @@ set_global_assignment -name FMAX_REQUIREMENT "27 MHz" -section_id clk_27_
 set_instance_assignment -name CLOCK_SETTINGS clk_27_ -to clk_27_
 set_global_assignment -name FMAX_REQUIREMENT "50 MHz" -section_id clk_50_
 set_instance_assignment -name CLOCK_SETTINGS clk_50_ -to clk_50_
-set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS OUTPUT DRIVING GROUND"
 set_global_assignment -name ENABLE_CLOCK_LATENCY ON
-set_global_assignment -name USE_TIMEQUEST_TIMING_ANALYZER OFF
 
 set_location_assignment PIN_B10 -to tft_lcd_b_[1]
 set_location_assignment PIN_A10 -to tft_lcd_b_[0]

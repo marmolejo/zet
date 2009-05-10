@@ -27,7 +27,7 @@ module vdu #(
     input             wb_rst_i,
     input      [15:0] wb_dat_i,
     output reg [15:0] wb_dat_o,
-    input      [11:1] wb_adr_i,
+    input      [14:1] wb_adr_i,     // 32 K
     input             wb_we_i,
     input             wb_tga_i,
     input      [ 1:0] wb_sel_i,
@@ -88,8 +88,10 @@ module vdu #(
 
   // Control registers
   reg [3:0] reg_adr;
-  reg [6:0] reg_hcursor; // 80 columns
-  reg [4:0] reg_vcursor; // 25 rows
+  reg [6:0] reg_hcursor;     // 80 columns
+  reg [4:0] reg_vcursor;     // 25 rows
+  reg [7:0] reg_start_hi;    // Upper 8 bits (of 18)
+  reg [7:0] reg_start_lo;    // Lower 8 bits (of 18)
   reg [5:0] reg_cur_start;
   reg [5:0] reg_cur_end;
 
@@ -100,6 +102,8 @@ module vdu #(
   wire      wr_vcursor;
   wire      wr_cur_start;
   wire      wr_cur_end;
+  wire      wr_start_hi;
+  wire      wr_start_lo;
 
   // Video shift register
   reg [7:0] vga_shift;
@@ -127,9 +131,9 @@ module vdu #(
   reg         attr_sel;
   reg   [7:0] buff_data_in;
   reg   [7:0] attr_data_in;
-  reg  [10:0] csr_adr;
+  reg  [17:0] csr_adr;        // 256K
   reg         attr0_we;
-  reg  [10:0] cpu_addr;
+  reg  [14:0] cpu_addr;
   reg         buff0_we;
   reg         intense;
   wire        vga_cs;
@@ -156,7 +160,7 @@ module vdu #(
     .sys_clk (wb_clk_i),
 
     // CSR slave interface
-    .csr_adr_i ({5'b11000,csr_adr}), // from b8000 to b8fff
+    .csr_adr_i ({1'b0, csr_adr}), // First 256K
     .csr_sel_i ({attr_sel,buff_sel}),
     .csr_we_i  (attr_we|buff_we),
     .csr_dat_i ({attr_data_in,buff_data_in}),
@@ -192,10 +196,12 @@ module vdu #(
   assign write        = wb_tga_i & wb_stb_i & wb_cyc_i & wb_we_i;
   assign wr_adr       = write & wb_sel_i[0];
   assign wr_reg       = write & wb_sel_i[1];
-  assign wr_hcursor   = wr_reg & (reg_adr==4'hf);
-  assign wr_vcursor   = wr_reg & (reg_adr==4'he);
   assign wr_cur_start = wr_reg & (reg_adr==4'ha);
   assign wr_cur_end   = wr_reg & (reg_adr==4'hb);
+  assign wr_start_hi  = wr_reg & (reg_adr==4'hc);
+  assign wr_start_lo  = wr_reg & (reg_adr==4'hd);
+  assign wr_vcursor   = wr_reg & (reg_adr==4'he);
+  assign wr_hcursor   = wr_reg & (reg_adr==4'hf);
 
   assign v_retrace   = !video_on_v;
   assign vh_retrace  = v_retrace | !video_on_h;
@@ -265,12 +271,14 @@ module vdu #(
     reg_cur_end <= wb_rst_i ? 6'hf
       : (wr_cur_end ? wb_dat_i[13:8] : reg_cur_end);
 
-  // char_data_out
-/*
   always @(posedge wb_clk_i)
-    char_data_out <= wb_rst_i ? 8'h0
-      : ((h_count[2:0]==3'b111) ? char_data_out1 : char_data_out);
-*/
+    reg_start_hi <= wb_rst_i ? 8'h00
+      : (wr_start_hi ? wb_dat_i[15:8] : reg_start_hi);
+
+  always @(posedge wb_clk_i)
+    reg_start_lo <= wb_rst_i ? 8'h00
+      : (wr_start_lo ? wb_dat_i[15:8] : reg_start_lo);
+
   // Sync generation & timing process
   // Generate horizontal and vertical timing signals for video signal
   always @(posedge wb_clk_i)
@@ -327,7 +335,7 @@ module vdu #(
         ver_addr <= 7'b0;
         hor_addr <= 7'b0;
 
-        csr_adr <= 10'b0;
+        csr_adr <= 18'b0;
         buff_we   <= 1'b0;
         attr_we   <= 1'b0;
       end
@@ -367,7 +375,8 @@ module vdu #(
 
         // on vdu_clk + 3 calculate memory address
         // vga_addr = (row_addr % 80) * 80 + hor_addr
-        csr_adr   <= vga2_rw ? cpu_addr : vga_addr;
+        csr_adr   <= vga2_rw ? {3'b000, cpu_addr}
+          : ({2'b00, reg_start_hi, reg_start_lo} + {7'h0, vga_addr});
         buff_we   <= vga2_rw ? (buff0_we & vga2_we) : 1'b0;
         attr_we   <= vga2_rw ? (attr0_we & vga2_we) : 1'b0;
         buff_sel  <= vga2_rw ? (buff0_we | !vga2_we) : 1'b1;
