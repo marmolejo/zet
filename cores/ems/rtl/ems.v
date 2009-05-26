@@ -31,7 +31,7 @@ module ems #(
     input         wb_stb_i,
     input         wb_we_i,
     output reg    wb_ack_o,
-    output        ems_io_area,
+    output        ems_io_arena,
 
     // sdram address interface
     input [19:1] sdram_adr_i,
@@ -51,18 +51,19 @@ module ems #(
   // register interface
   //
   // register bank select
-  assign ems_io_area = { wb_adr_i[15:3] == IO_BASE_ADDR[15:3] };
+  assign ems_io_arena = { wb_adr_i[15:3] == IO_BASE_ADDR[15:3] };
 
   reg ems_enable;
   // base address of 64KB block in UMB [19:16]
   reg [19:16] umb_base_adr;
   // x4 page address registers for 16KB memory blocks [22:14]
-  // - assumes 8MB is the largest we can address
-  reg [22:14] page_adr [0:3];
+  // - assumes 8MB is the largest we can address atm
+  // - *** only 4MB possible ATM
+  reg [21:14] page_adr [0:3];
 
   // supports 8-bit I/O only atm...
-  wire [8:0] dat_i = (wb_sel_i[0] ? wb_dat_i[7:0] : wb_dat_i[15:8]);
-  wire [1:0] page_reg = { wb_adr_i[1], wb_sel_i[0] };
+  wire [7:0] dat_i = (wb_sel_i[0] ? wb_dat_i[7:0] : wb_dat_i[15:8]);
+  wire [1:0] page_reg = { wb_adr_i[1], ~wb_sel_i[0] };
 
   // register read logic
   wire [7:0] dat_o = ~wb_adr_i[2] ? page_adr[page_reg] 
@@ -98,6 +99,6 @@ module ems #(
   wire [1:0] page = sdram_adr_i[15:14];
 
   assign sdram_adr_o = ems_enable && page_frame_arena
-                        ? { 8'b0, page_adr[page], sdram_adr_i[13:1], 2'b00 }
+                        ? { 9'b0, page_adr[page], sdram_adr_i[13:1], 2'b00 }
                         : { 11'b0, sdram_adr_i, 2'b00 };
 endmodule

@@ -308,3 +308,7 @@ set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/rom_def.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/alu.v
 set_global_assignment -name SIGNALTAP_FILE stp1.stp
 set_global_assignment -name STRATIX_CONFIGURATION_DEVICE EPCS4
+set_instance_assignment -name REPORT_DELAY ON -from * -to sdram_addr_[*]
+set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
+set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*

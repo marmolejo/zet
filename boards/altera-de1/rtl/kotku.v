@@ -311,7 +311,7 @@ module kotku (
     .wb_stb_i (ems_stb),
     .wb_we_i (we),
     .wb_ack_o (ems_ack_o),
-    .ems_io_area (ems_io_arena),
+    .ems_io_arena (ems_io_arena),
 
     // sdram address interface
     .sdram_adr_i (adr),
