@@ -431,6 +431,26 @@ LINC_HIGH_WORD:
     inc     word ptr 2[bx]
     ret
 
+	 diskette_param_table2:
+	 ;;  New diskette parameter table adding 3 parameters from IBM
+	 ;;  Since no provisions are made for multiple drive types, most
+	 ;;  values in this table are ignored.  I set parameters for 1.44M
+	 ;;  floppy here
+	 db  0xAF
+	 db  0x02 ;; head load time 0000001, DMA used
+	 db  0x25
+	 db  0x02
+	 db    18
+	 db  0x1B
+	 db  0xFF
+	 db  0x6C
+	 db  0xF6
+	 db  0x0F
+	 db  0x08
+	 db    79 ;; maximum track
+	 db     0 ;; data transfer rate
+	 db     4 ;; drive type in cmos
+
   ASM_END
 
 // for access to RAM area which is used by interrupt vectors
@@ -502,7 +522,7 @@ static void           bios_printf();
 
 static void           int09_function();
 static void           int13_harddisk();
-static void           transf_sect();
+static void           transf_sect_drive_a();
 static void           int13_diskette_function();
 static void           int16_function();
 static void           int19_function();
@@ -673,6 +693,27 @@ ASM_START
 ASM_END
 }
 
+  void
+outb(port, val)
+  Bit16u port;
+  Bit8u  val;
+{
+ASM_START
+  push bp
+  mov  bp, sp
+
+    push ax
+    push dx
+    mov  dx, 4[bp]
+    mov  al, 6[bp]
+    out  dx, al
+    pop  dx
+    pop  ax
+
+  pop  bp
+ASM_END
+}
+
   Bit16u
 inw(port)
   Bit16u port;
@@ -689,6 +730,8 @@ ASM_START
   pop  bp
 ASM_END
 }
+
+
 
   void
 outw(port, val)
@@ -1973,8 +2016,7 @@ int13_success_noah:
     return;
 }
 
-  void
-transf_sect(seg, offset)
+void transf_sect_drive_a(seg, offset)
   Bit16u seg;
   Bit16u offset;
 {
@@ -2016,110 +2058,390 @@ one_sect:
 ASM_END
 }
 
-  void
-int13_diskette_function(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
-  Bit16u DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS;
+// The RAM Disk is stored at 0x110000 to 0x277FFF in the SDRAM
+Bit16u GetRamdiskSector(Sector)
+	Bit16u Sector;
 {
-  Bit8u  drive, num_sectors, track, sector, head, status;
-  Bit16u base_address, base_count, base_es;
-  Bit8u  page, mode_register, val8, dor;
-  Bit8u  return_status[7];
-  Bit8u  drive_type, num_floppies, ah;
-  Bit16u es, last_addr;
-  Bit16u log_sector, tmp, i, j;
+	Bit16u Page;
 
-  ah = GET_AH();
+	// The bits above the upper five bits tells us which memory location
+	// The lower five bits tells us where in the 16K Page the Sector is
 
-  switch ( ah ) {
-    case 0x00: // diskette controller reset
-      SET_AH(0);
-      set_diskette_ret_status(0);
-      CLEAR_CF(); // successful
-      set_diskette_current_cyl(drive, 0); // current cylinder
-      return;
+	Page = RAM_DISK_BASE + (Sector >> 5);
+	outb(EMS_PAGE1_REG, Page);									// Set the first	16K
 
-    case 0x02: // Read Diskette Sectors
-      num_sectors = GET_AL();
-      track       = GET_CH();
-      sector      = GET_CL();
-      head        = GET_DH();
-      drive       = GET_ELDL();
-
-      if ((drive > 1) || (head > 1) || (sector == 0) ||
-          (num_sectors == 0) || (num_sectors > 72)) {
-        BX_INFO("int13_diskette: read/write/verify: parameter out of range\n");
-        SET_AH(1);
-        set_diskette_ret_status(1);
-        SET_AL(0); // no sectors read
-        SET_CF(); // error occurred
-        return;
-      }
-
-        page = (ES >> 12);   // upper 4 bits
-        base_es = (ES << 4); // lower 16bits contributed by ES
-        base_address = base_es + BX; // lower 16 bits of address
-                                     // contributed by ES:BX
-        if ( base_address < base_es ) {
-          // in case of carry, adjust page by 1
-          page++;
-        }
-        base_count = (num_sectors * 512) - 1;
-
-        // check for 64K boundary overrun
-        last_addr = base_address + base_count;
-        if (last_addr < base_address) {
-          SET_AH(0x09);
-          set_diskette_ret_status(0x09);
-          SET_AL(0); // no sectors read
-          SET_CF(); // error occurred
-          return;
-        }
-
-        log_sector = track * 36 + head * 18 + sector - 1;
-        last_addr = page << 12;
-        // Configure the sector address
-        for (j=0; j<num_sectors; j++)
-          {
-            outw(0xe000, log_sector+j);
-            base_count = base_address + (j << 9);
-            transf_sect (last_addr, base_count);
-          }
-
-        // ??? should track be new val from return_status[3] ?
-        set_diskette_current_cyl(drive, track);
-        // AL = number of sectors read (same value as passed)
-        SET_AH(0x00); // success
-        CLEAR_CF();   // success
-        return;
-    default:
-        BX_INFO("int13_diskette: unsupported AH=%02x\n", GET_AH());
-
-      // if ( (ah==0x20) || ((ah>=0x41) && (ah<=0x49)) || (ah==0x4e) ) {
-        SET_AH(0x01); // ???
-        set_diskette_ret_status(1);
-        SET_CF();
-        return;
-      //   }
-    }
+	return ((Sector & 0x001F) << 9);							// Return the memory location within the sector
 }
 
- void
-set_diskette_ret_status(value)
+void MakeRamdisk()
+{
+	Bit16u Sector;
+	Bit16u base_count;
+
+	// The principle of this routine is to copy directly from flash to the ram disk
+	// Using the same call that is used to read the flash disk
+
+	outb(EMS_ENABLE_REG, EMS_ENABLE_VAL);										// Turn on EMS from 0xB0000 - 0xBFFFF
+
+	// Configure the sector address
+	for (Sector = 0; Sector < SECTOR_COUNT; Sector++)
+	{
+		outw(FLASH_PAGE_REG, Sector);									// Select the Flash Disk Sector
+		base_count = GetRamdiskSector(Sector);						// Select the Flash Page and get the address within the page of the Sector
+		transf_sect_drive_a(EMS_SECTOR_OFFSET, base_count);	// We now have the correct page of flash selected and the sector is always in the same place so just pass the place to copy it too
+	}
+}
+
+void int13_diskette_function(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
+Bit16u DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS;
+{
+	Bit8u  drive, num_sectors, track, sector, head, status;
+	Bit16u base_address, base_count, base_es;
+	Bit8u  page, mode_register, val8, dor;
+	Bit8u  return_status[7];
+	Bit8u  drive_type, num_floppies, ah;
+	Bit16u es, last_addr;
+	Bit16u log_sector, tmp, i, j;
+	Bit16u RamAddress;
+
+	ah		= GET_AH();
+
+	switch (ah) 
+	{
+	case 0x00:													// Disk controller reset
+		{
+			drive       = GET_ELDL();					// Was here but that meant that drive was not set for other cases
+			SET_AH(0);
+			set_diskette_ret_status(0);
+			CLEAR_CF();											// Successful
+			set_diskette_current_cyl(drive, 0);			// Current cylinder
+		}
+		break;
+
+	case 0x02: // Read Diskette Sectors
+		{
+			num_sectors = GET_AL();
+			track       = GET_CH();
+			sector      = GET_CL();
+			head        = GET_DH();
+			drive       = GET_ELDL();					// Was here but that meant that drive was not set for other cases
+
+			if ((drive > 1) || (head > 1) || (sector == 0) || (num_sectors == 0) || (num_sectors > 72)) 
+			{
+				BX_INFO("int13_diskette: read/write/verify: parameter out of range\n");
+				SET_AH(1);
+				set_diskette_ret_status(1);
+				SET_AL(0);										// No sectors have been read
+				SET_CF();										// An error occurred
+
+				return;
+			}
+
+			page				= (ES >> 12);					// The upper 4 bits give the page
+			base_es			= (ES << 4);					// The lower 16bits contributed by ES
+			base_address	= base_es + BX;				// The lower 16 bits of address
+
+			// Contributed by ES:BX
+			if (base_address < base_es)					// If the base_address is less than the base_es then there was an overflow above so we need to go to the next page
+			{
+				page++;											// In case of carry, adjust page by 1
+			}
+
+			base_count = (num_sectors * 512) - 1;		// Work out the number of bytes to be transfered less one (last address to be transfered)
+
+			// Check for 64K boundary overrun
+			last_addr = base_address + base_count;		// Add the base address to work out if the last address is in the same segment
+			if (last_addr < base_address)					// If the last address is less than the base then there must have been an overflow above !
+			{
+				SET_AH(0x09);
+				set_diskette_ret_status(0x09);
+				SET_AL(0);										// No sectors have been read
+				SET_CF();										// An error occurred
+				return;
+			}
+
+			log_sector	= track * 36 + head * 18 + sector - 1;			// Calculate the first sector we are going to read
+			last_addr	= page << 12;											
+
+			if (drive == DRIVE_A)
+			{
+				// This is the Flash Based Drive
+
+				for (j = 0; j < num_sectors; j++)
+				{
+				  outw(FLASH_PAGE_REG, log_sector + j);
+				  base_count = base_address + (j << 9);
+ 				  transf_sect_drive_a(last_addr, base_count);			// We now have the correct page of flash selected and the sector is always in the same place so just pass the place to copy it too
+				}
+			}
+			else
+			{
+				// This is the SDRAM based drive
+
+				for (j = 0; j < num_sectors; j++)
+				{
+					RamAddress = GetRamdiskSector(log_sector + j);												// Pass in the sector which will set the right RAM page and give back the ram address
+					base_count = base_address + (j << 9);
+					memcpyb(last_addr, base_count, EMS_SECTOR_OFFSET, RamAddress, SECTOR_SIZE);		// Copy the sector
+				}
+			}
+
+			// ??? should track be new val from return_status[3] ?
+			set_diskette_current_cyl(drive, track);
+
+			// AL = number of sectors read (same value as passed)
+			SET_AH(0x00); // success
+			CLEAR_CF();   // success
+		}
+		break;
+
+    case 0x08: // read diskette drive parameters
+		{
+		  //BX_DEBUG_INT13_FL("floppy f08\n");
+		  drive = GET_ELDL();
+
+		  if (drive > 1)
+		  {
+			 AX = 0;
+			 BX = 0;
+			 CX = 0;
+			 DX = 0;
+			 ES = 0;
+			 DI = 0;
+			 SET_DL(num_floppies);
+			 SET_CF();
+			 return;
+		  }
+
+		  drive_type = 0x44;							/// inb_cmos(0x10);
+
+		  num_floppies = 0;
+		  if (drive_type & 0xf0)
+		  {
+			 num_floppies++;
+		  }
+
+		  if (drive_type & 0x0f)
+		  {
+			 num_floppies++;
+		  }
+
+		  if (drive == 0)
+		  {
+			 drive_type >>= 4;
+		  }
+		  else
+		  {
+			 drive_type &= 0x0f;
+		  }
+
+		  SET_BH(0);
+		  SET_BL(drive_type);
+		  SET_AH(0);
+		  SET_AL(0);
+		  SET_DL(num_floppies);
+
+		  switch (drive_type)
+		  {
+			 case 0: // none
+				CX = 0;
+				SET_DH(0); // max head #
+				break;
+
+			 case 1: // 360KB, 5.25"
+				CX = 0x2709; // 40 tracks, 9 sectors
+				SET_DH(1); // max head #
+				break;
+
+			 case 2: // 1.2MB, 5.25"
+				CX = 0x4f0f; // 80 tracks, 15 sectors
+				SET_DH(1); // max head #
+				break;
+
+			 case 3: // 720KB, 3.5"
+				CX = 0x4f09; // 80 tracks, 9 sectors
+				SET_DH(1); // max head #
+				break;
+
+			 case 4: // 1.44MB, 3.5"
+				CX = 0x4f12; // 80 tracks, 18 sectors
+				SET_DH(1); // max head #
+				break;
+
+			 case 5: // 2.88MB, 3.5"
+				CX = 0x4f24; // 80 tracks, 36 sectors
+				SET_DH(1); // max head #
+				break;
+
+			 case 6: // 160k, 5.25"
+				CX = 0x2708; // 40 tracks, 8 sectors
+				SET_DH(0); // max head #
+				break;
+
+			 case 7: // 180k, 5.25"
+				CX = 0x2709; // 40 tracks, 9 sectors
+				SET_DH(0); // max head #
+				break;
+
+			 case 8: // 320k, 5.25"
+				CX = 0x2708; // 40 tracks, 8 sectors
+				SET_DH(1); // max head #
+				break;
+
+			 default: // ?
+				BX_PANIC("floppy: int13: bad floppy type\n");
+			 }
+
+			 // Set es & di to point to 11 byte diskette param table in ROM
+	 ASM_START
+			 push bp
+			 mov  bp, sp
+			 mov ax, #diskette_param_table2
+			 mov _int13_diskette_function.DI+2[bp], ax
+			 mov _int13_diskette_function.ES+2[bp], cs
+			 pop  bp
+	 ASM_END
+			 CLEAR_CF(); // success
+			 /* disk status not changed upon success */
+		  }
+		  break;
+		
+
+		case 0x15: // read diskette drive type
+		  {
+			 // BX_DEBUG_INT13_FL("floppy f15\n");
+			 drive = GET_ELDL();
+			 if (drive > 1)
+			 {
+				SET_AH(0); // only 2 drives supported
+				// set_diskette_ret_status here ???
+				SET_CF();
+				return;
+			 }
+
+			 drive_type = 0x44;			// inb_cmos(0x10);
+
+			 if (drive == 0)
+			 {
+				drive_type >>= 4;
+			 }
+			 else
+			 {
+				drive_type &= 0x0f;
+			 }
+
+			 CLEAR_CF(); // successful, not present
+
+			 if (drive_type == 0) 
+			 {
+				SET_AH(0); // drive not present
+			 }
+			 else 
+			 {
+				SET_AH(1); // drive present, does not support change line
+			 }
+		}
+		break;
+
+	case 0x03:	// Write disk sector
+		{
+			 num_sectors = GET_AL();
+			 track       = GET_CH();
+			 sector      = GET_CL();
+			 head        = GET_DH();
+			 drive       = GET_ELDL();						// Was here but that meant that drive was not set for other cases
+
+			if (drive == DRIVE_B)							// Writing only works on Drive B
+			{
+				if ((drive > 1) || (head > 1) || (sector == 0) || (num_sectors == 0) || (num_sectors > 72)) 
+				{
+					BX_INFO("int13_diskette: read/write/verify: parameter out of range\n");
+					SET_AH(1);
+					set_diskette_ret_status(1);
+					SET_AL(0);										// No sectors have been read
+					SET_CF();										// An error occurred
+
+					return;
+				}
+
+				page				= (ES >> 12);					// The upper 4 bits give the page
+				base_es			= (ES << 4);					// The lower 16bits contributed by ES
+				base_address	= base_es + BX;				// The lower 16 bits of address
+
+				// Contributed by ES:BX
+				if (base_address < base_es)					// If the base_address is less than the base_es then there was an overflow above so we need to go to the next page
+				{
+					page++;											// In case of carry, adjust page by 1
+				}
+
+				base_count = (num_sectors << 9) - 1;		// Work out the number of bytes to be transfered less one (last address to be transfered)
+
+				// Check for 64K boundary overrun
+				last_addr = base_address + base_count;		// Add the base address to work out if the last address is in the same segment
+				if (last_addr < base_address)					// If the last address is less than the base then there must have been an overflow above !
+				{
+					SET_AH(0x09);
+					set_diskette_ret_status(0x09);
+					SET_AL(0);										// No sectors have been read
+					SET_CF();										// An error occurred
+					return;
+				}
+
+				log_sector	= track * 36 + head * 18 + sector - 1;			// Calculate the first sector we are going to read
+				last_addr	= page << 12;											
+
+				// This is the SDRAM based drive
+
+				for (j = 0; j < num_sectors; j++)
+				{
+					base_address = GetRamdiskSector(log_sector++);												// Pass in the sector which will set the right RAM page and give back the ram address
+					memcpyb(EMS_SECTOR_OFFSET, base_address, last_addr, base_count, SECTOR_SIZE);		// Copy the sector
+					base_count += SECTOR_SIZE;
+				}
+
+				// ??? should track be new val from return_status[3] ?
+				set_diskette_current_cyl(drive, track);
+
+				// AL = number of sectors read (same value as passed)
+				SET_AH(0x00); // success
+				CLEAR_CF();   // success
+				
+				break;
+			}
+		}
+		// Fall Through to what it used to do!
+
+	default:
+		{
+			BX_INFO("int13_diskette: unsupported AH=%02x\n", GET_AH());
+
+			// if ( (ah==0x20) || ((ah>=0x41) && (ah<=0x49)) || (ah==0x4e) ) {
+			SET_AH(0x01); // ???
+			set_diskette_ret_status(1);
+			SET_CF();
+		}
+		break;
+	}
+}
+
+void set_diskette_ret_status(value)
   Bit8u value;
 {
   write_byte(0x0040, 0x0041, value);
 }
 
-  void
-set_diskette_current_cyl(drive, cyl)
+void set_diskette_current_cyl(drive, cyl)
   Bit8u drive;
   Bit8u cyl;
 {
-/* TEMP HACK: FOR MSDOS
+	// Temporary hack: for MSDOS
   if (drive > 1)
-    drive = 1; */
-  /*  BX_PANIC("set_diskette_current_cyl(): drive > 1\n"); */
-  write_byte(0x0040, 0x0094+drive, cyl);
+  {
+    drive = 1;
+  }
+  
+  /* BX_PANIC("set_diskette_current_cyl(): drive > 1\n"); */
+  write_byte(0x0040, 0x0094 + drive, cyl);
 }
 
 void
@@ -2822,6 +3144,10 @@ post_default_ints:
 
   call _print_bios_banner
 
+  ;; Ram Drive setup
+
+  call _MakeRamdisk
+  
   ;;
   ;; Hard Drive setup
   ;;
