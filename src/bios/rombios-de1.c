@@ -2392,11 +2392,14 @@ Bit16u DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS;
 
 				// This is the SDRAM based drive
 
+
+				// This is the SDRAM based drive
+
 				for (j = 0; j < num_sectors; j++)
 				{
-					base_address = GetRamdiskSector(log_sector++);												// Pass in the sector which will set the right RAM page and give back the ram address
-					memcpyb(EMS_SECTOR_OFFSET, base_address, last_addr, base_count, SECTOR_SIZE);		// Copy the sector
-					base_count += SECTOR_SIZE;
+					RamAddress = GetRamdiskSector(log_sector + j);												// Pass in the sector which will set the right RAM page and give back the ram address
+					base_count = base_address + (j << 9);
+					memcpyb(EMS_SECTOR_OFFSET, RamAddress, last_addr, base_count, SECTOR_SIZE);		// Copy the sector
 				}
 
 				// ??? should track be new val from return_status[3] ?
