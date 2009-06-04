@@ -81,7 +81,19 @@ module kotku (
     output        sd_sclk_,
     input         sd_miso_,
     output        sd_mosi_,
-    output        sd_ss_
+    output        sd_ss_,
+
+    // I2C
+		inout         i2c_sdat,
+		output        i2c_sclk,
+
+    // AUDIO CODEC
+		output        aud_adclrck,
+		input         aud_adcdat,
+		inout         aud_daclrck,
+		output        aud_dacdat,
+		inout         aud_bclk,
+		output        aud_xck
   );
 
   // Registers and nets
@@ -148,6 +160,14 @@ module kotku (
   wire        ems_arena;
   wire [31:0] ems_sdram_adr;
 
+  wire        sb16_stb;
+  wire [15:0] sb16_dat_o;
+  wire        sb16_ack_o;
+  wire        sb16_io_arena;
+  wire        sb16_arena;
+  wire [15:0] sb16_audio_l;
+  wire [15:0] sb16_audio_r;
+  
   wire [ 7:0] keyb_dat_o;
   wire        keyb_io_arena;
   wire        keyb_io_status;
@@ -318,6 +338,26 @@ module kotku (
     .sdram_adr_o (ems_sdram_adr)
   );
 
+  sound_blaster_16 #(
+    .IO_BASE_ADDR (16'h0220)
+    ) sb16_card (
+    .wb_clk_i (clk),
+    .wb_rst_i (rst),
+    .wb_adr_i (adr[15:1]),
+    .wb_dat_i (dat_o),
+    .wb_dat_o (sb16_dat_o),
+    .wb_sel_i (sel),
+    .wb_cyc_i (cyc),
+    .wb_stb_i (sb16_stb),
+    .wb_we_i  (we),
+    .wb_ack_o (sb16_ack_o),
+    
+    .sb16_io_arena (sb16_io_arena),
+    
+    .audio_l  (sb16_audio_l),
+    .audio_r  (sb16_audio_r)
+    );
+
   ps2_keyb #(
     .TIMER_60USEC_VALUE_PP (750),
     .TIMER_60USEC_BITS_PP  (10),
@@ -457,6 +497,11 @@ module kotku (
   assign ems_arena      = (tga & ems_io_arena);
   assign ems_stb        = ems_arena & stb & cyc;
 
+  // SB16 gets its I/O address from "dipswitches" (parameter) on the SB16 module
+  //assign sb16_io_arena   = {adr[15:4]==12'h022 && adr[3]==1'b0};
+  assign sb16_arena     = (tga & sb16_io_arena);
+  assign sb16_stb       = sb16_arena & stb & cyc;
+
   // MS-DOS is reading IO address 0x64 to check the inhibit bit
   assign keyb_io_status  = (adr[15:1]==15'h0032 && !we);
   assign keyb_io_arena   = (adr[15:1]==15'h0030 && !we);
@@ -471,7 +516,8 @@ module kotku (
                                : (vdu_io_arena ? vdu_ack_sync[1]
                                : (sd_io_arena ? sd_ack
                                : (com1_io_arena ? com1_ack_o
-                               : (ems_io_arena ? ems_ack_o : (stb & cyc))))))
+                               : (ems_io_arena ? ems_ack_o
+                               : (sb16_io_arena ? sb16_ack_o : (stb & cyc)))))))
                          : (vdu_mem_arena ? vdu_ack_sync[1]
                          : (flash_mem_arena ? flash_ack : sdram_ack));
   assign lock            = lock0;
@@ -482,10 +528,11 @@ module kotku (
                    : (vdu_io_arena ? vdu_dat_o
                    : (com1_io_arena ? {com1_dat_o, com1_dat_o}
                    : (ems_io_arena ? ems_dat_o
+                   : (sb16_io_arena ? sb16_dat_o
                    : (keyb_io_arena ? keyb_dat_o
                    : (keyb_io_status ? 16'h10
                    : (sd_io_arena ? {8'h0,sd_dat_o}
-                   : (sw_arena ? sw_[7:0] : 16'hffff)))))));
+                   : (sw_arena ? sw_[7:0] : 16'hffff))))))));
 
   assign dat_i     = inta ? { 13'b0000_0000_0000_1, iid }
                    : (tga ? io_dat_i
@@ -509,6 +556,47 @@ module kotku (
   assign rst = rst_lck;
   assign { ledr_,ledg_ } = { 2'b00, io_reg };
 `endif
+
+  //
+  //  DE1 stuff
+  //
+  
+	I2C_AV_Config av_init (
+    //	Host Side
+    .iCLK							(clk_50_),
+    .iRST_N						(~rst),
+    
+    //	I2C Side
+    .I2C_SCLK					(i2c_sclk),
+    .I2C_SDAT					(i2c_sdat)
+  );
+
+  wire [15:0] audio_l;
+  assign audio_l = sb16_audio_l - 16'h8000;
+  wire [15:0] audio_r;
+  assign audio_r = sb16_audio_r - 16'h8000;
+  
+  // Audio
+  audio_if # (
+    .REF_CLK       (18432000),  // Set REF clk frequency here
+    .SAMPLE_RATE   (48000),     // 48000 samples/sec
+    .DATA_WIDTH    (16),			  //	16		Bits
+    .CHANNEL_NUM   (2)  			  //	Dual Channel
+  ) audif_inst (
+    // Inputs
+    .clk           (clk),
+    .reset         (rst),
+    .datal         (audio_l),
+    .datar         (audio_r),
+
+    // Outputs
+    .aud_xck       (aud_xck),
+    .aud_adclrck   (aud_adclrck),
+    .aud_daclrck   (aud_daclrck),
+    .aud_bclk      (aud_bclk),
+    .aud_dacdat    (aud_dacdat)
+    //.next_sample   ()
+  );
 
   // Behaviour
   // leds

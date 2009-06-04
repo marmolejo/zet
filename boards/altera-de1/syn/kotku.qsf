@@ -256,10 +256,34 @@ set_location_assignment PIN_W20 -to sd_miso_
 set_location_assignment PIN_Y20 -to sd_mosi_
 set_location_assignment PIN_V20 -to sd_sclk_
 set_location_assignment PIN_U20 -to sd_ss_
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_adcdat
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_adclrck
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_bclk
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_dacdat
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_daclrck
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_xck
+set_location_assignment PIN_B6 -to aud_adcdat
+set_location_assignment PIN_A6 -to aud_adclrck
+set_location_assignment PIN_A4 -to aud_bclk
+set_location_assignment PIN_B5 -to aud_dacdat
+set_location_assignment PIN_A5 -to aud_daclrck
+set_location_assignment PIN_B4 -to aud_xck
+set_instance_assignment -name IO_STANDARD LVTTL -to i2c_sclk
+set_instance_assignment -name IO_STANDARD LVTTL -to i2c_sdat
+set_location_assignment PIN_A3 -to i2c_sclk
+set_location_assignment PIN_B3 -to i2c_sdat
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT -section_id Top
 
+set_global_assignment -name STRATIX_CONFIGURATION_DEVICE EPCS4
+set_instance_assignment -name REPORT_DELAY ON -from * -to sdram_addr_[*]
+set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
+set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
+set_global_assignment -name VERILOG_FILE ../rtl/I2C_Controller.v
+set_global_assignment -name VERILOG_FILE ../rtl/I2C_AV_Config.v
+set_global_assignment -name VHDL_FILE ../rtl/audio_if.vhd
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_tfifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_rfifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
@@ -282,6 +306,7 @@ set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_sdram16.
 set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_spram.v
 set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ems/rtl/ems.v
+set_global_assignment -name VHDL_FILE ../../../cores/sb16/sb16.vhd
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/raminfr.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_debug_if.v
 set_global_assignment -name VHDL_FILE ../../../cores/uart/uart_pkg.vhd
@@ -307,8 +332,3 @@ set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/regfile.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/rom_def.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/alu.v
 set_global_assignment -name SIGNALTAP_FILE stp1.stp
-set_global_assignment -name STRATIX_CONFIGURATION_DEVICE EPCS4
-set_instance_assignment -name REPORT_DELAY ON -from * -to sdram_addr_[*]
-set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
-set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
-set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
