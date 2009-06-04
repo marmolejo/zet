@@ -225,7 +225,7 @@ module vdu (
     if (wb_rst_i)
       begin
         wb_dat_o <= 16'h0;
-        wb_ack_o <= 16'h0;
+        wb_ack_o <= 1'b0;
       end
     else
       if (wb_tga_i)
