@@ -27,14 +27,14 @@ module yadmc_spram #(
 	input [address_depth-1:0] adr,
 	input we,
 	input [data_width-1:0] di,
-	output reg [data_width-1:0] do
+	output reg [data_width-1:0] dout
 );
 
 reg [data_width-1:0] storage[0:(1 << address_depth)-1];
 
 always @(posedge clk) begin
 	if(we) storage[adr] <= di;
-	do <= storage[adr];
+	dout <= storage[adr];
 end
 
 integer i;

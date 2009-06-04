@@ -342,10 +342,14 @@ reg load_cache_msb_refill;
 reg [cache_depth-1:0] cache_adr_msb;
 always @(posedge sdram_clk) begin
 	if(load_cache_msb_evict) begin
+    // synthesis translate_off
 		$display("Reads from the cache begin at address %h", evict_adr[cache_depth-1:0]);
+    // synthesis translate_on
 		cache_adr_msb <= evict_adr[cache_depth-1:0];
 	end else if(load_cache_msb_refill) begin
+    // synthesis translate_off
 		$display("Writes to the cache begin at address %h", refill_adr[cache_depth-1:0]);
+    // synthesis translate_on
 		cache_adr_msb <= refill_adr[cache_depth-1:0];
 	end
 end
@@ -356,6 +360,7 @@ assign cache_dat_o = {sdram_dq_in, sdram_dq_in};
 assign sdram_dq_out = burst_counter[0] ? cache_dat_i[15:0] : cache_dat_i[31:16];
 
 /* FSM that runs everything */
+// synthesis translate_off
 always @(posedge sdram_clk) begin
 	if(command_evict) begin
 		$display("EVICT  addr %b", evict_adr);
@@ -364,6 +369,7 @@ always @(posedge sdram_clk) begin
 	if(command_refill) $display("REFILL addr %b", refill_adr);
 	if(command_ack)    $display("ACK    addr %b", refill_adr);
 end
+// synthesis translate_on
 
 reg command_evict_pending;
 reg command_refill_pending;
@@ -413,7 +419,9 @@ always @(posedge sdram_clk) begin
 	if(sdram_rst) begin
 		state <= RESET;
 	end else begin
+    // synthesis translate_off
 		if(state != next_state) $display("state:%d->%d", state, next_state);
+    // synthesis translate_on
 		state <= next_state;
 	end
 end
@@ -465,7 +473,7 @@ always @(state
 	command_ack = 1'b0;
 	
 	case(state)
-		RESET: begin // 0
+		default: begin // 0
 			reload_init_counter = 1'b1;
 			next_state = INIT_PRECHARGEALL;
 		end

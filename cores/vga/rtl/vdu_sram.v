@@ -18,10 +18,7 @@
 
 `timescale 1ns/10ps
 
-module vdu #(
-    parameter ack_delay = 1
-  )
-  (
+module vdu (
     // Wishbone signals
     input             wb_clk_i,     // 25 Mhz VDU clock
     input             wb_rst_i,
@@ -79,10 +76,7 @@ module vdu #(
   reg [22:0] blink_count;
 
   // Character generator ROM
-  wire        char_cs;
-  wire        char_we;
   wire [11:0] char_addr;
-  wire [7:0]  char_data_in;
   wire [7:0]  char_data_out;
 //  wire [7:0]  char_data_out1;
 
@@ -136,7 +130,6 @@ module vdu #(
   reg  [14:0] cpu_addr;
   reg         buff0_we;
   reg         intense;
-  wire        vga_cs;
   wire  [7:0] vga_data_out;
   wire  [7:0] attr_data_out;
   wire [10:0] vga_addr;  // 2K byte character buffer
@@ -178,14 +171,10 @@ module vdu #(
   // Assignments
   assign video_on1  = video_on_h && video_on_v;
   assign cursor_on1 = cursor_on_h && cursor_on_v;
-  assign char_cs    = 1'b1;
-  assign char_we    = 1'b0;
-  assign char_data_in = 8'b0;
   assign char_addr  = { vga_data_out, v_count[3:0] };
   assign vga_addr   = { 4'b0, hor_addr} + { ver_addr, 4'b0 };
   assign out_data   = {attr_data_out, vga_data_out};
 
-  assign vga_cs     = 1'b1;
   assign stb        = wb_stb_i && wb_cyc_i;
 
   assign fg_or_bg    = vga_shift[7] ^ cursor_on;
@@ -362,8 +351,8 @@ module vdu #(
         // row1_addr = (row_addr % 80)
         vga1_we <= vga0_we;
         vga1_rw <= vga0_rw;
-        row1_addr <= (row_addr < VER_DISP_CHR) ? row_addr
-                    : row_addr - VER_DISP_CHR;
+        row1_addr <= /* (row_addr < VER_DISP_CHR) ? */ row_addr
+                  /*  : row_addr - VER_DISP_CHR */ ;
         col1_addr <= col_addr;
 
         // on vdu_clk + 2 calculate vertical address

@@ -400,6 +400,8 @@ wire serial_in = loopback ? serial_out : srx_pad;
 assign stx_pad_o = loopback ? 1'b1 : serial_out;
 
 // Receiver Instance
+wire rf_overrun;
+wire rf_push_pulse;
 uart_receiver receiver(clk, wb_rst_i, lcr, rf_pop, serial_in, enable, 
 	counter_t, rf_count, rf_data_out, rf_error_bit, rf_overrun, rx_reset, lsr_mask, rstate, rf_push_pulse);
 

@@ -93,7 +93,7 @@ module yadmc #(
 	
 	input [31:0] wb_adr_i,
 	input [31:0] wb_dat_i,
-	output [31:0] wb_dat_o,
+	output [15:0] wb_dat_o,
 	input [3:0] wb_sel_i,
 	input wb_cyc_i,
 	input wb_stb_i,
@@ -114,6 +114,7 @@ module yadmc #(
 	inout [sdram_bits-1:0] sdram_dq
 );
 
+// synthesis translate_off
 initial begin
 	$display("=== YADMC parameters ===");
 	
@@ -129,6 +130,7 @@ initial begin
 	
 	$display("Cache tag depth\t\t\t%d", cache_tagdepth);
 end
+// synthesis translate_on
 
 /* Address in words */
 wire [sdram_depth-1-2:0] address = wb_adr_i[sdram_depth-1:2];
@@ -263,7 +265,7 @@ yadmc_spram #(
 	.adr(cache_index),
 	.we(cachetags_we),
 	.di(cachetags_di),
-	.do(cachetags_do)
+	.dout(cachetags_do)
 );
 
 reg cachetags_write_dirty;
@@ -380,10 +382,10 @@ yadmc_sdram16 #(
 
 /* Wishbone and cache management state machine */
 
-//reg [1:0] state;
+// reg [1:0] state;
 reg [1:0] next_state;
 
-localparam IDLE = 0, CHECK_HIT = 1, WAIT_ACK = 2;
+localparam [1:0] IDLE = 0, CHECK_HIT = 1, WAIT_ACK = 2;
 
 always @(posedge sys_clk) begin
 	if(sys_rst) begin
@@ -393,10 +395,12 @@ always @(posedge sys_clk) begin
 	end
 end
 
+// synthesis translate_off
 always @(posedge sys_clk) begin
 	if(state == CHECK_HIT)
 		$display("cache: [wb adr %h] hit %b  tag(wanted) %b tag(cached) %b index %b line %b", wb_adr_i, cache_hit, cache_tag, cachetags_do[cache_tagdepth:1], cache_index, cache_lindex);
 end
+// synthesis translate_on
 
 always @(state or wb_cyc_i or wb_stb_i or wb_we_i or cache_hit or cache_is_dirty or command_ack) begin
 	next_state = state;
@@ -409,7 +413,7 @@ always @(state or wb_cyc_i or wb_stb_i or wb_we_i or cache_hit or cache_is_dirty
 	command_refill = 0;
 	
 	case(state)
-		IDLE: begin
+		default: begin
 			//$display("IDLE");
 			if(wb_cyc_i & wb_stb_i)
 				next_state = CHECK_HIT;

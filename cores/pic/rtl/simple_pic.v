@@ -20,7 +20,7 @@
 module simple_pic (
     input             clk,
     input             rst,
-    input       [7:0] int,
+    input       [7:0] intv,
     input             inta,
     output            intr,
     output reg  [2:0] iid
@@ -42,18 +42,18 @@ module simple_pic (
 
   // irr
   always @(posedge clk)
-    irr[0] <= rst ? 1'b0 : (int[0] | irr[0] & !(iid == 3'b000 && inta_r && !inta));
+    irr[0] <= rst ? 1'b0 : (intv[0] | irr[0] & !(iid == 3'b000 && inta_r && !inta));
 
   always @(posedge clk)
-    irr[1] <= rst ? 1'b0 : (int[1] | irr[1] & !(iid == 3'b001 && inta_r && !inta));
+    irr[1] <= rst ? 1'b0 : (intv[1] | irr[1] & !(iid == 3'b001 && inta_r && !inta));
 
   always @(posedge clk)
     irr[4] <= rst ? 1'b0
-      : ((int[4] && !int4_r) | irr[4] & !(iid == 3'b100 && inta_r && !inta));
+      : ((intv[4] && !int4_r) | irr[4] & !(iid == 3'b100 && inta_r && !inta));
 
   // int4_r
   always @(posedge clk)
-    int4_r <= rst ? 1'b0 : int[4];
+    int4_r <= rst ? 1'b0 : intv[4];
 
   // iid
   always @(posedge clk)

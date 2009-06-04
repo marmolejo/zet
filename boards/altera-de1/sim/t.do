@@ -4,12 +4,12 @@ if {[file exists work]} {
 }
 
 if ![file isdirectory verilog_libs] {
-	file mkdir verilog_libs
+  file mkdir verilog_libs
+  vlib verilog_libs/altera_mf_ver
+  vlog -vlog01compat -work altera_mf_ver {/opt/altera9.0/quartus/eda/sim_lib/altera_mf.v}
 }
 
-vlib verilog_libs/altera_mf_ver
 vmap altera_mf_ver ./verilog_libs/altera_mf_ver
-vlog -vlog01compat -work altera_mf_ver {/opt/altera9.0/quartus/eda/sim_lib/altera_mf.v}
 
 vlib work
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../rtl/kotku.v ../rtl/flash.v ../rtl/pll.v
@@ -22,13 +22,19 @@ vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/gpio/rtl/hex_display.v ../../../cores/gpio/rtl/seg_7.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/sdspi/rtl/sdspi.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/ems/rtl/ems.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/ems/rtl/ems.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/uart ../../../cores/uart/uart_top.v ../../../cores/uart/uart_wb.v ../../../cores/uart/uart_regs.v ../../../cores/uart/uart_receiver.v ../../../cores/uart/uart_transmitter.v ../../../cores/uart/uart_tfifo.v ../../../cores/uart/uart_rfifo.v ../../../cores/uart/uart_sync_flops.v ../../../cores/uart/raminfr.v
 
 vsim -L altera_mf_ver -novopt -t ps work.test_kotku
 
-add wave -label io_reg -radix hexadecimal /test_kotku/kotku/io_reg
 add wave -label clk /test_kotku/kotku/zet_proc/wb_clk_i
 add wave -label rst /test_kotku/kotku/rst
 add wave -label pc -radix hexadecimal /test_kotku/kotku/zet_proc/fetch0/pc
+add wave -divider ints
+add wave -label intv /test_kotku/kotku/intv
+add wave -label intr /test_kotku/kotku/intr
+add wave -label inta /test_kotku/kotku/inta
+add wave -radix hexadecimal -r /test_kotku/kotku/pic0/*
 add wave -divider fetch
 add wave -label state -radix hexadecimal /test_kotku/kotku/zet_proc/fetch0/state
 add wave -label next_state -radix hexadecimal /test_kotku/kotku/zet_proc/fetch0/next_state
@@ -46,6 +52,7 @@ add wave -label imm -radix hexadecimal /test_kotku/kotku/zet_proc/fetch0/imm
 add wave -label off -radix hexadecimal /test_kotku/kotku/zet_proc/fetch0/off
 add wave -divider regfile
 add wave -label ax -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[0\]
+add wave -label bx -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[3\]
 add wave -label cx -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[1\]
 add wave -label dx -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[2\]
 add wave -label si -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[6\]
@@ -58,17 +65,19 @@ add wave -label cs -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/cs
 add wave -label ns -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/ns
 add wave -label op -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/op
 add wave -label wb_block /test_kotku/kotku/zet_proc/wb_block
-add wave -label dat_o -radix hexadecimal sim:/test_kotku/kotku/dat_o
+add wave -label dat_o -radix hexadecimal sim:/test_kotku/kotku/zet_proc/wm0/wb_dat_o
+add wave -label wb_dat -radix hexadecimal sim:/test_kotku/kotku/zet_proc/wb_dat_o
 add wave -label dat_i -radix hexadecimal sim:/test_kotku/kotku/dat_i
 add wave -label adr -radix hexadecimal /test_kotku/kotku/adr
 add wave -label odd_word -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/odd_word
 add wave -label byte_o -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/cpu_byte_o
-add wave -label sel_o -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/wb_sel_o
-add wave -label stb_o -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/wb_stb_o
-add wave -label cyc_o -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/wb_cyc_o
-add wave -label ack_i -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/wb_ack_i
-add wave -label we_o -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/wb_we_o
-add wave -label tga_o -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/wb_tga_o
+add wave -label sel_o -radix hexadecimal /test_kotku/kotku/zet_proc/wb_sel_o
+add wave -label stb_o -radix hexadecimal /test_kotku/kotku/zet_proc/wb_stb_o
+add wave -label cyc_o -radix hexadecimal /test_kotku/kotku/zet_proc/wb_cyc_o
+add wave -label we_o -radix hexadecimal /test_kotku/kotku/zet_proc/wb_we_o
+add wave -label tga_o -radix hexadecimal /test_kotku/kotku/zet_proc/wb_tga_o
+add wave -label ack_i -radix hexadecimal /test_kotku/kotku/zet_proc/wb_ack_i
+add wave -label cpu_adr_o -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/cpu_adr_o
 add wave -label cpu_dat_i -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/cpu_dat_i
 add wave -divider flash
 add wave -radix hexadecimal /flash_addr
@@ -92,4 +101,4 @@ add wave -divider sram
 add wave -radix hexadecimal -r /test_kotku/kotku/vdu/sram/*
 add wave -divider vdu
 add wave -radix hexadecimal -r /test_kotku/kotku/vdu/*
-run 100us
+run 50us

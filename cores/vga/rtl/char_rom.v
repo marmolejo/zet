@@ -5,6 +5,10 @@ module char_rom (
   );
 
   // Registers, nets and parameters
+
+  // altera message_off 10030
+  //  get rid of the warning about
+  //  not initializing the ROM
   reg [7:0] rom[0:4095];
 
   // Behaviour

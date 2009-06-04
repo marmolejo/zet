@@ -345,7 +345,7 @@ module kotku (
   simple_pic pic0 (
     .clk  (clk),
     .rst  (rst),
-    .int  (intv),
+    .intv (intv),
     .inta (inta),
     .intr (intr),
     .iid  (iid)
