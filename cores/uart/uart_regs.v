@@ -617,7 +617,7 @@ always @(posedge clk or posedge wb_rst_i)
 
 always @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) lsr0r <= #1 0;
-	else lsr0r <= #1 (rf_count==1 && rf_pop && !rf_push_pulse || rx_reset) ? 0 : // deassert condition
+	else lsr0r <= #1 (rf_count==1 && rf_pop && !rf_push_pulse || rx_reset) ? 1'b0 : // deassert condition
 					  lsr0r || (lsr0 && ~lsr0_d); // set on rise of lsr0 and keep asserted until deasserted 
 
 // lsr bit 1 (receiver overrun)
@@ -629,7 +629,7 @@ always @(posedge clk or posedge wb_rst_i)
 
 always @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) lsr1r <= #1 0;
-	else	lsr1r <= #1	lsr_mask ? 0 : lsr1r || (lsr1 && ~lsr1_d); // set on rise
+	else	lsr1r <= #1	lsr_mask ? 1'b0 : lsr1r || (lsr1 && ~lsr1_d); // set on rise
 
 // lsr bit 2 (parity error)
 reg lsr2_d; // delayed
@@ -640,7 +640,7 @@ always @(posedge clk or posedge wb_rst_i)
 
 always @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) lsr2r <= #1 0;
-	else lsr2r <= #1 lsr_mask ? 0 : lsr2r || (lsr2 && ~lsr2_d); // set on rise
+	else lsr2r <= #1 lsr_mask ? 1'b0 : lsr2r || (lsr2 && ~lsr2_d); // set on rise
 
 // lsr bit 3 (framing error)
 reg lsr3_d; // delayed
@@ -651,7 +651,7 @@ always @(posedge clk or posedge wb_rst_i)
 
 always @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) lsr3r <= #1 0;
-	else lsr3r <= #1 lsr_mask ? 0 : lsr3r || (lsr3 && ~lsr3_d); // set on rise
+	else lsr3r <= #1 lsr_mask ? 1'b0 : lsr3r || (lsr3 && ~lsr3_d); // set on rise
 
 // lsr bit 4 (break indicator)
 reg lsr4_d; // delayed
@@ -662,7 +662,7 @@ always @(posedge clk or posedge wb_rst_i)
 
 always @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) lsr4r <= #1 0;
-	else lsr4r <= #1 lsr_mask ? 0 : lsr4r || (lsr4 && ~lsr4_d);
+	else lsr4r <= #1 lsr_mask ? 1'b0 : lsr4r || (lsr4 && ~lsr4_d);
 
 // lsr bit 5 (transmitter fifo is empty)
 reg lsr5_d;
@@ -673,7 +673,7 @@ always @(posedge clk or posedge wb_rst_i)
 
 always @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) lsr5r <= #1 1;
-	else lsr5r <= #1 (fifo_write) ? 0 :  lsr5r || (lsr5 && ~lsr5_d);
+	else lsr5r <= #1 (fifo_write) ? 1'b0 :  lsr5r || (lsr5 && ~lsr5_d);
 
 // lsr bit 6 (transmitter empty indicator)
 reg lsr6_d;
@@ -684,7 +684,7 @@ always @(posedge clk or posedge wb_rst_i)
 
 always @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) lsr6r <= #1 1;
-	else lsr6r <= #1 (fifo_write) ? 0 : lsr6r || (lsr6 && ~lsr6_d);
+	else lsr6r <= #1 (fifo_write) ? 1'b0 : lsr6r || (lsr6 && ~lsr6_d);
 
 // lsr bit 7 (error in fifo)
 reg lsr7_d;
@@ -695,7 +695,7 @@ always @(posedge clk or posedge wb_rst_i)
 
 always @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) lsr7r <= #1 0;
-	else lsr7r <= #1 lsr_mask ? 0 : lsr7r || (lsr7 && ~lsr7_d);
+	else lsr7r <= #1 lsr_mask ? 1'b0 : lsr7r || (lsr7 && ~lsr7_d);
 
 // Frequency divider
 always @(posedge clk or posedge wb_rst_i) 
@@ -705,9 +705,9 @@ begin
 	else
 		if (start_dlc | ~ (|dlc))
   			//dlc <= #1 dl - 1;               // preset counter
-  			dlc <= #1 7 - 1;               // hard-code to 115200 @ 12.5MHz
+  			dlc <= #1 16'h7 - 16'h1;               // hard-code to 115200 @ 12.5MHz
 		else
-			dlc <= #1 dlc - 1;              // decrement counter
+			dlc <= #1 dlc - 16'h1;              // decrement counter
 end
 
 // Enable signal generation logic
@@ -745,7 +745,7 @@ begin
     block_cnt <= #1 block_value;
   else
   if (enable & block_cnt != 8'b0)  // only work on enable times
-    block_cnt <= #1 block_cnt - 1;  // decrement break counter
+    block_cnt <= #1 block_cnt - 8'd1;  // decrement break counter
 end // always of break condition detection
 
 // Generating THRE status enable signal
@@ -814,36 +814,36 @@ reg 	ti_int_pnd;
 always  @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) rls_int_pnd <= #1 0; 
 	else 
-		rls_int_pnd <= #1 lsr_mask ? 0 :  						// reset condition
-							rls_int_rise ? 1 :						// latch condition
+		rls_int_pnd <= #1 lsr_mask ? 1'b0 :  						// reset condition
+							rls_int_rise ? 1'b1 :						// latch condition
 							rls_int_pnd && ier[`UART_IE_RLS];	// default operation: remove if masked
 
 always  @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) rda_int_pnd <= #1 0; 
 	else 
-		rda_int_pnd <= #1 ((rf_count == {1'b0,trigger_level}) && fifo_read) ? 0 :  	// reset condition
-							rda_int_rise ? 1 :						// latch condition
+		rda_int_pnd <= #1 ((rf_count == {1'b0,trigger_level}) && fifo_read) ? 1'b0 :  	// reset condition
+							rda_int_rise ? 1'b1 :						// latch condition
 							rda_int_pnd && ier[`UART_IE_RDA];	// default operation: remove if masked
 
 always  @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) thre_int_pnd <= #1 0; 
 	else 
-		thre_int_pnd <= #1 fifo_write || (iir_read & ~iir[`UART_II_IP] & iir[`UART_II_II] == `UART_II_THRE)? 0 : 
-							thre_int_rise ? 1 :
+		thre_int_pnd <= #1 fifo_write || (iir_read & ~iir[`UART_II_IP] & iir[`UART_II_II] == `UART_II_THRE)? 1'b0 : 
+							thre_int_rise ? 1'b1 :
 							thre_int_pnd && ier[`UART_IE_THRE];
 
 always  @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) ms_int_pnd <= #1 0; 
 	else 
-		ms_int_pnd <= #1 msr_read ? 0 : 
-							ms_int_rise ? 1 :
+		ms_int_pnd <= #1 msr_read ? 1'b0 : 
+							ms_int_rise ? 1'b1 :
 							ms_int_pnd && ier[`UART_IE_MS];
 
 always  @(posedge clk or posedge wb_rst_i)
 	if (wb_rst_i) ti_int_pnd <= #1 0; 
 	else 
-		ti_int_pnd <= #1 fifo_read ? 0 : 
-							ti_int_rise ? 1 :
+		ti_int_pnd <= #1 fifo_read ? 1'b0 : 
+							ti_int_rise ? 1'b1 :
 							ti_int_pnd && ier[`UART_IE_RDA];
 // end of pending flags
 
@@ -856,11 +856,11 @@ begin
 	else
 		int_o_s <= #1 
 					rls_int_pnd		?	~lsr_mask					:
-					rda_int_pnd		? 1								:
+					rda_int_pnd		? 1'b1								:
 					ti_int_pnd		? ~fifo_read					:
 					thre_int_pnd	? !(fifo_write & iir_read) :
 					ms_int_pnd		? ~msr_read						:
-					0;	// if no interrupt are pending
+					1'b0;	// if no interrupt are pending
 end
 assign int_o = int_o_s & mcr[`UART_MC_OUT2];
 

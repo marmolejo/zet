@@ -113,6 +113,7 @@ module ps2_keyb (
 
   // Module instantiation
   translate_8042 tr0 (
+//    .clk     (wb_clk_i),
     .at_code (q[7:1]),
     .xt_code (xt_code)
   );
@@ -162,12 +163,12 @@ module ps2_keyb (
   // This is the 60usec timer counter
   always @(posedge wb_clk_i)
     if (~enable_timer_60usec) timer_60usec_count <= 0;
-    else if (~timer_60usec_done) timer_60usec_count <= timer_60usec_count + 1;
+    else if (~timer_60usec_done) timer_60usec_count <= timer_60usec_count + 10'd1;
 
   // This is the 5usec timer counter
   always @(posedge wb_clk_i)
     if (~enable_timer_5usec) timer_5usec_count <= 0;
-    else if (~timer_5usec_done) timer_5usec_count <= timer_5usec_count + 1;
+    else if (~timer_5usec_done) timer_5usec_count <= timer_5usec_count + 6'd1;
 
   // Input "synchronizing" logic -- synchronizes the inputs to the state
   // machine clock, thus avoiding errors related to
@@ -353,7 +354,7 @@ module ps2_keyb (
       else if ( (m1_state == m1_rx_falling_edge_marker) // increment for rx
               ||(m1_state == m1_tx_rising_edge_marker)  // increment for tx
               )
-        bit_count <= bit_count + 1;
+        bit_count <= bit_count + 4'd1;
   end
 
   // Store the special scan code status bits
@@ -365,142 +366,21 @@ module ps2_keyb (
 
 endmodule
 
-
 module translate_8042 (
+  //  input            clk,
     input      [6:0] at_code,
-    output reg [6:0] xt_code
+    output     [6:0] xt_code
   );
 
+  // Registers, nets and parameters
+  reg [7:0] rom[0:2**7-1];
+
+  assign xt_code = rom[at_code][6:0];
+
   // Behaviour
-  always @(at_code)
-    case (at_code)
-      7'h00: xt_code <= 7'h7f;
-      7'h01: xt_code <= 7'h43;
-      7'h02: xt_code <= 7'h41;
-      7'h03: xt_code <= 7'h3f;
-      7'h04: xt_code <= 7'h3d;
-      7'h05: xt_code <= 7'h3b;
-      7'h06: xt_code <= 7'h3c;
-      7'h07: xt_code <= 7'h58;
-      7'h08: xt_code <= 7'h64;
-      7'h09: xt_code <= 7'h44;
-      7'h0a: xt_code <= 7'h42;
-      7'h0b: xt_code <= 7'h40;
-      7'h0c: xt_code <= 7'h3e;
-      7'h0d: xt_code <= 7'h0f;
-      7'h0e: xt_code <= 7'h29;
-      7'h0f: xt_code <= 7'h59;
-      7'h10: xt_code <= 7'h65;
-      7'h11: xt_code <= 7'h38;
-      7'h12: xt_code <= 7'h2a;
-      7'h13: xt_code <= 7'h70;
-      7'h14: xt_code <= 7'h1d;
-      7'h15: xt_code <= 7'h10;
-      7'h16: xt_code <= 7'h02;
-      7'h17: xt_code <= 7'h5a;
-      7'h18: xt_code <= 7'h66;
-      7'h19: xt_code <= 7'h71;
-      7'h1a: xt_code <= 7'h2c;
-      7'h1b: xt_code <= 7'h1f;
-      7'h1c: xt_code <= 7'h1e;
-      7'h1d: xt_code <= 7'h11;
-      7'h1e: xt_code <= 7'h03;
-      7'h1f: xt_code <= 7'h5b;
-      7'h20: xt_code <= 7'h67;
-      7'h21: xt_code <= 7'h2e;
-      7'h22: xt_code <= 7'h2d;
-      7'h23: xt_code <= 7'h20;
-      7'h24: xt_code <= 7'h12;
-      7'h25: xt_code <= 7'h05;
-      7'h26: xt_code <= 7'h04;
-      7'h27: xt_code <= 7'h5c;
-      7'h28: xt_code <= 7'h68;
-      7'h29: xt_code <= 7'h39;
-      7'h2a: xt_code <= 7'h2f;
-      7'h2b: xt_code <= 7'h21;
-      7'h2c: xt_code <= 7'h14;
-      7'h2d: xt_code <= 7'h13;
-      7'h2e: xt_code <= 7'h06;
-      7'h2f: xt_code <= 7'h5d;
-      7'h30: xt_code <= 7'h69;
-      7'h31: xt_code <= 7'h31;
-      7'h32: xt_code <= 7'h30;
-      7'h33: xt_code <= 7'h23;
-      7'h34: xt_code <= 7'h22;
-      7'h35: xt_code <= 7'h15;
-      7'h36: xt_code <= 7'h07;
-      7'h37: xt_code <= 7'h5e;
-      7'h38: xt_code <= 7'h6a;
-      7'h39: xt_code <= 7'h72;
-      7'h3a: xt_code <= 7'h32;
-      7'h3b: xt_code <= 7'h24;
-      7'h3c: xt_code <= 7'h16;
-      7'h3d: xt_code <= 7'h08;
-      7'h3e: xt_code <= 7'h09;
-      7'h3f: xt_code <= 7'h5f;
-      7'h40: xt_code <= 7'h6b;
-      7'h41: xt_code <= 7'h33;
-      7'h42: xt_code <= 7'h25;
-      7'h43: xt_code <= 7'h17;
-      7'h44: xt_code <= 7'h18;
-      7'h45: xt_code <= 7'h0b;
-      7'h46: xt_code <= 7'h0a;
-      7'h47: xt_code <= 7'h60;
-      7'h48: xt_code <= 7'h6c;
-      7'h49: xt_code <= 7'h34;
-      7'h4a: xt_code <= 7'h35;
-      7'h4b: xt_code <= 7'h26;
-      7'h4c: xt_code <= 7'h27;
-      7'h4d: xt_code <= 7'h19;
-      7'h4e: xt_code <= 7'h0c;
-      7'h4f: xt_code <= 7'h61;
-      7'h50: xt_code <= 7'h6d;
-      7'h51: xt_code <= 7'h73;
-      7'h52: xt_code <= 7'h28;
-      7'h53: xt_code <= 7'h74;
-      7'h54: xt_code <= 7'h1a;
-      7'h55: xt_code <= 7'h0d;
-      7'h56: xt_code <= 7'h62;
-      7'h57: xt_code <= 7'h6e;
-      7'h58: xt_code <= 7'h3a;
-      7'h59: xt_code <= 7'h36;
-      7'h5a: xt_code <= 7'h1c;
-      7'h5b: xt_code <= 7'h1b;
-      7'h5c: xt_code <= 7'h75;
-      7'h5d: xt_code <= 7'h2b;
-      7'h5e: xt_code <= 7'h63;
-      7'h5f: xt_code <= 7'h76;
-      7'h60: xt_code <= 7'h55;
-      7'h61: xt_code <= 7'h56;
-      7'h62: xt_code <= 7'h77;
-      7'h63: xt_code <= 7'h78;
-      7'h64: xt_code <= 7'h79;
-      7'h65: xt_code <= 7'h7a;
-      7'h66: xt_code <= 7'h0e;
-      7'h67: xt_code <= 7'h7b;
-      7'h68: xt_code <= 7'h7c;
-      7'h69: xt_code <= 7'h4f;
-      7'h6a: xt_code <= 7'h7d;
-      7'h6b: xt_code <= 7'h4b;
-      7'h6c: xt_code <= 7'h47;
-      7'h6d: xt_code <= 7'h7e;
-      7'h6e: xt_code <= 7'h7f;
-      7'h6f: xt_code <= 7'h6f;
-      7'h70: xt_code <= 7'h52;
-      7'h71: xt_code <= 7'h53;
-      7'h72: xt_code <= 7'h50;
-      7'h73: xt_code <= 7'h4c;
-      7'h74: xt_code <= 7'h4d;
-      7'h75: xt_code <= 7'h48;
-      7'h76: xt_code <= 7'h01;
-      7'h77: xt_code <= 7'h45;
-      7'h78: xt_code <= 7'h57;
-      7'h79: xt_code <= 7'h4e;
-      7'h7a: xt_code <= 7'h51;
-      7'h7b: xt_code <= 7'h4a;
-      7'h7c: xt_code <= 7'h37;
-      7'h7d: xt_code <= 7'h49;
-      7'h7e: xt_code <= 7'h46;
-      7'h7f: xt_code <= 7'h54;
-    endcase
+/*
+  always @(posedge clk)
+    xt_code <= rom[at_code][6:0];
+*/
+  initial $readmemh("xt_codes.dat", rom);
 endmodule

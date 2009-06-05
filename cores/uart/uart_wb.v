@@ -189,7 +189,7 @@ reg [`UART_ADDR_WIDTH-1:0]	wb_adr_is;
 reg 								wb_we_is;
 reg 								wb_cyc_is;
 reg 								wb_stb_is;
-reg [3:0] 						wb_sel_is;
+//reg [3:0] 						wb_sel_is;
 wire [3:0]   wb_sel_i;
 reg 			 wre ;// timing control signal for write or read enable
 
@@ -235,14 +235,14 @@ always  @(posedge clk or posedge wb_rst_i)
 		wb_cyc_is <= #1 0;
 		wb_stb_is <= #1 0;
 		wb_dat_is <= #1 0;
-		wb_sel_is <= #1 0;
+//		wb_sel_is <= #1 0;
 	end else begin
 		wb_adr_is <= #1 wb_adr_i;
 		wb_we_is <= #1 wb_we_i;
 		wb_cyc_is <= #1 wb_cyc_i;
 		wb_stb_is <= #1 wb_stb_i;
 		wb_dat_is <= #1 wb_dat_i;
-		wb_sel_is <= #1 wb_sel_i;
+//		wb_sel_is <= #1 wb_sel_i;
 	end
 
 `ifdef DATA_BUS_WIDTH_8 // 8-bit data bus

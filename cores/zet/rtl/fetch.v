@@ -1804,6 +1804,10 @@ module micro_data (
   assign ir = { high_ir, addr_d, addr_c, addr_b, addr_a, addr_s };
 endmodule
 
+// altera message_off 10030
+//  get rid of the warning about
+//  not initializing the ROM
+
 module micro_rom (
     input [`MICRO_ADDR_WIDTH-1:0] addr,
     output [`MICRO_DATA_WIDTH-1:0] q

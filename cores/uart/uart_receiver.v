@@ -225,7 +225,7 @@ reg	[7:0]	rshift;			// receiver shift register
 reg		rparity;		// received parity
 reg		rparity_error;
 reg		rframing_error;		// framing error flag
-reg		rbit_in;
+//reg		rbit_in;  // not used
 reg		rparity_xor;
 reg	[7:0]	counter_b;	// counts the 0 (low) signals
 reg   rf_push_q;
@@ -258,7 +258,7 @@ uart_rfifo #(`UART_FIFO_REC_WIDTH) fifo_rx(
 
 wire 		rcounter16_eq_7 = (rcounter16 == 4'd7);
 wire		rcounter16_eq_0 = (rcounter16 == 4'd0);
-wire		rcounter16_eq_1 = (rcounter16 == 4'd1);
+// wire		rcounter16_eq_1 = (rcounter16 == 4'd1); // not used
 
 wire [3:0] rcounter16_minus_1 = rcounter16 - 1'b1;
 
@@ -280,7 +280,7 @@ begin
   if (wb_rst_i)
   begin
      rstate 			<= #1 sr_idle;
-	  rbit_in 				<= #1 1'b0;
+//	  rbit_in 				<= #1 1'b0;
 	  rcounter16 			<= #1 0;
 	  rbit_counter 		<= #1 0;
 	  rparity_xor 		<= #1 1'b0;
@@ -463,7 +463,7 @@ begin
 		counter_b <= #1 brc_value; // character time length - 1
 	else
 	if(enable & counter_b != 8'b0)            // only work on enable times  break not reached.
-		counter_b <= #1 counter_b - 1;  // decrement break counter
+		counter_b <= #1 counter_b - 8'd1;  // decrement break counter
 end // always of break condition detection
 
 ///
@@ -479,7 +479,7 @@ begin
 			counter_t <= #1 toc_value;
 		else
 		if (enable && counter_t != 10'b0)  // we don't want to underflow
-			counter_t <= #1 counter_t - 1;		
+			counter_t <= #1 counter_t - 8'd1;		
 end
 	
 endmodule
