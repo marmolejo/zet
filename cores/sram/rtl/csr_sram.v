@@ -20,11 +20,11 @@ module csr_sram (
     input sys_clk,
 
     // CSR slave interface
-    input  [16:1] csr_adr_i,
-    input  [ 1:0] csr_sel_i,
-    input         csr_we_i,
-    input  [15:0] csr_dat_i,
-    output [15:0] csr_dat_o,
+    input      [16:1] csr_adr_i,
+    input      [ 1:0] csr_sel_i,
+    input             csr_we_i,
+    input      [15:0] csr_dat_i,
+    output reg [15:0] csr_dat_o,
 
     // Pad signals
     output     [17:0] sram_addr_,
@@ -40,7 +40,6 @@ module csr_sram (
   reg [15:0] sram_addr;
 
   // Continuous assingments
-  assign csr_dat_o  = sram_data_;
   assign sram_data_ = sram_we_n_ ? 16'hzzzz : ww;
   assign sram_ce_n_ = 1'b0;
   assign sram_addr_ = { 2'b00, sram_addr };
@@ -61,4 +60,6 @@ module csr_sram (
   // sram_oe_n_
   always @(posedge sys_clk) sram_oe_n_ <= csr_we_i;
 
+  // csr_dat_o
+  always @(posedge sys_clk) csr_dat_o <= sram_data_;
 endmodule

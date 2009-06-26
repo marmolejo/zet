@@ -24,6 +24,7 @@ vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/ems/rtl/ems.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/ems/rtl/ems.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/uart ../../../cores/uart/uart_top.v ../../../cores/uart/uart_wb.v ../../../cores/uart/uart_regs.v ../../../cores/uart/uart_receiver.v ../../../cores/uart/uart_transmitter.v ../../../cores/uart/uart_tfifo.v ../../../cores/uart/uart_rfifo.v ../../../cores/uart/uart_sync_flops.v ../../../cores/uart/raminfr.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/sb16/sb16.vhd
 
 vsim -L altera_mf_ver -novopt -t ps work.test_kotku
 
