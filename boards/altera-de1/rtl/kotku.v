@@ -63,11 +63,11 @@ module kotku (
     output [ 1:0] sram_bw_n_,
 
     // VGA signals
-    output [1:0] tft_lcd_r_,
-    output [1:0] tft_lcd_g_,
-    output [1:0] tft_lcd_b_,
-    output       tft_lcd_hsync_,
-    output       tft_lcd_vsync_,
+    output [ 3:0] tft_lcd_r_,
+    output [ 3:0] tft_lcd_g_,
+    output [ 3:0] tft_lcd_b_,
+    output        tft_lcd_hsync_,
+    output        tft_lcd_vsync_,
 
     // UART signals
     input         uart_rxd_,
@@ -84,16 +84,16 @@ module kotku (
     output        sd_ss_,
 
     // I2C
-		inout         i2c_sdat,
-		output        i2c_sclk,
+    inout         i2c_sdat,
+    output        i2c_sclk,
 
     // AUDIO CODEC
-		output        aud_adclrck,
-		input         aud_adcdat,
-		inout         aud_daclrck,
-		output        aud_dacdat,
-		inout         aud_bclk,
-		output        aud_xck
+    output        aud_adclrck,
+    input         aud_adcdat,
+    inout         aud_daclrck,
+    output        aud_dacdat,
+    inout         aud_bclk,
+    output        aud_xck
   );
 
   // Registers and nets
@@ -138,13 +138,15 @@ module kotku (
   wire        vdum_cyc_o;
   wire        vdum_ack_i;
   wire [15:0] vdu_dat_o;
+  wire [15:0] vga_dat_o;
   wire        vdu_ack;
+  wire        vdu_ack_o;
   wire        vdu_stb;
+  wire        vga_stb;
   wire        vdu_mem_arena;
   wire        vdu_io_arena;
   wire        vdu_arena;
   reg  [ 1:0] vdu_stb_sync;
-  reg  [ 1:0] vdu_ack_sync;
 
   wire        com1_stb;
   wire [ 7:0] com1_dat_i;
@@ -167,7 +169,7 @@ module kotku (
   wire        sb16_arena;
   wire [15:0] sb16_audio_l;
   wire [15:0] sb16_audio_r;
-  
+
   wire [ 7:0] keyb_dat_o;
   wire        keyb_io_arena;
   wire        keyb_io_status;
@@ -258,19 +260,19 @@ module kotku (
     .sdram_dq    (sdram_data_)
   );
 
-  vdu vdu (
+  vga vga (
     // Wishbone slave interface
     .wb_rst_i (rst),
     .wb_clk_i (vdu_clk), // 25MHz VDU clock
     .wb_dat_i (dat_o),
-    .wb_dat_o (vdu_dat_o),
-    .wb_adr_i (adr[14:1]),    // 32K
+    .wb_dat_o (vga_dat_o),
+    .wb_adr_i (adr[16:1]),    // 128K
     .wb_we_i  (we),
     .wb_tga_i (tga),
     .wb_sel_i (sel),
-    .wb_stb_i (vdu_stb_sync[1]),
-    .wb_cyc_i (vdu_stb_sync[1]),
-    .wb_ack_o (vdu_ack),
+    .wb_stb_i (vga_stb),
+    .wb_cyc_i (vga_stb),
+    .wb_ack_o (vdu_ack_o),
 
     // VGA pad signals
     .vga_red_o   (tft_lcd_r_),
@@ -286,6 +288,19 @@ module kotku (
     .sram_oe_n_ (sram_oe_n_),
     .sram_ce_n_ (sram_ce_n_),
     .sram_bw_n_ (sram_bw_n_)
+  );
+
+  delay_ack d_ack_vga (
+    .clk_vga  (vdu_clk),
+    .clk_cpu  (clk),
+    .wb_rst_i (rst),
+    .wb_ack_i (vdu_ack_o),
+    .wb_stb_i (vdu_stb_sync[1]),
+    .wb_ack_o (vdu_ack),
+    .wb_stb_o (vga_stb),
+
+    .wb_dat_cpu (vga_dat_o),
+    .wb_dat_o   (vdu_dat_o)
   );
 
   uart_top com1 (
@@ -337,10 +352,10 @@ module kotku (
     .sdram_adr_i (adr),
     .sdram_adr_o (ems_sdram_adr)
   );
-
-  sound_blaster_16 #(
+/*
+  sound_blaster_16  #(
     .IO_BASE_ADDR (16'h0220)
-    ) sb16_card (
+    )  sb16_card (
     .wb_clk_i (clk),
     .wb_rst_i (rst),
     .wb_adr_i (adr[15:1]),
@@ -351,12 +366,14 @@ module kotku (
     .wb_stb_i (sb16_stb),
     .wb_we_i  (we),
     .wb_ack_o (sb16_ack_o),
-    
+
     .sb16_io_arena (sb16_io_arena),
-    
+
     .audio_l  (sb16_audio_l),
     .audio_r  (sb16_audio_r)
     );
+*/
+assign sb16_io_arena = 1'b0;
 
   ps2_keyb #(
     .TIMER_60USEC_VALUE_PP (750),
@@ -478,10 +495,8 @@ module kotku (
   assign sdram_arena     = !tga & sdram_mem_arena;
   assign sdram_stb       = sdram_arena & stb & cyc;
 
-  assign vdu_mem_arena   = (adr[19:15]==5'b1011_1);  // B8000h-BFFFFh -- 32K
-  assign vdu_io_arena    = (adr[15:4]==12'h03d) &&
-                           ((adr[3:1]==3'h2 && we)
-                            || (adr[3:1]==3'h5 && !we));
+  assign vdu_mem_arena   = (adr[19:17]==5'b101);  // A0000h-BFFFFh -- 128K
+  assign vdu_io_arena    = (adr[15:5]==11'b0000_0011_110);
   assign vdu_arena       = (!tga & vdu_mem_arena)
                          | (tga & vdu_io_arena);
   assign vdu_stb         = vdu_arena & stb & cyc;
@@ -513,12 +528,12 @@ module kotku (
   assign sw_arena        = (adr[15:1]==15'h0081);
 
   assign ack             = tga ? (flash_io_arena ? flash_ack
-                               : (vdu_io_arena ? vdu_ack_sync[1]
+                               : (vdu_io_arena ? vdu_ack
                                : (sd_io_arena ? sd_ack
                                : (com1_io_arena ? com1_ack_o
                                : (ems_io_arena ? ems_ack_o
                                : (sb16_io_arena ? sb16_ack_o : (stb & cyc)))))))
-                         : (vdu_mem_arena ? vdu_ack_sync[1]
+                         : (vdu_mem_arena ? vdu_ack
                          : (flash_mem_arena ? flash_ack : sdram_ack));
   assign lock            = lock0;
   assign rst_lck         = !lock;
@@ -560,22 +575,22 @@ module kotku (
   //
   //  DE1 stuff
   //
-  
-	I2C_AV_Config av_init (
-    //	Host Side
-    .iCLK							(clk_50_),
-    .iRST_N						(~rst),
-    
-    //	I2C Side
-    .I2C_SCLK					(i2c_sclk),
-    .I2C_SDAT					(i2c_sdat)
+  /*
+  I2C_AV_Config av_init (
+    // Host Side
+    .iCLK     (clk_50_),
+    .iRST_N   (~rst),
+
+    // I2C Side
+    .I2C_SCLK (i2c_sclk),
+    .I2C_SDAT (i2c_sdat)
   );
 
   wire [15:0] audio_l;
   assign audio_l = sb16_audio_l - 16'h8000;
   wire [15:0] audio_r;
   assign audio_r = sb16_audio_r - 16'h8000;
-  
+
   // Audio
   audio_if # (
     .REF_CLK       (18432000),  // Set REF clk frequency here
@@ -597,7 +612,7 @@ module kotku (
     .aud_dacdat    (aud_dacdat)
     //.next_sample   ()
   );
-
+*/
   // Behaviour
   // leds
   always @(posedge clk)
@@ -608,9 +623,5 @@ module kotku (
   // vdu_stb_sync
   always @(posedge vdu_clk)
     vdu_stb_sync <= { vdu_stb_sync[0], vdu_stb };
-
-  // vdu_ack_sync
-  always @(posedge clk)
-    vdu_ack_sync <= { vdu_ack_sync[0], vdu_ack };
 
 endmodule

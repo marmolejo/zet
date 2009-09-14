@@ -135,13 +135,9 @@ module vdu (
 
   // Module instantiation
   char_rom vdu_char_rom (
-    .clk   (wb_clk_i),
-    .rst   (wb_rst_i),
-    .cs    (char_cs),
-    .we    (char_we),
-    .addr  (char_addr),
-    .wdata (char_data_in),
-    .rdata (char_data_out)
+    .clk  (wb_clk_i),
+    .addr (char_addr),
+    .q    (char_data_out)
   );
 
   ram_2k char_buff_ram (
@@ -154,7 +150,7 @@ module vdu (
     .rdata (vga_data_out)
   );
 
-  ram_2k_attr attr_buff_ram (
+  ram_2k attr_buff_ram (
     .clk   (wb_clk_i),
     .rst   (wb_rst_i),
     .cs    (vga_cs),

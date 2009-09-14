@@ -204,13 +204,19 @@ set_instance_assignment -name CLOCK_SETTINGS clk_50_ -to clk_50_
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS OUTPUT DRIVING GROUND"
 set_global_assignment -name ENABLE_CLOCK_LATENCY ON
 
-set_location_assignment PIN_B10 -to tft_lcd_b_[1]
-set_location_assignment PIN_A10 -to tft_lcd_b_[0]
-set_location_assignment PIN_A8 -to tft_lcd_g_[1]
-set_location_assignment PIN_B9 -to tft_lcd_g_[0]
+set_location_assignment PIN_B10 -to tft_lcd_b_[3]
+set_location_assignment PIN_A10 -to tft_lcd_b_[2]
+set_location_assignment PIN_D11 -to tft_lcd_b_[1]
+set_location_assignment PIN_A9 -to tft_lcd_b_[0]
+set_location_assignment PIN_A8 -to tft_lcd_g_[3]
+set_location_assignment PIN_B9 -to tft_lcd_g_[2]
+set_location_assignment PIN_C10 -to tft_lcd_g_[1]
+set_location_assignment PIN_B8 -to tft_lcd_g_[0]
 set_location_assignment PIN_A11 -to tft_lcd_hsync_
-set_location_assignment PIN_B7 -to tft_lcd_r_[1]
-set_location_assignment PIN_A7 -to tft_lcd_r_[0]
+set_location_assignment PIN_B7 -to tft_lcd_r_[3]
+set_location_assignment PIN_A7 -to tft_lcd_r_[2]
+set_location_assignment PIN_C9 -to tft_lcd_r_[1]
+set_location_assignment PIN_D9 -to tft_lcd_r_[0]
 set_location_assignment PIN_B11 -to tft_lcd_vsync_
 set_location_assignment PIN_E2 -to hex0_[6]
 set_location_assignment PIN_F1 -to hex0_[5]
@@ -281,6 +287,19 @@ set_instance_assignment -name REPORT_DELAY ON -from * -to sdram_addr_[*]
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
 set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/dac_regs.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/palette_regs.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/char_rom.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/write_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/read_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/planar_640x480.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/text_mode.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/mem_arbitrer.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/cpu_mem_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/lcd.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/config_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/delay_ack.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga.v
 set_global_assignment -name VERILOG_FILE ../rtl/I2C_Controller.v
 set_global_assignment -name VERILOG_FILE ../rtl/I2C_AV_Config.v
 set_global_assignment -name VHDL_FILE ../rtl/audio_if.vhd
@@ -288,7 +307,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_tfifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_rfifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vdu_sram.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sram/rtl/csr_sram.v
 set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
 set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
@@ -299,7 +317,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/debug/rtl/send_addr.v
 set_global_assignment -name VERILOG_FILE ../../../cores/debug/rtl/clk_uart.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/hex_display.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/seg_7.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/char_rom.v
 set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_dpram.v
 set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_sync.v
 set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_sdram16.v
@@ -332,3 +349,4 @@ set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/regfile.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/rom_def.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/alu.v
 set_global_assignment -name SIGNALTAP_FILE stp1.stp
+set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"

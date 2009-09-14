@@ -165,10 +165,10 @@ module test_kotku;
       $readmemb("../../../cores/zet/rtl/seq_rom.dat",
         kotku.zet_proc.fetch0.decode0.seq_rom0.rom);
       $readmemh("../../../cores/vga/rtl/char_rom.dat",
-        kotku.vdu.vdu_char_rom.rom);
-      $readmemh("../../../cores/sram/sim/rnd_data.dat",
+        kotku.vga.lcd0.tm.vdu_char_rom.rom);
+      $readmemh("../../../tmp/images/msdos/menu0.hex",
         sram.bank0);
-      $readmemh("../../../cores/sram/sim/rnd_data.dat",
+      $readmemh("../../../tmp/images/msdos/menu1.hex",
         sram.bank1);
 
       clk_50 <= 1'b0;

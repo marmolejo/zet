@@ -167,8 +167,15 @@ int10_test_1A:
   jmp   int10_end
 int10_test_1103:
   cmp   ax, #0x1103
-  jne   int10_normal
+  jne   int10_test_101B
   call  biosfn_set_text_block_specifier
+  jmp   int10_end
+int10_test_101B:
+  cmp   ax, #0x101b
+  je    int10_normal
+  cmp   ah, #0x10
+  jne   int10_normal
+  call  biosfn_group_10
   jmp   int10_end
 
 int10_normal:
@@ -1047,6 +1054,484 @@ biosfn_get_video_mode:
   mov   ah, [bx]
   pop   bx
   pop   ds
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_group_10:
+  cmp   al, #0x00
+  jne   int10_test_1001
+  jmp   biosfn_set_single_palette_reg
+int10_test_1001:
+  cmp   al, #0x01
+  jne   int10_test_1002
+  jmp   biosfn_set_overscan_border_color
+int10_test_1002:
+  cmp   al, #0x02
+  jne   int10_test_1003
+  jmp   biosfn_set_all_palette_reg
+int10_test_1003:
+  cmp   al, #0x03
+  jne   int10_test_1007
+  jmp   biosfn_toggle_intensity
+int10_test_1007:
+  cmp   al, #0x07
+  jne   int10_test_1008
+  jmp   biosfn_get_single_palette_reg
+int10_test_1008:
+  cmp   al, #0x08
+  jne   int10_test_1009
+  jmp   biosfn_read_overscan_border_color
+int10_test_1009:
+  cmp   al, #0x09
+  jne   int10_test_1010
+  jmp   biosfn_get_all_palette_reg
+int10_test_1010:
+  cmp   al, #0x10
+  jne   int10_test_1012
+  jmp  biosfn_set_single_dac_reg
+int10_test_1012:
+  cmp   al, #0x12
+  jne   int10_test_1013
+  jmp   biosfn_set_all_dac_reg
+int10_test_1013:
+  cmp   al, #0x13
+  jne   int10_test_1015
+  jmp   biosfn_select_video_dac_color_page
+int10_test_1015:
+  cmp   al, #0x15
+  jne   int10_test_1017
+  jmp   biosfn_read_single_dac_reg
+int10_test_1017:
+  cmp   al, #0x17
+  jne   int10_test_1018
+  jmp   biosfn_read_all_dac_reg
+int10_test_1018:
+  cmp   al, #0x18
+  jne   int10_test_1019
+  jmp   biosfn_set_pel_mask
+int10_test_1019:
+  cmp   al, #0x19
+  jne   int10_test_101A
+  jmp   biosfn_read_pel_mask
+int10_test_101A:
+  cmp   al, #0x1a
+  jne   int10_group_10_unknown
+  jmp   biosfn_read_video_dac_state
+int10_group_10_unknown:
+  ret
+
+biosfn_set_single_palette_reg:
+  cmp   bl, #0x14
+  ja    no_actl_reg1
+  push  ax
+  push  dx
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, bl
+  out   dx, al
+  mov   al, bh
+  out   dx, al
+  mov   al, #0x20
+  out   dx, al
+  pop   dx
+  pop   ax
+no_actl_reg1:
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_set_overscan_border_color:
+  push  bx
+  mov   bl, #0x11
+  call  biosfn_set_single_palette_reg
+  pop   bx
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_set_all_palette_reg:
+  push  ax
+  push  bx
+  push  cx
+  push  dx
+  mov   bx, dx
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   cl, #0x00
+  mov   dx, # VGAREG_ACTL_ADDRESS
+set_palette_loop:
+  mov   al, cl
+  out   dx, al
+  seg   es
+  mov   al, [bx]
+  out   dx, al
+  inc   bx
+  inc   cl
+  cmp   cl, #0x10
+  jne   set_palette_loop
+  mov   al, #0x11
+  out   dx, al
+  seg   es
+  mov   al, [bx]
+  out   dx, al
+  mov   al, #0x20
+  out   dx, al
+  pop   dx
+  pop   cx
+  pop   bx
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_toggle_intensity:
+  push  ax
+  push  bx
+  push  dx
+  push  cx
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, #0x10
+  out   dx, al
+  mov   dx, # VGAREG_ACTL_READ_DATA
+  in    al, dx
+  and   al, #0xf7
+  and   bl, #0x01
+  mov   cl, #3
+  shl   bl, cl
+  or    al, bl
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  out   dx, al
+  mov   al, #0x20
+  out   dx, al
+  pop   cx
+  pop   dx
+  pop   bx
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_get_single_palette_reg:
+  cmp   bl, #0x14
+  ja    no_actl_reg2
+  push  ax
+  push  dx
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, bl
+  out   dx, al
+  mov   dx, # VGAREG_ACTL_READ_DATA
+  in    al, dx
+  mov   bh, al
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, #0x20
+  out   dx, al
+  pop   dx
+  pop   ax
+no_actl_reg2:
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_read_overscan_border_color:
+  push  ax
+  push  bx
+  mov   bl, #0x11
+  call  biosfn_get_single_palette_reg
+  mov   al, bh
+  pop   bx
+  mov   bh, al
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_get_all_palette_reg:
+  push  ax
+  push  bx
+  push  cx
+  push  dx
+  mov   bx, dx
+  mov   cl, #0x00
+get_palette_loop:
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, cl
+  out   dx, al
+  mov   dx, # VGAREG_ACTL_READ_DATA
+  in    al, dx
+  seg   es
+  mov   [bx], al
+  inc   bx
+  inc   cl
+  cmp   cl, #0x10
+  jne   get_palette_loop
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, #0x11
+  out   dx, al
+  mov   dx, # VGAREG_ACTL_READ_DATA
+  in    al, dx
+  seg   es
+  mov   [bx], al
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, #0x20
+  out   dx, al
+  pop   dx
+  pop   cx
+  pop   bx
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_set_single_dac_reg:
+  push  ax
+  push  dx
+  mov   dx, # VGAREG_DAC_WRITE_ADDRESS
+  mov   al, bl
+  out   dx, al
+  mov   dx, # VGAREG_DAC_DATA
+  pop   ax
+  push  ax
+  mov   al, ah
+  out   dx, al
+  mov   al, ch
+  out   dx, al
+  mov   al, cl
+  out   dx, al
+  pop   dx
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_set_all_dac_reg:
+  push  ax
+  push  bx
+  push  cx
+  push  dx
+  mov   dx, # VGAREG_DAC_WRITE_ADDRESS
+  mov   al, bl
+  out   dx, al
+  pop   dx
+  push  dx
+  mov   bx, dx
+  mov   dx, # VGAREG_DAC_DATA
+set_dac_loop:
+  seg   es
+  mov   al, [bx]
+  out   dx, al
+  inc   bx
+  seg   es
+  mov   al, [bx]
+  out   dx, al
+  inc   bx
+  seg   es
+  mov   al, [bx]
+  out   dx, al
+  inc   bx
+  dec   cx
+  jnz   set_dac_loop
+  pop   dx
+  pop   cx
+  pop   bx
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_select_video_dac_color_page:
+  push  ax
+  push  bx
+  push  dx
+  push  cx
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, #0x10
+  out   dx, al
+  mov   dx, # VGAREG_ACTL_READ_DATA
+  in    al, dx
+  and   bl, #0x01
+  jnz   set_dac_page
+  and   al, #0x7f
+  mov   cl, #7
+  shl   bh, cl
+  or    al, bh
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  out   dx, al
+  jmp   set_actl_normal
+set_dac_page:
+  push  ax
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, #0x14
+  out   dx, al
+  pop   ax
+  and   al, #0x80
+  jnz   set_dac_16_page
+  mov   cl, #2
+  shl   bh, cl
+set_dac_16_page:
+  and   bh, #0x0f
+  mov   al, bh
+  out   dx, al
+set_actl_normal:
+  mov   al, #0x20
+  out   dx, al
+  pop   cx
+  pop   dx
+  pop   bx
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_read_single_dac_reg:
+  push  ax
+  push  dx
+  mov   dx, # VGAREG_DAC_READ_ADDRESS
+  mov   al, bl
+  out   dx, al
+  pop   ax
+  mov   ah, al
+  mov   dx, # VGAREG_DAC_DATA
+  in    al, dx
+  xchg  al, ah
+  push  ax
+  in    al, dx
+  mov   ch, al
+  in    al, dx
+  mov   cl, al
+  pop   dx
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_read_all_dac_reg:
+  push  ax
+  push  bx
+  push  cx
+  push  dx
+  mov   dx, # VGAREG_DAC_READ_ADDRESS
+  mov   al, bl
+  out   dx, al
+  pop   dx
+  push  dx
+  mov   bx, dx
+  mov   dx, # VGAREG_DAC_DATA
+read_dac_loop:
+  in    al, dx
+  seg   es
+  mov   [bx], al
+  inc   bx
+  in    al, dx
+  seg   es
+  mov   [bx], al
+  inc   bx
+  in    al, dx
+  seg   es
+  mov   [bx], al
+  inc   bx
+  dec   cx
+  jnz   read_dac_loop
+  pop   dx
+  pop   cx
+  pop   bx
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_set_pel_mask:
+  push  ax
+  push  dx
+  mov   dx, # VGAREG_PEL_MASK
+  mov   al, bl
+  out   dx, al
+  pop   dx
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_read_pel_mask:
+  push  ax
+  push  dx
+  mov   dx, # VGAREG_PEL_MASK
+  in    al, dx
+  mov   bl, al
+  pop   dx
+  pop   ax
+  ret
+ASM_END
+
+// --------------------------------------------------------------------------------------------
+ASM_START
+biosfn_read_video_dac_state:
+  push  ax
+  push  dx
+  push  cx
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, #0x10
+  out   dx, al
+  mov   dx, # VGAREG_ACTL_READ_DATA
+  in    al, dx
+  mov   bl, al
+  mov   cl, #7
+  shr   bl, cl
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, #0x14
+  out   dx, al
+  mov   dx, # VGAREG_ACTL_READ_DATA
+  in    al, dx
+  mov   bh, al
+  and   bh, #0x0f
+  test  bl, #0x01
+  jnz   get_dac_16_page
+  mov   cl, #2
+  shr   bh, cl
+get_dac_16_page:
+  mov   dx, # VGAREG_ACTL_RESET
+  in    al, dx
+  mov   dx, # VGAREG_ACTL_ADDRESS
+  mov   al, #0x20
+  out   dx, al
+  pop   cx
+  pop   dx
+  pop   ax
   ret
 ASM_END
 

@@ -3143,14 +3143,24 @@ post_default_ints:
   mov  cx, #0xc000  ;; init vga bios
   mov  ax, #0xc780
 
+  ;; Push addr of ROM entry point
+  ;push cx       ;; Push seg
+  ;; push #0x0003  ;; Push offset - not an 8086 valid operand
+  ;mov ax, #0x0003
+  ;push ax
+
+  ;mov  bp, sp   ;; Call ROM init routine using seg:off on stack
+  ;db   0xff     ;; call_far ss:[bp+0]
+  ;db   0x5e
+  ;db   0
+
   call rom_scan
 
   call _print_bios_banner
 
   ;; Ram Drive setup
+  ;; call _MakeRamdisk
 
-  call _MakeRamdisk
-  
   ;;
   ;; Hard Drive setup
   ;;

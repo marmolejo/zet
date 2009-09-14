@@ -16,15 +16,16 @@ vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/zet/rtl/regfile.v ../../../cores/zet/rtl/alu.v ../../../cores/zet/rtl/cpu.v ../../../cores/zet/rtl/exec.v ../../../cores/zet/rtl/fetch.v ../../../cores/zet/rtl/jmp_cond.v ../../../cores/zet/rtl/util/primitives.v ../../../cores/zet/rtl/util/div_su.v ../../../cores/zet/rtl/util/div_uu.v ../../../cores/zet/rtl/rotate.v  ../../../cores/zet/rtl/util/signmul17.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/yadmc/rtl/yadmc.v ../../../cores/yadmc/rtl/yadmc_sync.v ../../../cores/yadmc/rtl/yadmc_spram.v ../../../cores/yadmc/rtl/yadmc_sdram16.v ../../../cores/yadmc/rtl/yadmc_dpram.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/sram/rtl/csr_sram.v
-vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/vga/rtl/vdu_sram.v ../../../cores/vga/rtl/char_rom.v ../rtl/domain_sync.v
+#vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/vga/rtl/vdu_sram.v ../../../cores/vga/rtl/char_rom.v ../rtl/domain_sync.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/vga/rtl/delay_ack.v ../../../cores/vga/rtl/vga.v ../../../cores/vga/rtl/config_iface.v ../../../cores/vga/rtl/lcd.v ../../../cores/vga/rtl/text_mode.v ../../../cores/vga/rtl/char_rom.v ../../../cores/vga/rtl/planar_640x480.v ../../../cores/vga/rtl/read_iface.v ../../../cores/vga/rtl/write_iface.v ../../../cores/vga/rtl/cpu_mem_iface.v ../../../cores/vga/rtl/mem_arbitrer.v ../../../cores/vga/rtl/dac_regs.v ../../../cores/vga/rtl/palette_regs.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/pic/rtl/simple_pic.v ../../../cores/timer/rtl/timer.v ../../../cores/keyb/rtl/ps2_keyb.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim test_kotku.v s29al032d_00.v ../../../cores/sram/sim/IS61LV25616.v ../../../cores/yadmc/sim/mt48lc16m16a2.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/gpio/rtl/hex_display.v ../../../cores/gpio/rtl/seg_7.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/sdspi/rtl/sdspi.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/ems/rtl/ems.v
-vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/ems/rtl/ems.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/uart ../../../cores/uart/uart_top.v ../../../cores/uart/uart_wb.v ../../../cores/uart/uart_regs.v ../../../cores/uart/uart_receiver.v ../../../cores/uart/uart_transmitter.v ../../../cores/uart/uart_tfifo.v ../../../cores/uart/uart_rfifo.v ../../../cores/uart/uart_sync_flops.v ../../../cores/uart/raminfr.v
-vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/sb16/sb16.vhd
+#vcom -work work -lint ../../../cores/sb16/sb16.vhd ../rtl/audio_if.vhd
+#vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../rtl/I2C_AV_Config.v ../rtl/I2C_Controller.v
 
 vsim -L altera_mf_ver -novopt -t ps work.test_kotku
 
@@ -62,24 +63,17 @@ add wave -label tmp -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/r\[
 add wave -label d -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/d\[15:0\]
 add wave -label wr -radix hexadecimal /test_kotku/kotku/zet_proc/exec0/reg0/wr
 add wave -divider wb_master
-add wave -label cs -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/cs
-add wave -label ns -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/ns
-add wave -label op -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/op
 add wave -label wb_block /test_kotku/kotku/zet_proc/wb_block
-add wave -label dat_o -radix hexadecimal sim:/test_kotku/kotku/zet_proc/wm0/wb_dat_o
 add wave -label wb_dat -radix hexadecimal sim:/test_kotku/kotku/zet_proc/wb_dat_o
 add wave -label dat_i -radix hexadecimal sim:/test_kotku/kotku/dat_i
 add wave -label adr -radix hexadecimal /test_kotku/kotku/adr
-add wave -label odd_word -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/odd_word
-add wave -label byte_o -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/cpu_byte_o
 add wave -label sel_o -radix hexadecimal /test_kotku/kotku/zet_proc/wb_sel_o
 add wave -label stb_o -radix hexadecimal /test_kotku/kotku/zet_proc/wb_stb_o
 add wave -label cyc_o -radix hexadecimal /test_kotku/kotku/zet_proc/wb_cyc_o
 add wave -label we_o -radix hexadecimal /test_kotku/kotku/zet_proc/wb_we_o
 add wave -label tga_o -radix hexadecimal /test_kotku/kotku/zet_proc/wb_tga_o
 add wave -label ack_i -radix hexadecimal /test_kotku/kotku/zet_proc/wb_ack_i
-add wave -label cpu_adr_o -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/cpu_adr_o
-add wave -label cpu_dat_i -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/cpu_dat_i
+add wave -radix hexadecimal /test_kotku/kotku/zet_proc/wm0/*
 add wave -divider flash
 add wave -radix hexadecimal /flash_addr
 add wave -radix hexadecimal /flash_data
@@ -98,8 +92,6 @@ add wave -label wr /test_kotku/kotku/zet_proc/exec0/reg0/wr
 add wave -label we /test_kotku/kotku/we
 add wave -label ack /test_kotku/kotku/ack
 add wave -label fetch_or_exec /test_kotku/kotku/zet_proc/fetch_or_exec
-add wave -divider sram
-add wave -radix hexadecimal -r /test_kotku/kotku/vdu/sram/*
-add wave -divider vdu
-add wave -radix hexadecimal -r /test_kotku/kotku/vdu/*
-run 50us
+add wave -divider vga
+add wave -radix hexadecimal -r /test_kotku/kotku/vga/*
+run 31us
