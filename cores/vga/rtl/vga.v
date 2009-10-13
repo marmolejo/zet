@@ -104,6 +104,8 @@ module vga (
   wire [15:0] start_addr;
   wire [ 4:0] vcursor;
   wire [ 6:0] hcursor;
+  wire [ 6:0] horiz_total;
+  wire [ 6:0] end_horiz;
 
   // attribute_ctrl wires
   wire [3:0] pal_addr;
@@ -166,6 +168,9 @@ module vga (
     .vcursor    (vcursor),
     .hcursor    (hcursor),
 
+    .horiz_total (horiz_total),
+    .end_horiz   (end_horiz),
+
     .v_retrace  (v_retrace),
     .vh_retrace (vh_retrace)
   );
@@ -204,6 +209,9 @@ module vga (
     .cur_end    (cur_end),
     .vcursor    (vcursor),
     .hcursor    (hcursor),
+
+    .horiz_total (horiz_total),
+    .end_horiz   (end_horiz),
 
     .v_retrace  (v_retrace),
     .vh_retrace (vh_retrace)

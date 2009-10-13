@@ -84,6 +84,9 @@ module config_iface (
     output [ 4:0] vcursor,
     output [ 6:0] hcursor,
 
+    output [ 6:0] horiz_total,
+    output [ 6:0] end_horiz,
+
     input v_retrace,
     input vh_retrace
   );
@@ -91,8 +94,8 @@ module config_iface (
   // Registers and nets
   reg [7:0] graphics_ctrl[0:8];
   reg [3:0] graph_idx;
-  reg [7:0] CRTC[0:15];
-  reg [3:0] crtc_idx;
+  reg [7:0] CRTC[0:23];
+  reg [4:0] crtc_idx;
   reg [3:0] seq_idx;
   reg       flip_flop;
   reg       h_pal_addr;
@@ -105,7 +108,7 @@ module config_iface (
   integer i;
 
   wire [3:0] graph_idx_wr;
-  wire [3:0] crtc_idx_wr;
+  wire [4:0] crtc_idx_wr;
   wire [3:0] seq_idx_wr;
   wire       wr_graph;
   wire       wr_seq;
@@ -131,7 +134,7 @@ module config_iface (
 
   assign seq_idx_wr   = (wr_seq && wb_sel_i[0]) ? wb_dat_i[3:0] : seq_idx;
   assign graph_idx_wr = (wr_graph && wb_sel_i[0]) ? wb_dat_i[3:0] : graph_idx;
-  assign crtc_idx_wr  = (wr_crtc && wb_sel_i[0]) ? wb_dat_i[3:0] : crtc_idx;
+  assign crtc_idx_wr  = (wr_crtc && wb_sel_i[0]) ? wb_dat_i[4:0] : crtc_idx;
 
   assign shift_reg1       = graphics_ctrl[5][6];
   assign graphics_alpha   = graphics_ctrl[6][0];
@@ -152,6 +155,9 @@ module config_iface (
   assign start_lo  = CRTC[13];
   assign vcursor   = CRTC[14][4:0];
   assign hcursor   = CRTC[15][6:0];
+
+  assign horiz_total = CRTC[0][6:0];
+  assign end_horiz   = CRTC[1][6:0];
 
   assign write    = wb_stb_i & wb_we_i;
   assign read     = wb_stb_i & !wb_we_i;
@@ -247,7 +253,7 @@ module config_iface (
 
   // crtc_idx
   always @(posedge wb_clk_i)
-    crtc_idx <= wb_rst_i ? 4'h0 : crtc_idx_wr;
+    crtc_idx <= wb_rst_i ? 5'h0 : crtc_idx_wr;
 
   // CRTC
   always @(posedge wb_clk_i)
@@ -266,8 +272,8 @@ module config_iface (
       4'h3: wb_dat_o = { 6'h0, dac_state, 8'hff };
       4'h4: wb_dat_o = { dac_read_data, write_data_register };
       4'h7: wb_dat_o = { 4'h0, graph_idx, graphics_ctrl[graph_idx] };
-      4'ha: wb_dat_o = { 4'h0, crtc_idx, CRTC[crtc_idx] };
-      4'hd: wb_dat_o = { 11'b0, v_retrace, 3'b0, vh_retrace };
+      4'ha: wb_dat_o = { 3'h0, crtc_idx, CRTC[crtc_idx] };
+      4'hd: wb_dat_o = { 12'b0, v_retrace, 2'b0, vh_retrace };
       default: wb_dat_o = 16'h0;
     endcase
 

@@ -54,6 +54,9 @@ module lcd (
     input [4:0] vcursor,
     input [6:0] hcursor,
 
+    input [6:0] horiz_total,
+    input [6:0] end_horiz,
+
     // retrace signals
     output v_retrace,
     output vh_retrace
@@ -61,10 +64,8 @@ module lcd (
 
   // Synchronization constants, these values are taken from:
   //  http://tinyvga.com/vga-timing/640x400@70Hz
-  localparam HOR_DISP_END = 10'd639; // Last horizontal pixel displayed
   localparam HOR_SYNC_BEG = 10'd655; // Start of horizontal synch pulse
   localparam HOR_SYNC_END = 10'd751; // End of Horizontal Synch pulse
-  localparam HOR_SCAN_END = 10'd799; // Last pixel in scan line
 
   localparam VER_DISP_END_0 = 10'd400;  // last row displayed
   localparam VER_SYNC_BEG_0 = 10'd412;  // start of vertical synch pulse
@@ -83,6 +84,8 @@ module lcd (
   reg [9:0]  v_count;   // 0 to VER_SCAN_END
 
   wire       mode640x480;
+  wire [9:0] hor_disp_end;
+  wire [9:0] hor_scan_end;
   wire [9:0] ver_disp_end;
   wire [9:0] ver_sync_beg;
   wire [9:0] ver_sync_end;
@@ -195,6 +198,8 @@ module lcd (
 
   // Continuous assignments
   assign mode640x480  = graphics_alpha & !shift_reg1;
+  assign hor_disp_end = { end_horiz, 3'h7 };
+  assign hor_scan_end = { horiz_total[6:2] + 1'b1, horiz_total[1:0], 3'h7 };
   assign ver_disp_end = mode640x480 ? VER_DISP_END_1 : VER_DISP_END_0;
   assign ver_sync_beg = mode640x480 ? VER_SYNC_BEG_1 : VER_SYNC_BEG_0;
   assign ver_sync_end = mode640x480 ? VER_SYNC_END_1 : VER_SYNC_END_0;
@@ -233,16 +238,16 @@ module lcd (
       end
     else
       begin
-        h_count      <= (h_count==HOR_SCAN_END) ? 10'b0 : h_count + 10'b1;
+        h_count      <= (h_count==hor_scan_end) ? 10'b0 : h_count + 10'b1;
         horiz_sync_i <= (h_count==HOR_SYNC_BEG) ? 1'b0
                       : ((h_count==HOR_SYNC_END) ? 1'b1 : horiz_sync_i);
-        v_count      <= (v_count==ver_scan_end && h_count==HOR_SCAN_END) ? 10'b0
-                      : ((h_count==HOR_SCAN_END) ? v_count + 10'b1 : v_count);
+        v_count      <= (v_count==ver_scan_end && h_count==hor_scan_end) ? 10'b0
+                      : ((h_count==hor_scan_end) ? v_count + 10'b1 : v_count);
         vert_sync    <= (v_count==ver_sync_beg) ? 1'b0
                       : ((v_count==ver_sync_end) ? 1'b1 : vert_sync);
 
-        video_on_h_i <= (h_count==HOR_SCAN_END) ? 1'b1
-                      : ((h_count==HOR_DISP_END) ? 1'b0 : video_on_h_i);
+        video_on_h_i <= (h_count==hor_scan_end) ? 1'b1
+                      : ((h_count==hor_disp_end) ? 1'b0 : video_on_h_i);
         video_on_v   <= (v_count==10'h0) ? 1'b1
                       : ((v_count==ver_disp_end) ? 1'b0 : video_on_v);
       end
