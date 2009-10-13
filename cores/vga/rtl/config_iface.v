@@ -86,6 +86,12 @@ module config_iface (
 
     output [ 6:0] horiz_total,
     output [ 6:0] end_horiz,
+    output [ 6:0] st_hor_retr,
+    output [ 4:0] end_hor_retr,
+    output [ 9:0] vert_total,
+    output [ 9:0] end_vert,
+    output [ 9:0] st_ver_retr,
+    output [ 3:0] end_ver_retr,
 
     input v_retrace,
     input vh_retrace
@@ -156,8 +162,14 @@ module config_iface (
   assign vcursor   = CRTC[14][4:0];
   assign hcursor   = CRTC[15][6:0];
 
-  assign horiz_total = CRTC[0][6:0];
-  assign end_horiz   = CRTC[1][6:0];
+  assign horiz_total  = CRTC[0][6:0];
+  assign end_horiz    = CRTC[1][6:0];
+  assign st_hor_retr  = CRTC[4][6:0];
+  assign end_hor_retr = CRTC[5][4:0];
+  assign vert_total   = { CRTC[7][5], CRTC[7][0], CRTC[6] };
+  assign end_vert     = { CRTC[7][6], CRTC[7][1], CRTC[18] };
+  assign st_ver_retr  = { CRTC[7][7], CRTC[7][2], CRTC[16] };
+  assign end_ver_retr = CRTC[17][3:0];
 
   assign write    = wb_stb_i & wb_we_i;
   assign read     = wb_stb_i & !wb_we_i;

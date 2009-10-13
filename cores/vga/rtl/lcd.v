@@ -56,25 +56,17 @@ module lcd (
 
     input [6:0] horiz_total,
     input [6:0] end_horiz,
+    input [6:0] st_hor_retr,
+    input [4:0] end_hor_retr,
+    input [9:0] vert_total,
+    input [9:0] end_vert,
+    input [9:0] st_ver_retr,
+    input [3:0] end_ver_retr,
 
     // retrace signals
     output v_retrace,
     output vh_retrace
   );
-
-  // Synchronization constants, these values are taken from:
-  //  http://tinyvga.com/vga-timing/640x400@70Hz
-  localparam HOR_SYNC_BEG = 10'd655; // Start of horizontal synch pulse
-  localparam HOR_SYNC_END = 10'd751; // End of Horizontal Synch pulse
-
-  localparam VER_DISP_END_0 = 10'd400;  // last row displayed
-  localparam VER_SYNC_BEG_0 = 10'd412;  // start of vertical synch pulse
-  localparam VER_SYNC_END_0 = 10'd415;  // end of vertical synch pulse
-  localparam VER_SCAN_END_0 = 10'd448;  // Last scan row in the frame
-  localparam VER_DISP_END_1 = 10'd480;  // last row displayed
-  localparam VER_SYNC_BEG_1 = 10'd490;  // start of vertical synch pulse
-  localparam VER_SYNC_END_1 = 10'd492;  // end of vertical synch pulse
-  localparam VER_SCAN_END_1 = 10'd524;  // Last scan row in the frame
 
   // Registers and nets
   reg        video_on_v;
@@ -88,7 +80,7 @@ module lcd (
   wire [9:0] hor_scan_end;
   wire [9:0] ver_disp_end;
   wire [9:0] ver_sync_beg;
-  wire [9:0] ver_sync_end;
+  wire [3:0] ver_sync_end;
   wire [9:0] ver_scan_end;
   wire       video_on;
 
@@ -200,10 +192,10 @@ module lcd (
   assign mode640x480  = graphics_alpha & !shift_reg1;
   assign hor_disp_end = { end_horiz, 3'h7 };
   assign hor_scan_end = { horiz_total[6:2] + 1'b1, horiz_total[1:0], 3'h7 };
-  assign ver_disp_end = mode640x480 ? VER_DISP_END_1 : VER_DISP_END_0;
-  assign ver_sync_beg = mode640x480 ? VER_SYNC_BEG_1 : VER_SYNC_BEG_0;
-  assign ver_sync_end = mode640x480 ? VER_SYNC_END_1 : VER_SYNC_END_0;
-  assign ver_scan_end = mode640x480 ? VER_SCAN_END_1 : VER_SCAN_END_0;
+  assign ver_disp_end = end_vert + 10'd1;
+  assign ver_sync_beg = st_ver_retr;
+  assign ver_sync_end = end_ver_retr + 4'd1;
+  assign ver_scan_end = vert_total + 10'd1;
   assign video_on     = video_on_h && video_on_v;
 
   assign attr_gm = 4'h0;
@@ -239,12 +231,12 @@ module lcd (
     else
       begin
         h_count      <= (h_count==hor_scan_end) ? 10'b0 : h_count + 10'b1;
-        horiz_sync_i <= (h_count==HOR_SYNC_BEG) ? 1'b0
-                      : ((h_count==HOR_SYNC_END) ? 1'b1 : horiz_sync_i);
+        horiz_sync_i <= horiz_sync_i ? (h_count[9:3]!=st_hor_retr)
+                                     : (h_count[7:3]==end_hor_retr);
         v_count      <= (v_count==ver_scan_end && h_count==hor_scan_end) ? 10'b0
                       : ((h_count==hor_scan_end) ? v_count + 10'b1 : v_count);
-        vert_sync    <= (v_count==ver_sync_beg) ? 1'b0
-                      : ((v_count==ver_sync_end) ? 1'b1 : vert_sync);
+        vert_sync    <= vert_sync ? (v_count!=ver_sync_beg)
+                                  : (v_count[3:0]==ver_sync_end);
 
         video_on_h_i <= (h_count==hor_scan_end) ? 1'b1
                       : ((h_count==hor_disp_end) ? 1'b0 : video_on_h_i);

@@ -106,6 +106,12 @@ module vga (
   wire [ 6:0] hcursor;
   wire [ 6:0] horiz_total;
   wire [ 6:0] end_horiz;
+  wire [ 6:0] st_hor_retr;
+  wire [ 4:0] end_hor_retr;
+  wire [ 9:0] vert_total;
+  wire [ 9:0] end_vert;
+  wire [ 9:0] st_ver_retr;
+  wire [ 3:0] end_ver_retr;
 
   // attribute_ctrl wires
   wire [3:0] pal_addr;
@@ -168,8 +174,14 @@ module vga (
     .vcursor    (vcursor),
     .hcursor    (hcursor),
 
-    .horiz_total (horiz_total),
-    .end_horiz   (end_horiz),
+    .horiz_total  (horiz_total),
+    .end_horiz    (end_horiz),
+    .st_hor_retr  (st_hor_retr),
+    .end_hor_retr (end_hor_retr),
+    .vert_total   (vert_total),
+    .end_vert     (end_vert),
+    .st_ver_retr  (st_ver_retr),
+    .end_ver_retr (end_ver_retr),
 
     .v_retrace  (v_retrace),
     .vh_retrace (vh_retrace)
@@ -210,8 +222,14 @@ module vga (
     .vcursor    (vcursor),
     .hcursor    (hcursor),
 
-    .horiz_total (horiz_total),
-    .end_horiz   (end_horiz),
+    .horiz_total  (horiz_total),
+    .end_horiz    (end_horiz),
+    .st_hor_retr  (st_hor_retr),
+    .end_hor_retr (end_hor_retr),
+    .vert_total   (vert_total),
+    .end_vert     (end_vert),
+    .st_ver_retr  (st_ver_retr),
+    .end_ver_retr (end_ver_retr),
 
     .v_retrace  (v_retrace),
     .vh_retrace (vh_retrace)
