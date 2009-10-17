@@ -63,6 +63,8 @@ module lcd (
     input [9:0] st_ver_retr,
     input [3:0] end_ver_retr,
 
+    input x_dotclockdiv2,
+
     // retrace signals
     output v_retrace,
     output vh_retrace
@@ -146,6 +148,7 @@ module lcd (
     .csr_stb_o (csr_wm_stb_o),
 
     .attr_plane_enable (4'hf),
+    .x_dotclockdiv2    (x_dotclockdiv2),
 
     .h_count      (h_count),
     .v_count      (v_count),
@@ -190,12 +193,12 @@ module lcd (
 
   // Continuous assignments
   assign mode640x480  = graphics_alpha & !shift_reg1;
-  assign hor_disp_end = { end_horiz, 3'h7 };
   assign hor_scan_end = { horiz_total[6:2] + 1'b1, horiz_total[1:0], 3'h7 };
+  assign hor_disp_end = { end_horiz, 3'h7 };
+  assign ver_scan_end = vert_total + 10'd1;
   assign ver_disp_end = end_vert + 10'd1;
   assign ver_sync_beg = st_ver_retr;
   assign ver_sync_end = end_ver_retr + 4'd1;
-  assign ver_scan_end = vert_total + 10'd1;
   assign video_on     = video_on_h && video_on_v;
 
   assign attr_gm = 4'h0;

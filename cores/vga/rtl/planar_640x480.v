@@ -25,6 +25,7 @@ module planar_640x480 (
 
     // Controller registers
     input [3:0] attr_plane_enable,
+    input       x_dotclockdiv2,
 
     input [9:0] h_count,
     input [9:0] v_count,
@@ -53,6 +54,7 @@ module planar_640x480 (
   reg [ 7:0] bit_mask1;
 
   wire [15:0] bit_mask;
+  wire        v_count0;
 
   wire bit3, bit2, bit1, bit0;
 
@@ -72,11 +74,13 @@ module planar_640x480 (
   assign video_on_h_o = video_on_h[9];
   assign horiz_sync_o = horiz_sync[9];
   assign csr_stb_o    = |pipe[4:1];
+  assign v_count0     = x_dotclockdiv2 ? 1'b0 : v_count[0];
 
   // Behaviour
   // Pipeline count
   always @(posedge clk)
-    pipe <= rst ? 8'b0 : { pipe[6:0], (h_count[3:0]==4'h0) };
+    pipe <= rst ? 8'b0 : { pipe[6:0],
+      x_dotclockdiv2 ? (h_count[4:0]==5'h0) : (h_count[3:0]==4'h0) };
 
   // video_on_h
   always @(posedge clk)
@@ -99,13 +103,15 @@ module planar_640x480 (
     else
       begin
         // Loading new row_addr and col_addr when h_count[3:0]==4'h0
-        // v_count * 40
-        row_addr <= { v_count[9:0], 2'b00 } + { v_count[9:0] };
-        col_addr <= h_count[9:4];
+        // v_count * 40 or 22 (depending on x_dotclockdiv2)
+        row_addr <= { v_count[9:1], v_count0, 2'b00 } + { v_count[9:1], v_count0 }
+                  + (x_dotclockdiv2 ? v_count[9:1] : 9'h0);
+        col_addr <= x_dotclockdiv2 ? h_count[9:5] : h_count[9:4];
         plane_addr0 <= h_count[1:0];
 
         // Load new word_offset at +1
-        word_offset <= { row_addr, 3'b000 } + col_addr;
+        word_offset <= (x_dotclockdiv2 ? { row_addr, 1'b0 }
+                                       : { row_addr, 3'b000 }) + col_addr;
         plane_addr  <= plane_addr0;
       end
 
@@ -119,7 +125,7 @@ module planar_640x480 (
       end
     else
       begin
-        // Load plane0 when pipe == 0x10
+        // Load plane0 when pipe == 4
         plane0_tmp <= pipe[4] ? csr_dat_i : plane0_tmp;
         plane1_tmp <= pipe[5] ? csr_dat_i : plane1_tmp;
         plane2_tmp <= pipe[6] ? csr_dat_i : plane2_tmp;
@@ -151,8 +157,10 @@ module planar_640x480 (
       end
     else
       begin
-        bit_mask0 <= { pipe[7], bit_mask0[7:1] };
-        bit_mask1 <= { bit_mask0[0], bit_mask1[7:1] };
+        bit_mask0 <= (h_count[0] & x_dotclockdiv2) ? bit_mask0
+                   : { pipe[7], bit_mask0[7:1] };
+        bit_mask1 <= (h_count[0] & x_dotclockdiv2) ? bit_mask1
+                   : { bit_mask0[0], bit_mask1[7:1] };
       end
 
   // attr

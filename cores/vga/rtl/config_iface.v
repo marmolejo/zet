@@ -19,7 +19,7 @@
   *  3b5: 0000_0011_1011_0101 CRTC     (not used in vdu.v)
   *  3c0: 0000_0011_1100_0000 attribute_ctrl
   *  3c4: 0000_0011_1100_0100 sequencer.index
-  *  3c5: 0000_0011_1100_0101 sequencer.map_mask
+  *  3c5: 0000_0011_1100_0101 sequencer.seq
   *  3c6: 0000_0011_1100_0110 pel.mask
   *  3c7: 0000_0011_1100_0111 pel.dac_state
   *  3c8: 0000_0011_1100_1000 pel.write_data_register
@@ -46,7 +46,8 @@ module config_iface (
 
     // VGA configuration registers
     // sequencer
-    output reg [3:0] map_mask,     // 3c5 (3c4: 2)
+    output [3:0] map_mask,         // 3c5 (3c4: 2)
+    output       x_dotclockdiv2,   // 3c5 (3c4: 1)
 
     // graphics_ctrl
     output       shift_reg1,       // 3cf (3ce: 5)
@@ -101,6 +102,7 @@ module config_iface (
   reg [7:0] graphics_ctrl[0:8];
   reg [3:0] graph_idx;
   reg [7:0] CRTC[0:23];
+  reg [7:0] seq[0:4];
   reg [4:0] crtc_idx;
   reg [3:0] seq_idx;
   reg       flip_flop;
@@ -141,6 +143,9 @@ module config_iface (
   assign seq_idx_wr   = (wr_seq && wb_sel_i[0]) ? wb_dat_i[3:0] : seq_idx;
   assign graph_idx_wr = (wr_graph && wb_sel_i[0]) ? wb_dat_i[3:0] : graph_idx;
   assign crtc_idx_wr  = (wr_crtc && wb_sel_i[0]) ? wb_dat_i[4:0] : crtc_idx;
+
+  assign map_mask       = seq[2][3:0];
+  assign x_dotclockdiv2 = seq[1][3];
 
   assign shift_reg1       = graphics_ctrl[5][6];
   assign graphics_alpha   = graphics_ctrl[6][0];
@@ -248,11 +253,10 @@ module config_iface (
   always @(posedge wb_clk_i)
     seq_idx <= wb_rst_i ? 4'h0 : seq_idx_wr;
 
-  // map_mask
+  // seq
   always @(posedge wb_clk_i)
-    map_mask <= wb_rst_i ? 4'h0
-      : ((wr_seq && wb_sel_i[1] && seq_idx_wr==4'h2) ?
-        wb_dat_i[11:8] : map_mask);
+    if (wr_seq & wb_sel_i[1])
+      seq[seq_idx_wr] <= wb_dat_i[15:8];
 
   // graph_idx
   always @(posedge wb_clk_i)
@@ -280,11 +284,11 @@ module config_iface (
   always @(*)
     case (wb_adr_i)
       4'h0: wb_dat_o = { pal_read, 3'b001, h_pal_addr, pal_addr };
-      4'h2: wb_dat_o = { 4'h0, seq_idx, map_mask };
+      4'h2: wb_dat_o = { seq[seq_idx], 4'h0, seq_idx };
       4'h3: wb_dat_o = { 6'h0, dac_state, 8'hff };
       4'h4: wb_dat_o = { dac_read_data, write_data_register };
-      4'h7: wb_dat_o = { 4'h0, graph_idx, graphics_ctrl[graph_idx] };
-      4'ha: wb_dat_o = { 3'h0, crtc_idx, CRTC[crtc_idx] };
+      4'h7: wb_dat_o = { graphics_ctrl[graph_idx], 4'h0, graph_idx };
+      4'ha: wb_dat_o = { CRTC[crtc_idx], 3'h0, crtc_idx };
       4'hd: wb_dat_o = { 12'b0, v_retrace, 2'b0, vh_retrace };
       default: wb_dat_o = 16'h0;
     endcase

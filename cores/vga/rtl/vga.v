@@ -112,6 +112,7 @@ module vga (
   wire [ 9:0] end_vert;
   wire [ 9:0] st_ver_retr;
   wire [ 3:0] end_ver_retr;
+  wire        x_dotclockdiv2;
 
   // attribute_ctrl wires
   wire [3:0] pal_addr;
@@ -151,6 +152,7 @@ module vga (
     .set_reset        (set_reset),
     .enable_set_reset (enable_set_reset),
     .map_mask         (map_mask),
+    .x_dotclockdiv2   (x_dotclockdiv2),
     .read_map_select  (read_map_select),
     .color_compare    (color_compare),
     .color_dont_care  (color_dont_care),
@@ -230,6 +232,8 @@ module vga (
     .end_vert     (end_vert),
     .st_ver_retr  (st_ver_retr),
     .end_ver_retr (end_ver_retr),
+
+    .x_dotclockdiv2 (x_dotclockdiv2),
 
     .v_retrace  (v_retrace),
     .vh_retrace (vh_retrace)
@@ -316,7 +320,7 @@ module vga (
   // Behaviour
   // csr_adr_i
   always @(posedge wb_clk_i)
-    csr_adr_i <= wb_rst_i ? 17'h0 : csr_adr_o + start_addr;
+    csr_adr_i <= wb_rst_i ? 17'h0 : csr_adr_o + start_addr[15:1];
 
   // csr_stb_i
   always @(posedge wb_clk_i)
