@@ -130,7 +130,6 @@ module kotku (
 
   wire        vdu_clk;
   wire [15:0] vdum_dat_i;
-  wire [ 6:0] h_vdu_adr;
   wire [11:1] vdum_adr_o;
   wire        vdum_we_o;
   wire [ 1:0] vdum_sel_o;
@@ -162,13 +161,13 @@ module kotku (
   wire        ems_arena;
   wire [31:0] ems_sdram_adr;
 
-  wire        sb16_stb;
-  wire [15:0] sb16_dat_o;
-  wire        sb16_ack_o;
-  wire        sb16_io_arena;
-  wire        sb16_arena;
-  wire [15:0] sb16_audio_l;
-  wire [15:0] sb16_audio_r;
+  //wire        sb16_stb;
+  //wire [15:0] sb16_dat_o;
+  //wire        sb16_ack_o;
+  //wire        sb16_io_arena;
+  //wire        sb16_arena;
+  //wire [15:0] sb16_audio_l;
+  //wire [15:0] sb16_audio_r;
 
   wire [ 7:0] keyb_dat_o;
   wire        keyb_io_arena;
@@ -373,7 +372,7 @@ module kotku (
     .audio_r  (sb16_audio_r)
     );
 */
-assign sb16_io_arena = 1'b0;
+//assign sb16_io_arena = 1'b0;
 
   ps2_keyb #(
     .TIMER_60USEC_VALUE_PP (750),
@@ -514,8 +513,8 @@ assign sb16_io_arena = 1'b0;
 
   // SB16 gets its I/O address from "dipswitches" (parameter) on the SB16 module
   //assign sb16_io_arena   = {adr[15:4]==12'h022 && adr[3]==1'b0};
-  assign sb16_arena     = (tga & sb16_io_arena);
-  assign sb16_stb       = sb16_arena & stb & cyc;
+  //assign sb16_arena     = (tga & sb16_io_arena);
+  //assign sb16_stb       = sb16_arena & stb & cyc;
 
   // MS-DOS is reading IO address 0x64 to check the inhibit bit
   assign keyb_io_status  = (adr[15:1]==15'h0032 && !we);
@@ -532,7 +531,8 @@ assign sb16_io_arena = 1'b0;
                                : (sd_io_arena ? sd_ack
                                : (com1_io_arena ? com1_ack_o
                                : (ems_io_arena ? ems_ack_o
-                               : (sb16_io_arena ? sb16_ack_o : (stb & cyc)))))))
+                               //: (sb16_io_arena ? sb16_ack_o
+                               : (stb & cyc)))/*)*/)))
                          : (vdu_mem_arena ? vdu_ack
                          : (flash_mem_arena ? flash_ack : sdram_ack));
   assign lock            = lock0;
@@ -543,11 +543,11 @@ assign sb16_io_arena = 1'b0;
                    : (vdu_io_arena ? vdu_dat_o
                    : (com1_io_arena ? {com1_dat_o, com1_dat_o}
                    : (ems_io_arena ? ems_dat_o
-                   : (sb16_io_arena ? sb16_dat_o
+                   //: (sb16_io_arena ? sb16_dat_o
                    : (keyb_io_arena ? keyb_dat_o
                    : (keyb_io_status ? 16'h10
                    : (sd_io_arena ? {8'h0,sd_dat_o}
-                   : (sw_arena ? sw_[7:0] : 16'hffff))))))));
+                   : (sw_arena ? sw_[7:0] : 16'hffff))))/*)*/)));
 
   assign dat_i     = inta ? { 13'b0000_0000_0000_1, iid }
                    : (tga ? io_dat_i

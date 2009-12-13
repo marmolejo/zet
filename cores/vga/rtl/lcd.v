@@ -77,7 +77,6 @@ module lcd (
   reg [9:0]  h_count;   // Horizontal pipeline delay is 2 cycles
   reg [9:0]  v_count;   // 0 to VER_SCAN_END
 
-  wire       mode640x480;
   wire [9:0] hor_disp_end;
   wire [9:0] hor_scan_end;
   wire [9:0] ver_disp_end;
@@ -192,7 +191,6 @@ module lcd (
   );
 
   // Continuous assignments
-  assign mode640x480  = graphics_alpha & !shift_reg1;
   assign hor_scan_end = { horiz_total[6:2] + 1'b1, horiz_total[1:0], 3'h7 };
   assign hor_disp_end = { end_horiz, 3'h7 };
   assign ver_scan_end = vert_total + 10'd1;

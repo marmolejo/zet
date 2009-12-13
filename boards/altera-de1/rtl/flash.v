@@ -57,7 +57,7 @@ module flash (
   assign flash_rst_n_ = 1'b1;
   assign flash_we_n_  = 1'b1;
   assign flash_oe_n_  = !op;
-  assign flash_ce_n_  = 1'b0;
+  assign flash_ce_n_  = !op;
 
   assign flash_addr_[21:1] =
     wb_tga_i ? { 1'b1, base, wb_adr_i[8:1] }

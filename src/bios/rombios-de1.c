@@ -1120,7 +1120,9 @@ static void
 init_boot_vectors()
 {
   ipl_entry_t e;
+  Bit8u  sd_error, switches;
   Bit16u count = 0;
+  Bit16u hdi, fdi;
   Bit16u ss = get_SS();
 
   /* Clear out the IPL table. */
@@ -1129,20 +1131,36 @@ init_boot_vectors()
   /* User selected device not set */
   write_word(IPL_SEG, IPL_BOOTFIRST_OFFSET, 0xFFFF);
 
-  /* Floppy drive */
-  e.type = IPL_TYPE_FLOPPY; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
-  memcpyb(IPL_SEG, IPL_TABLE_OFFSET + count * sizeof (e), ss, &e, sizeof (e));
-  count++;
+  sd_error = read_byte (0x40, 0x8d);
+  if (sd_error)
+    {
+      printf("Error initializing SD card controller (at stage %d)\n", sd_error);
 
-  /* First HDD */
-  e.type = IPL_TYPE_HARDDISK; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
-  memcpyb(IPL_SEG, IPL_TABLE_OFFSET + count * sizeof (e), ss, &e, sizeof (e));
-  count++;
+      /* Floppy drive */
+      e.type = IPL_TYPE_FLOPPY; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
+      memcpyb(IPL_SEG, IPL_TABLE_OFFSET + count * sizeof (e), ss, &e, sizeof (e));
+      count++;
+    }
+  else
+    {
+      // Get the boot sequence from the switches
+      switches = inb(0x102);
+      if (switches) { hdi = 1; fdi = 0; }
+      else          { hdi = 0; fdi = 1; }
+
+      e.type = IPL_TYPE_HARDDISK; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
+      memcpyb(IPL_SEG, IPL_TABLE_OFFSET + hdi * sizeof (e), ss, &e, sizeof (e));
+
+      e.type = IPL_TYPE_FLOPPY; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
+      memcpyb(IPL_SEG, IPL_TABLE_OFFSET + fdi * sizeof (e), ss, &e, sizeof (e));
+
+      count = 2;
+    }
 
   /* Remember how many devices we have */
   write_word(IPL_SEG, IPL_COUNT_OFFSET, count);
-  /* Not tried booting anything yet */
-  write_word(IPL_SEG, IPL_SEQUENCE_OFFSET, 0xffff);
+  /* Try to boot first boot device */
+  write_word(IPL_SEG, IPL_SEQUENCE_OFFSET, 1);
 }
 
 static Bit8u
@@ -1579,7 +1597,7 @@ int13_harddisk(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
   Bit16u DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS;
 {
   Bit8u    drive, num_sectors, sector, head, status;
-  Bit8u    drive_map;
+  Bit8u    drive_map, sd_error;
   Bit8u    n_drives;
   Bit16u   max_cylinder, cylinder;
   Bit16u   hd_cylinders;
@@ -1596,7 +1614,10 @@ int13_harddisk(DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS)
      handler code */
   /* check how many disks first (cmos reg 0x12), return an error if
      drive not present */
-  drive_map = 1;
+  sd_error = read_byte (0x40, 0x8d);
+  if (sd_error) drive_map = 0;
+  else          drive_map = 1;
+
   n_drives = 1;
 
   if (!(drive_map & (1<<(GET_ELDL()&0x7f)))) { /* allow 0, 1, or 2 disks */
@@ -2453,7 +2474,7 @@ Bit16u seq_nr;
 {
   Bit16u ebda_seg=read_word(0x0040,0x000E);
   Bit16u bootdev;
-  Bit8u  bootdrv;
+  Bit8u  bootdrv, sd_error;
   Bit8u  bootchk;
   Bit16u bootseg;
   Bit16u bootip;
@@ -2475,27 +2496,15 @@ Bit16u seq_nr;
   //     0x04 - 0x0f : PnP expansion ROMs (e.g. Etherboot)
   //     else : boot failure
 
-  // Get the boot sequence from the switches
-  bootdev = inb(0x102);
-  if(bootdev) bootdev = 1;   // 1: flopy disk, 2: hard disk
-  else        bootdev = 2;
-
   /* Read user selected device */
-  bootfirst = read_word(IPL_SEG, IPL_BOOTFIRST_OFFSET);
-  if (bootfirst != 0xFFFF) {
-    bootdev = bootfirst;
-    /* User selected device not set */
-    write_word(IPL_SEG, IPL_BOOTFIRST_OFFSET, 0xFFFF);
-    /* Reset boot sequence */
-    write_word(IPL_SEG, IPL_SEQUENCE_OFFSET, 0xFFFF);
-  } else if (bootdev == 0) BX_PANIC("No bootable device.\n");
+  bootdev = read_word(IPL_SEG, IPL_SEQUENCE_OFFSET);
 
   /* Translate from CMOS runes to an IPL table offset by subtracting 1 */
   bootdev -= 1;
 
   /* Read the boot device from the IPL table */
   if (get_boot_vector(bootdev, &e) == 0) {
-    BX_INFO("Invalid boot device (0x%x)\n", bootdev);
+    printf("Invalid boot device (0x%x)\n", bootdev);
     return;
   }
 
@@ -2546,6 +2555,11 @@ ASM_END
       return;
     }
 
+    if (read_word (0x07c0, 0x1fe)!=0xaa55) {
+      print_boot_failure(e.type, 0);
+      return;
+    }
+
     /* Canonicalize bootseg:bootip */
     bootip = (bootseg & 0x0fff) << 4;
     bootseg &= 0xf000;
@@ -2579,6 +2593,11 @@ ASM_START
     ;; Go!
     iret
 ASM_END
+}
+
+void boot_halt ()
+{
+  printf("No more devices to boot - System halted.\n");
 }
 
   void
@@ -2706,6 +2725,14 @@ int18_handler: ;; Boot Failure recovery: try the next device.
   mov  ds, bx                     ;; Set segment
   mov  bx, IPL_SEQUENCE_OFFSET    ;; BX is now the sequence number
   inc  bx                         ;; ++
+  mov  ax, IPL_COUNT_OFFSET
+  cmp  ax, bx
+  jg   i18_next
+  call _boot_halt
+  hlt
+
+i18_next:
+  xor  ax, ax
   mov  IPL_SEQUENCE_OFFSET, bx    ;; Write it back
   mov  ds, ax                     ;; and reset the segment to zero.
 
@@ -2732,10 +2759,10 @@ int19_relocated: ;; Boot function, relocated
   mov  ss, ax
 
   ;; Start from the first boot device (0, in AX)
-  mov  bx, #IPL_SEG
-  mov  ds, bx                     ;; Set segment to write to the IPL memory
-  mov  IPL_SEQUENCE_OFFSET, ax    ;; Save the sequence number
-  mov  ds, ax                     ;; and reset the segment.
+  ;mov  bx, #IPL_SEG
+  ;mov  ds, bx                     ;; Set segment to write to the IPL memory
+  ;mov  IPL_SEQUENCE_OFFSET, ax    ;; Save the sequence number
+  ;mov  ds, ax                     ;; and reset the segment.
 
   push ax
 
@@ -2804,7 +2831,9 @@ hd_post_init80:
 
   cmp  cl, #1
   je   hd_post_cmd1
-  hlt
+  mov  al, #1     ; error 1
+  mov  0x048d, al
+  ret
 
 hd_post_cmd1:
   ; CMD1: activate the init sequence
@@ -2846,7 +2875,9 @@ hd_post_cmd1:
 
   test cl, #0xff
   jz hd_post_success
-  hlt
+  mov  al, #2     ; error 2
+  mov  0x048d, al
+  ret
 
 hd_post_success:
   ret

@@ -292,10 +292,11 @@ module config_iface (
       4'hd: wb_dat_o = { 12'b0, v_retrace, 2'b0, vh_retrace };
       default: wb_dat_o = 16'h0;
     endcase
-
+/*
   initial
     begin
       for (i=0;i<=8 ;i=i+1) graphics_ctrl[i] = 8'h0;
       for (i=0;i<=15;i=i+1) CRTC[i] = 8'h0;
     end
+*/
 endmodule

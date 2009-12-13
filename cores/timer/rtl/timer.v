@@ -1,7 +1,7 @@
  /*
   *  Phase accumulator clock:
   *   Fo = Fc * N / 2^bits
-  *   here N: 12507 and bits: 32
+  *   here N: 12507 and bits: 33
   *   it gives a frequency of 18.200080376 Hz
   */
 
