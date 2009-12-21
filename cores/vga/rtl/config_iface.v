@@ -48,6 +48,7 @@ module config_iface (
     // sequencer
     output [3:0] map_mask,         // 3c5 (3c4: 2)
     output       x_dotclockdiv2,   // 3c5 (3c4: 1)
+    output       chain_four,       // 3c5 (3c4: 4)
 
     // graphics_ctrl
     output       shift_reg1,       // 3cf (3ce: 5)
@@ -146,6 +147,7 @@ module config_iface (
 
   assign map_mask       = seq[2][3:0];
   assign x_dotclockdiv2 = seq[1][3];
+  assign chain_four     = seq[4][3];
 
   assign shift_reg1       = graphics_ctrl[5][6];
   assign graphics_alpha   = graphics_ctrl[6][0];

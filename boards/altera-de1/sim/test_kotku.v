@@ -26,6 +26,7 @@ module test_kotku;
   wire [9:0] ledr;
   wire [7:0] ledg;
   reg  [9:0] sw;
+  integer    i;
 
   wire [21:0] flash_addr;
   wire [ 7:0] flash_data;
@@ -175,6 +176,38 @@ module test_kotku;
       clk_27 <= 1'b0;
       sw <= 10'h1;
       #300 sw <= 10'h0;
+    end
+
+
+  initial
+    begin
+      kotku.vga.config_if.graphics_ctrl[5] = 8'h40;
+      kotku.vga.config_if.graphics_ctrl[6] = 8'h01;
+      kotku.vga.config_if.CRTC[ 0] = 8'h5f;
+      kotku.vga.config_if.CRTC[ 1] = 8'h4f;
+      kotku.vga.config_if.CRTC[ 2] = 8'h50;
+      kotku.vga.config_if.CRTC[ 3] = 8'h82;
+      kotku.vga.config_if.CRTC[ 4] = 8'h54;
+      kotku.vga.config_if.CRTC[ 5] = 8'h80;
+      kotku.vga.config_if.CRTC[ 6] = 8'hbf;
+      kotku.vga.config_if.CRTC[ 7] = 8'h1f;
+      kotku.vga.config_if.CRTC[ 8] = 8'h00;
+      kotku.vga.config_if.CRTC[ 9] = 8'h41;
+      kotku.vga.config_if.CRTC[10] = 8'h00;
+      kotku.vga.config_if.CRTC[11] = 8'h00;
+      kotku.vga.config_if.CRTC[12] = 8'h00;
+      kotku.vga.config_if.CRTC[13] = 8'h00;
+      kotku.vga.config_if.CRTC[14] = 8'h00;
+      kotku.vga.config_if.CRTC[15] = 8'h00;
+      kotku.vga.config_if.CRTC[16] = 8'h9c;
+      kotku.vga.config_if.CRTC[17] = 8'h8e;
+      kotku.vga.config_if.CRTC[18] = 8'h8f;
+      kotku.vga.config_if.CRTC[19] = 8'h28;
+      kotku.vga.config_if.CRTC[20] = 8'h40;
+      kotku.vga.config_if.CRTC[21] = 8'h96;
+      kotku.vga.config_if.CRTC[22] = 8'hb9;
+      kotku.vga.config_if.CRTC[23] = 8'ha3;
+      kotku.vga.config_if.CRTC[24] = 8'hff;
     end
 
 endmodule

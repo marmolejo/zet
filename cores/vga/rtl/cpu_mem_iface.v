@@ -38,6 +38,7 @@ module cpu_mem_iface (
     input         wbm_ack_i,
 
     // VGA configuration registers
+    input        chain_four,
     input        memory_mapping1,
     input [ 1:0] write_mode,
     input [ 1:0] raster_op,
@@ -55,11 +56,27 @@ module cpu_mem_iface (
   wire        read_stb;
   wire        write_stb;
   wire        rd_wbs_ack_o;
+  wire [15:0] rd_wbs_dat_o;
   wire        wr_wbs_ack_o;
   wire [17:1] rd_wbm_adr_o;
   wire [17:1] wr_wbm_adr_o;
   wire        rd_wbm_stb_o;
   wire        wr_wbm_stb_o;
+  wire        rd_wbm_ack_i;
+  wire [ 1:0] wr_wbm_sel_o;
+  wire [15:0] wr_wbm_dat_o;
+  wire        wr_wbm_ack_i;
+
+  wire [15:0] wbs_dat_o_c;
+  wire        wbs_stb_i_c;
+  wire        wbs_ack_o_c;
+
+  wire [17:1] wbm_adr_o_c;
+  wire [ 1:0] wbm_sel_o_c;
+  wire        wbm_we_o_c;
+  wire [15:0] wbm_dat_o_c;
+  wire        wbm_stb_o_c;
+  wire        wbm_ack_i_c;
 
   wire [7:0] latch0, latch1, latch2, latch3;
 
@@ -70,14 +87,14 @@ module cpu_mem_iface (
 
     .wbs_adr_i (wbs_adr_i),
     .wbs_sel_i (wbs_sel_i),
-    .wbs_dat_o (wbs_dat_o),
+    .wbs_dat_o (rd_wbs_dat_o),
     .wbs_stb_i (read_stb),
     .wbs_ack_o (rd_wbs_ack_o),
 
     .wbm_adr_o (rd_wbm_adr_o),
     .wbm_dat_i (wbm_dat_i),
     .wbm_stb_o (rd_wbm_stb_o),
-    .wbm_ack_i (wbm_ack_i),
+    .wbm_ack_i (rd_wbm_ack_i),
 
     .memory_mapping1 (memory_mapping1),
     .read_mode       (read_mode),
@@ -102,10 +119,10 @@ module cpu_mem_iface (
     .wbs_ack_o (wr_wbs_ack_o),
 
     .wbm_adr_o (wr_wbm_adr_o),
-    .wbm_sel_o (wbm_sel_o),
-    .wbm_dat_o (wbm_dat_o),
+    .wbm_sel_o (wr_wbm_sel_o),
+    .wbm_dat_o (wr_wbm_dat_o),
     .wbm_stb_o (wr_wbm_stb_o),
-    .wbm_ack_i (wbm_ack_i),
+    .wbm_ack_i (wr_wbm_ack_i),
 
     .memory_mapping1  (memory_mapping1),
     .write_mode       (write_mode),
@@ -121,14 +138,46 @@ module cpu_mem_iface (
     .latch3 (latch3)
   );
 
+  c4_iface c4 (
+    .wb_clk_i  (wb_clk_i),
+    .wb_rst_i  (wb_rst_i),
+
+    .wbs_adr_i (wbs_adr_i),
+    .wbs_sel_i (wbs_sel_i),
+    .wbs_we_i  (wbs_we_i),
+    .wbs_dat_i (wbs_dat_i),
+    .wbs_dat_o (wbs_dat_o_c),
+    .wbs_stb_i (wbs_stb_i_c),
+    .wbs_ack_o (wbs_ack_o_c),
+
+    .wbm_adr_o (wbm_adr_o_c),
+    .wbm_sel_o (wbm_sel_o_c),
+    .wbm_we_o  (wbm_we_o_c),
+    .wbm_dat_o (wbm_dat_o_c),
+    .wbm_dat_i (wbm_dat_i),
+    .wbm_stb_o (wbm_stb_o_c),
+    .wbm_ack_i (wbm_ack_i_c)
+  );
+
   // Continuous assignments
-  assign read_stb  = wbs_stb_i & !wbs_we_i;
-  assign write_stb = wbs_stb_i & wbs_we_i;
+  assign read_stb     = wbs_stb_i & !wbs_we_i & !chain_four;
+  assign write_stb    = wbs_stb_i & wbs_we_i & !chain_four;
+  assign rd_wbm_ack_i = !wbs_we_i & wbm_ack_i & !chain_four;
+  assign wr_wbm_ack_i = wbs_we_i & wbm_ack_i & !chain_four;
 
-  assign wbs_ack_o = wbs_we_i ? wr_wbs_ack_o : rd_wbs_ack_o;
-  assign wbm_adr_o = wbs_we_i ? wr_wbm_adr_o : rd_wbm_adr_o;
-  assign wbm_stb_o = wbs_we_i ? wr_wbm_stb_o : rd_wbm_stb_o;
+  assign wbs_ack_o = chain_four ? wbs_ack_o_c
+                   : (wbs_we_i ? wr_wbs_ack_o : rd_wbs_ack_o);
+  assign wbs_dat_o = chain_four ? wbs_dat_o_c : rd_wbs_dat_o;
+  assign wbm_adr_o = chain_four ? wbm_adr_o_c
+                   : (wbs_we_i ? wr_wbm_adr_o : rd_wbm_adr_o);
+  assign wbm_stb_o = chain_four ? wbm_stb_o_c
+                   : (wbs_we_i ? wr_wbm_stb_o : rd_wbm_stb_o);
+  assign wbm_sel_o = chain_four ? wbm_sel_o_c : wr_wbm_sel_o;
+  assign wbm_dat_o = chain_four ? wbm_dat_o_c : wr_wbm_dat_o;
 
-  assign wbm_we_o  = wbs_we_i;
+  assign wbm_we_o  = chain_four & wbm_we_o_c
+                   | !chain_four & wbs_we_i;
 
+  assign wbs_stb_i_c = chain_four & wbs_stb_i;
+  assign wbm_ack_i_c = chain_four & wbm_ack_i;
 endmodule

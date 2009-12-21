@@ -231,7 +231,7 @@ module kotku (
     .sdram_depth       (23),
     .sdram_columndepth (8),
     .sdram_adrwires    (12),
-    .cache_depth       (4)
+    .cache_depth       (6)
     ) yadmc (
 
     // Wishbone slave interface

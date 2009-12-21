@@ -85,11 +85,13 @@ module lcd (
   wire [9:0] ver_scan_end;
   wire       video_on;
 
-  wire [3:0] attr_gm;
   wire [3:0] attr_wm;
   wire [3:0] attr_tm;
   wire [3:0] attr;
   wire [7:0] index;
+  wire [7:0] index_pal;
+  wire [7:0] color;
+  reg  [7:0] index_gm;
 
   wire video_on_h_tm;
   wire video_on_h_wm;
@@ -106,6 +108,8 @@ module lcd (
   wire        csr_tm_stb_o;
   wire [17:1] csr_wm_adr_o;
   wire        csr_wm_stb_o;
+  wire [17:1] csr_gm_adr_o;
+  wire        csr_gm_stb_o;
   wire        csr_stb_o_tmp;
 
   wire [7:0] red;
@@ -137,7 +141,7 @@ module lcd (
     .horiz_sync_o (horiz_sync_tm)
   );
 
-  planar_640x480 wm (
+  planar wm (
     .clk (clk),
     .rst (rst),
 
@@ -159,11 +163,30 @@ module lcd (
     .horiz_sync_o (horiz_sync_wm)
   );
 
+  linear gm (
+    .clk (clk),
+    .rst (rst),
+
+    // CSR slave interface for reading
+    .csr_adr_o (csr_gm_adr_o),
+    .csr_dat_i (csr_dat_i),
+    .csr_stb_o (csr_gm_stb_o),
+
+    .h_count      (h_count),
+    .v_count      (v_count),
+    .horiz_sync_i (horiz_sync_i),
+    .video_on_h_i (video_on_h_i),
+    .video_on_h_o (video_on_h_gm),
+
+    .color        (color),
+    .horiz_sync_o (horiz_sync_gm)
+  );
+
   palette_regs pr (
     .clk (clk),
 
     .attr  (attr),
-    .index (index),
+    .index (index_pal),
 
     .address    (pal_addr),
     .write      (pal_we),
@@ -199,23 +222,24 @@ module lcd (
   assign ver_sync_end = end_ver_retr + 4'd1;
   assign video_on     = video_on_h && video_on_v;
 
-  assign attr_gm = 4'h0;
+  assign attr  = graphics_alpha ? attr_wm : attr_tm;
+  assign index = (graphics_alpha & shift_reg1) ? index_gm : index_pal;
 
-  assign attr = graphics_alpha ?
-    (shift_reg1 ? attr_gm : attr_wm) : attr_tm;
-
-  assign video_on_h_gm = video_on_h_i;
   assign video_on_h    = video_on_h_p[1];
 
-  assign horiz_sync_gm = horiz_sync_i;
+  assign csr_adr_o = graphics_alpha ?
+    (shift_reg1 ? csr_gm_adr_o : csr_wm_adr_o) : { 1'b0, csr_tm_adr_o };
 
-  assign csr_adr_o = graphics_alpha ? csr_wm_adr_o : { 1'b0, csr_tm_adr_o };
-
-  assign csr_stb_o_tmp = graphics_alpha ? csr_wm_stb_o : csr_tm_stb_o;
+  assign csr_stb_o_tmp = graphics_alpha ?
+    (shift_reg1 ? csr_gm_stb_o : csr_wm_stb_o) : csr_tm_stb_o;
   assign csr_stb_o     = csr_stb_o_tmp & (video_on_h_i | video_on_h) & video_on_v;
 
   assign v_retrace   = !video_on_v;
   assign vh_retrace  = v_retrace | !video_on_h;
+
+  // index_gm
+  always @(posedge clk)
+    index_gm <= rst ? 8'h0 : color;
 
   // Sync generation & timing process
   // Generate horizontal and vertical timing signals for video signal

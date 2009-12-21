@@ -76,6 +76,8 @@ module vga (
   wire [ 3:0] set_reset;
   wire [ 3:0] enable_set_reset;
   wire [ 3:0] map_mask;
+  wire        x_dotclockdiv2;
+  wire        chain_four;
   wire [ 1:0] read_map_select;
   wire [ 3:0] color_compare;
   wire [ 3:0] color_dont_care;
@@ -112,7 +114,6 @@ module vga (
   wire [ 9:0] end_vert;
   wire [ 9:0] st_ver_retr;
   wire [ 3:0] end_ver_retr;
-  wire        x_dotclockdiv2;
 
   // attribute_ctrl wires
   wire [3:0] pal_addr;
@@ -153,6 +154,7 @@ module vga (
     .enable_set_reset (enable_set_reset),
     .map_mask         (map_mask),
     .x_dotclockdiv2   (x_dotclockdiv2),
+    .chain_four       (chain_four),
     .read_map_select  (read_map_select),
     .color_compare    (color_compare),
     .color_dont_care  (color_dont_care),
@@ -259,6 +261,7 @@ module vga (
     .wbm_stb_o (wbm_stb_o),
     .wbm_ack_i (wbm_ack_i),
 
+    .chain_four       (chain_four),
     .memory_mapping1  (memory_mapping1),
     .write_mode       (write_mode),
     .raster_op        (raster_op),

@@ -14,7 +14,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module planar_640x480 (
+module planar (
     input clk,
     input rst,
 
