@@ -1144,7 +1144,7 @@ init_boot_vectors()
   else
     {
       // Get the boot sequence from the switches
-      switches = inb(0x102);
+      switches = inb(0xf100);
       if (switches) { hdi = 1; fdi = 0; }
       else          { hdi = 0; fdi = 1; }
 

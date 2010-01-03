@@ -17,13 +17,15 @@ vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/yadmc/rtl/yadmc.v ../../../cores/yadmc/rtl/yadmc_sync.v ../../../cores/yadmc/rtl/yadmc_spram.v ../../../cores/yadmc/rtl/yadmc_sdram16.v ../../../cores/yadmc/rtl/yadmc_dpram.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/sram/rtl/csr_sram.v
 #vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/vga/rtl/vdu_sram.v ../../../cores/vga/rtl/char_rom.v ../rtl/domain_sync.v
-vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/vga/rtl/delay_ack.v ../../../cores/vga/rtl/vga.v ../../../cores/vga/rtl/config_iface.v ../../../cores/vga/rtl/lcd.v ../../../cores/vga/rtl/linear.v ../../../cores/vga/rtl/text_mode.v ../../../cores/vga/rtl/char_rom.v ../../../cores/vga/rtl/planar_640x480.v ../../../cores/vga/rtl/read_iface.v ../../../cores/vga/rtl/write_iface.v ../../../cores/vga/rtl/cpu_mem_iface.v ../../../cores/vga/rtl/mem_arbitrer.v ../../../cores/vga/rtl/dac_regs.v ../../../cores/vga/rtl/palette_regs.v
+vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/vga/rtl/delay_ack.v ../../../cores/vga/rtl/vga.v ../../../cores/vga/rtl/config_iface.v ../../../cores/vga/rtl/lcd.v ../../../cores/vga/rtl/linear.v ../../../cores/vga/rtl/text_mode.v ../../../cores/vga/rtl/char_rom.v ../../../cores/vga/rtl/planar.v ../../../cores/vga/rtl/c4_iface.v ../../../cores/vga/rtl/read_iface.v ../../../cores/vga/rtl/write_iface.v ../../../cores/vga/rtl/cpu_mem_iface.v ../../../cores/vga/rtl/mem_arbitrer.v ../../../cores/vga/rtl/dac_regs.v ../../../cores/vga/rtl/palette_regs.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/pic/rtl/simple_pic.v ../../../cores/timer/rtl/timer.v ../../../cores/keyb/rtl/ps2_keyb.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim test_kotku.v s29al032d_00.v ../../../cores/sram/sim/IS61LV25616.v ../../../cores/yadmc/sim/mt48lc16m16a2.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/gpio/rtl/hex_display.v ../../../cores/gpio/rtl/seg_7.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/sdspi/rtl/sdspi.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../../../cores/ems/rtl/ems.v
 vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/uart ../../../cores/uart/uart_top.v ../../../cores/uart/uart_wb.v ../../../cores/uart/uart_regs.v ../../../cores/uart/uart_receiver.v ../../../cores/uart/uart_transmitter.v ../../../cores/uart/uart_tfifo.v ../../../cores/uart/uart_rfifo.v ../../../cores/uart/uart_sync_flops.v ../../../cores/uart/raminfr.v
+vlog -work work -lint ../../../cores/gpio/rtl/sw_leds.v
+vlog -work work -lint ../../../cores/wb_switch/wb_switch.v
 #vcom -work work -lint ../../../cores/sb16/sb16.vhd ../rtl/audio_if.vhd
 #vlog -work work -lint +incdir+../../../cores/zet/rtl +incdir+../../../cores/zet/sim ../rtl/I2C_AV_Config.v ../rtl/I2C_Controller.v
 
@@ -92,10 +94,13 @@ add wave -label wr /test_kotku/kotku/zet_proc/exec0/reg0/wr
 add wave -label we /test_kotku/kotku/we
 add wave -label ack /test_kotku/kotku/ack
 add wave -label fetch_or_exec /test_kotku/kotku/zet_proc/fetch_or_exec
-add wave -divider lcd
-add wave -radix hexadecimal /test_kotku/kotku/vga/lcd0/*
-add wave -divider gm
-add wave -radix hexadecimal /test_kotku/kotku/vga/lcd0/gm/*
-add wave -divider arbitrer
-add wave -radix hexadecimal /test_kotku/kotku/vga/arbitrer/*
-run 31us
+add wave -divider wb_switch
+add wave -radix hexadecimal /test_kotku/kotku/wbs/*
+add wave -divider vga
+add wave -radix hexadecimal /test_kotku/kotku/vga/*
+add wave -divider delay_ack
+add wave -radix hexadecimal /test_kotku/kotku/d_ack_vga/*
+add wave -radix hexadecimal /test_kotku/kotku/vdu_stb_sync
+add wave -divider cpu_mem_iface
+add wave -radix hexadecimal /test_kotku/kotku/vga/cpu_mem_iface0/*
+run 60ms

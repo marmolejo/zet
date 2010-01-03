@@ -16,13 +16,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-`define DEBUG 1
-
 module kotku (
-`ifdef DEBUG_TRACE
-    output       trx_,
-`endif
-
     input        clk_50_,
     input        clk_27_,
     output [9:0] ledr_,
@@ -98,7 +92,6 @@ module kotku (
 
   // Registers and nets
   wire        clk;
-  wire        sys_clk;
   wire        rst;
   wire        rst_lck;
   wire [15:0] dat_o;
@@ -108,115 +101,134 @@ module kotku (
   wire        tga;
   wire [ 1:0] sel;
   wire        stb;
-  wire        flash_stb;
   wire        cyc;
   wire        ack;
-  wire        flash_ack;
-  wire        flash_arena;
-  wire        flash_mem_arena;
-  wire        flash_io_arena;
-  wire [15:0] flash_dat_o;
-  wire        lock, lock0, lock1;
-  reg  [15:0] io_reg;
-  wire        block_trace;
-  wire [15:0] io_dat_i;
 
-  wire [31:0] sdram_dat_o;
-  wire        sdram_stb;
-  wire        sdram_ack;
-  wire        sdram_mem_arena;
-  wire        sdram_arena;
+  wire        lock;
+
+  // wires to flash controller
+  wire [15:0] fl_dat_o;
+  wire [15:0] fl_dat_i;
+  wire        fl_tga_i;
+  wire [19:1] fl_adr_i;
+  wire [ 1:0] fl_sel_i;
+  wire        fl_we_i;
+  wire        fl_cyc_i;
+  wire        fl_stb_i;
+  wire        fl_ack_o;
+
+  // wires to vga controller
+  wire [15:0] vga_dat_o;
+  wire [15:0] vga_dat_i;
+  wire [15:0] vdu_dat_o;
+  wire        vga_tga_i;
+  wire [19:1] vga_adr_i;
+  wire [ 1:0] vga_sel_i;
+  wire        vga_we_i;
+  wire        vga_cyc_i;
+  wire        vga_stb_i;
+  wire        vdu_stb_i;
+  wire        vga_ack_o;
+
+  // wires to uart controller
+  wire [15:0] uart_dat_o;
+  wire [15:0] uart_dat_i;
+  wire        uart_tga_i;
+  wire [19:1] uart_adr_i;
+  wire [ 1:0] uart_sel_i;
+  wire        uart_we_i;
+  wire        uart_cyc_i;
+  wire        uart_stb_i;
+  wire        uart_ack_o;
+
+  // wires to keyboard controller
+  wire [15:0] keyb_dat_o;
+  wire [15:0] keyb_dat_i;
+  wire        keyb_tga_i;
+  wire [19:1] keyb_adr_i;
+  wire [ 1:0] keyb_sel_i;
+  wire        keyb_we_i;
+  wire        keyb_cyc_i;
+  wire        keyb_stb_i;
+  wire        keyb_ack_o;
+
+  // wires to sd controller
+  wire [15:0] sd_dat_o;
+  wire [15:0] sd_dat_i;
+  wire        sd_tga_i;
+  wire [19:1] sd_adr_i;
+  wire [ 1:0] sd_sel_i;
+  wire        sd_we_i;
+  wire        sd_cyc_i;
+  wire        sd_stb_i;
+  wire        sd_ack_o;
+
+  // wires to gpio controller
+  wire [15:0] gpio_dat_o;
+  wire [15:0] gpio_dat_i;
+  wire        gpio_tga_i;
+  wire [19:1] gpio_adr_i;
+  wire [ 1:0] gpio_sel_i;
+  wire        gpio_we_i;
+  wire        gpio_cyc_i;
+  wire        gpio_stb_i;
+  wire        gpio_ack_o;
+
+  // wires to sdram controller
+  wire [15:0] sdram_dat_o;
+  wire [15:0] sdram_dat_i;
+  wire        sdram_tga_i;
+  wire [19:1] sdram_adr_i;
+  wire [ 1:0] sdram_sel_i;
+  wire        sdram_we_i;
+  wire        sdram_cyc_i;
+  wire        sdram_stb_i;
+  wire        sdram_ack_o;
+
+  // wires to default stb/ack
+  wire def_cyc_i;
+  wire def_stb_i;
+
+  wire [15:0] sw_dat_o;
+
   wire        sdram_clk;
 
   wire        vdu_clk;
-  wire [15:0] vdum_dat_i;
-  wire [11:1] vdum_adr_o;
-  wire        vdum_we_o;
-  wire [ 1:0] vdum_sel_o;
-  wire        vdum_stb_o;
-  wire        vdum_cyc_o;
-  wire        vdum_ack_i;
-  wire [15:0] vdu_dat_o;
-  wire [15:0] vga_dat_o;
-  wire        vdu_ack;
   wire        vdu_ack_o;
-  wire        vdu_stb;
-  wire        vga_stb;
-  wire        vdu_mem_arena;
-  wire        vdu_io_arena;
-  wire        vdu_arena;
   reg  [ 1:0] vdu_stb_sync;
-
-  wire        com1_stb;
-  wire [ 7:0] com1_dat_i;
-  wire [ 7:0] com1_dat_o;
-  wire        com1_ack_o;
-  wire        com1_io_arena;
-  wire        com1_arena;
-
-  wire        ems_stb;
-  wire [15:0] ems_dat_o;
-  wire        ems_ack_o;
-  wire        ems_io_arena;
-  wire        ems_arena;
-  wire [31:0] ems_sdram_adr;
-
-  //wire        sb16_stb;
-  //wire [15:0] sb16_dat_o;
-  //wire        sb16_ack_o;
-  //wire        sb16_io_arena;
-  //wire        sb16_arena;
-  //wire [15:0] sb16_audio_l;
-  //wire [15:0] sb16_audio_r;
-
-  wire [ 7:0] keyb_dat_o;
-  wire        keyb_io_arena;
-  wire        keyb_io_status;
 
   wire [ 7:0] intv;
   wire [ 2:0] iid;
   wire        intr;
   wire        inta;
 
-  wire [ 7:0] sd_dat_o;
-  wire        sd_io_arena;
-  wire        sd_arena;
-  wire        sd_ack;
-  wire        sd_stb;
-
-  wire        sw_arena;
-
-`ifdef DEBUG
   wire [15:0] ip;
   wire [19:0] pc;
   wire [15:0] cs;
   wire [ 2:0] state;
-  wire        clk_s;
-  wire        rst_s;
-`endif
 
   // Module instantiations
   pll pll (
     .inclk0 (clk_50_),
     .c0     (sdram_clk),
     .c1     (vdu_clk),
-    .c2     (sys_clk),
-    .locked (lock0)
+    .c2     (clk),
+    .locked (lock)
   );
 
   flash flash (
     // Wishbone slave interface
     .wb_clk_i (clk),
     .wb_rst_i (rst),
-    .wb_dat_i (dat_o),
-    .wb_dat_o (flash_dat_o),
-    .wb_adr_i (adr[16:1]),
-    .wb_we_i  (we),
-    .wb_tga_i (tga),
-    .wb_stb_i (flash_stb),
-    .wb_cyc_i (flash_stb),
-    .wb_sel_i (sel),
-    .wb_ack_o (flash_ack),
+    .wb_dat_i (fl_dat_i),
+    .wb_dat_o (fl_dat_o),
+    .wb_adr_i (fl_adr_i[16:1]),
+    .wb_we_i  (fl_we_i),
+    .wb_tga_i (fl_tga_i),
+    .wb_stb_i (fl_stb_i),
+    .wb_cyc_i (fl_cyc_i),
+    .wb_sel_i (fl_sel_i),
+    .wb_ack_o (fl_ack_o),
 
     // Pad signals
     .flash_addr_  (flash_addr_),
@@ -237,14 +249,14 @@ module kotku (
     // Wishbone slave interface
     .sys_clk  (clk),
     .sys_rst  (rst),
-    .wb_adr_i (ems_sdram_adr),
-    .wb_dat_i ({16'h0,dat_o}),
+    .wb_adr_i ({11'h0,sdram_adr_i,2'b00}),
+    .wb_dat_i ({16'h0,sdram_dat_i}),
     .wb_dat_o (sdram_dat_o),
-    .wb_sel_i ({2'b00,sel}),
-    .wb_cyc_i (sdram_stb),
-    .wb_stb_i (sdram_stb),
-    .wb_we_i  (we),
-    .wb_ack_o (sdram_ack),
+    .wb_sel_i ({2'b00,sdram_sel_i}),
+    .wb_cyc_i (sdram_cyc_i),
+    .wb_stb_i (sdram_stb_i),
+    .wb_we_i  (sdram_we_i),
+    .wb_ack_o (sdram_ack_o),
 
     // SDRAM interface
     .sdram_clk   (sdram_clk),
@@ -262,15 +274,15 @@ module kotku (
   vga vga (
     // Wishbone slave interface
     .wb_rst_i (rst),
-    .wb_clk_i (vdu_clk), // 25MHz VDU clock
-    .wb_dat_i (dat_o),
-    .wb_dat_o (vga_dat_o),
-    .wb_adr_i (adr[16:1]),    // 128K
-    .wb_we_i  (we),
-    .wb_tga_i (tga),
-    .wb_sel_i (sel),
-    .wb_stb_i (vga_stb),
-    .wb_cyc_i (vga_stb),
+    .wb_clk_i (vdu_clk),   // 25MHz VGA clock
+    .wb_dat_i (vga_dat_i),
+    .wb_dat_o (vdu_dat_o),
+    .wb_adr_i (vga_adr_i[16:1]),    // 128K
+    .wb_we_i  (vga_we_i),
+    .wb_tga_i (vga_tga_i),
+    .wb_sel_i (vga_sel_i),
+    .wb_stb_i (vdu_stb_i),
+    .wb_cyc_i (vdu_stb_i),
     .wb_ack_o (vdu_ack_o),
 
     // VGA pad signals
@@ -295,24 +307,24 @@ module kotku (
     .wb_rst_i (rst),
     .wb_ack_i (vdu_ack_o),
     .wb_stb_i (vdu_stb_sync[1]),
-    .wb_ack_o (vdu_ack),
-    .wb_stb_o (vga_stb),
+    .wb_ack_o (vga_ack_o),
+    .wb_stb_o (vdu_stb_i),
 
-    .wb_dat_cpu (vga_dat_o),
-    .wb_dat_o   (vdu_dat_o)
+    .wb_dat_cpu (vdu_dat_o),
+    .wb_dat_o   (vga_dat_o)
   );
 
   uart_top com1 (
     // Wishbone slave interface
     .wb_clk_i (clk),
     .wb_rst_i (rst),
-    .wb_adr_i ({adr[2:1],~sel[0]}),
-    .wb_dat_i (com1_dat_i),
-    .wb_dat_o (com1_dat_o),
-    .wb_we_i  (we),
-    .wb_stb_i (com1_stb),
-    .wb_cyc_i (cyc),
-    .wb_ack_o (com1_ack_o),
+    .wb_adr_i ({uart_adr_i[2:1],~uart_sel_i[0]}),
+    .wb_dat_i (uart_dat_i),
+    .wb_dat_o (uart_dat_o),
+    .wb_we_i  (uart_we_i),
+    .wb_stb_i (uart_stb_i),
+    .wb_cyc_i (uart_cyc_i),
+    .wb_ack_o (uart_ack_o),
     .wb_sel_i (4'b0),
     .int_o    (intv[4]), // interrupt request
 
@@ -322,57 +334,11 @@ module kotku (
     .srx_pad_i  (uart_rxd_),
 
     // modem signals
-    //.rts_pad_o,
     .cts_pad_i  (1'b1),
-    //.dtr_pad_o,
     .dsr_pad_i  (1'b1),
     .ri_pad_i   (1'b0),
     .dcd_pad_i  (1'b0)
-    //, baud_o
   );
-
-  ems #(
-    .IO_BASE_ADDR (16'h0208)
-    ) ems_card (
-    // Wishbone slave interface
-    .wb_clk_i (clk),
-    .wb_rst_i (rst),
-    .wb_adr_i (adr[15:1]),
-    .wb_dat_i (dat_o),
-    .wb_dat_o (ems_dat_o),
-    .wb_sel_i (sel),
-    .wb_cyc_i (cyc),
-    .wb_stb_i (ems_stb),
-    .wb_we_i (we),
-    .wb_ack_o (ems_ack_o),
-    .ems_io_arena (ems_io_arena),
-
-    // sdram address interface
-    .sdram_adr_i (adr),
-    .sdram_adr_o (ems_sdram_adr)
-  );
-/*
-  sound_blaster_16  #(
-    .IO_BASE_ADDR (16'h0220)
-    )  sb16_card (
-    .wb_clk_i (clk),
-    .wb_rst_i (rst),
-    .wb_adr_i (adr[15:1]),
-    .wb_dat_i (dat_o),
-    .wb_dat_o (sb16_dat_o),
-    .wb_sel_i (sel),
-    .wb_cyc_i (cyc),
-    .wb_stb_i (sb16_stb),
-    .wb_we_i  (we),
-    .wb_ack_o (sb16_ack_o),
-
-    .sb16_io_arena (sb16_io_arena),
-
-    .audio_l  (sb16_audio_l),
-    .audio_r  (sb16_audio_r)
-    );
-*/
-//assign sb16_io_arena = 1'b0;
 
   ps2_keyb #(
     .TIMER_60USEC_VALUE_PP (750),
@@ -382,7 +348,11 @@ module kotku (
     ) keyboard (
     .wb_clk_i (clk),
     .wb_rst_i (rst),
+    .wb_adr_i (keyb_adr_i[2:1]),
     .wb_dat_o (keyb_dat_o),
+    .wb_stb_i (keyb_stb_i),
+    .wb_cyc_i (keyb_cyc_i),
+    .wb_ack_o (keyb_ack_o),
     .wb_tgc_o (intv[1]),
 
     .ps2_clk_  (ps2_clk_),
@@ -417,22 +387,40 @@ module kotku (
     // Wishbone slave interface
     .wb_clk_i (clk),
     .wb_rst_i (rst),
-    .wb_dat_i (dat_o),
+    .wb_dat_i (sd_dat_i),
     .wb_dat_o (sd_dat_o),
-    .wb_we_i  (we),
-    .wb_sel_i (sel),
-    .wb_stb_i (sd_stb),
-    .wb_cyc_i (sd_stb),
-    .wb_ack_o (sd_ack)
+    .wb_we_i  (sd_we_i),
+    .wb_sel_i (sd_sel_i),
+    .wb_stb_i (sd_stb_i),
+    .wb_cyc_i (sd_cyc_i),
+    .wb_ack_o (sd_ack_o)
+  );
+
+  // Switches and leds
+  sw_leds sw_leds (
+    // Wishbone slave interface
+    .wb_clk_i (clk),
+    .wb_rst_i (rst),
+    .wb_adr_i (gpio_adr_i),
+    .wb_dat_o (gpio_dat_o),
+    .wb_dat_i (gpio_dat_i),
+    .wb_sel_i (gpio_sel_i),
+    .wb_we_i  (gpio_we_i),
+    .wb_stb_i (gpio_stb_i),
+    .wb_cyc_i (gpio_cyc_i),
+    .wb_ack_o (gpio_ack_o),
+
+    // GPIO inputs/outputs
+    .leds_ ({ledr_,ledg_[7:4]}),
+    .sw_   (sw_)
   );
 
   cpu zet_proc (
-`ifdef DEBUG
     .ip         (ip),
     .cs         (cs),
     .state      (state),
     .dbg_block  (1'b0),
-`endif
+
     // Wishbone master interface
     .wb_clk_i (clk),
     .wb_rst_i (rst),
@@ -449,7 +437,120 @@ module kotku (
     .wb_tgc_o (inta)
   );
 
-`ifdef DEBUG
+  wb_switch #(
+    .s0_addr_1 (20'b0_1111_0000_0000_0000_000), // mem 0xf0000 - 0xfffff
+    .s0_mask_1 (20'b1_1111_0000_0000_0000_000),
+    .s0_addr_2 (20'b0_1100_0000_0000_0000_000), // mem 0xc0000 - 0xcffff
+    .s0_mask_2 (20'b1_1111_0000_0000_0000_000),
+    .s0_addr_3 (20'b1_0000_1110_0000_0000_000), // io 0xe000 - 0xfeff
+    .s0_mask_3 (20'b1_0000_1111_1110_0000_000),
+    .s1_addr_1 (20'b0_1010_0000_0000_0000_000), // mem 0xa0000 - 0xbffff
+    .s1_mask_1 (20'b1_1110_0000_0000_0000_000),
+    .s1_addr_2 (20'b1_0000_0000_0011_1100_000), // io 0x3c0 - 0x3df
+    .s1_mask_2 (20'b1_0000_1111_1111_1110_000),
+    .s2_addr_1 (20'b1_0000_0000_0011_1111_100), // io 0x3f8 - 0x3ff
+    .s2_mask_1 (20'b1_0000_1111_1111_1111_100),
+    .s3_addr_1 (20'b1_0000_0000_0000_0110_000), // io 0x60, 0x64
+    .s3_mask_1 (20'b1_0000_1111_1111_1111_101),
+    .s4_addr_1 (20'b1_0000_0000_0001_0000_000), // io 0x100
+    .s4_mask_1 (20'b1_0000_1111_1111_1111_111),
+    .s5_addr_1 (20'b1_0000_1111_0001_0000_000), // io 0xf100 - 0xf103
+    .s5_mask_1 (20'b1_0000_1111_1111_1111_110),
+    .s6_addr_1 (20'b0_0000_0000_0000_0000_000), // mem 0x00000 - 0xfffff
+    .s6_mask_1 (20'b1_0000_0000_0000_0000_000)
+    ) wbs (
+
+    // Master interface
+    .m_dat_i (dat_o),
+    .m_dat_o (sw_dat_o),
+    .m_adr_i ({tga,adr}),
+    .m_sel_i (sel),
+    .m_we_i  (we),
+    .m_cyc_i (cyc),
+    .m_stb_i (stb),
+    .m_ack_o (ack),
+
+    // Slave 0 interface - flash
+    .s0_dat_i (fl_dat_o),
+    .s0_dat_o (fl_dat_i),
+    .s0_adr_o ({fl_tga_i,fl_adr_i}),
+    .s0_sel_o (fl_sel_i),
+    .s0_we_o  (fl_we_i),
+    .s0_cyc_o (fl_cyc_i),
+    .s0_stb_o (fl_stb_i),
+    .s0_ack_i (fl_ack_o),
+
+    // Slave 1 interface - vga
+    .s1_dat_i (vga_dat_o),
+    .s1_dat_o (vga_dat_i),
+    .s1_adr_o ({vga_tga_i,vga_adr_i}),
+    .s1_sel_o (vga_sel_i),
+    .s1_we_o  (vga_we_i),
+    .s1_cyc_o (vga_cyc_i),
+    .s1_stb_o (vga_stb_i),
+    .s1_ack_i (vga_ack_o),
+
+    // Slave 2 interface - uart
+    .s2_dat_i (uart_dat_o),
+    .s2_dat_o (uart_dat_i),
+    .s2_adr_o ({uart_tga_i,uart_adr_i}),
+    .s2_sel_o (uart_sel_i),
+    .s2_we_o  (uart_we_i),
+    .s2_cyc_o (uart_cyc_i),
+    .s2_stb_o (uart_stb_i),
+    .s2_ack_i (uart_ack_o),
+
+    // Slave 3 interface - keyb
+    .s3_dat_i (keyb_dat_o),
+    .s3_dat_o (keyb_dat_i),
+    .s3_adr_o ({keyb_tga_i,keyb_adr_i}),
+    .s3_sel_o (keyb_sel_i),
+    .s3_we_o  (keyb_we_i),
+    .s3_cyc_o (keyb_cyc_i),
+    .s3_stb_o (keyb_stb_i),
+    .s3_ack_i (keyb_ack_o),
+
+    // Slave 4 interface - sd
+    .s4_dat_i (sd_dat_o),
+    .s4_dat_o (sd_dat_i),
+    .s4_adr_o ({sd_tga_i,sd_adr_i}),
+    .s4_sel_o (sd_sel_i),
+    .s4_we_o  (sd_we_i),
+    .s4_cyc_o (sd_cyc_i),
+    .s4_stb_o (sd_stb_i),
+    .s4_ack_i (sd_ack_o),
+
+    // Slave 5 interface - gpio
+    .s5_dat_i (gpio_dat_o),
+    .s5_dat_o (gpio_dat_i),
+    .s5_adr_o ({gpio_tga_i,gpio_adr_i}),
+    .s5_sel_o (gpio_sel_i),
+    .s5_we_o  (gpio_we_i),
+    .s5_cyc_o (gpio_cyc_i),
+    .s5_stb_o (gpio_stb_i),
+    .s5_ack_i (gpio_ack_o),
+
+    // Slave 6 interface - sdram
+    .s6_dat_i (sdram_dat_o),
+    .s6_dat_o (sdram_dat_i),
+    .s6_adr_o ({sdram_tga_i,sdram_adr_i}),
+    .s6_sel_o (sdram_sel_i),
+    .s6_we_o  (sdram_we_i),
+    .s6_cyc_o (sdram_cyc_i),
+    .s6_stb_o (sdram_stb_i),
+    .s6_ack_i (sdram_ack_o),
+
+    // Slave 7 interface - default
+    .s7_dat_i (16'hffff),
+    .s7_dat_o (),
+    .s7_adr_o (),
+    .s7_sel_o (),
+    .s7_we_o  (),
+    .s7_cyc_o (def_cyc_i),
+    .s7_stb_o (def_stb_i),
+    .s7_ack_i (def_cyc_i & def_stb_i)
+  );
+
   hex_display hex16 (
     .num (pc[19:4]),
     .en  (1'b1),
@@ -460,168 +561,21 @@ module kotku (
     .hex3 (hex3_)
   );
 
-`ifdef DEBUG_TRACE
-  clk_uart #(
-    .bits  (26),
-    .value (154619) // phase counter
-    ) clk_uart (
-    .clk_i (sdram_clk),
-    .rst_i (rst_lck),
-    .clk_o (clk_s),
-    .rst_o (rst_s)
-  );
-
-  pc_trace pc0 (
-    .trx_     (trx_),
-
-    .clk      (clk),
-    .rst      (rst),
-    .pc       (pc),
-    .zet_st   (state),
-    .block    (block_trace)
-  );
-`endif
-`endif
-
   // Continuous assignments
-  assign flash_mem_arena = (adr[19:16]==4'hc || adr[19:16]==4'hf);
-  assign flash_io_arena  = (adr[15:9]==7'b1110_000);
-  assign flash_arena     = (!tga & flash_mem_arena)
-                         | (tga & flash_io_arena);
-  assign flash_stb       = flash_arena & stb & cyc;
-
-  assign sdram_mem_arena = !flash_mem_arena & !vdu_mem_arena;
-  assign sdram_arena     = !tga & sdram_mem_arena;
-  assign sdram_stb       = sdram_arena & stb & cyc;
-
-  assign vdu_mem_arena   = (adr[19:17]==5'b101);  // A0000h-BFFFFh -- 128K
-  assign vdu_io_arena    = (adr[15:5]==11'b0000_0011_110);
-  assign vdu_arena       = (!tga & vdu_mem_arena)
-                         | (tga & vdu_io_arena);
-  assign vdu_stb         = vdu_arena & stb & cyc;
-
-  // com1
-  assign com1_io_arena   = (adr[15:4]==12'h03f && adr[3]==1'b1);
-  assign com1_arena      = (tga & com1_io_arena);
-  assign com1_stb        = com1_arena & stb & cyc;
-  assign com1_dat_i      = (sel[0] ? dat_o[7:0] : dat_o[15:8]);
-
-  // EMS gets its I/O address from "dipswitches" (parameter) on the EMS module
-  //assign ems_io_arena   = {adr[15:4]==12'h020 && adr[3]==1'b1};
-  assign ems_arena      = (tga & ems_io_arena);
-  assign ems_stb        = ems_arena & stb & cyc;
-
-  // SB16 gets its I/O address from "dipswitches" (parameter) on the SB16 module
-  //assign sb16_io_arena   = {adr[15:4]==12'h022 && adr[3]==1'b0};
-  //assign sb16_arena     = (tga & sb16_io_arena);
-  //assign sb16_stb       = sb16_arena & stb & cyc;
-
-  // MS-DOS is reading IO address 0x64 to check the inhibit bit
-  assign keyb_io_status  = (adr[15:1]==15'h0032 && !we);
-  assign keyb_io_arena   = (adr[15:1]==15'h0030 && !we);
-
-  assign sd_io_arena     = (adr[15:1]==15'h0080);
-  assign sd_arena        = sd_io_arena & tga;
-  assign sd_stb          = sd_arena & stb & cyc;
-
-  assign sw_arena        = (adr[15:1]==15'h0081);
-
-  assign ack             = tga ? (flash_io_arena ? flash_ack
-                               : (vdu_io_arena ? vdu_ack
-                               : (sd_io_arena ? sd_ack
-                               : (com1_io_arena ? com1_ack_o
-                               : (ems_io_arena ? ems_ack_o
-                               //: (sb16_io_arena ? sb16_ack_o
-                               : (stb & cyc)))/*)*/)))
-                         : (vdu_mem_arena ? vdu_ack
-                         : (flash_mem_arena ? flash_ack : sdram_ack));
-  assign lock            = lock0;
   assign rst_lck         = !lock;
   assign sdram_clk_      = sdram_clk;
 
-  assign io_dat_i  = flash_io_arena ? flash_dat_o
-                   : (vdu_io_arena ? vdu_dat_o
-                   : (com1_io_arena ? {com1_dat_o, com1_dat_o}
-                   : (ems_io_arena ? ems_dat_o
-                   //: (sb16_io_arena ? sb16_dat_o
-                   : (keyb_io_arena ? keyb_dat_o
-                   : (keyb_io_status ? 16'h10
-                   : (sd_io_arena ? {8'h0,sd_dat_o}
-                   : (sw_arena ? sw_[7:0] : 16'hffff))))/*)*/)));
-
-  assign dat_i     = inta ? { 13'b0000_0000_0000_1, iid }
-                   : (tga ? io_dat_i
-                   : (vdu_mem_arena ? vdu_dat_o
-                   : (flash_mem_arena ? flash_dat_o
-                   : sdram_dat_o[15:0])));
+  assign dat_i = inta ? { 13'b0000_0000_0000_1, iid }
+               : sw_dat_o;
 
   assign pc  = (cs << 4) + ip;
 
-`ifdef DEBUG
-`ifdef DEBUG_TRACE
-  assign clk = clk_s;
-  assign rst = rst_s;
-`else
-  assign clk = sys_clk;
-  assign rst = sw_[0] | rst_lck;
-`endif
-  assign { ledr_,ledg_ } = { io_reg[13:0], pc[3:0] };
-`else
-  assign clk = sys_clk;
-  assign rst = rst_lck;
-  assign { ledr_,ledg_ } = { 2'b00, io_reg };
-`endif
+  assign rst        = sw_[0] | rst_lck;
+  assign ledg_[3:0] = pc[3:0];
 
-  //
-  //  DE1 stuff
-  //
-  /*
-  I2C_AV_Config av_init (
-    // Host Side
-    .iCLK     (clk_50_),
-    .iRST_N   (~rst),
-
-    // I2C Side
-    .I2C_SCLK (i2c_sclk),
-    .I2C_SDAT (i2c_sdat)
-  );
-
-  wire [15:0] audio_l;
-  assign audio_l = sb16_audio_l - 16'h8000;
-  wire [15:0] audio_r;
-  assign audio_r = sb16_audio_r - 16'h8000;
-
-  // Audio
-  audio_if # (
-    .REF_CLK       (18432000),  // Set REF clk frequency here
-    .SAMPLE_RATE   (48000),     // 48000 samples/sec
-    .DATA_WIDTH    (16),			  //	16		Bits
-    .CHANNEL_NUM   (2)  			  //	Dual Channel
-  ) audif_inst (
-    // Inputs
-    .clk           (clk),
-    .reset         (rst),
-    .datal         (audio_l),
-    .datar         (audio_r),
-
-    // Outputs
-    .aud_xck       (aud_xck),
-    .aud_adclrck   (aud_adclrck),
-    .aud_daclrck   (aud_daclrck),
-    .aud_bclk      (aud_bclk),
-    .aud_dacdat    (aud_dacdat)
-    //.next_sample   ()
-  );
-*/
   // Behaviour
-  // leds
-  always @(posedge clk)
-    io_reg <= rst ? 16'h0
-      : ((tga && stb && cyc && we && adr[15:8]==8'hf1) ?
-        dat_o : io_reg );
-
   // vdu_stb_sync
   always @(posedge vdu_clk)
-    vdu_stb_sync <= { vdu_stb_sync[0], vdu_stb };
+    vdu_stb_sync <= { vdu_stb_sync[0], vga_stb_i & vga_cyc_i };
 
 endmodule

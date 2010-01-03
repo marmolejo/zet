@@ -37,7 +37,11 @@ module ps2_keyb (
     // Wishbone slave interface
     input            wb_clk_i,
     input            wb_rst_i,
-    output reg [7:0] wb_dat_o,   // scancode
+    input     [ 2:1] wb_adr_i,
+    output    [15:0] wb_dat_o,   // scancode
+    input            wb_stb_i,
+    input            wb_cyc_i,
+    output           wb_ack_o,
     output reg       wb_tgc_o,   // intr
 
     // PS2 PAD signals
@@ -91,7 +95,8 @@ module ps2_keyb (
   wire rx_shifting_done;
   wire released;
 `endif
-  wire [6:0] xt_code;
+  wire [ 6:0] xt_code;
+  reg  [ 7:0] dat_o;
 
   reg [3:0] bit_count;
   reg [3:0] m1_state;
@@ -146,6 +151,9 @@ module ps2_keyb (
   // These are the "unlatched versions."
   //assign extended = (q[8:1] == `EXTEND_CODE) && rx_shifting_done;
   assign released = (q[8:1] == `RELEASE_CODE) && rx_shifting_done;
+
+  assign wb_ack_o = wb_stb_i & wb_cyc_i;
+  assign wb_dat_o = wb_adr_i[2] ? 16'h10 : { 8'h0, dat_o };
 
   // Behaviour
   // wb_tgc_o
@@ -332,13 +340,13 @@ module ps2_keyb (
     else m1_state <= m1_next_state;
   end
 
-  // wb_dat_o - scancode
+  // dat_o - scancode
   always @(posedge wb_clk_i)
-    if (wb_rst_i) wb_dat_o <= 8'b0;
-    else wb_dat_o <=
+    if (wb_rst_i) dat_o <= 8'b0;
+    else dat_o <=
       (rx_output_strobe && q[8:1]) ? (q[8] ? q[8:1]
         : {hold_released,xt_code})
-     : wb_dat_o;
+     : dat_o;
 
   // This is the bit counter
   always @(posedge wb_clk_i)
