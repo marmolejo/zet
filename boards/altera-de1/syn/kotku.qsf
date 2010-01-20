@@ -288,6 +288,7 @@ set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
 set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/planar.v
@@ -303,7 +304,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/mem_arbitrer.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/cpu_mem_iface.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/lcd.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/config_iface.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/delay_ack.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga.v
 set_global_assignment -name VERILOG_FILE ../rtl/I2C_Controller.v
 set_global_assignment -name VERILOG_FILE ../rtl/I2C_AV_Config.v
