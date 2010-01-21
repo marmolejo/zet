@@ -183,16 +183,57 @@ module kotku (
   wire        gpio_stb_i;
   wire        gpio_ack_o;
 
-  // wires to sdram controller
-  wire [15:0] sdram_dat_o;
-  wire [15:0] sdram_dat_i;
-  wire        sdram_tga_i;
-  wire [19:1] sdram_adr_i;
-  wire [ 1:0] sdram_sel_i;
-  wire        sdram_we_i;
-  wire        sdram_cyc_i;
-  wire        sdram_stb_i;
-  wire        sdram_ack_o;
+  // wires to SDRAM controller
+  wire [19:1] fmlbrg_adr_s;
+  wire [15:0] fmlbrg_dat_w_s;
+  wire [15:0] fmlbrg_dat_r_s;
+  wire [ 1:0] fmlbrg_sel_s;
+  wire        fmlbrg_cyc_s;
+  wire        fmlbrg_stb_s;
+  wire        fmlbrg_tga_s;
+  wire        fmlbrg_we_s;
+  wire        fmlbrg_ack_s;
+
+  wire [19:1] fmlbrg_adr;
+  wire [15:0] fmlbrg_dat_w;
+  wire [15:0] fmlbrg_dat_r;
+  wire [ 1:0] fmlbrg_sel;
+  wire        fmlbrg_cyc;
+  wire        fmlbrg_stb;
+  wire        fmlbrg_tga;
+  wire        fmlbrg_we;
+  wire        fmlbrg_ack;
+
+  wire [19:1] csrbrg_adr_s;
+  wire [15:0] csrbrg_dat_w_s;
+  wire [15:0] csrbrg_dat_r_s;
+  wire [ 1:0] csrbrg_sel_s;
+  wire        csrbrg_cyc_s;
+  wire        csrbrg_stb_s;
+  wire        csrbrg_tga_s;
+  wire        csrbrg_we_s;
+  wire        csrbrg_ack_s;
+
+  wire [19:1] csrbrg_adr;
+  wire [15:0] csrbrg_dat_w;
+  wire [15:0] csrbrg_dat_r;
+  wire        csrbrg_cyc;
+  wire        csrbrg_stb;
+  wire        csrbrg_we;
+  wire        csrbrg_ack;
+
+  wire [ 2:0] csr_a;
+  wire        csr_we;
+  wire [15:0] csr_dw;
+  wire [15:0] csr_dr_hpdmc;
+
+  wire [22:0] fml_adr;
+  wire        fml_stb;
+  wire        fml_we;
+  wire        fml_ack;
+  wire [ 1:0] fml_sel;
+  wire [15:0] fml_di;
+  wire [15:0] fml_do;
 
   // wires to default stb/ack
   wire def_cyc_i;
@@ -246,27 +287,130 @@ module kotku (
     .flash_rst_n_ (flash_rst_n_)
   );
 
-  yadmc #(
-    .sdram_depth       (23),
-    .sdram_columndepth (8),
-    .sdram_adrwires    (12),
-    .cache_depth       (6)
-    ) yadmc (
+  wb_abrg wb_fmlbrg (
+    .sys_rst (rst),
 
     // Wishbone slave interface
-    .sys_clk  (clk),
-    .sys_rst  (rst),
-    .wb_adr_i ({11'h0,sdram_adr_i,2'b00}),
-    .wb_dat_i ({16'h0,sdram_dat_i}),
-    .wb_dat_o (sdram_dat_o),
-    .wb_sel_i ({2'b00,sdram_sel_i}),
-    .wb_cyc_i (sdram_cyc_i),
-    .wb_stb_i (sdram_stb_i),
-    .wb_we_i  (sdram_we_i),
-    .wb_ack_o (sdram_ack_o),
+    .wbs_clk_i (clk),
+    .wbs_adr_i (fmlbrg_adr_s),
+    .wbs_dat_i (fmlbrg_dat_w_s),
+    .wbs_dat_o (fmlbrg_dat_r_s),
+    .wbs_sel_i (fmlbrg_sel_s),
+    .wbs_tga_i (fmlbrg_tga_s),
+    .wbs_stb_i (fmlbrg_stb_s),
+    .wbs_cyc_i (fmlbrg_cyc_s),
+    .wbs_we_i  (fmlbrg_we_s),
+    .wbs_ack_o (fmlbrg_ack_s),
 
-    // SDRAM interface
-    .sdram_clk   (sdram_clk),
+    // Wishbone master interface
+    .wbm_clk_i (sdram_clk),
+    .wbm_adr_o (fmlbrg_adr),
+    .wbm_dat_o (fmlbrg_dat_w),
+    .wbm_dat_i (fmlbrg_dat_r),
+    .wbm_sel_o (fmlbrg_sel),
+    .wbm_tga_o (fmlbrg_tga),
+    .wbm_stb_o (fmlbrg_stb),
+    .wbm_cyc_o (fmlbrg_cyc),
+    .wbm_we_o  (fmlbrg_we),
+    .wbm_ack_i (fmlbrg_ack)
+  );
+
+  fmlbrg #(
+    .fml_depth   (23),
+    .cache_depth (9)   // 512 byte cache
+    ) fmlbrg (
+    .sys_clk  (sdram_clk),
+    .sys_rst  (rst),
+
+    // Wishbone slave interface
+    .wb_adr_i ({3'b000,fmlbrg_adr}),
+    .wb_dat_i (fmlbrg_dat_w),
+    .wb_dat_o (fmlbrg_dat_r),
+    .wb_sel_i (fmlbrg_sel),
+    .wb_cyc_i (fmlbrg_cyc),
+    .wb_stb_i (fmlbrg_stb),
+    .wb_tga_i (fmlbrg_tga),
+    .wb_we_i  (fmlbrg_we),
+    .wb_ack_o (fmlbrg_ack),
+
+    // FML master interface
+    .fml_adr (fml_adr),
+    .fml_stb (fml_stb),
+    .fml_we  (fml_we),
+    .fml_ack (fml_ack),
+    .fml_sel (fml_sel),
+    .fml_do  (fml_do),
+    .fml_di  (fml_di)
+  );
+
+  wb_abrg wb_csrbrg (
+    .sys_rst (rst),
+
+    // Wishbone slave interface
+    .wbs_clk_i (clk),
+    .wbs_adr_i (csrbrg_adr_s),
+    .wbs_dat_i (csrbrg_dat_w_s),
+    .wbs_dat_o (csrbrg_dat_r_s),
+    .wbs_stb_i (csrbrg_stb_s),
+    .wbs_cyc_i (csrbrg_cyc_s),
+    .wbs_we_i  (csrbrg_we_s),
+    .wbs_ack_o (csrbrg_ack_s),
+
+    // Wishbone master interface
+    .wbm_clk_i (sdram_clk),
+    .wbm_adr_o (csrbrg_adr),
+    .wbm_dat_o (csrbrg_dat_w),
+    .wbm_dat_i (csrbrg_dat_r),
+    .wbm_stb_o (csrbrg_stb),
+    .wbm_cyc_o (csrbrg_cyc),
+    .wbm_we_o  (csrbrg_we),
+    .wbm_ack_i (csrbrg_ack)
+  );
+
+  csrbrg csrbrg (
+    .sys_clk (sdram_clk),
+    .sys_rst (rst),
+    
+    // Wishbone slave interface
+    .wb_adr_i (csrbrg_adr[3:1]),
+    .wb_dat_i (csrbrg_dat_w),
+    .wb_dat_o (csrbrg_dat_r),
+    .wb_cyc_i (csrbrg_cyc),
+    .wb_stb_i (csrbrg_stb),
+    .wb_we_i  (csrbrg_we),
+    .wb_ack_o (csrbrg_ack),
+    
+    // CSR master interface
+    .csr_a  (csr_a),
+    .csr_we (csr_we),
+    .csr_do (csr_dw),
+    .csr_di (csr_dr_hpdmc)
+  );
+
+  hpdmc #(
+    .csr_addr          (1'b0),
+    .sdram_depth       (23),
+    .sdram_columndepth (8)
+    ) hpdmc (
+    .sys_clk (sdram_clk),
+    .sys_rst (rst),
+
+    // CSR slave interface
+    .csr_a  (csr_a),
+    .csr_we (csr_we),
+    .csr_di (csr_dw),
+    .csr_do (csr_dr_hpdmc),
+    
+    // FML slave interface
+    .fml_adr (fml_adr),
+    .fml_stb (fml_stb),
+    .fml_we  (fml_we),
+    .fml_ack (fml_ack),
+    .fml_sel (fml_sel),
+    .fml_di  (fml_do),
+    .fml_do  (fml_di),
+    
+    // SDRAM pad signals
     .sdram_cke   (sdram_ce_),
     .sdram_cs_n  (sdram_cs_n_),
     .sdram_we_n  (sdram_we_n_),
@@ -474,12 +618,16 @@ module kotku (
     .s2_mask_1 (20'b1_0000_1111_1111_1111_100),
     .s3_addr_1 (20'b1_0000_0000_0000_0110_000), // io 0x60, 0x64
     .s3_mask_1 (20'b1_0000_1111_1111_1111_101),
-    .s4_addr_1 (20'b1_0000_0000_0001_0000_000), // io 0x100
+    .s4_addr_1 (20'b1_0000_0000_0001_0000_000), // io 0x100 - 0x101
     .s4_mask_1 (20'b1_0000_1111_1111_1111_111),
     .s5_addr_1 (20'b1_0000_1111_0001_0000_000), // io 0xf100 - 0xf103
     .s5_mask_1 (20'b1_0000_1111_1111_1111_110),
-    .s6_addr_1 (20'b0_0000_0000_0000_0000_000), // mem 0x00000 - 0xfffff
-    .s6_mask_1 (20'b1_0000_0000_0000_0000_000)
+    .s6_addr_1 (20'b1_0000_1111_0010_0000_000), // io 0xf200 - 0xf20f
+    .s6_mask_1 (20'b1_0000_1111_1111_1111_000),
+    .s7_addr_1 (20'b1_0000_1111_0011_0000_000), // io 0xf300 - 0xf3ff
+    .s7_mask_1 (20'b1_0000_1111_1111_0000_000),
+    .s7_addr_2 (20'b0_0000_0000_0000_0000_000), // mem 0x00000 - 0xfffff
+    .s7_mask_2 (20'b1_0000_0000_0000_0000_000)
     ) wbs (
 
     // Master interface
@@ -552,25 +700,35 @@ module kotku (
     .s5_stb_o (gpio_stb_i),
     .s5_ack_i (gpio_ack_o),
 
-    // Slave 6 interface - sdram
-    .s6_dat_i (sdram_dat_o),
-    .s6_dat_o (sdram_dat_i),
-    .s6_adr_o ({sdram_tga_i,sdram_adr_i}),
-    .s6_sel_o (sdram_sel_i),
-    .s6_we_o  (sdram_we_i),
-    .s6_cyc_o (sdram_cyc_i),
-    .s6_stb_o (sdram_stb_i),
-    .s6_ack_i (sdram_ack_o),
+    // Slave 6 interface - csr bridge
+    .s6_dat_i (csrbrg_dat_r_s),
+    .s6_dat_o (csrbrg_dat_w_s),
+    .s6_adr_o ({csrbrg_tga_s,csrbrg_adr_s}),
+    .s6_sel_o (csrbrg_sel_s),
+    .s6_we_o  (csrbrg_we_s),
+    .s6_cyc_o (csrbrg_cyc_s),
+    .s6_stb_o (csrbrg_stb_s),
+    .s6_ack_i (csrbrg_ack_s),
 
-    // Slave 7 interface - default
-    .s7_dat_i (16'hffff),
-    .s7_dat_o (),
-    .s7_adr_o (),
-    .s7_sel_o (),
-    .s7_we_o  (),
-    .s7_cyc_o (def_cyc_i),
-    .s7_stb_o (def_stb_i),
-    .s7_ack_i (def_cyc_i & def_stb_i)
+    // Slave 7 interface - sdram
+    .s7_dat_i (fmlbrg_dat_r_s),
+    .s7_dat_o (fmlbrg_dat_w_s),
+    .s7_adr_o ({fmlbrg_tga_s,fmlbrg_adr_s}),
+    .s7_sel_o (fmlbrg_sel_s),
+    .s7_we_o  (fmlbrg_we_s),
+    .s7_cyc_o (fmlbrg_cyc_s),
+    .s7_stb_o (fmlbrg_stb_s),
+    .s7_ack_i (fmlbrg_ack_s),
+
+    // Slave 8 interface - default
+    .s8_dat_i (16'hffff),
+    .s8_dat_o (),
+    .s8_adr_o (),
+    .s8_sel_o (),
+    .s8_we_o  (),
+    .s8_cyc_o (def_cyc_i),
+    .s8_stb_o (def_stb_i),
+    .s8_ack_i (def_cyc_i & def_stb_i)
   );
 
   hex_display hex16 (

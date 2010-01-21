@@ -3071,6 +3071,49 @@ normal_post:
   ; case 0: normal startup
 
   cli
+
+  ; Initialize the SDRAM controller
+  ;
+  ; Bring CKE high
+  ; CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_BYPASS|HPDMC_SYSTEM_RESET|HPDMC_SYSTEM_CKE;
+  mov dx, #0xf200
+  mov ax, #7
+  out dx, ax
+
+  ; Precharge All
+  ; CSR_HPDMC_BYPASS = 0x400B;
+  mov dx, #0xf202
+  mov ax, #0x400b
+  out dx, ax
+
+  ; Auto refresh
+  ; CSR_HPDMC_BYPASS = 0xD;
+  mov ax, #0xd
+  out dx, ax
+
+  ; Auto refresh
+  ; CSR_HPDMC_BYPASS = 0xD;
+  mov ax, #0xd
+  out dx, ax
+
+  ; Load Mode Register, Enable DLL
+  ; CSR_HPDMC_BYPASS = 0x23F;
+  mov ax, #0x23f
+  out dx, ax
+
+  ; Wait about 200 cycles
+  mov cx, #50
+a:
+  loop a
+
+  ; Leave Bypass mode and bring up hardware controller
+  ; CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_CKE;
+  mov dx, #0xf200
+  mov ax, #4
+  out dx, ax
+
+  ; We are done with the controller, we can use the memory now
+
   mov  ax, #0xfffe
   mov  sp, ax
   xor  ax, ax

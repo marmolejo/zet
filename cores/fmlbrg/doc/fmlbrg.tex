@@ -1,0 +1,31 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage{fullpage}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[normalem]{ulem}
+\usepackage[english]{babel}
+\usepackage{listings,babel}
+\lstset{breaklines=true,basicstyle=\ttfamily}
+\usepackage{graphicx}
+\usepackage{moreverb}
+\usepackage{url}
+
+\title{Wishbone to FML caching bridge}
+\author{S\'ebastien Bourdeauducq}
+\date{December 2009}
+\begin{document}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\maketitle{}
+\section{Specifications}
+This core gives access over a Wishbone link to a memory subsystem using the FML bus.
+
+It can be used to connect the high-bandwidth parts of a system which use FML to a more traditional Wishbone system-on-chip base, which includes a CPU and low-speed peripherals.
+
+To make efficient use of the burst-oriented FML bandwidth, the bridge implements a cache. This cache can cause coherency problems with other FML masters writing to the memory. To solve this issue, the bridge can be programmed to flush the cache.
+
+\section*{Copyright notice}
+Copyright \copyright 2007-2009 S\'ebastien Bourdeauducq. \\
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. A copy of the license is included in the LICENSE.FDL file at the root of the Milkymist source distribution.
+
+\end{document}

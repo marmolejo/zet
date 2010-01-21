@@ -288,6 +288,16 @@ set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
 set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg_datamem.v
+set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_sdrio.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_banktimer.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_busif.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_ctlif.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_datactl.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_mgmt.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc.v
+set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch.v
@@ -322,11 +332,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/debug/rtl/send_addr.v
 set_global_assignment -name VERILOG_FILE ../../../cores/debug/rtl/clk_uart.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/hex_display.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/seg_7.v
-set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_dpram.v
-set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_sync.v
-set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_sdram16.v
-set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc_spram.v
-set_global_assignment -name VERILOG_FILE ../../../cores/yadmc/rtl/yadmc.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ems/rtl/ems.v
 set_global_assignment -name VHDL_FILE ../../../cores/sb16/sb16.vhd
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/raminfr.v
