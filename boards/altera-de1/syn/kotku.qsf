@@ -150,8 +150,6 @@ set_location_assignment PIN_T6 -to sdram_cs_n_
 set_location_assignment PIN_U4 -to sdram_clk_
 set_location_assignment PIN_N3 -to sdram_ce_
 set_location_assignment PIN_R8 -to sdram_we_n_
-set_parameter -name CYCLONEII_SAFE_WRITE "\"RESTRUCTURE\""
-set_location_assignment PIN_D12 -to clk_27_
 set_location_assignment PIN_L1 -to clk_50_
 set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
 set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
@@ -197,8 +195,6 @@ set_location_assignment PIN_T8 -to sram_oe_n_
 set_location_assignment PIN_AB5 -to sram_ce_n_
 set_location_assignment PIN_Y7 -to sram_bw_n_[0]
 set_location_assignment PIN_W7 -to sram_bw_n_[1]
-set_global_assignment -name FMAX_REQUIREMENT "27 MHz" -section_id clk_27_
-set_instance_assignment -name CLOCK_SETTINGS clk_27_ -to clk_27_
 set_global_assignment -name FMAX_REQUIREMENT "50 MHz" -section_id clk_50_
 set_instance_assignment -name CLOCK_SETTINGS clk_50_ -to clk_50_
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS OUTPUT DRIVING GROUND"
@@ -288,6 +284,9 @@ set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
 set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
+set_global_assignment -name USE_TIMEQUEST_TIMING_ANALYZER OFF
+
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrgr.v
 set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg_datamem.v
 set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_sdrio.v

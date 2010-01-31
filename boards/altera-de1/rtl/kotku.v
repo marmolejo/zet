@@ -18,7 +18,6 @@
 
 module kotku (
     input        clk_50_,
-    input        clk_27_,
     output [9:0] ledr_,
     output [7:0] ledg_,
     input  [9:0] sw_,
@@ -164,13 +163,21 @@ module kotku (
   // wires to sd controller
   wire [15:0] sd_dat_o;
   wire [15:0] sd_dat_i;
-  wire        sd_tga_i;
-  wire [19:1] sd_adr_i;
   wire [ 1:0] sd_sel_i;
   wire        sd_we_i;
   wire        sd_cyc_i;
   wire        sd_stb_i;
   wire        sd_ack_o;
+
+  // wires to sd bridge
+  wire [15:0] sd_dat_o_s;
+  wire [15:0] sd_dat_i_s;
+  wire        sd_tga_i_s;
+  wire [ 1:0] sd_sel_i_s;
+  wire        sd_we_i_s;
+  wire        sd_cyc_i_s;
+  wire        sd_stb_i_s;
+  wire        sd_ack_o_s;
 
   // wires to gpio controller
   wire [15:0] gpio_dat_o;
@@ -287,7 +294,7 @@ module kotku (
     .flash_rst_n_ (flash_rst_n_)
   );
 
-  wb_abrg wb_fmlbrg (
+  wb_abrgr wb_fmlbrg (
     .sys_rst (rst),
 
     // Wishbone slave interface
@@ -343,7 +350,7 @@ module kotku (
     .fml_di  (fml_di)
   );
 
-  wb_abrg wb_csrbrg (
+  wb_abrgr wb_csrbrg (
     .sys_rst (rst),
 
     // Wishbone slave interface
@@ -543,6 +550,30 @@ module kotku (
     .iid  (iid)
   );
 
+  wb_abrgr sd_brg (
+    .sys_rst (rst),
+
+    // Wishbone slave interface
+    .wbs_clk_i (clk),
+    .wbs_dat_i (sd_dat_i_s),
+    .wbs_dat_o (sd_dat_o_s),
+    .wbs_sel_i (sd_sel_i_s),
+    .wbs_stb_i (sd_stb_i_s),
+    .wbs_cyc_i (sd_cyc_i_s),
+    .wbs_we_i  (sd_we_i_s),
+    .wbs_ack_o (sd_ack_o_s),
+
+    // Wishbone master interface
+    .wbm_clk_i (sdram_clk),
+    .wbm_dat_o (sd_dat_i),
+    .wbm_dat_i (sd_dat_o),
+    .wbm_sel_o (sd_sel_i),
+    .wbm_stb_o (sd_stb_i),
+    .wbm_cyc_o (sd_cyc_i),
+    .wbm_we_o  (sd_we_i),
+    .wbm_ack_i (sd_ack_o)
+  );
+
   sdspi sdspi (
     // Serial pad signal
     .sclk  (sd_sclk_),
@@ -551,7 +582,7 @@ module kotku (
     .ss    (sd_ss_),
 
     // Wishbone slave interface
-    .wb_clk_i (clk),
+    .wb_clk_i (sdram_clk),
     .wb_rst_i (rst),
     .wb_dat_i (sd_dat_i),
     .wb_dat_o (sd_dat_o),
@@ -681,14 +712,14 @@ module kotku (
     .s3_ack_i (keyb_ack_o),
 
     // Slave 4 interface - sd
-    .s4_dat_i (sd_dat_o),
-    .s4_dat_o (sd_dat_i),
-    .s4_adr_o ({sd_tga_i,sd_adr_i}),
-    .s4_sel_o (sd_sel_i),
-    .s4_we_o  (sd_we_i),
-    .s4_cyc_o (sd_cyc_i),
-    .s4_stb_o (sd_stb_i),
-    .s4_ack_i (sd_ack_o),
+    .s4_dat_i (sd_dat_o_s),
+    .s4_dat_o (sd_dat_i_s),
+    .s4_adr_o ({sd_tga_i_s,sd_adr_i_s}),
+    .s4_sel_o (sd_sel_i_s),
+    .s4_we_o  (sd_we_i_s),
+    .s4_cyc_o (sd_cyc_i_s),
+    .s4_stb_o (sd_stb_i_s),
+    .s4_ack_i (sd_ack_o_s),
 
     // Slave 5 interface - gpio
     .s5_dat_i (gpio_dat_o),
