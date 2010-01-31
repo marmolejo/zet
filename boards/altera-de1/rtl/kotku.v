@@ -1,5 +1,6 @@
 /*
- *  Copyright (c) 2009  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *  Zet SoC
+ *  Copyright (C) 2009, 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -91,7 +92,6 @@ module kotku (
 
   // Registers and nets
   wire        clk;
-  wire        rst;
   wire        rst_lck;
   wire [15:0] dat_o;
   wire [15:0] dat_i;
@@ -261,6 +261,9 @@ module kotku (
   wire [19:0] pc;
   wire [15:0] cs;
   wire [ 2:0] state;
+
+  reg [16:0] rst_debounce;
+  reg rst;
 
   // Module instantiations
   pll pll (
@@ -773,7 +776,7 @@ module kotku (
   );
 
   // Continuous assignments
-  assign rst_lck         = !lock;
+  assign rst_lck         = !sw_[0] & lock;
   assign sdram_clk_      = sdram_clk;
 
   assign dat_i = inta ? { 13'b0000_0000_0000_1, iid }
@@ -781,7 +784,20 @@ module kotku (
 
   assign pc  = (cs << 4) + ip;
 
-  assign rst        = sw_[0] | rst_lck;
   assign ledg_[3:0] = pc[3:0];
+
+  /*
+   * Debounce it (counter holds reset for 10.49ms),
+   * and generate power-on reset.
+   */
+  initial rst_debounce <= 17'h1FFFF;
+  initial rst <= 1'b1;
+  always @(posedge clk) begin
+    if(~rst_lck) /* reset is active low */
+      rst_debounce <= 17'h1FFFF;
+    else if(rst_debounce != 17'd0)
+      rst_debounce <= rst_debounce - 17'd1;
+    rst <= rst_debounce != 17'd0;
+  end
 
 endmodule

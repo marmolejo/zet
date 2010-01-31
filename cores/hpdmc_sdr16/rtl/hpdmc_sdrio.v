@@ -1,6 +1,6 @@
 /*
  * Milkymist VJ SoC
- * Copyright (C) 2007, 2008, 2009 Sebastien Bourdeauducq
+ * Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

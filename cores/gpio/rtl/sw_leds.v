@@ -1,4 +1,7 @@
 /*
+ *  GPIO module to deal with LEDs and switches
+ *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
+ *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
  *  the GNU General Public License as published by the Free Software

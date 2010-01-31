@@ -1,3 +1,24 @@
+/*
+ *  Wishbone switch and address decoder
+ *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
+ *  Copyright (C) 2008, 2009 Sebastien Bourdeauducq - http://lekernel.net
+ *  Copyright (C) 2000 Johny Chi - chisuhua@yahoo.com.cn
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ */
+
 module wb_switch #(
     parameter s0_addr_1 = 20'h00000,
     parameter s0_mask_1 = 20'h00000,

@@ -1,9 +1,26 @@
- /*
-  *  Phase accumulator clock:
-  *   Fo = Fc * N / 2^bits
-  *   here N: 12507 and bits: 33
-  *   it gives a frequency of 18.200080376 Hz
-  */
+/*
+ *  Phase accumulator clock:
+ *   Fo = Fc * N / 2^bits
+ *   here N: 12507 and bits: 33
+ *   it gives a frequency of 18.200080376 Hz
+ *
+ *  Copyright (c) 2009  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *  adapted from the opencores keyboard controller from John Clayton
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ */
 
 module timer #(
     parameter res   = 33,   // bit resolution (default: 33 bits)

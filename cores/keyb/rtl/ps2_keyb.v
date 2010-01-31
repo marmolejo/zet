@@ -1,7 +1,6 @@
 /*
  *  PS2 Wishbone 8042 compatible keyboard controller
- *
- *  Copyright (c) 2009  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *  Copyright (c) 2009  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *  adapted from the opencores keyboard controller from John Clayton
  *
  *  This file is part of the Zet processor. This processor is free
