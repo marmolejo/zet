@@ -29,8 +29,8 @@ LOCAL_CXXFLAGS =
 RELEASE = `pwd | sed "s-.*/--"`
 BUILDDATE = `date '+%d %b %Y'`
 BUILD_DATE = `date '+%m/%d/%y'`
-RELDATE = Mon Feb 1 00:35:40 2010 +0100
-RELVERS = v1.0.0-13-g4ddd705
+RELDATE = `git log -1 | grep Date | sed 's/Date:   //g'`
+RELVERS = `git describe`
 
 BIOS_BUILD_DATE = "-DBIOS_BUILD_DATE=\"$(BUILD_DATE)\""
 BIOS_BUILDDATE = "-DBIOS_BUILDDATE=\"$(BUILDDATE)\""
