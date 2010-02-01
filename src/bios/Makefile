@@ -22,18 +22,20 @@ AS86 = as86
 BX_INCDIRS = -I.. -I$(srcdir)/.. -I../iodev -I$(srcdir)/../iodev
 LOCAL_CXXFLAGS =
 
-BUILDDATE = `date '+%m/%d/%y'`
-BIOS_BUILD_DATE = "-DBIOS_BUILD_DATE=\"$(BUILDDATE)\""
 #
 # -------- end configurable options --------------------------
 #
 
 RELEASE = `pwd | sed "s-.*/--"`
-RELDATE = `date '+%d %b %Y'`
-RELVERS = `pwd | sed "s-.*/--" | sed "s/vgabios//" | sed "s/-//"`
+BUILDDATE = `date '+%d %b %Y'`
+BUILD_DATE = `date '+%m/%d/%y'`
+RELDATE = Mon Feb 1 00:35:40 2010 +0100
+RELVERS = v1.0.0-13-g4ddd705
 
-VGABIOS_DATE = "-DVGABIOS_DATE=\"$(RELDATE)\""
-
+BIOS_BUILD_DATE = "-DBIOS_BUILD_DATE=\"$(BUILD_DATE)\""
+BIOS_BUILDDATE = "-DBIOS_BUILDDATE=\"$(BUILDDATE)\""
+BIOS_DATE = "-DBIOS_DATE=\"$(RELDATE)\""
+BIOS_VERS = "-DBIOS_VERS=\"$(RELVERS)\""
 
 all: de1
 de1: bios.out
@@ -76,7 +78,7 @@ bios-clean:
 	$(CXX) -c $(BX_INCDIRS) $(CXXFLAGS) $(LOCAL_CXXFLAGS) $< -o $@
 
 zet-bios.out: $(ROMBIOS) biossums rombios.h
-	$(GCC32) $(BIOS_BUILD_DATE) -DLEGACY -E -P $< > _rombiosl_.c
+	$(GCC32) $(BIOS_VERS) $(BIOS_DATE) $(BIOS_BUILD_DATE) $(BIOS_BUILDDATE) -DLEGACY -E -P $< > _rombiosl_.c
 	$(BCC) -o rombiosl.s -C-c -D__i86__ -0 -S _rombiosl_.c
 	sed -e 's/^\.text//' -e 's/^\.data//' rombiosl.s > _rombiosl_.s
 	$(AS86) _rombiosl_.s -b tmpl.bin -u- -w- -g -0 -j -O -l rombiosl.txt
@@ -86,7 +88,7 @@ zet-bios.out: $(ROMBIOS) biossums rombios.h
 	rm -f  _rombiosl_.s
 
 vgabios.out: vgabios.c vgabios.h vgatables.h vgasums
-	$(GCC) -E vgabios.c $(VGABIOS_VERS) -P $(VGABIOS_DATE) > _vgabios_.c
+	$(GCC) -E vgabios.c $(BIOS_VERS) -P $(BIOS_BUILDDATE) > _vgabios_.c
 	$(BCC) -o vgabios.s -C-c -D__i86__ -S -0 _vgabios_.c
 	sed -e 's/^\.text//' -e 's/^\.data//' vgabios.s > _vgabios_.s
 	$(AS86) _vgabios_.s -b vgabios.bin -u -w- -g -0 -j -O -l vgabios.txt

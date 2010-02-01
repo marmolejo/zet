@@ -73,7 +73,7 @@ vgabios_entry_point:
   jmp vgabios_init_func
 
 vgabios_name:
-.ascii	"Zet/Bochs VGABios"
+.ascii	"Zet VGA bios"
 .ascii	" "
 .byte	0x00
 
@@ -83,15 +83,15 @@ vgabios_name:
 .byte   0x00
 
 vgabios_version:
-#ifndef VGABIOS_VERS
-.ascii	"current-cvs"
+#ifndef BIOS_VERS
+.ascii	"git"
 #else
-.ascii VGABIOS_VERS
+.ascii BIOS_VERS
 #endif
 .ascii	" "
 
 vgabios_date:
-.ascii  VGABIOS_DATE
+.ascii  BIOS_BUILDDATE
 .byte   0x0a,0x0d
 .byte	0x00
 

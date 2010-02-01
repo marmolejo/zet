@@ -1,4 +1,4 @@
 #!/bin/bash
-sed "s/\$Version:[^\$]\+/\$Version: $1 /g" $2  | 
-  sed "s/\$Date:[^\$]\+/\$Date: $(date -R) /g" > $2.tmp
-mv $2.tmp $2
+sed "s/\`git describe\`/$(git describe)/g" Makefile |
+  sed "s/\`git log.\+\`/$(git log -1 | grep Date | sed 's/Date:   //g')/g" > Makefile.tmp
+mv Makefile.tmp Makefile

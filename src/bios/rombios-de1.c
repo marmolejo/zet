@@ -17,7 +17,7 @@
 #define SYS_MODEL_ID     0xFC
 
 #ifndef BIOS_BUILD_DATE
-#  define BIOS_BUILD_DATE "06/23/99"
+#  define BIOS_BUILD_DATE "02/01/10"
 #endif
 
   // 1K of base memory used for Extended Bios Data Area (EBDA)
@@ -1084,9 +1084,7 @@ ASM_END
     }
 }
 
-static char bios_svn_version_string[] = "$Version: git $ $Date: Mon, 16 Mar 2009 19:21:11 +0100 $";
-
-#define BIOS_COPYRIGHT_STRING "(c) 2009 Zeus Gomez Marmolejo and (c) 2002 MandrakeSoft S.A."
+#define BIOS_COPYRIGHT_STRING "(c) 2009, 2010 Zeus Gomez Marmolejo and (c) 2002 MandrakeSoft S.A."
 
 //--------------------------------------------------------------------------
 // print_bios_banner
@@ -1095,8 +1093,28 @@ static char bios_svn_version_string[] = "$Version: git $ $Date: Mon, 16 Mar 2009
 void
 print_bios_banner()
 {
-  printf("Zet ROMBIOS - build: %s\n%s\n\n",
-    BIOS_BUILD_DATE, bios_svn_version_string);
+  printf("Zet ROMBIOS - build date: ");
+  printf(
+#ifndef BIOS_BUILDDATE
+  "unspecified"
+#else
+  BIOS_BUILDDATE
+#endif
+  "\n");
+
+  printf("Version: "
+#ifndef BIOS_VERS
+  "git"
+#else
+  BIOS_VERS
+#endif
+  );
+
+#ifdef BIOS_DATE
+  printf(". Date: "
+  BIOS_DATE
+  "\n\n" );
+#endif
 }
 
 //--------------------------------------------------------------------------
