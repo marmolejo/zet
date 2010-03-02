@@ -170,6 +170,7 @@ module kotku (
   wire        sd_ack_o;
 
   // wires to sd bridge
+  wire [19:1] sd_adr_i_s;
   wire [15:0] sd_dat_o_s;
   wire [15:0] sd_dat_i_s;
   wire        sd_tga_i_s;
@@ -263,16 +264,35 @@ module kotku (
   wire [ 2:0] state;
 
   reg [16:0] rst_debounce;
-  reg rst;
 
   // Module instantiations
   pll pll (
     .inclk0 (clk_50_),
-    .c0     (sdram_clk),
-    .c1     (vga_clk),
-    .c2     (clk),
+    .c0     (sdram_clk),  // 100 Mhz
+    .c1     (vga_clk),    // 25 Mhz
+    .c2     (clk),        // 12.5 Mhz
     .locked (lock)
   );
+
+`ifndef SIMULATION
+  /*
+   * Debounce it (counter holds reset for 10.49ms),
+   * and generate power-on reset.
+   */
+  initial rst_debounce <= 17'h1FFFF;
+  reg rst;
+  initial rst <= 1'b1;
+  always @(posedge clk) begin
+    if(~rst_lck) /* reset is active low */
+      rst_debounce <= 17'h1FFFF;
+    else if(rst_debounce != 17'd0)
+      rst_debounce <= rst_debounce - 17'd1;
+    rst <= rst_debounce != 17'd0;
+  end
+`else
+  wire rst;
+  assign rst = !rst_lck;
+`endif
 
   flash flash (
     // Wishbone slave interface
@@ -327,7 +347,7 @@ module kotku (
 
   fmlbrg #(
     .fml_depth   (23),
-    .cache_depth (9)   // 512 byte cache
+    .cache_depth (10)   // 1 Kbyte cache
     ) fmlbrg (
     .sys_clk  (sdram_clk),
     .sys_rst  (rst),
@@ -786,18 +806,5 @@ module kotku (
 
   assign ledg_[3:0] = pc[3:0];
 
-  /*
-   * Debounce it (counter holds reset for 10.49ms),
-   * and generate power-on reset.
-   */
-  initial rst_debounce <= 17'h1FFFF;
-  initial rst <= 1'b1;
-  always @(posedge clk) begin
-    if(~rst_lck) /* reset is active low */
-      rst_debounce <= 17'h1FFFF;
-    else if(rst_debounce != 17'd0)
-      rst_debounce <= rst_debounce - 17'd1;
-    rst <= rst_debounce != 17'd0;
-  end
 
 endmodule

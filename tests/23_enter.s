@@ -1,7 +1,8 @@
 .code16
 start:
-enter $2345, $1
+enter $2345, $23
 imul   $0x6556,%bp,%sp
+insw %dx,(%di)
 leave
 hlt
 

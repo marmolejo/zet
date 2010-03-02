@@ -12,7 +12,6 @@ outw %ax, %dx
 hlt
 
 .org 65520
-hlt
 jmp start
 
 .org 65535

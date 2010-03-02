@@ -22,7 +22,6 @@ module test_kotku;
 
   // Registers and nets
   reg        clk_50;
-  reg        clk_27;
   wire [9:0] ledr;
   wire [7:0] ledg;
   reg  [9:0] sw;
@@ -56,7 +55,6 @@ module test_kotku;
   // Module instantiations
   kotku kotku (
     .clk_50_ (clk_50),
-    .clk_27_ (clk_27),
     .ledr_   (ledr),
     .ledg_   (ledg),
     .sw_     (sw),
@@ -156,7 +154,6 @@ module test_kotku;
   // Behaviour
   // Clock generation
   always #10 clk_50 <= !clk_50;
-  always #18.518518 clk_27 <= !clk_27;
 
   initial
     begin
@@ -173,7 +170,6 @@ module test_kotku;
         sram.bank1);
 
       clk_50 <= 1'b0;
-      clk_27 <= 1'b0;
       sw <= 10'h1;
       #300 sw <= 10'h0;
     end

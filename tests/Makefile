@@ -33,6 +33,15 @@ all: $(ml403roms)
 %.ml403: %.rom
 	hexdump -v -e '4/1 "%02X"' -e '"\n"' $< > ../impl/virtex4-ml403ep/sim/$@
 
+%.de1: %.rom
+	hexdump -v -e '1/1 "%02X"' -e '"\n"' $< > ../boards/altera-de1/sim/bios.dat
+
+%.rom: %.out zero.dat
+	cat zero.dat $< > $@
+
+zero.dat:
+	dd if=/dev/zero of=zero.dat bs=1024 count=64
+
 %.fout: %.out hd.img.rtl
 	for i in $$(seq 32768); do echo FFFF; done >$@
 	hexdump -v -e '1/2 "%04X"' -e '"\n"' $< >>$@
@@ -42,15 +51,6 @@ all: $(ml403roms)
 
 %.rtlold: %.out
 	hexdump -v -e '1/1 "%02X"' -e '"\n"' $< > ../../sim/$@
-
-%.rom: %.rom16
-	out2rom-ml403 ff.out $< > $@
-
-%.rom16: %.out ff.out
-	cat ff.out $< > $@
-
-%.bin: %.rom
-	cat count.rom $< > $@
 
 %.out: %.o
 	objcopy -O binary -S $< $@
@@ -62,4 +62,4 @@ hd.img.rtl: hd.img
 	hexdump -v -e '1/2 "%04X"' -e '"\n"' $< >$@
 
 clean:
-	rm -f *.o *.out *.bin *.mcs ../../impl/spartan3an-sk/sim/flash-prom/*.s3rom ../../sim/*.rtlrom
+	rm -f *.o *.out *.bin *.mcs zero.dat *.rom
