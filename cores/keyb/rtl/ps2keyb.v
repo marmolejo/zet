@@ -27,7 +27,7 @@
 `define LEFT_SHIFT   16'h12
 `define RIGHT_SHIFT  16'h59
 
-module ps2_keyb (
+module ps2keyb (
 `ifdef DEBUG
     output           rx_output_strobe,
     output           released,
@@ -116,7 +116,7 @@ module ps2_keyb (
   reg hold_released;    // Holds prior value, cleared at rx_output_strobe
 
   // Module instantiation
-  translate_8042 tr0 (
+  ps2keyb_xtcodes xtcodes (
 //    .clk     (wb_clk_i),
     .at_code (q[7:1]),
     .xt_code (xt_code)
@@ -371,23 +371,4 @@ module ps2_keyb (
     if (wb_rst_i || rx_output_event) hold_released <= 0;
     else if (rx_shifting_done && released) hold_released <= 1;
 
-endmodule
-
-module translate_8042 (
-  //  input            clk,
-    input      [6:0] at_code,
-    output     [6:0] xt_code
-  );
-
-  // Registers, nets and parameters
-  reg [7:0] rom[0:2**7-1];
-
-  assign xt_code = rom[at_code][6:0];
-
-  // Behaviour
-/*
-  always @(posedge clk)
-    xt_code <= rom[at_code][6:0];
-*/
-  initial $readmemh("xt_codes.dat", rom);
 endmodule

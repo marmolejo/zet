@@ -57,7 +57,7 @@
 `timescale 1ns/10ps
 //synopsys translate_on
 
-module div_su(clk, ena, z, d, q, s, div0, ovf);
+module zet_div_su (clk, ena, z, d, q, s, div0, ovf);
 
   //
   // parameters
@@ -135,7 +135,7 @@ module div_su(clk, ena, z, d, q, s, div0, ovf);
     end
 
   // hookup non-restoring divider
-  div_uu #(z_width, d_width)
+  zet_div_uu #(z_width, d_width)
   divider (
     .clk(clk),
     .ena(ena),

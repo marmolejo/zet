@@ -20,7 +20,7 @@
 
 `include "defines.v"
 
-module regfile (
+module zet_regfile (
 `ifdef DEBUG
     output [15:0] ax,
     output [15:0] dx,

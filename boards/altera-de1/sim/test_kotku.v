@@ -141,7 +141,7 @@ module test_kotku;
     .Dqm   (sdram_dqm)
   );
 
-  IS61LV25616 sram (
+  is61lv25616 sram (
     .A   (sram_addr_),
     .IO  (sram_data_),
     .CE_ (sram_ce_n_),
@@ -159,9 +159,9 @@ module test_kotku;
     begin
       $readmemh("bios.dat",flash.Mem);
       $readmemb("../../../cores/zet/rtl/micro_rom.dat",
-        kotku.zet_proc.fetch0.decode0.mdata0.m0.rom);
+        kotku.zet.fetch.decode.micro_data.micro_rom.rom);
       $readmemb("../../../cores/zet/rtl/seq_rom.dat",
-        kotku.zet_proc.fetch0.decode0.seq_rom0.rom);
+        kotku.zet.fetch.decode.seq_rom.rom);
       $readmemh("../../../cores/vga/rtl/char_rom.dat",
         kotku.vga.lcd0.tm.vdu_char_rom.rom);
       $readmemh("../../../tmp/images/msdos/menu0.hex",

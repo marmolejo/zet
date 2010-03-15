@@ -7,7 +7,7 @@
 `define tAC_10     //tAC_10 or tAC_12 defines different parameters
 `timescale 1ns/1ns
 
-module IS61LV25616 (A, IO, CE_, OE_, WE_, LB_, UB_);
+module is61lv25616 (A, IO, CE_, OE_, WE_, LB_, UB_);
 
 parameter dqbits = 16;
 parameter memdepth = 262143;

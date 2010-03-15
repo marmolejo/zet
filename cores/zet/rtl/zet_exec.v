@@ -1,5 +1,6 @@
 /*
- *  Copyright (c) 2008  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *  Microcode execution stage for Zet
+ *  Copyright (C) 2008-2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -20,7 +21,7 @@
 
 `include "defines.v"
 
-module exec (
+module zet_exec (
     // IO Ports
 `ifdef DEBUG
     output [15:0] x,
@@ -90,16 +91,16 @@ module exec (
   wire        dive;
 
   // Module instances
-  alu     alu0( {c, a }, bus_b, aluout, t, func, alu_iflags, oflags,
+  zet_alu alu( {c, a }, bus_b, aluout, t, func, alu_iflags, oflags,
                alu_word, s, off, clk, dive);
-  regfile reg0 (
+  zet_regfile regfile (
 `ifdef DEBUG
     ax, dx, bp, si, es,
 `endif
     a, b, c, cs, ip, {aluout[31:16], omemalu}, s, flags, wr_reg, wrfl,
                 wr_high, clk, rst, addr_a, addr_b, addr_c, addr_d, addr_s, iflags,
                 ~byteop, a_byte, b_byte, c_byte, cx_zero, wrip0);
-  jmp_cond jc0( logic_flags, addr_b, addr_c[0], c, jmp);
+  zet_jmp_cond jmp_cond (logic_flags, addr_b, addr_c[0], c, jmp);
 
   // Assignments
   assign addr_s = ir[1:0];

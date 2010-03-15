@@ -536,12 +536,12 @@ module kotku (
     .dcd_pad_i  (1'b0)
   );
 
-  ps2_keyb #(
+  ps2keyb #(
     .TIMER_60USEC_VALUE_PP (750),
     .TIMER_60USEC_BITS_PP  (10),
     .TIMER_5USEC_VALUE_PP  (60),
     .TIMER_5USEC_BITS_PP   (6)
-    ) keyboard (
+    ) ps2keyb (
     .wb_clk_i (clk),
     .wb_rst_i (rst),
     .wb_adr_i (keyb_adr_i[2:1]),
@@ -635,7 +635,7 @@ module kotku (
     .sw_   (sw_)
   );
 
-  cpu zet_proc (
+  zet zet (
     .ip         (ip),
     .cs         (cs),
     .state      (state),

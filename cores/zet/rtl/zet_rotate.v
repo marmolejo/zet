@@ -18,7 +18,7 @@
 
 `timescale 1ns/10ps
 
-module rotate (
+module zet_rotate (
     input  [15:0] x,
     input  [ 4:0] y,
     input  [ 1:0] func,  // 00: ror, 01: rol, 10: rcr, 11: rcl
@@ -39,7 +39,7 @@ module rotate (
   wire unchanged;
 
   // Module instantiation
-  rxr8 rxr8_0 (
+  zet_rxr8 rxr8 (
     .x  (x[7:0]),
     .ci (cfi),
     .y  (rot8),
@@ -48,7 +48,7 @@ module rotate (
     .co (co8)
   );
 
-  rxr16 rxr16_0 (
+  zet_rxr16 rxr16 (
     .x  (x),
     .ci (cfi),
     .y  (rot16),
@@ -85,56 +85,4 @@ module rotate (
                          (word_op ? out[15]^out[14] : out[7]^out[6]));
 endmodule
 
-module rxr16 (
-    input      [15:0] x,
-    input             ci,
-    input      [ 4:0] y,
-    input             e,
-    output reg [15:0] w,
-    output reg        co
-  );
 
-  always @(x or ci or y or e)
-    case (y)
-      default: {co,w} <= {ci,x};
-      5'd01: {co,w} <= e ? {x[0], ci, x[15:1]} : {ci, x[0], x[15:1]};
-      5'd02: {co,w} <= e ? {x[ 1:0], ci, x[15: 2]} : {ci, x[ 1:0], x[15: 2]};
-      5'd03: {co,w} <= e ? {x[ 2:0], ci, x[15: 3]} : {ci, x[ 2:0], x[15: 3]};
-      5'd04: {co,w} <= e ? {x[ 3:0], ci, x[15: 4]} : {ci, x[ 3:0], x[15: 4]};
-      5'd05: {co,w} <= e ? {x[ 4:0], ci, x[15: 5]} : {ci, x[ 4:0], x[15: 5]};
-      5'd06: {co,w} <= e ? {x[ 5:0], ci, x[15: 6]} : {ci, x[ 5:0], x[15: 6]};
-      5'd07: {co,w} <= e ? {x[ 6:0], ci, x[15: 7]} : {ci, x[ 6:0], x[15: 7]};
-      5'd08: {co,w} <= e ? {x[ 7:0], ci, x[15: 8]} : {ci, x[ 7:0], x[15: 8]};
-      5'd09: {co,w} <= e ? {x[ 8:0], ci, x[15: 9]} : {ci, x[ 8:0], x[15: 9]};
-      5'd10: {co,w} <= e ? {x[ 9:0], ci, x[15:10]} : {ci, x[ 9:0], x[15:10]};
-      5'd11: {co,w} <= e ? {x[10:0], ci, x[15:11]} : {ci, x[10:0], x[15:11]};
-      5'd12: {co,w} <= e ? {x[11:0], ci, x[15:12]} : {ci, x[11:0], x[15:12]};
-      5'd13: {co,w} <= e ? {x[12:0], ci, x[15:13]} : {ci, x[12:0], x[15:13]};
-      5'd14: {co,w} <= e ? {x[13:0], ci, x[15:14]} : {ci, x[13:0], x[15:14]};
-      5'd15: {co,w} <= e ? {x[14:0], ci, x[15]} : {ci, x[14:0], x[15]};
-      5'd16: {co,w} <= {x,ci};
-    endcase
-endmodule
-
-module rxr8 (
-    input      [7:0] x,
-    input            ci,
-    input      [3:0] y,
-    input            e,
-    output reg [7:0] w,
-    output reg       co
-  );
-
-  always @(x or ci or y or e)
-    case (y)
-      default: {co,w} <= {ci,x};
-      5'd01: {co,w} <= e ? {x[0], ci, x[7:1]} : {ci, x[0], x[7:1]};
-      5'd02: {co,w} <= e ? {x[1:0], ci, x[7:2]} : {ci, x[1:0], x[7:2]};
-      5'd03: {co,w} <= e ? {x[2:0], ci, x[7:3]} : {ci, x[2:0], x[7:3]};
-      5'd04: {co,w} <= e ? {x[3:0], ci, x[7:4]} : {ci, x[3:0], x[7:4]};
-      5'd05: {co,w} <= e ? {x[4:0], ci, x[7:5]} : {ci, x[4:0], x[7:5]};
-      5'd06: {co,w} <= e ? {x[5:0], ci, x[7:6]} : {ci, x[5:0], x[7:6]};
-      5'd07: {co,w} <= e ? {x[6:0], ci, x[7]} : {ci, x[6:0], x[7]};
-      5'd08: {co,w} <= {x,ci};
-    endcase
-endmodule

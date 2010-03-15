@@ -18,7 +18,7 @@
 
 `timescale 1ns/10ps
 
-module jmp_cond (
+module zet_jmp_cond (
     input [4:0]  logic_flags,
     input [3:0]  cond,
     input        is_cx,
