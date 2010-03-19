@@ -20,16 +20,15 @@
 `include "defines.v"
 
 module zet_decode (
-    input [7:0] opcode,
-    input [7:0] modrm,
-    input [15:0] off_i,
-    input [15:0] imm_i,
-    input       rep,
     input clk,
     input rst,
+    input [7:0] opcode,
+    input [7:0] modrm,
+    input       rep,
     input block,
     input exec_st,
     input div_exc,
+    input ld_base,
 
     output need_modrm,
     output need_off,
@@ -37,25 +36,27 @@ module zet_decode (
     output off_size,
     output imm_size,
 
-    output [`IR_SIZE-1:0] ir,
-    output [15:0] off_o,
-    output [15:0] imm_o,
-    input  ld_base,
-    output end_seq,
-
     input  [2:0] sop_l,
 
     input        intr,
     input        ifl,
     output reg   inta,
     output reg   ext_int,
-    input        repz_pr
+
+    // to microcode
+    output [`MICRO_ADDR_WIDTH-1:0] seq_addr,
+    output [3:0] src,
+    output [3:0] dst,
+    output [3:0] base,
+    output [3:0] index,
+    output [1:0] seg,
+
+    // from microcode
+    input  end_seq
   );
 
   // Net declarations
-  wire [`MICRO_ADDR_WIDTH-1:0] base_addr, seq_addr;
-  wire [3:0] src, dst, base, index;
-  wire [1:0] seg;
+  wire [`MICRO_ADDR_WIDTH-1:0] base_addr;
   reg  [`MICRO_ADDR_WIDTH-1:0] seq;
   reg  dive;
   reg  old_ext_int;
@@ -65,12 +66,9 @@ module zet_decode (
                              need_off, need_imm, off_size, imm_size, src, dst,
                              base, index, seg);
 
-  zet_micro_data micro_data (seq_addr, off_i, imm_i, src, dst, base, index, seg,
-                        ir, off_o, imm_o, end_seq);
-
   // Assignments
   assign seq_addr = (dive ? `INTD
-    : (ext_int ? (repz_pr ? `EINTP : `EINT) : base_addr)) + seq;
+    : (ext_int ? (rep ? `EINTP : `EINT) : base_addr)) + seq;
 
   // Behaviour
   // seq

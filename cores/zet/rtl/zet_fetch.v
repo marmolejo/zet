@@ -24,24 +24,47 @@
 module zet_fetch (
     input clk,
     input rst,
+
+    // to decode
+    output     [7:0] opcode,
+    output     [7:0] modrm,
+    output           rep,
+    output           exec_st,
+    output           ld_base,
+    output reg [2:0] sop_l,
+
+    // from decode
+    input need_modrm,
+    input need_off,
+    input need_imm,
+    input off_size,
+    input imm_size,
+    input ext_int,
+    input end_seq,
+
+    // to microcode
+    output reg [15:0] off_l,
+    output reg [15:0] imm_l,
+
+    // from microcode
+    input [5:0] ftype,
+
+    // to exec
+    output [15:0] imm_f,
+
     input [15:0] cs,
     input [15:0] ip,
     input of,
     input zf,
     input cx_zero,
     input [15:0] data,
-    output [`IR_SIZE-1:0] ir,
-    output [15:0] off,
-    output [15:0] imm,
     output [19:0] pc,
     output bytefetch,
-    output fetch_or_exec,
     input  block,
     input  div_exc,
     output wr_ip0,
     input  intr,
-    input  ifl,
-    output inta
+    input  ifl
   );
 
   // Registers, nets and parameters
@@ -53,55 +76,38 @@ module zet_fetch (
 
   reg  [2:0] state;
   wire [2:0] next_state;
-  wire       end_seq;
-  wire       ext_int;
 
-  wire [`IR_SIZE-1:0] rom_ir;
-  wire [7:0] opcode, modrm;
-  wire exec_st;
-  wire [15:0] imm_d;
   wire prefix, repz_pr, sovr_pr;
   wire next_in_opco, next_in_exec;
-  wire need_modrm, need_off, need_imm, off_size, imm_size;
-  wire ld_base;
 
   reg [7:0] opcode_l, modrm_l;
-  reg [15:0] off_l, imm_l;
   reg [1:0] pref_l;
-  reg [2:0] sop_l;
 
   // Module instantiation
-  zet_decode decode (
-                 opcode, modrm, off_l, imm_l, pref_l[1], clk, rst, block,
-                 exec_st, div_exc, need_modrm, need_off, need_imm, off_size,
-                 imm_size, rom_ir, off, imm_d, ld_base, end_seq, sop_l,
-                 intr, ifl, inta, ext_int, pref_l[1]);
   zet_next_or_not next_or_not(pref_l, opcode[7:1], cx_zero, zf, ext_int, next_in_opco,
                   next_in_exec);
   zet_nstate nstate (state, prefix, need_modrm, need_off, need_imm, end_seq,
-             rom_ir[28:23], of, next_in_opco, next_in_exec, block, div_exc,
+             ftype, of, next_in_opco, next_in_exec, block, div_exc,
              intr, ifl, next_state);
 
   // Assignments
   assign pc = (cs << 4) + ip;
 
-  assign ir     = (state == execu_st) ? rom_ir : `ADD_IP;
   assign opcode = (state == opcod_st) ? data[7:0] : opcode_l;
   assign modrm  = (state == modrm_st) ? data[7:0] : modrm_l;
-  assign fetch_or_exec = (state == execu_st);
   assign bytefetch = (state == offse_st) ? ~off_size
                    : ((state == immed_st) ? ~imm_size : 1'b1);
   assign exec_st = (state == execu_st);
-  assign imm = (state == execu_st) ? imm_d
-              : (((state == offse_st) & off_size
+  assign imm_f = ((state == offse_st) & off_size
                 | (state == immed_st) & imm_size) ? 16'd2
-              : 16'd1);
+               : 16'd1;
   assign wr_ip0 = (state == opcod_st) && !pref_l[1] && !sop_l[2];
 
   assign sovr_pr = (opcode[7:5]==3'b001 && opcode[2:0]==3'b110);
   assign repz_pr = (opcode[7:1]==7'b1111_001);
   assign prefix  = sovr_pr || repz_pr;
   assign ld_base = (next_state == execu_st);
+  assign rep     = pref_l[1];
 
   // Behaviour
   always @(posedge clk)

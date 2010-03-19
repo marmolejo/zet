@@ -20,18 +20,19 @@
 `include "defines.v"
 
 module zet_micro_data (
-    input [`MICRO_ADDR_WIDTH-1:0] n_micro,
-    input [15:0] off_i,
-    input [15:0] imm_i,
-    input [3:0] src,
-    input [3:0] dst,
-    input [3:0] base,
-    input [3:0] index,
-    input [1:0] seg,
+    input  [`MICRO_ADDR_WIDTH-1:0] n_micro,
+    input  [15:0] off_i,
+    input  [15:0] imm_i,
+    input  [ 3:0] src,
+    input  [ 3:0] dst,
+    input  [ 3:0] base,
+    input  [ 3:0] index,
+    input  [ 1:0] seg,
+    output        end_seq,
+
     output [`IR_SIZE-1:0] ir,
-    output [15:0] off_o,
-    output [15:0] imm_o,
-    output        end_seq
+    output [15:0]         off_o,
+    output [15:0]         imm_o
   );
 
   // Net declarations

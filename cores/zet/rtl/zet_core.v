@@ -20,8 +20,6 @@
 `include "defines.v"
 
 module zet_core (
-    output [19:0] pc, // for debugging purposes
-
     input clk,
     input rst,
 
@@ -38,7 +36,9 @@ module zet_core (
     input         cpu_block,
     output        cpu_mem_op,
     output        cpu_m_io,
-    output        cpu_we_o
+    output        cpu_we_o,
+
+    output [19:0] pc  // for debugging purposes
   );
 
   // Net declarations
@@ -55,20 +55,74 @@ module zet_core (
   wire        cx_zero;
   wire        div_exc;
 
-  wire        fetch_or_exec;
   wire [19:0] addr_exec;
   wire        byte_fetch;
   wire        byte_exec;
+
+  wire [`MICRO_ADDR_WIDTH-1:0] seq_addr;
+  wire [3:0] src;
+  wire [3:0] dst;
+  wire [3:0] base;
+  wire [3:0] index;
+  wire [1:0] seg;
+  wire       end_seq;
+
+  // wires fetch - decode
+  wire [7:0] opcode;
+  wire [7:0] modrm;
+  wire       rep;
+  wire       exec_st;
+  wire       ld_base;
+  wire [2:0] sop_l;
+
+  wire need_modrm;
+  wire need_off;
+  wire need_imm;
+  wire off_size;
+  wire imm_size;
+  wire ext_int;
+
+  // wires fetch - microcode
+  wire [15:0] off_l;
+  wire [15:0] imm_l;
+  wire [15:0] imm_d;
+  wire [`IR_SIZE-1:0] rom_ir;
+  wire [5:0] ftype;
+
+  // wires fetch - exec
+  wire [15:0] imm_f;
 
   // Module instantiations
   zet_fetch fetch (
     .clk  (clk),
     .rst  (rst),
 
+    // to decode
+    .opcode  (opcode),
+    .modrm   (modrm),
+    .rep     (rep),
+    .exec_st (exec_st),
+    .ld_base (ld_base),
+    .sop_l   (sop_l),
+
+    // from decode
+    .need_modrm (need_modrm),
+    .need_off   (need_off),
+    .need_imm   (need_imm),
+    .off_size   (off_size),
+    .imm_size   (imm_size),
+    .ext_int    (ext_int),
+    .end_seq    (end_seq),
+
+    // to microcode
+    .off_l (off_l),
+    .imm_l (imm_l),
+
+    // from microcode
+    .ftype (ftype),
+
     // to exec
-    .ir     (ir),
-    .off    (off),
-    .imm    (imm),
+    .imm_f  (imm_f),
     .wr_ip0 (wr_ip0),
 
     // from exec
@@ -84,10 +138,59 @@ module zet_core (
     .data          (cpu_dat_i),
     .pc            (pc),
     .bytefetch     (byte_fetch),
-    .fetch_or_exec (fetch_or_exec),
     .block         (cpu_block),
-    .intr          (intr),
-    .inta          (inta)
+    .intr          (intr)
+  );
+
+  zet_decode decode (
+    .clk (clk),
+    .rst (rst),
+
+    .opcode  (opcode),
+    .modrm   (modrm),
+    .rep     (rep),
+    .block   (cpu_block),
+    .exec_st (exec_st),
+    .div_exc (div_exc),
+    .ld_base (ld_base),
+
+    .need_modrm (need_modrm),
+    .need_off   (need_off),
+    .need_imm   (need_imm),
+    .off_size   (off_size),
+    .imm_size   (imm_size),
+
+    .sop_l   (sop_l),
+    .intr    (intr),
+    .ifl     (ifl),
+    .inta    (inta),
+    .ext_int (ext_int),
+
+    .seq_addr (seq_addr),
+    .src      (src),
+    .dst      (dst),
+    .base     (base),
+    .index    (index),
+    .seg      (seg),
+    .end_seq  (end_seq)
+  );
+
+  zet_micro_data micro_data (
+    // from decode
+    .n_micro (seq_addr),
+    .off_i   (off_l),
+    .imm_i   (imm_l),
+    .src     (src),
+    .dst     (dst),
+    .base    (base),
+    .index   (index),
+    .seg     (seg),
+    .end_seq (end_seq),
+
+    // to exec
+    .ir    (rom_ir),
+    .off_o (off),
+    .imm_o (imm_d)
   );
 
   zet_exec exec (
@@ -120,8 +223,12 @@ module zet_core (
   );
 
   // Assignments
-  assign cpu_adr_o  = fetch_or_exec ? addr_exec : pc;
-  assign cpu_byte_o = fetch_or_exec ? byte_exec : byte_fetch;
+  assign cpu_adr_o  = exec_st ? addr_exec : pc;
+  assign cpu_byte_o = exec_st ? byte_exec : byte_fetch;
   assign cpu_mem_op = ir[`MEM_OP];
+
+  assign ir    = exec_st ? rom_ir : `ADD_IP;
+  assign imm   = exec_st ? imm_d  : imm_f;
+  assign ftype = rom_ir[28:23];
 
 endmodule
