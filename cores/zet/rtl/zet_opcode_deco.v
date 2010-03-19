@@ -25,7 +25,7 @@ module zet_opcode_deco (
     input       rep,
     input [2:0] sovr_pr,
 
-    output reg [`SEQ_ADDR_WIDTH-1:0] seq_addr,
+    output reg [`MICRO_ADDR_WIDTH-1:0] seq_addr,
     output reg need_modrm,
     output reg need_off,
     output reg need_imm,

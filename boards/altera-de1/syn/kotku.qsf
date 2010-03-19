@@ -289,7 +289,6 @@ set_global_assignment -name USE_TIMEQUEST_TIMING_ANALYZER OFF
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/altera/zet_signmul17.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_wb_master.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_shifts.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_seq_rom.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_rxr16.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_rxr8.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_rotate.v

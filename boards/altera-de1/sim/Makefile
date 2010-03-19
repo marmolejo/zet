@@ -56,6 +56,7 @@ ZET_MODS    = zet_addsub \
               zet_shifts zet \
               zet_wb_master \
               zet_signmul17
+#							zet_regdecodealu
 HPDMC_MODS  = hpdmc_banktimer \
               hpdmc_busif \
               hpdmc_ctlif \

@@ -30,7 +30,8 @@ module zet_micro_data (
     input [1:0] seg,
     output [`IR_SIZE-1:0] ir,
     output [15:0] off_o,
-    output [15:0] imm_o
+    output [15:0] imm_o,
+    output        end_seq
   );
 
   // Net declarations
@@ -61,6 +62,7 @@ module zet_micro_data (
   assign var_d   = micro_o[44:43];
   assign var_off = micro_o[45];
   assign var_imm = micro_o[48:46];
+  assign end_seq = micro_o[49];
 
   assign imm_o = var_imm == 3'd0 ? (16'h0000)
                : (var_imm == 3'd1 ? (16'h0002)

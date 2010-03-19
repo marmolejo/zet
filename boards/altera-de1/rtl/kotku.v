@@ -258,10 +258,7 @@ module kotku (
   wire        intr;
   wire        inta;
 
-  wire [15:0] ip;
   wire [19:0] pc;
-  wire [15:0] cs;
-  wire [ 2:0] state;
 
   reg [16:0] rst_debounce;
 
@@ -636,10 +633,7 @@ module kotku (
   );
 
   zet zet (
-    .ip         (ip),
-    .cs         (cs),
-    .state      (state),
-    .dbg_block  (1'b0),
+    .pc (pc),
 
     // Wishbone master interface
     .wb_clk_i (clk),
@@ -802,9 +796,6 @@ module kotku (
   assign dat_i = inta ? { 13'b0000_0000_0000_1, iid }
                : sw_dat_o;
 
-  assign pc  = (cs << 4) + ip;
-
   assign ledg_[3:0] = pc[3:0];
-
 
 endmodule

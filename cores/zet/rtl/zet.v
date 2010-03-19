@@ -21,36 +21,7 @@
 `include "defines.v"
 
 module zet (
-`ifdef DEBUG
-    output [15:0] cs,
-    output [15:0] ip,
-    output [ 2:0] state,
-    output [ 2:0] next_state,
-    output [ 5:0] iralu,
-    output [15:0] x,
-    output [15:0] y,
-    output [15:0] imm,
-    output [15:0] aluo,
-    output [15:0] ax,
-    output [15:0] dx,
-    output [15:0] bp,
-    output [15:0] si,
-    output [15:0] es,
-    input         dbg_block,
-    output [15:0] c,
-    output [ 3:0] addr_c,
-    output [ 3:0] addr_a,
-    output [15:0] cpu_dat_o,
-    output [15:0] d,
-    output [ 3:0] addr_d,
-    output        byte_exec,
-    output [ 8:0] flags,
-    output        end_seq,
-    output        ext_int,
-    output        cpu_block,
-    output [19:0] cpu_adr_o,
-    output [`SEQ_DATA_WIDTH-2:0] micro_addr,
-`endif
+    output [19:0] pc, // for debugging purposes
 
     // Wishbone master interface
     input         wb_clk_i,
@@ -69,18 +40,16 @@ module zet (
   );
 
   // Net declarations
-`ifndef DEBUG
   wire [15:0] cs, ip;
   wire [15:0] imm;
   wire [15:0] cpu_dat_o;
   wire        byte_exec;
   wire        cpu_block;
   wire [19:0] cpu_adr_o;
-`endif
   wire [`IR_SIZE-1:0] ir;
   wire [15:0] off;
 
-  wire [19:0] addr_exec, addr_fetch;
+  wire [19:0] addr_exec;
   wire byte_fetch, fetch_or_exec;
   wire of, zf, cx_zero;
   wire div_exc;
@@ -96,13 +65,6 @@ module zet (
 
   // Module instantiations
   zet_fetch fetch (
-`ifdef DEBUG
-    .state      (state),
-    .next_state (next_state),
-    .ext_int    (ext_int),
-    .end_seq    (end_seq),
-    .micro_addr (micro_addr),
-`endif
     .clk  (wb_clk_i),
     .rst  (wb_rst_i),
     .cs   (cs),
@@ -113,7 +75,7 @@ module zet (
     .ir   (ir),
     .off  (off),
     .imm  (imm),
-    .pc   (addr_fetch),
+    .pc   (pc),
 
     .cx_zero       (cx_zero),
     .bytefetch     (byte_fetch),
@@ -129,22 +91,6 @@ module zet (
   );
 
   zet_exec exec (
-`ifdef DEBUG
-    .x    (x),
-    .y    (y),
-    .aluo (aluo),
-    .ax   (ax),
-    .dx   (dx),
-    .bp   (bp),
-    .si   (si),
-    .es   (es),
-    .c    (c),
-    .addr_c (addr_c),
-    .addr_a (addr_a),
-    .omemalu (d),
-    .addr_d (addr_d),
-    .flags  (flags),
-`endif
     .ir      (ir),
     .off     (off),
     .imm     (imm),
@@ -192,14 +138,9 @@ module zet (
   );
 
   // Assignments
-  assign cpu_adr_o  = fetch_or_exec ? addr_exec : addr_fetch;
+  assign cpu_adr_o  = fetch_or_exec ? addr_exec : pc;
   assign cpu_byte_o = fetch_or_exec ? byte_exec : byte_fetch;
   assign iid_dat_i  = wb_tgc_o ? wb_dat_i : cpu_dat_i;
 
-`ifdef DEBUG
-  assign iralu = ir[28:23];
-  assign cpu_block = wb_block | dbg_block;
-`else
   assign cpu_block = wb_block;
-`endif
 endmodule

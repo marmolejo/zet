@@ -1,0 +1,1377 @@
+== Data transfer instructions ==
+=== mov ===
+Move data.
+* '''Source:''' register (ssss), '''Destination''': register (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ MOVRRB 000__x_01_xx_xx_11__x__x__1__1__x_01__1_001_001__0_01__0__0_dddd_xxxx_xxxx_ssss_xx  // (b) r->r
+ MOVRRW 000__x_01_xx_xx_11__x__x__0__1__x_01__0_001_001__0_01__0__0_dddd_xxxx_xxxx_ssss_xx  // (w) r->r
+* '''Source:''' register (ssss), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ MOVRMB xxx__1_xx_10_01_01__1__1__0__0__0_1x__1_000_111__0_00__1__0_xxxx_ssss_mmmm_mmmm_mm  // (b) st
+ MOVRMW xxx__1_xx_10_01_01__1__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_ssss_mmmm_mmmm_mm  // (w) st
+* '''Source:''' acumulator, '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ MOVAMB xxx__1_xx_00_01_01__1__1__0__0__0_1x__1_000_111__0_00__1__0_xxxx_0000_mmmm_mmmm_mm  // (b) st
+ MOVAMW xxx__1_xx_00_01_01__1__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_0000_mmmm_mmmm_mm  // (w) st
+* '''Source:''' memory (mmm), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ MOVMRB xxx__1_01_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_dddd_xxxx_mmmm_mmmm_mm  // (b) ld
+ MOVMRW xxx__1_01_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_dddd_xxxx_mmmm_mmmm_mm  // (w) ld
+* '''Source:''' memoria (mmm), '''Destination''': acumulator
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ MOVMAB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_0000_xxxx_mmmm_mmmm_mm  // (b) ld
+ MOVMAW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_0000_xxxx_mmmm_mmmm_mm  // (w) ld
+* '''Source:''' immediate (iii), '''Destination''': reg (ddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ MOVIRB 100__x_01_xx_xx_00__x__x__x__1__x_01__1_001_001__0_01__0__0_0ddd_xxxx_xxxx_1100_xx  // (b) i->r
+ MOVIRW 100__x_01_xx_xx_00__x__x__x__1__x_01__0_001_001__0_01__0__0_0ddd_xxxx_xxxx_1100_xx  // (w) i->r
+* '''Source:''' immediate (iii), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ MOVIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_001_001__0_01__0__0_1101_xxxx_xxxx_1100_xx  // (b) i->r
+ MOVIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // (b) st
+ MOVIMW 100__x_00_xx_xx_00__x__x__x__1__x_01__0_001_001__0_01__0__0_1101_xxxx_xxxx_1100_xx  // (w) i->r
+ MOVIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // (w) st
+
+=== push ===
+PUSH word onto stack
+* '''Source''' reg16 (ssss)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ PUSHR  001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_1101_xxxx_xxxx_0100_xx  // sp-2->tmp
+ PUSHR  xxx__0_xx_10_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_ssss_1100_1101_10  // st
+ PUSHR  000__x_00_xx_xx_00__x__x__x__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_1101_xx  // tmp->sp
+* '''Source''' mem16 (mmm):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ PUSHM  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ PUSHM  001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ PUSHM  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0100_10  // st
+* Immediate
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ PUSHI  100__x_00_xx_xx_00__x__x__x__1__x_01__1_001_001__0_01__0__0_1101_xxxx_xxxx_1100_xx  // i->tmp
+ PUSHI  001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ PUSHI  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0100_10  // st(tmp)
+
+=== leave ===
+Leave High-Level Procedure
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LEAVE  000__x_01_xx_xx_11__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0101_xx  // bp->sp
+ LEAVE  xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_0101_xxxx_1100_0100_10  // ld->bp
+ LEAVE  001__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+
+=== enter ===
+Enter High-Level Procedure '''(only supported when level = 0)'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ENTER  001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ ENTER  xxx__0_xx_10_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_0101_1100_1101_10  // st(bp)
+ ENTER  000__x_01_xx_xx_11__x__x__0__1__x_01__0_001_001__0_01__0__0_0101_xxxx_xxxx_0100_xx  // sp->bp
+ ENTER  100__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-i
+
+=== pop ===
+POP word off stack to destination
+* '''Destination''' register (dddd):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ POPR   xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_1100_0100_10  // ld
+ POPR   001__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+ POPR   000__x_01_xx_xx_00__x__x__x__1__x_01__0_001_001__0_01__0__0_dddd_xxxx_xxxx_1101_xx  // tmp->d
+* '''Destination''' mem16 (mmm):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ POPM   xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_1100_0100_10  // ld
+ POPM   xxx__1_xx_00_01_01__1__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ POPM   001__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+
+=== in ===
+INput byte or word by '''I'''mmediate or DX '''R'''egister
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ INIB   100__x_00_xx_xx_xx__x__x__x__1__1_00__1_110_000__0_01__0__0_0000_xxxx_xxxx_xxxx_xx
+ INIW   100__x_00_xx_xx_xx__x__x__x__1__1_00__0_110_000__0_01__0__0_0000_xxxx_xxxx_xxxx_xx
+ INRB   000__x_00_xx_00_xx__x__x__x__1__1_00__1_001_001__0_01__0__0_0000_xxxx_xxxx_0010_xx
+ INRW   000__x_00_xx_00_xx__x__x__x__1__1_00__0_001_001__0_01__0__0_0000_xxxx_xxxx_0010_xx
+
+=== out ===
+OUTput byte or word by '''I'''mmediate or DX '''R'''egister
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ OUTIB  100__x_xx_00_xx_xx__x__x__x__1__1_0x__1_110_000__0_00__1__0_xxxx_0000_xxxx_xxxx_xx
+ OUTIW  100__x_xx_00_xx_xx__x__x__x__1__1_0x__0_110_000__0_00__1__0_xxxx_0000_xxxx_xxxx_xx
+ OUTRB  000__x_xx_00_00_xx__x__1__x__1__1_0x__1_001_001__0_00__1__0_xxxx_0000_xxxx_0010_xx
+ OUTRW  000__x_xx_00_00_xx__x__0__x__1__1_0x__0_001_001__0_00__1__0_xxxx_0000_xxxx_0010_xx
+
+=== lahf ===
+* Load register AH from Flags
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LAHF   000__x_00_xx_xx_xx__x__x__x__1__x_01__1_101_111__0_01__0__0_0100_xxxx_xxxx_xxxx_xx  // f->r
+
+=== sahf ===
+Store AH into flags
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SAHF   xxx__x_xx_xx_xx_00__x__x__1__x__x_01__1_011_111__0_00__0__1_xxxx_xxxx_0100_xxxx_xx  // r->f
+
+=== lds ===
+* Load data Segment register
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LDS    xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld->tmp
+ LDS    xxx__1_00_xx_01_01__1__x__0__0__0_10__0_001_111__0_01__0__0_1011_xxxx_mmmm_mmmm_mm  // ld->ds
+ LDS    000__x_10_xx_xx_00__x__x__x__1__x_01__0_001_001__0_01__0__0_ssss_xxxx_xxxx_1101_xx  // tmp->r
+
+=== lea ===
+* Load Effective address, '''Arguments:''' ssss (reg), (mem)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LEA    xxx__1_10_xx_01_01__x__x__0__0__x_01__0_010_111__0_01__0__0_ssss_xxxx_mmmm_mmmm_xx
+
+=== les ===
+Load Extra Segment register
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LES    xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld->tmp
+ LES    xxx__1_00_xx_01_01__1__x__0__0__0_10__0_001_111__0_01__0__0_1000_xxxx_mmmm_mmmm_mm  // ld->es
+ LES    000__x_10_xx_xx_00__x__x__x__1__x_01__0_001_001__0_01__0__0_ssss_xxxx_xxxx_1101_xx  // tmp->r
+
+=== pushf ===
+PUSH Flags onto stack
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ PUSHF  001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ PUSHF  000__x_00_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // f->r
+ PUSHF  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0100_10  // st
+
+=== popf ===
+POP Flags off stack
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ POPF   xxx__0_00_xx_00_00__0__0__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_1100_0100_10  // ld
+ POPF   xxx__x_xx_xx_xx_00__x__x__0__x__x_01__0_011_111__0_00__0__1_xxxx_xxxx_1101_xxxx_xx  // r->f
+ POPF   001__x_00_xx_xx_00__x__0__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+
+=== xchg ===
+eXCHanGe two operands
+* '''Source:''' register (sss), '''Destination''': register (ddd):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ XCHRRB 000__x_00_xx_xx_10__x__x__1__1__x_01__0_001_001__0_01__0__0_1101_xxxx_xxxx_dddd_xx  // d->tmp
+ XCHRRB 000__x_01_xx_xx_11__x__x__1__1__x_01__1_001_001__0_01__0__0_dddd_xxxx_xxxx_ssss_xx  // r->d
+ XCHRRB 000__x_10_xx_xx_00__x__x__x__1__x_01__1_001_001__0_01__0__0_ssss_xxxx_xxxx_1101_xx  // tmp->r
+ XCHRRW 000__x_00_xx_xx_10__x__x__0__1__x_01__0_001_001__0_01__0__0_1101_xxxx_xxxx_dddd_xx  // d->tmp
+ XCHRRW 000__x_01_xx_xx_11__x__x__0__1__x_01__0_001_001__0_01__0__0_dddd_xxxx_xxxx_ssss_xx  // r->d
+ XCHRRW 000__x_10_xx_xx_00__x__x__x__1__x_01__0_001_001__0_01__0__0_ssss_xxxx_xxxx_1101_xx  // tmp->r
+* '''Source:''' memory (mmmm), '''Destination'''': register (dddd):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ XCHRMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ XCHRMB xxx__1_xx_01_01_01__1__1__0__0__0_1x__1_000_111__0_00__1__0_xxxx_dddd_mmmm_mmmm_mm  // st
+ XCHRMB 000__x_01_xx_xx_00__x__x__x__1__x_01__1_001_001__0_01__0__0_dddd_xxxx_xxxx_1101_xx  // tmp->r
+ XCHRMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ XCHRMW xxx__1_xx_01_01_01__1__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_dddd_mmmm_mmmm_mm  // st
+ XCHRMW 000__x_01_xx_xx_00__x__x__x__1__x_01__0_001_001__0_01__0__0_dddd_xxxx_xxxx_1101_xx  // tmp->r
+
+=== xlat ===
+Translate
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ XLAT   xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_001__0_01__0__0_1101_xxxx_0000_0011_xx  // a+b
+ XLAT   xxx__0_00_xx_00_00__1__x__x__0__0_10__1_000_111__0_01__0__0_0000_xxxx_1100_1101_mm  // ld
+
+== Arithmetic instructions ==
+=== aaa ===
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ AAA    xxx__x_00_xx_xx_00__x__x__0__0__x_01__0_001_010__0_01__0__1_0000_xxxx_xxxx_0000_xx  // aaa(ax)
+
+=== aas ===
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ AAS    xxx__x_00_xx_xx_00__x__x__0__0__x_01__0_010_010__0_01__0__1_0000_xxxx_xxxx_0000_xx  // aas(ax)
+
+=== aam ===
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_00__0__0_0000_xxxx_xxxx_0000_xx  // ax/i
+ AAM    100__x_00_xx_xx_00__x__x__1__1__x_01__0_110_011__0_01__0__1_0000_xxxx_xxxx_0000_xx  // ax/i
+
+=== aad ===
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ AAD    100__x_00_xx_xx_00__x__x__1__1__x_01__1_000_011__0_00__0__0_1101_xxxx_xxxx_0100_xx  // tmp=ah*10
+ AAD    100__x_00_xx_xx_00__x__x__1__1__x_01__1_000_011__0_00__0__0_1101_xxxx_xxxx_0100_xx  // tmp=ah*10
+ AAD    100__x_00_xx_xx_00__x__x__1__1__x_01__1_000_011__0_01__0__0_1101_xxxx_xxxx_0100_xx  // tmp=ah*10
+ AAD    xxx__x_00_xx_00_00__x__x__1__0__x_01__1_001_001__0_01__0__1_0000_xxxx_1101_0000_xx  // al=tmp+al
+ AAD    000__x_00_xx_xx_00__x__x__1__1__x_01__1_xxx_000__0_01__0__0_0100_xxxx_xxxx_xxxx_xx  // ah=0
+
+=== daa ===
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ DAA    xxx__x_00_xx_xx_00__x__x__1__0__x_01__1_101_010__0_01__0__1_0000_xxxx_xxxx_0000_xx  // daa(al)
+=== das ===
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ DAS    xxx__x_00_xx_xx_00__x__x__1__0__x_01__1_110_010__0_01__0__1_0000_xxxx_xxxx_0000_xx  // das(al)
+=== cbw ===
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CBW    xxx__x_00_xx_xx_00__x__x__0__0__x_01__0_000_010__0_01__0__0_0000_xxxx_xxxx_0000_xx  // cbw(ax)
+=== cwd ===
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CWD    xxx__x_00_xx_xx_00__x__x__0__0__x_01__0_100_010__1_01__0__0_0000_xxxx_xxxx_0000_xx  // cwd(ax)
+
+=== inc ===
+Increment
+* Register
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ INCRB  111__x_10_xx_xx_11__x__x__1__1__x_01__1_010_001__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r+1
+ INCRW  111__x_10_xx_xx_11__x__x__0__1__x_01__0_010_001__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r+1
+* Memory
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ INCMB  xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ INCMB  111__x_00_xx_xx_00__x__x__1__1__x_01__1_010_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // 1+tmp->tmp
+ INCMB  xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ INCMW  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ INCMW  111__x_00_xx_xx_00__x__x__0__1__x_01__0_010_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // 1+tmp->tmp
+ INCMW  xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== dec ===
+Decrement
+* Register
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ DECRB  111__x_10_xx_xx_11__x__x__1__1__x_01__1_110_001__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // a-1
+ DECRW  111__x_10_xx_xx_11__x__x__0__1__x_01__0_110_001__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // a-1
+* Memory
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ DECMB  xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ DECMB  111__x_00_xx_xx_00__x__x__1__1__x_01__1_110_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp-1->tmp
+ DECMB  xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ DECMW  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ DECMW  111__x_00_xx_xx_00__x__x__0__1__x_01__0_110_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp-1->tmp
+ DECMW  xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== add ===
+* '''Source:''' register (ssss), '''Destination''': register (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ADDRRB xxx__x_01_xx_10_10__x__x__1__0__x_01__1_001_001__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a+r
+ ADDRRW xxx__x_01_xx_10_10__x__x__0__0__x_01__0_001_001__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a+r
+* '''Source:''' register (ssss), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ADDRMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADDRMB xxx__x_00_xx_10_00__x__x__1__0__x_01__1_001_001__0_01__0__1_1101_xxxx_ssss_1101_xx  // s+tmp
+ ADDRMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ADDRMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADDRMW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_001_001__0_01__0__1_1101_xxxx_ssss_1101_xx  // s+tmp
+ ADDRMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Source:''' memory (mmm), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ADDMRB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADDMRB xxx__x_01_xx_00_10__x__x__1__0__x_01__1_001_001__0_01__0__1_dddd_xxxx_1101_dddd_xx  // d+tmp
+ ADDMRW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADDMRW xxx__x_01_xx_00_10__x__x__0__0__x_01__0_001_001__0_01__0__1_dddd_xxxx_1101_dddd_xx  // d+tmp
+* '''Source:''' immediate (iiii), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ADDIRB 100__x_01_xx_xx_10__x__x__1__1__x_01__1_001_001__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // i+r->r
+ ADDIRW 100__x_01_xx_xx_10__x__x__0__1__x_01__0_001_001__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // i+r->r
+* '''Source:''' immediate (iii), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ADDIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADDIMB 100__x_00_xx_xx_00__x__x__1__1__x_01__1_001_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i+tmp->tmp
+ ADDIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ADDIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADDIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i+tmp->tmp
+ ADDIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== adc ===
+ADd with Carry
+* '''Source:''' register (ssss), '''Destination''': register (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ADCRRB xxx__x_01_xx_10_10__x__x__1__0__x_01__1_000_001__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a+r
+ ADCRRW xxx__x_01_xx_10_10__x__x__0__0__x_01__0_000_001__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a+r
+* '''Source:''' register (ssss), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ADCRMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADCRMB xxx__x_00_xx_10_00__x__x__1__0__x_01__1_000_001__0_01__0__1_1101_xxxx_ssss_1101_xx  // s+tmp
+ ADCRMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ADCRMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADCRMW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_000_001__0_01__0__1_1101_xxxx_ssss_1101_xx  // s+tmp
+ ADCRMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Source:''' memory (mmm), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ADCMRB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADCMRB xxx__x_01_xx_00_10__x__x__1__0__x_01__1_000_001__0_01__0__1_dddd_xxxx_1101_dddd_xx  // d+tmp
+ ADCMRW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADCMRW xxx__x_01_xx_00_10__x__x__0__0__x_01__0_000_001__0_01__0__1_dddd_xxxx_1101_dddd_xx  // d+tmp
+* '''Source:''' immediate (iiii), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ADCIRB 100__x_01_xx_xx_10__x__x__1__1__x_01__1_000_001__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // i+r->r
+ ADCIRW 100__x_01_xx_xx_10__x__x__0__1__x_01__0_000_001__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // i+r->r
+* '''Source:''' immediate (iii), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ADCIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADCIMB 100__x_00_xx_xx_00__x__x__1__1__x_01__1_000_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i+tmp->tmp
+ ADCIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ADCIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ADCIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_000_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i+tmp->tmp
+ ADCIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== sub ===
+SUBstract
+* '''Source:''' register (ssss), '''Destination''': register (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SUBRRB xxx__x_01_xx_10_10__x__x__1__0__x_01__1_101_001__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a-b
+ SUBRRW xxx__x_01_xx_10_10__x__x__0__0__x_01__0_101_001__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a-b
+* '''Source:''' register (ssss), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SUBRMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SUBRMB xxx__x_00_xx_10_00__x__x__1__0__x_01__1_101_001__0_01__0__1_1101_xxxx_ssss_1101_xx  // tmp-b
+ SUBRMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SUBRMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SUBRMW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_101_001__0_01__0__1_1101_xxxx_ssss_1101_xx  // tmp-b
+ SUBRMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Source:''' memory (mmm), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SUBMRB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SUBMRB xxx__x_01_xx_00_10__x__x__1__0__x_01__1_101_001__0_01__0__1_dddd_xxxx_1101_dddd_xx  // a-mem
+ SUBMRW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SUBMRW xxx__x_01_xx_00_10__x__x__0__0__x_01__0_101_001__0_01__0__1_dddd_xxxx_1101_dddd_xx  // a-mem
+* '''Source:''' immediate (iiii), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SUBIRB 100__x_01_xx_xx_10__x__x__1__1__x_01__1_101_001__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // a-i->a
+ SUBIRW 100__x_01_xx_xx_10__x__x__0__1__x_01__0_101_001__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // a-i->a
+* '''Source:''' immediate (iii), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SUBIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SUBIMB 100__x_00_xx_xx_00__x__x__1__1__x_01__1_101_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp-i->tmp
+ SUBIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SUBIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SUBIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp-i->tmp
+ SUBIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== sbb ===
+SuBstract with Borrow
+* '''Source:''' register (ssss), '''Destination''': register (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SBBRRB xxx__x_01_xx_10_10__x__x__1__0__x_01__1_100_001__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a-b
+ SBBRRW xxx__x_01_xx_10_10__x__x__0__0__x_01__0_100_001__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a-b
+* '''Source:''' register (ssss), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SBBRMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SBBRMB xxx__x_00_xx_10_00__x__x__1__0__x_01__1_100_001__0_01__0__1_1101_xxxx_ssss_1101_xx  // tmp-b
+ SBBRMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SBBRMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SBBRMW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_100_001__0_01__0__1_1101_xxxx_ssss_1101_xx  // tmp-b
+ SBBRMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Source:''' memory (mmm), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SBBMRB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SBBMRB xxx__x_01_xx_00_10__x__x__1__0__x_01__1_100_001__0_01__0__1_dddd_xxxx_1101_dddd_xx  // a-mem
+ SBBMRW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SBBMRW xxx__x_01_xx_00_10__x__x__0__0__x_01__0_100_001__0_01__0__1_dddd_xxxx_1101_dddd_xx  // a-mem
+* '''Source:''' immediate (iiii), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SBBIRB 100__x_01_xx_xx_10__x__x__1__1__x_01__1_100_001__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // a-i->a
+ SBBIRW 100__x_01_xx_xx_10__x__x__0__1__x_01__0_100_001__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // a-i->a
+* '''Source:''' immediate (iii), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SBBIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SBBIMB 100__x_00_xx_xx_00__x__x__1__1__x_01__1_100_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp-i->tmp
+ SBBIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SBBIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SBBIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_100_001__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp-i->tmp
+ SBBIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== mul ===
+* Register
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ MULRB  xxx__x_00_xx_00_11__x__x__1__0__x_01__0_000_011__0_00__0__0_0000_xxxx_0000_ssss_xx  // a*r
+ MULRB  xxx__x_00_xx_00_11__x__x__1__0__x_01__0_000_011__0_00__0__0_0000_xxxx_0000_ssss_xx  // a*r
+ MULRB  xxx__x_00_xx_00_11__x__x__1__0__x_01__0_000_011__0_01__0__1_0000_xxxx_0000_ssss_xx  // a*r
+ MULRW  xxx__x_00_xx_00_11__x__x__0__0__x_01__0_000_011__0_00__0__0_0000_xxxx_0000_ssss_xx  // a*r
+ MULRW  xxx__x_00_xx_00_11__x__x__0__0__x_01__0_000_011__0_00__0__0_0000_xxxx_0000_ssss_xx  // a*r
+ MULRW  xxx__x_00_xx_00_11__x__x__0__0__x_01__0_000_011__1_01__0__1_0000_xxxx_0000_ssss_xx  // a*r
+* Memory
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ MULMB  xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // (b) ld
+ MULMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_000_011__0_00__0__0_0000_xxxx_0000_1101_xx  // a*tmp
+ MULMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_000_011__0_00__0__0_0000_xxxx_0000_1101_xx  // a*tmp
+ MULMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_000_011__0_01__0__1_0000_xxxx_0000_1101_xx  // a*tmp
+ MULMW  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // (w) ld
+ MULMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_000_011__0_00__0__0_0000_xxxx_0000_1101_xx  // a*tmp
+ MULMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_000_011__0_00__0__0_0000_xxxx_0000_1101_xx  // a*tmp
+ MULMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_000_011__1_01__0__1_0000_xxxx_0000_1101_xx  // a*tmp
+=== imul ===
+* Register
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ IMULRB xxx__x_00_xx_00_11__x__x__1__0__x_01__0_001_011__0_00__0__0_0000_xxxx_0000_ssss_xx  // a*r
+ IMULRB xxx__x_00_xx_00_11__x__x__1__0__x_01__0_001_011__0_00__0__0_0000_xxxx_0000_ssss_xx  // a*r
+ IMULRB xxx__x_00_xx_00_11__x__x__1__0__x_01__0_001_011__0_01__0__1_0000_xxxx_0000_ssss_xx  // a*r
+ IMULRW xxx__x_00_xx_00_11__x__x__0__0__x_01__0_001_011__0_00__0__0_0000_xxxx_0000_ssss_xx  // a*r
+ IMULRW xxx__x_00_xx_00_11__x__x__0__0__x_01__0_001_011__0_00__0__0_0000_xxxx_0000_ssss_xx  // a*r
+ IMULRW xxx__x_00_xx_00_11__x__x__0__0__x_01__0_001_011__1_01__0__1_0000_xxxx_0000_ssss_xx  // a*r
+* Memory
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ IMULMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // (b) ld
+ IMULMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_001_011__0_00__0__0_0000_xxxx_0000_1101_xx  // a*tmp
+ IMULMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_001_011__0_00__0__0_0000_xxxx_0000_1101_xx  // a*tmp
+ IMULMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_001_011__0_01__0__1_0000_xxxx_0000_1101_xx  // a*tmp
+ IMULMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // (w) ld
+ IMULMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_001_011__0_00__0__0_0000_xxxx_0000_1101_xx  // a*tmp
+ IMULMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_001_011__0_00__0__0_0000_xxxx_0000_1101_xx  // a*tmp
+ IMULMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_001_011__1_01__0__1_0000_xxxx_0000_1101_xx  // a*tmp
+* Immediate and register
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ IMULIR 100__x_01_xx_xx_11__x__x__0__1__x_01__0_001_011__0_00__0__0_dddd_xxxx_xxxx_ssss_xx  // s*i->d
+ IMULIR 100__x_01_xx_xx_11__x__x__0__1__x_01__0_001_011__0_00__0__0_dddd_xxxx_xxxx_ssss_xx  // s*i->d
+ IMULIR 100__x_01_xx_xx_11__x__x__0__1__x_01__0_001_011__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // s*i->d
+* Immediate and memory
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ IMULIM xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // (w) ld
+ IMULIM 100__x_01_xx_xx_11__x__x__0__1__x_01__0_001_011__0_00__0__0_dddd_xxxx_xxxx_1101_xx  // tmp*i->d
+ IMULIM 100__x_01_xx_xx_11__x__x__0__1__x_01__0_001_011__0_00__0__0_dddd_xxxx_xxxx_1101_xx  // tmp*i->d
+ IMULIM 100__x_01_xx_xx_11__x__x__0__1__x_01__0_001_011__0_01__0__1_dddd_xxxx_xxxx_1101_xx  // tmp*i->d
+
+=== div ===
+* Register
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRB  xxx__x_00_xx_10_00__x__x__1__0__x_01__0_010_011__0_01__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ DIVRW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_010_011__1_01__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+* Memory
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ DIVMB  xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld->tmp
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__0_010_011__0_01__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ DIVMW  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld->tmp
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ DIVMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_011__1_01__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+
+=== idiv ===
+* Register
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRB xxx__x_00_xx_10_00__x__x__1__0__x_01__0_011_011__0_01__0__0_0000_xxxx_ssss_0000_xx  // ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+ IDIVRW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_011__1_01__0__0_0000_0010_ssss_0000_xx  // dx,ax/r
+* Memory
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ IDIVMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld->tmp
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_00__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMB xxx__x_00_xx_00_00__x__x__1__0__x_01__0_011_011__0_01__0__0_0000_xxxx_1101_0000_xx  // t1/t2
+ IDIVMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld->tmp
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__0_00__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+ IDIVMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_011__1_01__0__0_0000_0010_1101_0000_xx  // dx,ax/t1
+
+=== neg ===
+Negate
+* Register
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ NEGRB  xxx__x_01_xx_10_00__x__x__1__0__x_01__1_101_001__0_01__0__1_dddd_xxxx_ssss_1100_xx  // -r->r
+ NEGRW  xxx__x_01_xx_10_00__x__x__0__0__x_01__0_101_001__0_01__0__1_dddd_xxxx_ssss_1100_xx  // -r->r
+* '''Source:''' immediate (iii), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ NEGMB  xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ NEGMB  xxx__x_00_xx_00_00__x__x__1__0__x_01__1_101_001__0_01__0__1_1101_xxxx_1101_1100_xx  // -r->r
+ NEGMB  xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ NEGMW  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ NEGMW  xxx__x_00_xx_00_00__x__x__0__0__x_01__0_101_001__0_01__0__1_1101_xxxx_1101_1100_xx  // -r->r
+ NEGMW  xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== cmp ===
+Compare
+* '''Source:''' register (ssss), '''Destination''': register (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CMPRRB xxx__x_01_xx_10_10__x__x__1__0__x_01__1_101_001__0_00__0__1_dddd_xxxx_ssss_dddd_xx  // a-b
+ CMPRRW xxx__x_01_xx_10_10__x__x__0__0__x_01__0_101_001__0_00__0__1_dddd_xxxx_ssss_dddd_xx  // a-b
+* '''Source:''' register (ssss), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CMPRMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ CMPRMB xxx__x_00_xx_10_00__x__x__1__0__x_01__1_101_001__0_00__0__1_1101_xxxx_ssss_1101_xx  // tmp-b
+ CMPRMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ CMPRMW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_101_001__0_00__0__1_1101_xxxx_ssss_1101_xx  // tmp-b
+* '''Source:''' memory (mmm), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CMPMRB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ CMPMRB xxx__x_01_xx_00_10__x__x__1__0__x_01__1_101_001__0_00__0__1_dddd_xxxx_1101_dddd_xx  // a-mem
+ CMPMRW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ CMPMRW xxx__x_01_xx_00_10__x__x__0__0__x_01__0_101_001__0_00__0__1_dddd_xxxx_1101_dddd_xx  // a-mem
+* '''Source:''' immediate (iiii), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CMPIRB 100__x_01_xx_xx_10__x__x__1__1__x_01__1_101_001__0_00__0__1_dddd_xxxx_xxxx_dddd_xx  // a-i->a
+ CMPIRW 100__x_01_xx_xx_10__x__x__0__1__x_01__0_101_001__0_00__0__1_dddd_xxxx_xxxx_dddd_xx  // a-i->a
+* '''Source:''' immediate (iii), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CMPIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ CMPIMB 100__x_00_xx_xx_00__x__x__1__1__x_01__1_101_001__0_00__0__1_1101_xxxx_xxxx_1101_xx  // tmp-i->tmp
+ CMPIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ CMPIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_00__0__1_1101_xxxx_xxxx_1101_xx  // tmp-i->tmp
+
+== Bitwise handling instructions ==
+=== and ===
+logical AND
+* '''Source:''' register (ssss), '''Destination''': register (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ANDRRB xxx__x_01_xx_10_10__x__x__1__0__x_01__1_000_100__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a&r
+ ANDRRW xxx__x_01_xx_10_10__x__x__0__0__x_01__0_000_100__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a&r
+* '''Source:''' register (ssss), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ANDRMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ANDRMB xxx__x_00_xx_10_00__x__x__1__0__x_01__1_000_100__0_01__0__1_1101_xxxx_ssss_1101_xx  // tmp&s->tmp
+ ANDRMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ANDRMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ANDRMW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_000_100__0_01__0__1_1101_xxxx_ssss_1101_xx  // tmp&s->tmp
+ ANDRMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Source:''' memory (mmm), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ANDMRB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ANDMRB xxx__x_01_xx_00_10__x__x__1__0__x_01__1_000_100__0_01__0__1_dddd_xxxx_1101_dddd_xx  // tmp&d->d
+ ANDMRW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ANDMRW xxx__x_01_xx_00_10__x__x__0__0__x_01__0_000_100__0_01__0__1_dddd_xxxx_1101_dddd_xx  // tmp&d->d
+* '''Source:''' immediate (iiii), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ANDIRB 100__x_01_xx_xx_10__x__x__1__1__x_01__1_000_100__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // i&r->r
+ ANDIRW 100__x_01_xx_xx_10__x__x__0__1__x_01__0_000_100__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // i&r->r
+* '''Source:''' immediate (iii), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ANDIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ANDIMB 100__x_00_xx_xx_00__x__x__1__1__x_01__1_000_100__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i&tmp->tmp
+ ANDIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ANDIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ANDIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_000_100__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i&tmp->tmp
+ ANDIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== or ===
+logical OR
+* '''Source:''' register (ssss), '''Destination''': register (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ORRRB  xxx__x_01_xx_10_10__x__x__1__0__x_01__1_001_100__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a|r
+ ORRRW  xxx__x_01_xx_10_10__x__x__0__0__x_01__0_001_100__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a|r
+* '''Source:''' register (ssss), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ORRMB  xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ORRMB  xxx__x_00_xx_10_00__x__x__1__0__x_01__1_001_100__0_01__0__1_1101_xxxx_ssss_1101_xx  // tmp|s->tmp
+ ORRMB  xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ORRMW  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ORRMW  xxx__x_00_xx_10_00__x__x__0__0__x_01__0_001_100__0_01__0__1_1101_xxxx_ssss_1101_xx  // tmp|s->tmp
+ ORRMW  xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Source:''' memory (mmm), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ORMRB  xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ORMRB  xxx__x_01_xx_00_10__x__x__1__0__x_01__1_001_100__0_01__0__1_dddd_xxxx_1101_dddd_xx  // tmp|d->d
+ ORMRW  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ORMRW  xxx__x_01_xx_00_10__x__x__0__0__x_01__0_001_100__0_01__0__1_dddd_xxxx_1101_dddd_xx  // tmp|d->d
+* '''Source:''' immediate (iiii), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ORIRB  100__x_01_xx_xx_10__x__x__1__1__x_01__1_001_100__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // i|r->r
+ ORIRW  100__x_01_xx_xx_10__x__x__0__1__x_01__0_001_100__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // i|r->r
+* '''Source:''' immediate (iii), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ORIMB  xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ORIMB  100__x_00_xx_xx_00__x__x__1__1__x_01__1_001_100__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i|tmp->tmp
+ ORIMB  xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ORIMW  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ORIMW  100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_100__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i|tmp->tmp
+ ORIMW  xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== not ===
+logical NOT
+* '''Register'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ NOTRB  xxx__x_01_xx_xx_10__x__x__1__0__x_01__1_010_100__0_01__0__0_dddd_xxxx_xxxx_dddd_xx  // ~r
+ NOTRW  xxx__x_01_xx_xx_10__x__x__0__0__x_01__0_010_100__0_01__0__0_dddd_xxxx_xxxx_dddd_xx  // ~r
+* '''Memory'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ NOTMB  xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ NOTMB  xxx__x_00_xx_xx_00__x__x__1__0__x_01__1_010_100__0_01__0__0_1101_xxxx_xxxx_1101_xx  // ~r
+ NOTMB  xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ NOTMW  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ NOTMW  xxx__x_00_xx_xx_00__x__x__0__0__x_01__0_010_100__0_01__0__0_1101_xxxx_xxxx_1101_xx  // ~r
+ NOTMW  xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== rcl ===
+* '''Register'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ RCL1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ RCL1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ RCLCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_011_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+ RCLCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_011_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+* '''Memory'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ RCL1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCL1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ RCL1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ RCL1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCL1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ RCL1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ RCLCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCLCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_011_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ RCLCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ RCLCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCLCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ RCLCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Immediate'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ RCLIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ RCLIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ RCLIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCLIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ RCLIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ RCLIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCLIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ RCLIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== rcr ===
+* '''Register'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ RCR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ RCR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ RCRCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_010_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+ RCRCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_010_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+* '''Memory'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ RCR1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ RCR1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ RCR1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ RCR1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ RCRCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCRCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_010_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ RCRCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ RCRCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCRCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ RCRCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Immediate'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ RCRIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ RCRIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ RCRIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCRIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ RCRIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ RCRIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RCRIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ RCRIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== rol ===
+* '''Register'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ROL1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ ROL1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ ROLCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_001_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+ ROLCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_001_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+* '''Memory'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ROL1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ROL1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ ROL1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ROL1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ROL1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ ROL1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ROLCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ROLCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_001_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ ROLCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ROLCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ROLCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_001_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ ROLCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Immediate'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ROLIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ ROLIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ ROLIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ROLIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ ROLIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ROLIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ROLIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ ROLIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== ror ===
+* '''Register'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ROR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ ROR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ RORCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_000_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+ RORCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_000_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+* '''Memory'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ROR1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ROR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ ROR1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ ROR1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ROR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ ROR1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ RORCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RORCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_000_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ RORCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ RORCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RORCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_000_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ RORCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Immediate'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ RORIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ RORIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ RORIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RORIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ RORIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ RORIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ RORIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ RORIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== sal/shl ===
+* '''Register'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SAL1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_000_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ SAL1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_000_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ SALCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_000_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+ SALCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_000_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+* '''Memory'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SAL1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SAL1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_000_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ SAL1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SAL1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SAL1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ SAL1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SALCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SALCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_000_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ SALCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SALCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SALCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_000_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ SALCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Immediate'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SALIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_000_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ SALIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_000_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ SALIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SALIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_000_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ SALIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SALIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SALIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ SALIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== sar ===
+* '''Register'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SAR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_001_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ SAR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_001_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ SARCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_001_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+ SARCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_001_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+* '''Memory'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SAR1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SAR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_001_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ SAR1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SAR1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SAR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_001_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ SAR1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SARCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SARCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_001_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ SARCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SARCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SARCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_001_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ SARCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Immediate'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SARIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_001_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ SARIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_001_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ SARIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SARIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_001_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ SARIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SARIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SARIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ SARIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== shr ===
+* '''Register'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SHR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_010_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>1
+ SHR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_010_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>1
+ SHRCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_010_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>>cl
+ SHRCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_010_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>>cl
+* '''Memory'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SHR1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SHR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_010_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>1
+ SHR1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SHR1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SHR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_010_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>1
+ SHR1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SHRCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SHRCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_010_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>>cl
+ SHRCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SHRCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SHRCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>>cl
+ SHRCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Immediate'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SHRIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_010_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>imm
+ SHRIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_010_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>imm
+ SHRIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SHRIMB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_010_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>imm
+ SHRIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ SHRIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ SHRIMW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_010_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>imm
+ SHRIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+=== test ===
+logical TEST/compare
+* '''Source:''' register (ssss), '''Destination''': register (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ TSTRRB xxx__x_01_xx_10_10__x__x__1__0__x_01__1_000_100__0_00__0__1_dddd_xxxx_ssss_dddd_xx  // a&r
+ TSTRRW xxx__x_01_xx_10_10__x__x__0__0__x_01__0_000_100__0_00__0__1_dddd_xxxx_ssss_dddd_xx  // a&r
+* '''Source:''' memory (mmm), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ TSTMRB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ TSTMRB xxx__x_01_xx_00_10__x__x__1__0__x_01__1_000_100__0_00__0__1_dddd_xxxx_1101_dddd_xx  // tmp&d->d
+ TSTMRW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ TSTMRW xxx__x_01_xx_00_10__x__x__0__0__x_01__0_000_100__0_00__0__1_dddd_xxxx_1101_dddd_xx  // tmp&d->d
+* '''Source:''' immediate (iiii), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ TSTIRB 100__x_01_xx_xx_10__x__x__1__1__x_01__1_000_100__0_00__0__1_dddd_xxxx_xxxx_dddd_xx  // i&r->r
+ TSTIRW 100__x_01_xx_xx_10__x__x__0__1__x_01__0_000_100__0_00__0__1_dddd_xxxx_xxxx_dddd_xx  // i&r->r
+* '''Source:''' immediate (iii), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ TSTIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ TSTIMB 100__x_00_xx_xx_00__x__x__1__1__x_01__1_000_100__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i&tmp->tmp
+ TSTIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ TSTIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_000_100__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i&tmp->tmp
+
+=== xor ===
+logical XOR
+* '''Source:''' register (ssss), '''Destination''': register (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ XORRRB xxx__x_01_xx_10_10__x__x__1__0__x_01__1_011_100__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a^r
+ XORRRW xxx__x_01_xx_10_10__x__x__0__0__x_01__0_011_100__0_01__0__1_dddd_xxxx_ssss_dddd_xx  // a^r
+* '''Source:''' register (ssss), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ XORRMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ XORRMB xxx__x_00_xx_10_00__x__x__1__0__x_01__1_011_100__0_01__0__1_1101_xxxx_ssss_1101_xx  // tmp^s->tmp
+ XORRMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ XORRMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ XORRMW xxx__x_00_xx_10_00__x__x__0__0__x_01__0_011_100__0_01__0__1_1101_xxxx_ssss_1101_xx  // tmp^s->tmp
+ XORRMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+* '''Source:''' memory (mmm), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ XORMRB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ XORMRB xxx__x_01_xx_00_10__x__x__1__0__x_01__1_011_100__0_01__0__1_dddd_xxxx_1101_dddd_xx  // tmp^d->d
+ XORMRW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ XORMRW xxx__x_01_xx_00_10__x__x__0__0__x_01__0_011_100__0_01__0__1_dddd_xxxx_1101_dddd_xx  // tmp^d->d
+* '''Source:''' immediate (iiii), '''Destination''': reg (dddd)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ XORIRB 100__x_01_xx_xx_10__x__x__1__1__x_01__1_011_100__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // i^r->r
+ XORIRW 100__x_01_xx_xx_10__x__x__0__1__x_01__0_011_100__0_01__0__1_dddd_xxxx_xxxx_dddd_xx  // i^r->r
+* '''Source:''' immediate (iii), '''Destination''': mem (mmm)
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ XORIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ XORIMB 100__x_00_xx_xx_00__x__x__1__1__x_01__1_011_100__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i^tmp->tmp
+ XORIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+ XORIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ XORIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_011_100__0_01__0__1_1101_xxxx_xxxx_1101_xx  // i^tmp->tmp
+ XORIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
+
+== Control transfer instructions ==
+=== call ===
+* Same segment, 16 bit offset:
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CALLN  001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ CALLN  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_0100_10  // st
+ CALLN  100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_1111_xxxx_xxxx_1111_xx  // r->r+i
+* Same segment, indirect jump through a register (sss):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CALLNR 001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_1101_xxxx_xxxx_0100_xx  // sp-2->tmp
+ CALLNR xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_1101_10  // st
+ CALLNR 000__x_00_xx_xx_11__x__x__0__1__x_01__0_001_001__0_01__0__0_1111_xxxx_xxxx_ssss_xx  // r->r
+ CALLNR 000__x_00_xx_xx_00__x__x__x__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_1101_xx  // tmp->sp
+* Same segment, indirect jump through memory:
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CALLNM 001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_1101_xxxx_xxxx_0100_xx  // sp-2->tmp
+ CALLNM xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_1101_10  // st
+ CALLNM xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1111_xxxx_mmmm_mmmm_mm  // ld
+ CALLNM 000__x_00_xx_xx_00__x__x__x__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_1101_xx  // tmp->sp
+* Different segment, indirect jump (it must be specified the segment ''ssss'' and offset ''dddd'' in the instruction):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CALLF  010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ CALLF  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_0100_10  // st
+ CALLF  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(2)
+ CALLF  100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_1001_xxxx_xxxx_1100_xx  // i->cs
+ CALLF  011__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_1111_xxxx_xxxx_1100_xx  // i->ip
+* Different segment, indirect jump through memory:
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CALLFM 010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_1101_xxxx_xxxx_0100_xx  // sp-4->tmp
+ CALLFM xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_1101_10  // st
+ CALLFM xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_1101_10  // st(2)
+ CALLFM xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1111_xxxx_mmmm_mmmm_mm  // ld
+ CALLFM xxx__1_00_xx_01_01__1__x__0__0__0_10__0_001_111__0_01__0__0_1001_xxxx_mmmm_mmmm_mm  // ld
+ CALLFM 000__x_00_xx_xx_00__x__x__x__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_1101_xx  // tmp->sp
+
+=== jcc ===
+Jump if condition
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ JCC    100__x_00_00_10_00__x__x__0__1__x_01__0_001_001__0_10__0__0_1111_0000_xxxx_1111_xx  // r->r+i
+
+=== jcxz ===
+Jump if CX is Zero
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ JCXZ   100__x_00_00_00_00__x__x__0__1__x_01__0_001_001__0_10__0__0_1111_0001_0000_1111_xx  // r->r+i
+
+=== jmp ===
+* Same segment, 8 bit (opcode '''EB''') or 16 bit (opcode '''E9''') offset
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ JMPI   100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_1111_xxxx_xxxx_1111_xx  // r->r+i
+* Same segment, indirect jump through a register (sss) (opcode '''FF'''):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ JMPR   000__x_00_xx_xx_11__x__x__0__1__x_01__0_001_001__0_01__0__0_1111_xxxx_xxxx_0sss_xx  // r->r
+* Same segment, indirect jump through memory (opcode '''FF'''):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ JMPM   xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1111_xxxx_mmmm_mmmm_mm  // ld
+* Diferent segment, direct jump (segment is specified ''ssss'' and offset ''dddd'' in the instruction) (opcode '''EA'''):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LJMPI  100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_1001_xxxx_xxxx_1100_xx  // i->cs
+ LJMPI  011__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_1111_xxxx_xxxx_1100_xx  // i->ip
+* Diferent segment, indirect jump through memory (opcode '''FF'''):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LJMPM  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1111_xxxx_mmmm_mmmm_mm  // ld
+ LJMPM  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_001_111__0_01__0__0_1001_xxxx_mmmm_mmmm_mm  // ld
+
+=== loop ===
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LOOP   101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // r->r-1
+ LOOP   100__x_00_00_00_00__x__x__0__1__x_01__0_001_001__0_10__0__0_1111_0001_0001_1111_xx  // r->r+i
+
+=== loope ===
+LOOP if Equal
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LOOPE  101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // r->r-1
+ LOOPE  100__x_00_00_00_00__x__x__0__1__x_01__0_001_001__0_10__0__0_1111_0001_0010_1111_xx  // r->r+i
+
+=== loopne ===
+LOOP if Not Equal
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LOOPNE 101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // r->r-1
+ LOOPNE 100__x_00_00_00_00__x__x__0__1__x_01__0_001_001__0_10__0__0_1111_0001_0011_1111_xx  // r->r+i
+
+=== ret ===
+RETurn from a procedure:
+* Same segment:
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ RETN0  xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1111_xxxx_1100_0100_10  // ld
+ RETN0  001__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+* Same segment with a value:
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ RETNV  xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1111_xxxx_1100_0100_10  // ld
+ RETNV  001__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+ RETNV  100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+i
+* Different segment:
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ RETF0  xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1111_xxxx_1100_0100_10  // ld(ip)
+ RETF0  001__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+ RETF0  xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1001_xxxx_1100_0100_10  // ld(cs)
+ RETF0  001__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+* Different segment with a value:
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ RETFV  xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1111_xxxx_1100_0100_10  // ld(ip)
+ RETFV  001__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+ RETFV  xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1001_xxxx_1100_0100_10  // ld(cs)
+ RETFV  001__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+ RETFV  100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+i
+
+== String handling instructions ==
+=== cmps ===
+CoMPare Strings
+* Without repetition
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CMPSB  000__0_00_xx_00_00__1__x__0__1__0_10__1_000_111__0_01__0__0_1100_xxxx_xxxx_0110_mm  // ld(si)
+ CMPSB  000__0_00_xx_00_00__0__x__0__1__0_10__1_000_111__0_01__0__0_1101_xxxx_xxxx_0111_00  // ld(di)
+ CMPSB  xxx__x_xx_xx_00_00__x__x__0__0__x_01__1_101_001__0_00__0__1_xxxx_xxxx_1101_1100_xx  // tmp1-tmp2
+ CMPSB  000__x_xx_xx_00_00__x__x__0__1__x_01__0_xxx_000__0_01__0__0_1100_xxxx_xxxx_xxxx_xx  // tmp1=0
+ CMPSB  111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-1
+ CMPSB  111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-1
+ CMPSW  000__0_00_xx_00_00__1__x__0__1__0_10__0_000_111__0_01__0__0_1100_xxxx_xxxx_0110_mm  // ld(si)
+ CMPSW  000__0_00_xx_00_00__0__x__0__1__0_10__0_000_111__0_01__0__0_1101_xxxx_xxxx_0111_00  // ld(di)
+ CMPSW  xxx__x_xx_xx_00_00__x__x__0__0__x_01__0_101_001__0_00__0__1_xxxx_xxxx_1101_1100_xx  // tmp1-tmp2
+ CMPSW  000__x_xx_xx_00_00__x__x__0__1__x_01__0_xxx_000__0_01__0__0_1100_xxxx_xxxx_xxxx_xx  // tmp1=0
+ CMPSW  001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-2
+ CMPSW  001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-2
+* With repetition
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CMPSBR 000__0_00_xx_00_00__1__x__0__1__0_10__1_000_111__0_01__0__0_1100_xxxx_xxxx_0110_mm  // ld(si)
+ CMPSBR 000__0_00_xx_00_00__0__x__0__1__0_10__1_000_111__0_01__0__0_1101_xxxx_xxxx_0111_00  // ld(di)
+ CMPSBR xxx__x_xx_xx_00_00__x__x__0__0__x_01__1_101_001__0_00__0__1_xxxx_xxxx_1101_1100_xx  // tmp1-tmp2
+ CMPSBR 000__x_xx_xx_00_00__x__x__0__1__x_01__0_xxx_000__0_01__0__0_1100_xxxx_xxxx_xxxx_xx  // tmp1=0
+ CMPSBR 111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-1
+ CMPSBR 111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-1
+ CMPSBR 101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // cx-1
+ CMPSWR 000__0_00_xx_00_00__1__x__0__1__0_10__0_000_111__0_01__0__0_1100_xxxx_xxxx_0110_mm  // ld(si)
+ CMPSWR 000__0_00_xx_00_00__0__x__0__1__0_10__0_000_111__0_01__0__0_1101_xxxx_xxxx_0111_00  // ld(di)
+ CMPSWR xxx__x_xx_xx_00_00__x__x__0__0__x_01__0_101_001__0_00__0__1_xxxx_xxxx_1101_1100_xx  // tmp1-tmp2
+ CMPSWR 000__x_xx_xx_00_00__x__x__0__1__x_01__0_xxx_000__0_01__0__0_1100_xxxx_xxxx_xxxx_xx  // tmp1=0
+ CMPSWR 001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-2
+ CMPSWR 001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-2
+ CMPSWR 101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // cx-1
+
+=== lods ===
+LOaD String
+* Without repetition
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LODSB  xxx__0_00_xx_00_00__1__x__0__0__0_10__1_000_111__0_01__0__0_0000_xxxx_1100_0110_mm  // al=ld(si)
+ LODSB  111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-1
+ LODSW  xxx__0_00_xx_00_00__1__x__0__0__0_10__0_000_111__0_01__0__0_0000_xxxx_1100_0110_mm  // ax=ld(si)
+ LODSW  001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-2
+* With repetition
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ LODSBR xxx__0_00_xx_00_00__1__x__0__0__0_10__1_000_111__0_01__0__0_0000_xxxx_1100_0110_mm  // al=ld(si)
+ LODSBR 111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-1
+ LODSBR 101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // cx-1
+ LODSWR xxx__0_00_xx_00_00__1__x__0__0__0_10__0_000_111__0_01__0__0_0000_xxxx_1100_0110_mm  // ax=ld(si)
+ LODSWR 001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-2
+ LODSWR 101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // cx-1
+=== movs ===
+MOVe String
+* Without repetition
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ MOVSB  xxx__0_00_xx_00_00__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_1100_0110_mm  // tmp=ld(si)
+ MOVSB  xxx__0_xx_00_00_00__0__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_1100_0111_00  // st(di)=tmp
+ MOVSB  111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-1
+ MOVSB  111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-1
+ MOVSW  xxx__0_00_xx_00_00__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_1100_0110_mm  // tmp=ld(si)
+ MOVSW  xxx__0_xx_00_00_00__0__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0111_00  // st(di)=tmp
+ MOVSW  001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-2
+ MOVSW  001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-2
+* With repetition
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ MOVSBR xxx__0_00_xx_00_00__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_1100_0110_mm  // tmp=ld(si)
+ MOVSBR xxx__0_xx_00_00_00__0__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_1100_0111_00  // st(di)=tmp
+ MOVSBR 111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-1
+ MOVSBR 111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-1
+ MOVSBR 101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // cx-1
+ MOVSWR xxx__0_00_xx_00_00__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_1100_0110_mm  // tmp=ld(si)
+ MOVSWR xxx__0_xx_00_00_00__0__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0111_00  // st(di)=tmp
+ MOVSWR 001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0110_xxxx_xxxx_0110_xx  // si+-2
+ MOVSWR 001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-2
+ MOVSWR 101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // cx-1
+
+=== scas ===
+Explore string
+* Without repetition
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SCASB  xxx__0_00_xx_00_00__0__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_1100_0111_00  // tmp=ld(di)
+ SCASB  xxx__x_xx_xx_00_00__x__x__1__0__x_01__1_101_001__0_00__0__1_xxxx_xxxx_1101_0000_xx  // fl=al-tmp
+ SCASB  111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-1
+ SCASW  xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_1100_0111_00  // tmp=ld(di)
+ SCASW  xxx__x_xx_xx_00_00__x__x__0__0__x_01__0_101_001__0_00__0__1_xxxx_xxxx_1101_0000_xx  // fl=ax-tmp
+ SCASW  001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-2
+* With repetition
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ SCASBR xxx__0_00_xx_00_00__0__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_1100_0111_00  // tmp=ld(di)
+ SCASBR xxx__x_xx_xx_00_00__x__x__1__0__x_01__1_101_001__0_00__0__1_xxxx_xxxx_1101_0000_xx  // fl=al-tmp
+ SCASBR 111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-1
+ SCASBR 101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // cx-1
+ SCASWR xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_1100_0111_00  // tmp=ld(di)
+ SCASWR xxx__x_xx_xx_00_00__x__x__0__0__x_01__0_101_001__0_00__0__1_xxxx_xxxx_1101_0000_xx  // fl=ax-tmp
+ SCASWR 001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-2
+ SCASWR 101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // cx-1
+
+=== stos ===
+STOre String
+* Without repetition
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ STOSB  xxx__0_xx_00_00_00__0__1__0__0__0_1x__1_000_111__0_00__1__0_xxxx_0000_1100_0111_00  // st(di)=al
+ STOSB  111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-1
+ STOSW  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_0000_1100_0111_00  // st(di)=ax
+ STOSW  001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-2
+* With repetition
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ STOSBR xxx__0_xx_00_00_00__0__1__0__0__0_1x__1_000_111__0_00__1__0_xxxx_0000_1100_0111_00  // st(di)=al
+ STOSBR 111__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-1
+ STOSBR 101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // cx-1
+ STOSWR xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_0000_1100_0111_00  // st(di)=ax
+ STOSWR 001__x_00_xx_xx_00__x__x__0__1__x_01__0_111_111__0_01__0__0_0111_xxxx_xxxx_0111_xx  // di+-2
+ STOSWR 101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0001_xxxx_xxxx_0001_xx  // cx-1
+
+== Interrupt instructions ==
+=== int ===
+INTerrupt
+* int 3:
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ INT3   001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ INT3   000__x_00_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // f->r
+ INT3   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0100_10  // st(fl)
+ INT3   xxx__x_xx_xx_xx_xx__x__x__x__1__x_01__0_110_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx  // i=0 t=0
+ INT3   010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ INT3   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_0100_10  // st(ip)
+ INT3   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
+ INT3   110__x_00_xx_xx_xx__x__x__0__1__x_01__0_000_000__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // 3->tmp
+ INT3   001__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__0_1101_xxxx_xxxx_1101_xx  // tmp*4
+ INT3   001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1101_xx  // ld(cs)
+ INT3   000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1101_xx  // ld(ip)
+* Other interrupt:
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ INT    001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ INT    000__x_00_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // f->r
+ INT    xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0100_10  // st(fl)
+ INT    xxx__x_xx_xx_xx_xx__x__x__x__1__x_01__0_110_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx  // i=0 t=0
+ INT    010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ INT    xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_0100_10  // st(ip)
+ INT    xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
+ INT    100__x_00_xx_xx_xx__x__x__0__1__x_01__0_000_000__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // i->tmp
+ INT    001__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__0_1101_xxxx_xxxx_1101_xx  // tmp*4
+ INT    001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1101_xx  // ld(cs)
+ INT    000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1101_xx  // ld(ip)
+* divide interrupt (not available to programs):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ INTD   001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ INTD   000__x_00_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // f->r
+ INTD   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0100_10  // st(fl)
+ INTD   xxx__x_xx_xx_xx_xx__x__x__x__1__x_01__0_110_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx  // i=0 t=0
+ INTD   010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ INTD   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1110_1100_0100_10  // st(ip0)
+ INTD   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
+ INTD   001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1100_xx  // ld(cs)
+ INTD   000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1100_xx  // ld(ip)
+==== External interrupt ====
+* External interrupt (new IP):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ EINT   001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ EINT   xxx__x_00_xx_xx_xx__x__x__0__x__0_00__0_xxx_xxx__0_01__0__0_1110_xxxx_xxxx_xxxx_xx  // iid->tmp
+ EINT   000__x_00_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // f->r
+ EINT   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0100_10  // st(fl)
+ EINT   xxx__x_xx_xx_xx_xx__x__x__x__1__x_01__0_110_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx  // i=0 t=0
+ EINT   010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ EINT   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_0100_10  // st(ip)
+ EINT   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
+ EINT   001__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__0_1101_xxxx_xxxx_1110_xx  // tmp*4
+ EINT   001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1101_xx  // ld(cs)
+ EINT   000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1101_xx  // ld(ip)
+* External interrupt (original IP):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ EINTP  001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ EINTP  xxx__x_00_xx_xx_xx__x__x__0__x__0_00__0_xxx_xxx__0_01__0__0_1111_xxxx_xxxx_xxxx_xx  // iid->tmp
+ EINTP  000__x_00_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // f->r
+ EINTP  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0100_10  // st(fl)
+ EINTP  xxx__x_xx_xx_xx_xx__x__x__x__1__x_01__0_110_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx  // i=0 t=0
+ EINTP  010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ EINTP  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1110_1100_0100_10  // st(ip)
+ EINTP  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
+ EINTP  001__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__0_1101_xxxx_xxxx_1111_xx  // tmp*4
+ EINTP  001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1101_xx  // ld(cs)
+ EINTP  000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1101_xx  // ld(ip)
+
+=== into ===
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ INTO   xxx__x_xx_xx_xx_xx__x__x__x__x__x_0x__x_111_010__0_00__0__0_xxxx_xxxx_xxxx_xxxx_xx  // o?
+ INTO   001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ INTO   000__x_00_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // f->r
+ INTO   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0100_10  // st(fl)
+ INTO   xxx__x_xx_xx_xx_xx__x__x__x__1__x_01__0_110_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx  // i=0 t=0
+ INTO   010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ INTO   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_0100_10  // st(ip)
+ INTO   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
+ INTO   010__x_00_xx_xx_xx__x__x__0__1__x_01__0_000_000__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // 4->tmp
+ INTO   001__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__0_1101_xxxx_xxxx_1101_xx  // tmp*4
+ INTO   001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1101_xx  // ld(cs)
+ INTO   000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1101_xx  // ld(ip)
+
+=== iret ===
+Interrupt RETurn
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ IRET   xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1111_xxxx_1100_0100_10  // ld(ip)
+ IRET   001__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+ IRET   xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_1001_xxxx_1100_0100_10  // ld(cs)
+ IRET   001__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+ IRET   xxx__0_00_xx_00_00__0__0__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_1100_0100_10  // ld(fl)
+ IRET   xxx__x_xx_xx_xx_00__x__x__0__x__x_01__0_011_111__0_00__0__1_xxxx_xxxx_1101_xxxx_xx  // r->f
+ IRET   001__x_00_xx_xx_00__x__0__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+2
+
+== Microprocessor control instrucions ==
+=== nop ===
+* NO operation
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ NOP    000__0_00_00_00_00__0__0__0__0__0_00__0_000_000__0_00__0__0_0000_0000_0000_0000_00  // (b) r->r
+
+=== clc ===
+CLear Carry flag
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CLC    101__x_xx_xx_xx_xx__x__x__x__1__x_01__0_100_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx
+
+=== cld ===
+CLear Direction flag
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CLD    010__x_xx_xx_xx_xx__x__x__x__1__x_01__0_100_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx
+
+=== cli ===
+CLear Interrupt flag, disable
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CLI    001__x_xx_xx_xx_xx__x__x__x__1__x_01__0_100_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx
+
+=== cmc ===
+CoMplement Carry flag
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ CMC    000__x_xx_xx_xx_xx__x__x__x__1__x_01__0_100_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx
+
+=== hlt ===
+HaLT
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ HLT    101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_1111_xxxx_xxxx_1111_xx
+
+=== stc ===
+SeT Carry flag
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ STC    101__x_xx_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx
+
+=== std ===
+SeT Direction flag
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ STD    010__x_xx_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx
+
+=== sti ===
+SeT Interrupt flag
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ STI    001__x_xx_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx

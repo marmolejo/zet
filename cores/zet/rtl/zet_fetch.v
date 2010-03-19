@@ -22,14 +22,6 @@
 `include "defines.v"
 
 module zet_fetch (
-`ifdef DEBUG
-    output reg [2:0] state,
-    output [2:0] next_state,
-    output       ext_int,
-    output       end_seq,
-
-    output [`SEQ_DATA_WIDTH-2:0] micro_addr,
-`endif
     input clk,
     input rst,
     input [15:0] cs,
@@ -59,12 +51,10 @@ module zet_fetch (
   parameter immed_st = 3'h3;
   parameter execu_st = 3'h4;
 
-`ifndef DEBUG
   reg  [2:0] state;
   wire [2:0] next_state;
   wire       end_seq;
   wire       ext_int;
-`endif
 
   wire [`IR_SIZE-1:0] rom_ir;
   wire [7:0] opcode, modrm;
@@ -82,9 +72,6 @@ module zet_fetch (
 
   // Module instantiation
   zet_decode decode (
-`ifdef DEBUG
-                 micro_addr,
-`endif
                  opcode, modrm, off_l, imm_l, pref_l[1], clk, rst, block,
                  exec_st, div_exc, need_modrm, need_off, need_imm, off_size,
                  imm_size, rom_ir, off, imm_d, ld_base, end_seq, sop_l,

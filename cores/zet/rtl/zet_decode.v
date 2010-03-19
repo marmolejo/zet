@@ -20,9 +20,6 @@
 `include "defines.v"
 
 module zet_decode (
-`ifdef DEBUG
-    output [`SEQ_DATA_WIDTH-2:0] micro_addr,
-`endif
     input [7:0] opcode,
     input [7:0] modrm,
     input [15:0] off_i,
@@ -56,24 +53,20 @@ module zet_decode (
   );
 
   // Net declarations
-`ifndef DEBUG
-  wire [`SEQ_DATA_WIDTH-2:0] micro_addr;
-`endif
-  wire [`SEQ_ADDR_WIDTH-1:0] base_addr, seq_addr;
+  wire [`MICRO_ADDR_WIDTH-1:0] base_addr, seq_addr;
   wire [3:0] src, dst, base, index;
   wire [1:0] seg;
-  reg  [`SEQ_ADDR_WIDTH-1:0] seq;
+  reg  [`MICRO_ADDR_WIDTH-1:0] seq;
   reg  dive;
   reg  old_ext_int;
-//  reg  [`SEQ_ADDR_WIDTH-1:0] base_l;
 
   // Module instantiations
   zet_opcode_deco opcode_deco (opcode, modrm, rep, sop_l, base_addr, need_modrm,
                              need_off, need_imm, off_size, imm_size, src, dst,
                              base, index, seg);
-  zet_seq_rom seq_rom  (seq_addr, {end_seq, micro_addr});
-  zet_micro_data micro_data (micro_addr, off_i, imm_i, src, dst, base, index, seg,
-                        ir, off_o, imm_o);
+
+  zet_micro_data micro_data (seq_addr, off_i, imm_i, src, dst, base, index, seg,
+                        ir, off_o, imm_o, end_seq);
 
   // Assignments
   assign seq_addr = (dive ? `INTD
@@ -82,16 +75,11 @@ module zet_decode (
   // Behaviour
   // seq
   always @(posedge clk)
-    if (rst) seq <= `SEQ_ADDR_WIDTH'd0;
+    if (rst) seq <= `MICRO_ADDR_WIDTH'd0;
     else if (!block)
-      seq <= (exec_st && !end_seq && !rst) ? (seq + `SEQ_ADDR_WIDTH'd1)
-                                           : `SEQ_ADDR_WIDTH'd0;
+      seq <= (exec_st && !end_seq && !rst) ? (seq + `MICRO_ADDR_WIDTH'd1)
+                                           : `MICRO_ADDR_WIDTH'd0;
 
-/* In Altera Quartus II, this latch doesn't work properly
-  // base_l
-  always @(posedge clk)
-    base_l <= rst ? `NOP : (ld_base ? base_addr : base_l);
-*/
   // dive
   always @(posedge clk)
     if (rst) dive <= 1'b0;

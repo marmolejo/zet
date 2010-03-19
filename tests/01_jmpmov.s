@@ -4,10 +4,46 @@
 # jmp: 1, 2, 3 (reg), 3 (mem base+index+off), 4, 5 (mem base+index+off)
 .code16
 start:
+# Bring CKE high
+# CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_BYPASS|HPDMC_SYSTEM_RESET|HPDMC_SYSTEM_CKE;
+movw $0xf200, %dx
+movw $7, %ax
+outw %ax, %dx
+
+# Precharge All
+# CSR_HPDMC_BYPASS = 0x400B;
+movw $0xf202, %dx
+movw $0x400b, %ax
+outw %ax, %dx
+
+# Auto refresh
+# CSR_HPDMC_BYPASS = 0xD;
+movw $0xd, %ax
+outw %ax, %dx
+
+# Auto refresh
+# CSR_HPDMC_BYPASS = 0xD;
+movw $0xd, %ax
+outw %ax, %dx
+
+# Load Mode Register, Enable DLL
+# CSR_HPDMC_BYPASS = 0x23F;
+movw $0x23f, %ax
+outw %ax, %dx
+
+movw $50, %cx
+a: loop a
+
+# Leave Bypass mode and bring up hardware controller
+# CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_CKE;
+movw $0xf200, %dx
+movw $4, %ax
+outw %ax, %dx
+
 jmp b                   # (2)  jmp
 hlt
 
-.org 14
+.org 114
 b:
 movw $0xf000, %bx       # (10) mov word
 movw %bx, %ds           # (4)  mov
