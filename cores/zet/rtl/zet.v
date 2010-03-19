@@ -1,5 +1,6 @@
 /*
- *  Copyright (c) 2008  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *  Zet processor top level file
+ *  Copyright (c) 2008-2010  Zeus Gomez Marmolejo <zeus@opencores.org>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -21,8 +22,6 @@
 `include "defines.v"
 
 module zet (
-    output [19:0] pc, // for debugging purposes
-
     // Wishbone master interface
     input         wb_clk_i,
     input         wb_rst_i,
@@ -36,90 +35,50 @@ module zet (
     output        wb_cyc_o,
     input         wb_ack_i,
     input         wb_tgc_i,  // intr
-    output        wb_tgc_o   // inta
+    output        wb_tgc_o,  // inta
+
+    output [19:0] pc  // for debugging purposes
   );
 
   // Net declarations
-  wire [15:0] cs, ip;
-  wire [15:0] imm;
   wire [15:0] cpu_dat_o;
-  wire        byte_exec;
   wire        cpu_block;
   wire [19:0] cpu_adr_o;
-  wire [`IR_SIZE-1:0] ir;
-  wire [15:0] off;
-
-  wire [19:0] addr_exec;
-  wire byte_fetch, fetch_or_exec;
-  wire of, zf, cx_zero;
-  wire div_exc;
-  wire wr_ip0;
-  wire ifl;
 
   wire        cpu_byte_o;
+  wire        cpu_mem_op;
   wire        cpu_m_io;
-  wire        wb_block;
   wire [15:0] cpu_dat_i;
   wire        cpu_we_o;
   wire [15:0] iid_dat_i;
 
   // Module instantiations
-  zet_fetch fetch (
-    .clk  (wb_clk_i),
-    .rst  (wb_rst_i),
-    .cs   (cs),
-    .ip   (ip),
-    .of   (of),
-    .zf   (zf),
-    .data (cpu_dat_i),
-    .ir   (ir),
-    .off  (off),
-    .imm  (imm),
-    .pc   (pc),
-
-    .cx_zero       (cx_zero),
-    .bytefetch     (byte_fetch),
-    .fetch_or_exec (fetch_or_exec),
-    .block         (cpu_block),
-    .div_exc       (div_exc),
-
-    .wr_ip0  (wr_ip0),
+  zet_core core (
+    .clk (wb_clk_i),
+    .rst (wb_rst_i),
 
     .intr (wb_tgc_i),
-    .ifl  (ifl),
-    .inta (wb_tgc_o)
-  );
+    .inta (wb_tgc_o),
 
-  zet_exec exec (
-    .ir      (ir),
-    .off     (off),
-    .imm     (imm),
-    .cs      (cs),
-    .ip      (ip),
-    .of      (of),
-    .zf      (zf),
-    .cx_zero (cx_zero),
-    .clk     (wb_clk_i),
-    .rst     (wb_rst_i),
-    .memout  (iid_dat_i),
-    .wr_data (cpu_dat_o),
-    .addr    (addr_exec),
-    .we      (cpu_we_o),
-    .m_io    (cpu_m_io),
-    .byteop  (byte_exec),
-    .block   (cpu_block),
-    .div_exc (div_exc),
-    .wrip0   (wr_ip0),
+    .cpu_adr_o  (cpu_adr_o),
+    .iid_dat_i  (iid_dat_i),
+    .cpu_dat_i  (cpu_dat_i),
+    .cpu_dat_o  (cpu_dat_o),
+    .cpu_byte_o (cpu_byte_o),
+    .cpu_block  (cpu_block),
+    .cpu_mem_op (cpu_mem_op),
+    .cpu_m_io   (cpu_m_io),
+    .cpu_we_o   (cpu_we_o),
 
-    .ifl     (ifl)
+    .pc (pc)
   );
 
   zet_wb_master wb_master (
     .cpu_byte_o (cpu_byte_o),
-    .cpu_memop  (ir[`MEM_OP]),
+    .cpu_memop  (cpu_mem_op),
     .cpu_m_io   (cpu_m_io),
     .cpu_adr_o  (cpu_adr_o),
-    .cpu_block  (wb_block),
+    .cpu_block  (cpu_block),
     .cpu_dat_i  (cpu_dat_i),
     .cpu_dat_o  (cpu_dat_o),
     .cpu_we_o   (cpu_we_o),
@@ -138,9 +97,6 @@ module zet (
   );
 
   // Assignments
-  assign cpu_adr_o  = fetch_or_exec ? addr_exec : pc;
-  assign cpu_byte_o = fetch_or_exec ? byte_exec : byte_fetch;
   assign iid_dat_i  = wb_tgc_o ? wb_dat_i : cpu_dat_i;
 
-  assign cpu_block = wb_block;
 endmodule

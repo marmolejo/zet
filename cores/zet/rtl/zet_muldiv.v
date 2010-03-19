@@ -57,8 +57,7 @@ module zet_muldiv (
     .d    (di),
     .q    (q),
     .s    (s),
-    .ovf  (ovf),
-    .div0 (div0)
+    .ovf  (ovf)
   );
 
   // Sign ext. for imul
@@ -91,12 +90,12 @@ module zet_muldiv (
                        : (o[15:8] == {8{o[7]}});
 
   // Exceptions
-  assign over = f[2] ? 1'b0
-              : (word_op ? (f[0] ? (q[17:16]!={2{q[15]}})
+  assign over = word_op ? (f[0] ? (q[17:16]!={2{q[15]}})
                                 : (q[17:16]!=2'b0) )
                         : (f[0] ? (q[17:8]!={10{q[7]}})
-                                : (q[17:8]!=10'h000)));
+                                : (q[17:8]!=10'h000));
   assign mint = f[0] & (word_op ? (x==32'h80000000)
                                 : (x==16'h8000));
-  assign exc  = div0 | (!f[2] & ovf) | over | mint;
+  assign div0 = ~|di;
+  assign exc  = div0 | (!f[2] & (ovf | over | mint));
 endmodule

@@ -159,9 +159,7 @@ module test_kotku;
     begin
       $readmemh("bios.dat",flash.Mem);
       $readmemb("../../../cores/zet/rtl/micro_rom.dat",
-        kotku.zet.fetch.decode.micro_data.micro_rom.rom);
-      $readmemb("../../../cores/zet/rtl/seq_rom.dat",
-        kotku.zet.fetch.decode.seq_rom.rom);
+        kotku.zet.core.fetch.decode.micro_data.micro_rom.rom);
       $readmemh("../../../cores/vga/rtl/char_rom.dat",
         kotku.vga.lcd0.tm.vdu_char_rom.rom);
       $readmemh("../../../tmp/images/msdos/menu0.hex",

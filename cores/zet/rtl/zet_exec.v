@@ -22,23 +22,9 @@
 `include "defines.v"
 
 module zet_exec (
-    // IO Ports
-`ifdef DEBUG
-    output [15:0] x,
-    output [15:0] y,
-    output [15:0] aluo,
-    output [15:0] ax,
-    output [15:0] dx,
-    output [15:0] bp,
-    output [15:0] si,
-    output [15:0] es,
-    output [15:0] c,
-    output [ 3:0] addr_a,
-    output [ 3:0] addr_c,
-    output [15:0] omemalu,
-    output [ 3:0] addr_d,
-    output [ 8:0] flags,
-`endif
+    input         clk,
+    input         rst,
+
     input [`IR_SIZE-1:0] ir,
     input [15:0]  off,
     input [15:0]  imm,
@@ -47,8 +33,6 @@ module zet_exec (
     output        of,
     output        zf,
     output        cx_zero,
-    input         clk,
-    input         rst,
     input [15:0]  memout,
 
     output [15:0] wr_data,
@@ -64,14 +48,12 @@ module zet_exec (
   );
 
   // Net declarations
-`ifndef DEBUG
   wire [15:0] c;
   wire [15:0] omemalu;
   wire [ 3:0] addr_a;
   wire [ 3:0] addr_c;
   wire [ 3:0] addr_d;
-  wire  [8:0] flags;
-`endif
+  wire [ 8:0] flags;
   wire [15:0] a, b, s, alu_iflags, bus_b;
   wire [31:0] aluout;
   wire [3:0]  addr_b;
@@ -94,10 +76,7 @@ module zet_exec (
   zet_alu alu( {c, a }, bus_b, aluout, t, func, alu_iflags, oflags,
                alu_word, s, off, clk, dive);
   zet_regfile regfile (
-`ifdef DEBUG
-    ax, dx, bp, si, es,
-`endif
-    a, b, c, cs, ip, {aluout[31:16], omemalu}, s, flags, wr_reg, wrfl,
+        a, b, c, cs, ip, {aluout[31:16], omemalu}, s, flags, wr_reg, wrfl,
                 wr_high, clk, rst, addr_a, addr_b, addr_c, addr_d, addr_s, iflags,
                 ~byteop, a_byte, b_byte, c_byte, cx_zero, wrip0);
   zet_jmp_cond jmp_cond (logic_flags, addr_b, addr_c[0], c, jmp);
@@ -143,9 +122,4 @@ module zet_exec (
   assign b_byte = r_byte;
   assign div_exc = dive && wr;
 
-`ifdef DEBUG
-  assign x        = a;
-  assign y        = bus_b;
-  assign aluo     = aluout[15:0];
-`endif
 endmodule

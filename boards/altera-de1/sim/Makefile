@@ -52,11 +52,10 @@ ZET_MODS    = zet_addsub \
               zet_rotate \
               zet_rxr8 \
               zet_rxr16 \
-              zet_seq_rom \
               zet_shifts zet \
               zet_wb_master \
-              zet_signmul17
-#							zet_regdecodealu
+              zet_signmul17 \
+              zet_core
 HPDMC_MODS  = hpdmc_banktimer \
               hpdmc_busif \
               hpdmc_ctlif \
