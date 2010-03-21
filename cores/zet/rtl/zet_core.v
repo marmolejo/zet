@@ -185,6 +185,7 @@ module zet_core (
     .base    (base),
     .index   (index),
     .seg     (seg),
+    .frot    (modrm[5:3]),
     .end_seq (end_seq),
 
     // to exec

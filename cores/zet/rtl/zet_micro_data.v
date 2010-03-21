@@ -28,6 +28,7 @@ module zet_micro_data (
     input  [ 3:0] base,
     input  [ 3:0] index,
     input  [ 1:0] seg,
+    input  [ 2:0] frot,
     output        end_seq,
 
     output [`IR_SIZE-1:0] ir,
@@ -37,7 +38,8 @@ module zet_micro_data (
 
   // Net declarations
   wire [`MICRO_DATA_WIDTH-1:0] micro_o;
-  wire [17:0] high_ir;
+  wire [ 6:0] ir1;
+  wire [ 3:0] ir0;
   wire var_s, var_off;
   wire [1:0] var_a, var_b, var_c, var_d;
   wire [2:0] var_imm;
@@ -45,6 +47,10 @@ module zet_micro_data (
   wire [3:0] addr_a, addr_b, addr_c, addr_d;
   wire [3:0] micro_a, micro_b, micro_c, micro_d;
   wire [1:0] addr_s, micro_s;
+  wire [2:0] t;
+  wire [2:0] f;
+  wire [2:0] f_rom;
+  wire       wr_flag;
 
   // Module instantiations
   zet_micro_rom micro_rom (n_micro, micro_o);
@@ -55,7 +61,11 @@ module zet_micro_data (
   assign micro_b = micro_o[9:6];
   assign micro_c = micro_o[13:10];
   assign micro_d = micro_o[17:14];
-  assign high_ir = micro_o[35:18];
+  assign wr_flag = micro_o[18];
+  assign ir0     = micro_o[22:19];
+  assign t       = micro_o[25:23];
+  assign f_rom   = micro_o[28:26];
+  assign ir1     = micro_o[35:29];
   assign var_s   = micro_o[36];
   assign var_a   = micro_o[38:37];
   assign var_b   = micro_o[40:39];
@@ -86,5 +96,8 @@ module zet_micro_data (
                 : (var_d == 2'd1 ? dst : src);
   assign addr_s = var_s ? seg : micro_s;
 
-  assign ir = { high_ir, addr_d, addr_c, addr_b, addr_a, addr_s };
+  assign f = (t==3'd6 && wr_flag) ? /* shifts/rotates */ frot : f_rom;
+
+  assign ir = { ir1, f, t, ir0, wr_flag, addr_d,
+                addr_c, addr_b, addr_a, addr_s };
 endmodule

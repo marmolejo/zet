@@ -827,32 +827,10 @@ module zet_opcode_deco (
           dst <= { 1'b0, op[2:0] };
         end
 
-      8'b1100_0000: // ror/rol/rcr/rcl/sal/shl/sar/shr imm8
+      8'b1100_000x: // ror/rol/rcr/rcl/sal/shl/sar/shr imm8/imm16
         begin
-          seq_addr <=  (regm==3'b000) ? ((mod==2'b11) ? `ROLIRB : `ROLIMB)
-                    : ((regm==3'b001) ? ((mod==2'b11) ? `RORIRB : `RORIMB)
-                    : ((regm==3'b010) ? ((mod==2'b11) ? `RCLIRB : `RCLIMB)
-                    : ((regm==3'b011) ? ((mod==2'b11) ? `RCRIRB : `RCRIMB)
-                    : ((regm==3'b100) ? ((mod==2'b11) ? `SALIRB : `SALIMB)
-                    : ((regm==3'b101) ? ((mod==2'b11) ? `SHRIRB : `SHRIMB)
-                                      : ((mod==2'b11) ? `SARIRB : `SARIMB))))));
-          need_modrm <= 1'b1;
-          need_off <= need_off_mod;
-          need_imm <= 1'b1;
-          imm_size <= 1'b0;
-          src <= rm;
-          dst <= rm;
-        end
-
-      8'b1100_0001: // ror/rol/rcr/rcl/sal/shl/sar/shr imm16
-        begin
-          seq_addr <=  (regm==3'b000) ? ((mod==2'b11) ? `ROLIRW : `ROLIMW)
-                    : ((regm==3'b001) ? ((mod==2'b11) ? `RORIRW : `RORIMW)
-                    : ((regm==3'b010) ? ((mod==2'b11) ? `RCLIRW : `RCLIMW)
-                    : ((regm==3'b011) ? ((mod==2'b11) ? `RCRIRW : `RCRIMW)
-                    : ((regm==3'b100) ? ((mod==2'b11) ? `SALIRW : `SALIMW)
-                    : ((regm==3'b101) ? ((mod==2'b11) ? `SHRIRW : `SHRIMW)
-                                      : ((mod==2'b11) ? `SARIRW : `SARIMW))))));
+          seq_addr <= (mod==2'b11) ? (b ? `RSHIRB : `RSHIRW)
+                                   : (b ? `RSHIMB : `RSHIMW);
           need_modrm <= 1'b1;
           need_off <= need_off_mod;
           need_imm <= 1'b1;
@@ -1008,42 +986,10 @@ module zet_opcode_deco (
 
       8'b1101_00xx: // sal/shl
         begin
-          seq_addr <= (regm==3'b010) ? ((mod==2'b11) ?
-            (op[1] ? (op[0] ? `RCLCRW : `RCLCRB )
-                       : (op[0] ? `RCL1RW : `RCL1RB ))
-          : (op[1] ? (op[0] ? `RCLCMW : `RCLCMB )
-                       : (op[0] ? `RCL1MW : `RCL1MB )))
-         : ((regm==3'b011) ? ((mod==2'b11) ?
-            (op[1] ? (op[0] ? `RCRCRW : `RCRCRB )
-                       : (op[0] ? `RCR1RW : `RCR1RB ))
-          : (op[1] ? (op[0] ? `RCRCMW : `RCRCMB )
-                       : (op[0] ? `RCR1MW : `RCR1MB )))
-         : ((regm==3'b001) ? ((mod==2'b11) ?
-            (op[1] ? (op[0] ? `RORCRW : `RORCRB )
-                       : (op[0] ? `ROR1RW : `ROR1RB ))
-          : (op[1] ? (op[0] ? `RORCMW : `RORCMB )
-                       : (op[0] ? `ROR1MW : `ROR1MB )))
-         : ((regm==3'b000) ? ((mod==2'b11) ?
-            (op[1] ? (op[0] ? `ROLCRW : `ROLCRB )
-                       : (op[0] ? `ROL1RW : `ROL1RB ))
-          : (op[1] ? (op[0] ? `ROLCMW : `ROLCMB )
-                       : (op[0] ? `ROL1MW : `ROL1MB )))
-         : ( (regm==3'b100) ? ((mod==2'b11) ?
-            (op[1] ? (op[0] ? `SALCRW : `SALCRB )
-                       : (op[0] ? `SAL1RW : `SAL1RB ))
-          : (op[1] ? (op[0] ? `SALCMW : `SALCMB )
-                       : (op[0] ? `SAL1MW : `SAL1MB )))
-         : ( (regm==3'b111) ? ((mod==2'b11) ?
-            (op[1] ? (op[0] ? `SARCRW : `SARCRB )
-                       : (op[0] ? `SAR1RW : `SAR1RB ))
-          : (op[1] ? (op[0] ? `SARCMW : `SARCMB )
-                       : (op[0] ? `SAR1MW : `SAR1MB )))
-           : ((mod==2'b11) ?
-            (op[1] ? (op[0] ? `SHRCRW : `SHRCRB )
-                       : (op[0] ? `SHR1RW : `SHR1RB ))
-          : (op[1] ? (op[0] ? `SHRCMW : `SHRCMB )
-                       : (op[0] ? `SHR1MW : `SHR1MB ))))))));
-
+          seq_addr <= (mod==2'b11) ? (op[1] ? (b ? `RSHCRB : `RSHCRW)
+                                            : (b ? `RSH1RB : `RSH1RW))
+                                   : (op[1] ? (b ? `RSHCMB : `RSHCMW)
+                                            : (b ? `RSH1MB : `RSH1MW));
           need_modrm <= 1'b1;
           need_off <= need_off_mod;
           need_imm <= 1'b0;
