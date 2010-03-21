@@ -286,6 +286,7 @@ set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
 set_global_assignment -name USE_TIMEQUEST_TIMING_ANALYZER OFF
 
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_arlog.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_shrot.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_core.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/altera/zet_signmul17.v

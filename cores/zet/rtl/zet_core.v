@@ -59,6 +59,7 @@ module zet_core (
   wire        byte_fetch;
   wire        byte_exec;
 
+  // wire decode - microcode
   wire [`MICRO_ADDR_WIDTH-1:0] seq_addr;
   wire [3:0] src;
   wire [3:0] dst;
@@ -66,6 +67,7 @@ module zet_core (
   wire [3:0] index;
   wire [1:0] seg;
   wire       end_seq;
+  wire [2:0] fdec;
 
   // wires fetch - decode
   wire [7:0] opcode;
@@ -172,6 +174,8 @@ module zet_core (
     .base     (base),
     .index    (index),
     .seg      (seg),
+    .f        (fdec),
+
     .end_seq  (end_seq)
   );
 
@@ -185,7 +189,7 @@ module zet_core (
     .base    (base),
     .index   (index),
     .seg     (seg),
-    .frot    (modrm[5:3]),
+    .fdec    (fdec),
     .end_seq (end_seq),
 
     // to exec

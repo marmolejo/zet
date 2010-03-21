@@ -58,4 +58,4 @@ add wave -label addr_d  -hex zet/core/exec/regfile/addr_d
 add wave -label wr      -hex zet/core/exec/regfile/wr
 add wave -label exec_st -hex zet/core/exec_st
 
-run 30us
+run 27650ns

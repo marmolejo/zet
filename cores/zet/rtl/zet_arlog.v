@@ -1,5 +1,5 @@
 /*
- *  Bitwise logical operations for Zet
+ *  Arithmetic and logical operations for Zet
  *  Copyright (C) 2008-2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
@@ -17,15 +17,17 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module zet_bitlog (
+module zet_arlog (
     input  [15:0] x,
+    input  [15:0] y,
+    input  [ 2:0] f,
     output [15:0] o,
     output        cfo,
     output        ofo
   );
 
-  // Assignments
-  assign o = ~x;  // Now we only do NEG
+  // Assignemnts
+  assign o   = f[2] ? (f[1] ? x^y : x&y) : x|y;
 
   assign cfo = 1'b0;
   assign ofo = 1'b0;

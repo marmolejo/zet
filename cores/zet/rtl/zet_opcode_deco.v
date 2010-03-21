@@ -118,8 +118,8 @@ module zet_opcode_deco (
 
       8'b0000_100x: // or r->r, r->m
         begin
-          seq_addr   <= (mod==2'b11) ? (b ? `ORRRB : `ORRRW)
-                                     : (b ? `ORRMB : `ORRMW);
+          seq_addr   <= (mod==2'b11) ? (b ? `LOGRRB : `LOGRRW)
+                                     : (b ? `LOGRMB : `LOGRMW);
           need_modrm <= 1'b1;
           need_off   <= need_off_mod;
           need_imm   <= 1'b0;
@@ -130,8 +130,8 @@ module zet_opcode_deco (
 
       8'b0000_101x: // or r->r, m->r
         begin
-          seq_addr   <= (mod==2'b11) ? (b ? `ORRRB : `ORRRW)
-                                     : (b ? `ORMRB : `ORMRW);
+          seq_addr   <= (mod==2'b11) ? (b ? `LOGRRB : `LOGRRW)
+                                     : (b ? `LOGMRB : `LOGMRW);
           need_modrm <= 1'b1;
           need_off   <= need_off_mod;
           need_imm   <= 1'b0;
@@ -142,7 +142,7 @@ module zet_opcode_deco (
 
       8'b0000_110x: // or i->r
         begin
-          seq_addr   <= b ? `ORIRB : `ORIRW;
+          seq_addr   <= b ? `LOGIRB : `LOGIRW;
           need_modrm <= 1'b0;
           need_off   <= 1'b0;
           need_imm   <= 1'b1;
@@ -234,8 +234,8 @@ module zet_opcode_deco (
 
       8'b0010_000x: // and r->r, r->m
         begin
-          seq_addr   <= (mod==2'b11) ? (b ? `ANDRRB : `ANDRRW)
-                                     : (b ? `ANDRMB : `ANDRMW);
+          seq_addr   <= (mod==2'b11) ? (b ? `LOGRRB : `LOGRRW)
+                                     : (b ? `LOGRMB : `LOGRMW);
           need_modrm <= 1'b1;
           need_off   <= need_off_mod;
           need_imm   <= 1'b0;
@@ -246,8 +246,8 @@ module zet_opcode_deco (
 
       8'b0010_001x: // and r->r, m->r
         begin
-          seq_addr   <= (mod==2'b11) ? (b ? `ANDRRB : `ANDRRW)
-                                     : (b ? `ANDMRB : `ANDMRW);
+          seq_addr   <= (mod==2'b11) ? (b ? `LOGRRB : `LOGRRW)
+                                     : (b ? `LOGMRB : `LOGMRW);
           need_modrm <= 1'b1;
           need_off   <= need_off_mod;
           need_imm   <= 1'b0;
@@ -258,7 +258,7 @@ module zet_opcode_deco (
 
       8'b0010_010x: // and i->r
         begin
-          seq_addr   <= b ? `ANDIRB : `ANDIRW;
+          seq_addr   <= b ? `LOGIRB : `LOGIRW;
           need_modrm <= 1'b0;
           need_off   <= 1'b0;
           need_imm   <= 1'b1;
@@ -326,8 +326,8 @@ module zet_opcode_deco (
 
       8'b0011_000x: // xor r->r, r->m
         begin
-          seq_addr   <= (mod==2'b11) ? (b ? `XORRRB : `XORRRW)
-                                     : (b ? `XORRMB : `XORRMW);
+          seq_addr   <= (mod==2'b11) ? (b ? `LOGRRB : `LOGRRW)
+                                     : (b ? `LOGRMB : `LOGRMW);
           need_modrm <= 1'b1;
           need_off   <= need_off_mod;
           need_imm   <= 1'b0;
@@ -338,8 +338,8 @@ module zet_opcode_deco (
 
       8'b0011_001x: // xor r->r, m->r
         begin
-          seq_addr   <= (mod==2'b11) ? (b ? `XORRRB : `XORRRW)
-                                     : (b ? `XORMRB : `XORMRW);
+          seq_addr   <= (mod==2'b11) ? (b ? `LOGRRB : `LOGRRW)
+                                     : (b ? `LOGMRB : `LOGMRW);
           need_modrm <= 1'b1;
           need_off   <= need_off_mod;
           need_imm   <= 1'b0;
@@ -350,7 +350,7 @@ module zet_opcode_deco (
 
       8'b0011_010x: // and i->r
         begin
-          seq_addr   <= b ? `XORIRB : `XORIRW;
+          seq_addr   <= b ? `LOGIRB : `LOGIRW;
           need_modrm <= 1'b0;
           need_off   <= 1'b0;
           need_imm   <= 1'b1;
@@ -506,12 +506,12 @@ module zet_opcode_deco (
                           : (b ? `ADCIMB : `ADCIMW))
            : (regm == 3'b000 ? ((mod==2'b11) ? (b ? `ADDIRB : `ADDIRW)
                           : (b ? `ADDIMB : `ADDIMW))
-           : (regm == 3'b100 ? ((mod==2'b11) ? (b ? `ANDIRB : `ANDIRW)
-                             : (b ? `ANDIMB : `ANDIMW))
-           : (regm == 3'b001 ? ((mod==2'b11) ? (b ? `ORIRB : `ORIRW)
-                                             : (b ? `ORIMB : `ORIMW))
-           : ((mod==2'b11) ? (b ? `XORIRB : `XORIRW)
-                           : (b ? `XORIMB : `XORIMW))))))));
+           : (regm == 3'b100 ? ((mod==2'b11) ? (b ? `LOGIRB : `LOGIRW)
+                             : (b ? `LOGIMB : `LOGIMW))
+           : (regm == 3'b001 ? ((mod==2'b11) ? (b ? `LOGIRB : `LOGIRW)
+                                             : (b ? `LOGIMB : `LOGIMW))
+           : ((mod==2'b11) ? (b ? `LOGIRB : `LOGIRW)
+                           : (b ? `LOGIMB : `LOGIMW))))))));
           need_modrm <= 1'b1;
           need_off   <= need_off_mod;
           need_imm   <= 1'b1;

@@ -24,6 +24,7 @@ VFLAGS = -work $(LIB) -lint
 ZET_MODS    = zet_addsub \
               zet_alu \
               zet_bitlog \
+              zet_arlog \
               zet_conv \
               zet_decode \
               zet_div_su \
