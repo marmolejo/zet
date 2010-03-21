@@ -9,7 +9,7 @@
 
   // Read all the instruction definitions
   //
-  $f1 = fopen("microcode.txt", "r");
+  $f1 = fopen("php://stdin", "r");
 
   if (!$f1)
     {
@@ -67,6 +67,8 @@
       fwrite($fm, $micros[$i] . "\n");
       if ($i == pow(2, $j)) $j++;
     }
+
+  printf ("%d micro instructions\n", $i);
 
   $micro_data_width++; // we include also the last bit
   for ($k=0; $k<$micro_data_width; $k++) $str_zero .= "0";

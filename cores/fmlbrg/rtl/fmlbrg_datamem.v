@@ -24,7 +24,7 @@ module fmlbrg_datamem #(
 	input [depth-1:0] a,
 	input [1:0] we,
 	input [15:0] di,
-	output [15:0] do
+	output [15:0] dout
 );
 
 reg [7:0] ram0[0:(1 << depth)-1];
@@ -62,6 +62,6 @@ end
 assign ram0di = di[7:0];
 assign ram1di = di[15:8];
 
-assign do = {ram1do, ram0do};
+assign dout = {ram1do, ram0do};
 
 endmodule

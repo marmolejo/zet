@@ -75,19 +75,7 @@ module kotku (
     output        sd_sclk_,
     input         sd_miso_,
     output        sd_mosi_,
-    output        sd_ss_,
-
-    // I2C
-    inout         i2c_sdat,
-    output        i2c_sclk,
-
-    // AUDIO CODEC
-    output        aud_adclrck,
-    input         aud_adcdat,
-    inout         aud_daclrck,
-    output        aud_dacdat,
-    inout         aud_bclk,
-    output        aud_xck
+    output        sd_ss_
   );
 
   // Registers and nets

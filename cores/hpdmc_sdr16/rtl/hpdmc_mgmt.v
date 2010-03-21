@@ -55,7 +55,7 @@ module hpdmc_mgmt #(
  * (depth for 16-bit words, which is sdram_depth-1)
  */
 
-parameter rowdepth = sdram_depth-1-1-(sdram_columndepth+2)+1;
+localparam rowdepth = sdram_depth-1-1-(sdram_columndepth+2)+1;
 
 wire [sdram_depth-1-1:0] address16 = address;
 
@@ -110,9 +110,9 @@ reg sdram_adr_loadrow;
 reg sdram_adr_loadcol;
 reg sdram_adr_loadA10;
 assign sdram_adr =
-	 ({13{sdram_adr_loadrow}}	& row_address)
-	|({13{sdram_adr_loadcol}}	& col_address)
-	|({13{sdram_adr_loadA10}}	& 13'd1024);
+	 ({12{sdram_adr_loadrow}}	& row_address)
+	|({12{sdram_adr_loadcol}}	& col_address)
+	|({12{sdram_adr_loadA10}}	& 12'd1024);
 
 assign sdram_ba = bank_address;
 
@@ -181,13 +181,14 @@ end
 reg [3:0] state;
 reg [3:0] next_state;
 
-parameter IDLE			= 4'd0;
-parameter ACTIVATE		= 4'd1;
-parameter READ			= 4'd2;
-parameter WRITE			= 4'd3;
-parameter PRECHARGEALL		= 4'd4;
-parameter AUTOREFRESH		= 4'd5;
-parameter AUTOREFRESH_WAIT	= 4'd6;
+  localparam [3:0]
+    IDLE			= 4'd0,
+    ACTIVATE		= 4'd1,
+    READ			= 4'd2,
+    WRITE			= 4'd3,
+    PRECHARGEALL		= 4'd4,
+    AUTOREFRESH		= 4'd5,
+    AUTOREFRESH_WAIT	= 4'd6;
 
 always @(posedge sys_clk) begin
 	if(sdram_rst)

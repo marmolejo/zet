@@ -131,7 +131,7 @@ fmlbrg_datamem #(
   .a(datamem_a),
   .we(datamem_we),
   .di(datamem_di),
-  .do(datamem_do)
+  .dout(datamem_do)
 );
 
 reg [2:0] bcounter;
@@ -187,32 +187,33 @@ assign cache_hit = do_valid & (do_tag == tag_r);
 reg [4:0] state;
 reg [4:0] next_state;
 
-parameter IDLE      = 5'd0;
-parameter TEST_HIT  = 5'd1;
-parameter WRITE_HIT = 5'd2;
+  localparam [4:0]
+    IDLE      = 5'd0,
+    TEST_HIT  = 5'd1,
+    WRITE_HIT = 5'd2,
 
-parameter EVICT  = 5'd3;
-parameter EVICT2 = 5'd4;
-parameter EVICT3 = 5'd5;
-parameter EVICT4 = 5'd6;
-parameter EVICT5 = 5'd7;
-parameter EVICT6 = 5'd8;
-parameter EVICT7 = 5'd9;
-parameter EVICT8 = 5'd10;
+    EVICT  = 5'd3,
+    EVICT2 = 5'd4,
+    EVICT3 = 5'd5,
+    EVICT4 = 5'd6,
+    EVICT5 = 5'd7,
+    EVICT6 = 5'd8,
+    EVICT7 = 5'd9,
+    EVICT8 = 5'd10,
 
-parameter REFILL      = 5'd11;
-parameter REFILL_WAIT = 5'd12;
-parameter REFILL1     = 5'd13;
-parameter REFILL2     = 5'd14;
-parameter REFILL3     = 5'd15;
-parameter REFILL4     = 5'd16;
-parameter REFILL5     = 5'd17;
-parameter REFILL6     = 5'd18;
-parameter REFILL7     = 5'd19;
-parameter REFILL8     = 5'd20;
+    REFILL      = 5'd11,
+    REFILL_WAIT = 5'd12,
+    REFILL1     = 5'd13,
+    REFILL2     = 5'd14,
+    REFILL3     = 5'd15,
+    REFILL4     = 5'd16,
+    REFILL5     = 5'd17,
+    REFILL6     = 5'd18,
+    REFILL7     = 5'd19,
+    REFILL8     = 5'd20,
 
-parameter TEST_INVALIDATE = 5'd21;
-parameter INVALIDATE      = 5'd22;
+    TEST_INVALIDATE = 5'd21,
+    INVALIDATE      = 5'd22;
 
 always @(posedge sys_clk) begin
   if(sys_rst)

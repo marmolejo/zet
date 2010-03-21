@@ -18,6 +18,10 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
+// altera message_off 10030
+//  get rid of the warning about
+//  not initializing the ROM
+
 module ps2keyb_xtcodes (
   //  input            clk,
     input      [6:0] at_code,

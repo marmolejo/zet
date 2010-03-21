@@ -59,13 +59,13 @@ assign sdram_ba = 2'b00;
 
 always @(posedge sys_clk) begin
 	if(sys_rst) begin
-		csr_do <= 32'd0;
+		csr_do <= 16'd0;
 	
 		bypass <= 1'b1;
 		sdram_rst <= 1'b1;
 		
 		sdram_cke <= 1'b0;
-		sdram_adr <= 13'd0;
+		sdram_adr <= 12'd0;
 		
 		tim_rp <= 3'd2;
 		tim_rcd <= 3'd2;
@@ -79,7 +79,7 @@ always @(posedge sys_clk) begin
 		sdram_cas_n <= 1'b1;
 		sdram_ras_n <= 1'b1;
 		
-		csr_do <= 32'd0;
+		csr_do <= 16'd0;
 		if(csr_selected) begin
 			if(csr_we) begin
 				case(csr_a[1:0])

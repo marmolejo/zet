@@ -250,7 +250,7 @@ hpdmc_sdrio sdrio(
 	 * the FML selection signal and SDRAM DQM pins.
 	 */
 	.mo(~fml_sel),
-	.do(fml_di),
+	.dout(fml_di),
 	.di(fml_do),
 	
 	.sdram_dqm(sdram_dqm),

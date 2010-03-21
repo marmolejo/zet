@@ -101,7 +101,7 @@ module write_iface (
   wire [15:0] new_val1;
   wire [15:0] new_val2;
   wire [15:0] new_val3;
-
+/*
   wire [ 7:0] wr2_d0_0;
   wire [ 7:0] wr2_d0_1;
   wire [ 7:0] wr2_d0_2;
@@ -111,7 +111,7 @@ module write_iface (
   wire [ 7:0] wr2_d1_1;
   wire [ 7:0] wr2_d1_2;
   wire [ 7:0] wr2_d1_3;
-
+*/
   wire [15:0] val0_write0, val0_write1, val0_write2, val0_write3;
   wire [15:0] val1_write0, val1_write1, val1_write2, val1_write3;
   wire [15:0] val0_or0, val0_or1, val0_or2, val0_or3;
@@ -201,6 +201,7 @@ module write_iface (
   assign val0_write3 = new_val3 | val0_or3;
 
   // write mode 2
+/*
   assign wr2_d0_0 = raster_op[1] ? lb0[7:0] : 8'h0;
   assign wr2_d0_1 = raster_op[1] ? lb1[7:0] : 8'h0;
   assign wr2_d0_2 = raster_op[1] ? lb2[7:0] : 8'h0;
@@ -214,7 +215,7 @@ module write_iface (
                                  : bitmask;
   assign wr2_d1_3 = raster_op[0] ? (raster_op[1] ? nlb3[7:0] : lb3[7:0])
                                  : bitmask;
-/*
+
   assign val1_or0[ 7:0] = wbs_dat_i[ 0] ? wr2_d1_0 : wr2_d0_0;
   assign val1_or1[ 7:0] = wbs_dat_i[ 1] ? wr2_d1_1 : wr2_d0_1;
   assign val1_or2[ 7:0] = wbs_dat_i[ 2] ? wr2_d1_2 : wr2_d0_2;

@@ -49,10 +49,10 @@ ZET_MODS    = zet_addsub \
               zet_opcode_deco \
               zet_othop \
               zet_regfile \
-              zet_rotate \
               zet_rxr8 \
               zet_rxr16 \
-              zet_shifts zet \
+              zet_shrot \
+              zet \
               zet_wb_master \
               zet_signmul17 \
               zet_core

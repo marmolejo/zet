@@ -740,225 +740,225 @@ logical NOT
 === rcl ===
 * '''Register'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- RCL1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
- RCL1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
- RCLCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_011_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
- RCLCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_011_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+ RCL1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ RCL1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ RCLCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_010_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+ RCLCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_010_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
 * '''Memory'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
  RCL1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCL1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ RCL1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
  RCL1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  RCL1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCL1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ RCL1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
  RCL1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  RCLCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCLCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_011_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ RCLCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_010_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
  RCLCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  RCLCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCLCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ RCLCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
  RCLCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 * '''Immediate'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- RCLIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
- RCLIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ RCLIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ RCLIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
  RCLIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCLIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ RCLIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
  RCLIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  RCLIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCLIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ RCLIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
  RCLIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 
 === rcr ===
 * '''Register'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- RCR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
- RCR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
- RCRCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_010_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
- RCRCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_010_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+ RCR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ RCR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ RCRCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_011_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+ RCRCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_011_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
 * '''Memory'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
  RCR1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ RCR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
  RCR1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  RCR1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ RCR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
  RCR1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  RCRCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCRCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_010_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ RCRCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_011_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
  RCRCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  RCRCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCRCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ RCRCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_011_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
  RCRCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 * '''Immediate'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- RCRIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
- RCRIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_010_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ RCRIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ RCRIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_011_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
  RCRIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCRIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ RCRIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
  RCRIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  RCRIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RCRIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_010_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ RCRIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_011_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
  RCRIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 
 === rol ===
 * '''Register'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- ROL1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
- ROL1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
- ROLCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_001_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
- ROLCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_001_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+ ROL1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ ROL1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ ROLCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_000_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+ ROLCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_000_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
 * '''Memory'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
  ROL1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- ROL1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ ROL1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
  ROL1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  ROL1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- ROL1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ ROL1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
  ROL1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  ROLCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- ROLCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_001_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ ROLCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_000_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
  ROLCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  ROLCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- ROLCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_001_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ ROLCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_000_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
  ROLCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 * '''Immediate'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- ROLIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
- ROLIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ ROLIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ ROLIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
  ROLIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- ROLIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ ROLIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
  ROLIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  ROLIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- ROLIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ ROLIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
  ROLIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 
 === ror ===
 * '''Register'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- ROR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
- ROR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
- RORCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_000_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
- RORCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_000_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+ ROR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ ROR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ RORCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_001_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+ RORCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_001_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
 * '''Memory'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
  ROR1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- ROR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ ROR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
  ROR1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  ROR1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- ROR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ ROR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
  ROR1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  RORCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RORCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_000_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ RORCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_001_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
  RORCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  RORCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RORCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_000_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ RORCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_001_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
  RORCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 * '''Immediate'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- RORIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
- RORIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_000_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ RORIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ RORIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_001_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
  RORIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RORIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ RORIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
  RORIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  RORIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- RORIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_000_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ RORIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
  RORIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 
 === sal/shl ===
 * '''Register'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- SAL1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_000_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
- SAL1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_000_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
- SALCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_000_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
- SALCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_000_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+ SAL1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_100_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ SAL1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_100_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<1
+ SALCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_100_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
+ SALCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_100_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r<<cl
 * '''Memory'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
  SAL1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SAL1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_000_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ SAL1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_100_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
  SAL1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SAL1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SAL1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
+ SAL1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_100_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<1
  SAL1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SALCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SALCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_000_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ SALCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_100_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
  SALCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SALCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SALCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_000_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
+ SALCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_100_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp<<cl
  SALCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 * '''Immediate'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- SALIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_000_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
- SALIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_000_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ SALIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_100_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
+ SALIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_100_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r<<imm
  SALIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SALIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_000_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ SALIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_100_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
  SALIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SALIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SALIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
+ SALIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_100_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp<<imm
  SALIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 
 === sar ===
 * '''Register'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- SAR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_001_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
- SAR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_001_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
- SARCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_001_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
- SARCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_001_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+ SAR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_110_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ SAR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_110_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>1
+ SARCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_110_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
+ SARCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_110_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>cl
 * '''Memory'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
  SAR1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SAR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_001_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ SAR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_110_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
  SAR1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SAR1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SAR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_001_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
+ SAR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_110_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>1
  SAR1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SARCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SARCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_001_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ SARCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_110_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
  SARCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SARCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SARCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_001_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
+ SARCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_110_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>cl
  SARCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 * '''Immediate'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- SARIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_001_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
- SARIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_001_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ SARIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_110_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
+ SARIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_110_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>imm
  SARIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SARIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_001_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ SARIMB 100__x_00_xx_xx_00__x__x__x__1__x_01__1_110_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
  SARIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SARIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SARIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_001_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
+ SARIMW 100__x_00_xx_xx_00__x__x__0__1__x_01__0_110_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>imm
  SARIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 
 === shr ===
 * '''Register'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- SHR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_010_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>1
- SHR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_010_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>1
- SHRCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_010_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>>cl
- SHRCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_010_101__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>>cl
+ SHR1RB 111__x_01_xx_xx_11__x__x__1__1__x_01__1_101_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>1
+ SHR1RW 111__x_01_xx_xx_11__x__x__0__1__x_01__0_101_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>1
+ SHRCRB xxx__x_01_xx_00_11__x__x__1__0__x_01__1_101_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>>cl
+ SHRCRW xxx__x_01_xx_00_11__x__x__0__0__x_01__0_101_110__0_01__0__1_dddd_xxxx_0001_ssss_xx  // r>>>cl
 * '''Memory'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
  SHR1MB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SHR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_010_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>1
+ SHR1MB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_101_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>1
  SHR1MB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SHR1MW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SHR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_010_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>1
+ SHR1MW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_101_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>1
  SHR1MW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SHRCMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SHRCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_010_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>>cl
+ SHRCMB xxx__x_00_xx_00_00__x__x__1__0__x_01__1_101_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>>cl
  SHRCMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SHRCMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SHRCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_010_101__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>>cl
+ SHRCMW xxx__x_00_xx_00_00__x__x__0__0__x_01__0_101_110__0_01__0__1_1101_xxxx_0001_1101_xx  // tmp>>>cl
  SHRCMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 * '''Immediate'''
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- SHRIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_010_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>imm
- SHRIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_010_101__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>imm
+ SHRIRB 100__x_01_xx_xx_11__x__x__1__1__x_01__1_101_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>imm
+ SHRIRW 100__x_01_xx_xx_11__x__x__0__1__x_01__0_101_110__0_01__0__1_dddd_xxxx_xxxx_ssss_xx  // r>>>imm
  SHRIMB xxx__1_00_xx_01_01__1__x__0__0__0_10__1_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SHRIMB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_010_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>imm
+ SHRIMB 111__x_00_xx_xx_00__x__x__x__1__x_01__1_101_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>imm
  SHRIMB xxx__1_xx_00_01_01__1__x__0__0__0_1x__1_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
  SHRIMW xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_01__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
- SHRIMW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_010_101__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>imm
+ SHRIMW 111__x_00_xx_xx_00__x__x__0__1__x_01__0_101_110__0_01__0__1_1101_xxxx_xxxx_1101_xx  // tmp>>>imm
  SHRIMW xxx__1_xx_00_01_01__1__x__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_mmmm_mmmm_mm  // st
 
 === test ===
@@ -1249,7 +1249,7 @@ INTerrupt
  INT3   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_0100_10  // st(ip)
  INT3   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
  INT3   110__x_00_xx_xx_xx__x__x__0__1__x_01__0_000_000__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // 3->tmp
- INT3   001__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__0_1101_xxxx_xxxx_1101_xx  // tmp*4
+ INT3   001__x_00_xx_xx_00__x__x__0__1__x_01__0_100_110__0_01__0__0_1101_xxxx_xxxx_1101_xx  // tmp*4
  INT3   001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1101_xx  // ld(cs)
  INT3   000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1101_xx  // ld(ip)
 * Other interrupt:
@@ -1262,7 +1262,7 @@ INTerrupt
  INT    xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_0100_10  // st(ip)
  INT    xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
  INT    100__x_00_xx_xx_xx__x__x__0__1__x_01__0_000_000__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // i->tmp
- INT    001__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__0_1101_xxxx_xxxx_1101_xx  // tmp*4
+ INT    001__x_00_xx_xx_00__x__x__0__1__x_01__0_100_110__0_01__0__0_1101_xxxx_xxxx_1101_xx  // tmp*4
  INT    001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1101_xx  // ld(cs)
  INT    000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1101_xx  // ld(ip)
 * divide interrupt (not available to programs):
@@ -1287,7 +1287,7 @@ INTerrupt
  EINT   010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
  EINT   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_0100_10  // st(ip)
  EINT   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
- EINT   001__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__0_1101_xxxx_xxxx_1110_xx  // tmp*4
+ EINT   001__x_00_xx_xx_00__x__x__0__1__x_01__0_100_110__0_01__0__0_1101_xxxx_xxxx_1110_xx  // tmp*4
  EINT   001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1101_xx  // ld(cs)
  EINT   000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1101_xx  // ld(ip)
 * External interrupt (original IP):
@@ -1300,7 +1300,7 @@ INTerrupt
  EINTP  010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
  EINTP  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1110_1100_0100_10  // st(ip)
  EINTP  xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
- EINTP  001__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__0_1101_xxxx_xxxx_1111_xx  // tmp*4
+ EINTP  001__x_00_xx_xx_00__x__x__0__1__x_01__0_100_110__0_01__0__0_1101_xxxx_xxxx_1111_xx  // tmp*4
  EINTP  001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1101_xx  // ld(cs)
  EINTP  000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1101_xx  // ld(ip)
 
@@ -1315,7 +1315,7 @@ INTerrupt
  INTO   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_0100_10  // st(ip)
  INTO   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
  INTO   010__x_00_xx_xx_xx__x__x__0__1__x_01__0_000_000__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // 4->tmp
- INTO   001__x_00_xx_xx_00__x__x__0__1__x_01__0_000_101__0_01__0__0_1101_xxxx_xxxx_1101_xx  // tmp*4
+ INTO   001__x_00_xx_xx_00__x__x__0__1__x_01__0_100_110__0_01__0__0_1101_xxxx_xxxx_1101_xx  // tmp*4
  INTO   001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1101_xx  // ld(cs)
  INTO   000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1101_xx  // ld(ip)
 

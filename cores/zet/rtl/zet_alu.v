@@ -35,13 +35,13 @@ module zet_alu (
   );
 
   // Net declarations
-  wire [15:0] add, log, shi, rot;
+  wire [15:0] add, log, rot;
   wire  [8:0] othflags;
   wire [19:0] oth;
   wire [31:0] cnv, mul;
   wire af_add, af_cnv;
-  wire cf_cnv, cf_add, cf_mul, cf_log, cf_shi, cf_rot;
-  wire of_cnv, of_add, of_mul, of_log, of_shi, of_rot;
+  wire cf_cnv, cf_add, cf_mul, cf_log, cf_rot;
+  wire of_cnv, of_add, of_mul, of_log, of_rot;
   wire ofi, sfi, zfi, afi, pfi, cfi;
   wire ofo, sfo, zfo, afo, pfo, cfo;
   wire flags_unchanged;
@@ -71,17 +71,28 @@ module zet_alu (
   );
 
   zet_bitlog bitlog (x[15:0], y, log, func, cf_log, of_log);
-  zet_shifts shifts (x[15:0], y[7:0], shi, func[1:0], word_op, cfi, ofi, cf_shi, of_shi);
-  zet_rotate rotate (x[15:0], y[4:0], func[1:0], cfi, word_op, rot, cf_rot, ofi, of_rot);
+
+  zet_shrot  shrot (
+    .x       (x[15:0]),
+    .y       (y[7:0]),
+    .out     (rot),
+    .func    (func),
+    .word_op (word_op),
+    .cfi     (cfi),
+    .ofi     (ofi),
+    .cfo     (cf_rot),
+    .ofo     (of_rot)
+  );
+
   zet_othop  othop (x[15:0], y, seg, off, iflags, func, word_op, oth, othflags);
 
   zet_mux8_16 m0(t, {8'd0, y[7:0]}, add, cnv[15:0],
-                 mul[15:0], log, shi, rot, oth[15:0], out[15:0]);
+                 mul[15:0], log, 16'd0, rot, oth[15:0], out[15:0]);
   zet_mux8_16 m1(t, 16'd0, 16'd0, cnv[31:16], mul[31:16],
                  16'd0, 16'd0, 16'd0, {12'b0,oth[19:16]}, out[31:16]);
-  zet_mux8_1  a1(t, 1'b0, cf_add, cf_cnv, cf_mul, cf_log, cf_shi, cf_rot, 1'b0, cfo);
+  zet_mux8_1  a1(t, 1'b0, cf_add, cf_cnv, cf_mul, cf_log, 1'b0, cf_rot, 1'b0, cfo);
   zet_mux8_1  a2(t, 1'b0, af_add, af_cnv, 1'b0, 1'b0, 1'b0, afi, 1'b0, afo);
-  zet_mux8_1  a3(t, 1'b0, of_add, of_cnv, of_mul, of_log, of_shi, of_rot, 1'b0, ofo);
+  zet_mux8_1  a3(t, 1'b0, of_add, of_cnv, of_mul, of_log, 1'b0, of_rot, 1'b0, ofo);
 
   // Flags
   assign pfo = flags_unchanged ? pfi : ^~ out[7:0];
@@ -101,8 +112,7 @@ module zet_alu (
   assign cfi = iflags[0];
 
   assign flags_unchanged = (t == 3'd4 && func == 3'd2
-                         || t == 3'd5 && y[4:0] == 5'h0
-                         || t == 3'd6);
+                         || t == 3'd6 && (!func[2] || func[2]&&y[4:0]==5'h0));
 
   assign div_exc = func[1] && (t==3'd3) && dexc;
 

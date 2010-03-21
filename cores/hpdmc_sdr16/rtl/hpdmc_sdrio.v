@@ -21,7 +21,7 @@ module hpdmc_sdrio(
 	input             direction,
 	input             direction_r,
 	input      [ 1:0] mo,
-	input      [15:0] do,
+	input      [15:0] dout,
 	output reg [15:0] di,
 	
 	output     [ 1:0] sdram_dqm,
@@ -36,7 +36,7 @@ assign sdram_dq = direction ? sdram_data_out : 16'hzzzz;
  * is extremely simple
  */
 assign sdram_dqm      = mo;
-assign sdram_data_out = do;
+assign sdram_data_out = dout;
 
  // Behaviour
  always @(posedge sys_clk) di <= sdram_dq;

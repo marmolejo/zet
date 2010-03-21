@@ -21,14 +21,6 @@
 `include "defines.v"
 
 module zet_regfile (
-`ifdef DEBUG
-    output [15:0] ax,
-    output [15:0] dx,
-    output [15:0] bp,
-    output [15:0] si,
-    output [15:0] es,
-`endif
-
     output [15:0] a,
     output [15:0] b,
     output [15:0] c,
@@ -63,21 +55,14 @@ module zet_regfile (
   wire [7:0] a8, b8, c8;
 
   // Assignments
-`ifdef DEBUG
-  assign ax = r[0];
-  assign dx = r[2];
-  assign bp = r[5];
-  assign si = r[6];
-  assign es = r[8];
-`endif
   assign a = (a_byte & ~addr_a[3]) ? { {8{a8[7]}}, a8} : r[addr_a];
-  assign a8 = addr_a[2] ? r[addr_a[1:0]][15:8] : r[addr_a][7:0];
+  assign a8 = addr_a[2] ? r[{2'b00,addr_a[1:0]}][15:8] : r[addr_a][7:0];
 
   assign b = (b_byte & ~addr_b[3]) ? { {8{b8[7]}}, b8} : r[addr_b];
-  assign b8 = addr_b[2] ? r[addr_b[1:0]][15:8] : r[addr_b][7:0];
+  assign b8 = addr_b[2] ? r[{2'b00,addr_b[1:0]}][15:8] : r[addr_b][7:0];
 
   assign c = (c_byte & ~addr_c[3]) ? { {8{c8[7]}}, c8} : r[addr_c];
-  assign c8 = addr_c[2] ? r[addr_c[1:0]][15:8] : r[addr_c][7:0];
+  assign c8 = addr_c[2] ? r[{2'b00,addr_c[1:0]}][15:8] : r[addr_c][7:0];
 
   assign s = r[{2'b10,addr_s}];
 
