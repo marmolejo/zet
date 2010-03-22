@@ -29,6 +29,7 @@ module zet_decode (
     input exec_st,
     input div_exc,
     input ld_base,
+    input div,
 
     output need_modrm,
     output need_off,
@@ -62,6 +63,8 @@ module zet_decode (
   reg  dive;
   reg  old_ext_int;
 
+  reg [4:0] div_cnt;
+
   // Module instantiations
   zet_opcode_deco opcode_deco (opcode, modrm, rep, sop_l, base_addr, need_modrm,
                              need_off, need_imm, off_size, imm_size, src, dst,
@@ -76,10 +79,16 @@ module zet_decode (
   // Behaviour
   // seq
   always @(posedge clk)
-    if (rst) seq <= `MICRO_ADDR_WIDTH'd0;
-    else if (!block)
-      seq <= (exec_st && !end_seq && !rst) ? (seq + `MICRO_ADDR_WIDTH'd1)
-                                           : `MICRO_ADDR_WIDTH'd0;
+    seq <= rst ? `MICRO_ADDR_WIDTH'd0
+         : block ? seq
+         : end_seq ? `MICRO_ADDR_WIDTH'd0
+         : |div_cnt ? seq
+         : exec_st ? (seq + `MICRO_ADDR_WIDTH'd1) : `MICRO_ADDR_WIDTH'd0;
+
+  // div_cnt - divisor counter
+  always @(posedge clk)
+    div_cnt <= rst ? 5'd0
+       : ((div & exec_st) ? (div_cnt==5'd0 ? 5'd18 : div_cnt - 5'd1) : 5'd0);
 
   // dive
   always @(posedge clk)

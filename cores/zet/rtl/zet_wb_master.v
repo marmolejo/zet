@@ -73,13 +73,13 @@ module zet_wb_master (
   // Behaviour
   // cpu_dat_i
   always @(posedge wb_clk_i)
-    cpu_dat_i <= (cs == stb1_hi) ?
+    cpu_dat_i <= cpu_we_o ? cpu_dat_i : ((cs == stb1_hi) ?
                    (wb_ack_i ?
                      (a0 ? bhw : (cpu_byte_o ? blw : wb_dat_i))
                    : cpu_dat_i)
                  : ((cs == stb2_hi && wb_ack_i) ?
                      { wb_dat_i[7:0], cpu_dat_i[7:0] }
-                   : cpu_dat_i);
+                   : cpu_dat_i));
 
   // adr1
   always @(posedge wb_clk_i)

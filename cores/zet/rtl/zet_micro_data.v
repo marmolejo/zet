@@ -29,6 +29,7 @@ module zet_micro_data (
     input  [ 3:0] index,
     input  [ 1:0] seg,
     input  [ 2:0] fdec,
+    output        div,
     output        end_seq,
 
     output [`IR_SIZE-1:0] ir,
@@ -101,6 +102,7 @@ module zet_micro_data (
                 : (var_d == 2'd1 ? dst : src);
   assign addr_s = var_s ? seg : micro_s;
 
+  assign div  = (t==3'd3 && (f_rom[2]|f_rom[1]) && !wr_rom);
   assign f    = (t==3'd6 && wr_flag || t==3'd5 && wr_rom) ? fdec : f_rom;
   assign wr_d = (t==3'd5 && f==3'd7) ? 1'b0 : wr_rom; /* CMP doesn't write */
 

@@ -31,6 +31,8 @@ add wave -label cx  -hex zet/core/exec/regfile/r\[1\]
 add wave -label dx  -hex zet/core/exec/regfile/r\[2\]
 add wave -label si  -hex zet/core/exec/regfile/r\[6\]
 add wave -label di  -hex zet/core/exec/regfile/r\[7\]
+add wave -label sp  -hex zet/core/exec/regfile/r\[4\]
+add wave -label cs  -hex zet/core/exec/regfile/r\[9\]
 add wave -label ip  -hex zet/core/exec/regfile/r\[15\]
 add wave -label tmp -hex zet/core/exec/regfile/r\[13\]
 add wave -label d   -hex zet/core/exec/regfile/d\[15:0\]
@@ -38,7 +40,7 @@ add wave -label wr  -hex zet/core/exec/regfile/wr
 
 add wave -divider wb_master
 add wave -label cpu_block -hex zet/cpu_block
-add wave -label stb       -hex stb
+add wave -label stb      -hex stb
 add wave -label ack       -hex ack
 add wave -label adr       -hex adr
 add wave -label sel       -hex sel
@@ -58,4 +60,10 @@ add wave -label addr_d  -hex zet/core/exec/regfile/addr_d
 add wave -label wr      -hex zet/core/exec/regfile/wr
 add wave -label exec_st -hex zet/core/exec_st
 
-run 30us
+add wave -divider divider
+add wave -r -hex zet/core/exec/alu/muldiv/*
+
+add wave -divider decode
+add wave -hex zet/core/decode/*
+
+run 120us

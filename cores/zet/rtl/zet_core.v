@@ -68,6 +68,7 @@ module zet_core (
   wire [1:0] seg;
   wire       end_seq;
   wire [2:0] fdec;
+  wire       div;
 
   // wires fetch - decode
   wire [7:0] opcode;
@@ -155,6 +156,7 @@ module zet_core (
     .exec_st (exec_st),
     .div_exc (div_exc),
     .ld_base (ld_base),
+    .div     (div),
 
     .need_modrm (need_modrm),
     .need_off   (need_off),
@@ -190,6 +192,7 @@ module zet_core (
     .index   (index),
     .seg     (seg),
     .fdec    (fdec),
+    .div     (div),
     .end_seq (end_seq),
 
     // to exec
