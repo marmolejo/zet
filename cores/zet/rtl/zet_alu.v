@@ -40,7 +40,7 @@ module zet_alu (
   wire  [8:0] othflags;
   wire [19:0] oth;
   wire [31:0] cnv, mul;
-  wire af_add, af_cnv;
+  wire af_add, af_cnv, af_arl;
   wire cf_cnv, cf_add, cf_mul, cf_log, cf_arl, cf_rot;
   wire of_cnv, of_add, of_mul, of_log, of_arl, of_rot;
   wire ofi, sfi, zfi, afi, pfi, cfi;
@@ -79,12 +79,15 @@ module zet_alu (
   );
 
   zet_arlog arlog (
-    .x   (x[15:0]),
-    .y   (y),
-    .f   (func),
-    .o   (arl),
-    .cfo (cf_arl),
-    .ofo (of_arl)
+    .x       (x[15:0]),
+    .y       (y),
+    .f       (func),
+    .o       (arl),
+    .word_op (word_op),
+    .cfi     (cfi),
+    .cfo     (cf_arl),
+    .afo     (af_arl),
+    .ofo     (of_arl)
   );
 
   zet_shrot  shrot (
@@ -106,7 +109,7 @@ module zet_alu (
   zet_mux8_16 m1(t, 16'd0, 16'd0, cnv[31:16], mul[31:16],
                  16'd0, 16'd0, 16'd0, {12'b0,oth[19:16]}, out[31:16]);
   zet_mux8_1  a1(t, 1'b0, cf_add, cf_cnv, cf_mul, cf_log, cf_arl, cf_rot, 1'b0, cfo);
-  zet_mux8_1  a2(t, 1'b0, af_add, af_cnv, 1'b0, 1'b0, 1'b0, afi, 1'b0, afo);
+  zet_mux8_1  a2(t, 1'b0, af_add, af_cnv, 1'b0, 1'b0, af_arl, afi, 1'b0, afo);
   zet_mux8_1  a3(t, 1'b0, of_add, of_cnv, of_mul, of_log, of_arl, of_rot, 1'b0, ofo);
 
   // Flags

@@ -52,6 +52,7 @@ module zet_micro_data (
   wire [2:0] f_rom;
   wire       wr_flag;
   wire       wr_mem;
+  wire       wr_rom;
   wire       wr_d;
 
   // Module instantiations
@@ -65,7 +66,7 @@ module zet_micro_data (
   assign micro_d = micro_o[17:14];
   assign wr_flag = micro_o[18];
   assign wr_mem  = micro_o[19];
-  assign wr_d    = micro_o[20];
+  assign wr_rom  = micro_o[20];
   assign ir0     = micro_o[22:21];
   assign t       = micro_o[25:23];
   assign f_rom   = micro_o[28:26];
@@ -100,7 +101,8 @@ module zet_micro_data (
                 : (var_d == 2'd1 ? dst : src);
   assign addr_s = var_s ? seg : micro_s;
 
-  assign f = (t==3'd6 && wr_flag || t==3'd5 && wr_d) ? fdec : f_rom;
+  assign f    = (t==3'd6 && wr_flag || t==3'd5 && wr_rom) ? fdec : f_rom;
+  assign wr_d = (t==3'd5 && f==3'd7) ? 1'b0 : wr_rom; /* CMP doesn't write */
 
   assign ir = { ir1, f, t, ir0, wr_d, wr_mem, wr_flag, addr_d,
                 addr_c, addr_b, addr_a, addr_s };
