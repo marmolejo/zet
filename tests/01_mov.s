@@ -1,25 +1,10 @@
 # mov: 1 (word), 2 (word), 3 (off, base+index+off), 4, 5 (off), 
-#      7 (byte,word), 8 (byte off), 9 (word base), 10 (byte,word), 
-#      11 (word off, byte base+index), 12 (imm,special)
-# jmp: 1, 2, 3 (reg), 3 (mem base+index+off), 4, 5 (mem base+index+off)
+#      7 (byte,word), 8 (byte off), 9 (word base), 10 (byte,word)
+#
+# Result:
+# 0x00000000: 0x1290 0xfbe1 0x4001 0x4001
+
 .code16
-start:
-jmp b                   # (2)  jmp
-hlt
-
-.org 114
-b:
-movw $0xf000, %bx       # (10) mov word
-movw %bx, %ds           # (4)  mov
-movw (0xfff3), %ax      # (2)  mov word
-jmp *%ax                # (3)  jmp reg
-hlt
-
-.org 0x1290
-ljmp $0xe342, $0xebe0   # (4)  jmp
-hlt
-
-.org 0x2000
 movw $0x1000, %bx       # (10) mov word
 movw %bx, %ds           # (4)  mov
 
@@ -36,17 +21,14 @@ movb $0x00, %dh         # (10) mov byte
 movw %dx, %di           # (7)  mov word
 
 movw $0x2506, %bp       # (10) mov word
-movw $0xf100, %dx
-movw $0x9535, %ax
-outw %ax, %dx
 
-jmp *-22(%bp,%di)       # (3)  jmp mem
-hlt                     # m[0x12501] = 0xffe1
+movw -22(%bp,%di), %ax
+movw $0, %bx
+movw %bx, %ds
+movw %ax, (2)
+movw $0x1000, %bx
+movw %bx, %ds
 
-.org 0x3001
-movw $0xf100, %dx
-movw $0x2536, %ax
-outw %ax, %dx
 .byte 0xc7,0xc0        # (12) movw $0x4001, %ax
 .word 0x4001           # [not in a default codification]
 movw $0x2501, %bx
@@ -59,22 +41,22 @@ movb $0, %ch
 movw %cx, %si
 movb $0xf0, -1(%bx,%si)
 movw $0x3, %si
-ljmp *-24(%bp,%si)      # (5)  jmp mem
-hlt
-
-.org 0x4001
-movw -3(%bx,%si), %ax
+movw -24(%bp,%si), %ax
+movw -3(%bx,%si), %cx
 movw $0x0, %dx
 movw %dx, %ds
-movw %ax, (0)
-movw $0xf100, %dx
-outw %ax, %dx
+movw %ax, (4)
+movw %cx, (6)
 hlt
 
-.org 65520
-jmp start               # (1)  jmp
+.org 0xffe3
 .word 0x1290
 
-.org 65534
-.word 0xffff
+.org 0xfff0
+movw $0xf000, %bx       # (10) mov word
+movw %bx, %ds           # (4)  mov
+movw (0xffe3), %ax      # (2)  mov word
 
+movw $0, %bx
+movw %bx, %ds
+movw %ax, (0)
