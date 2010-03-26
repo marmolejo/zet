@@ -1,6 +1,6 @@
 `timescale 10ns/100ps
 
-module testbench;
+module test_zet;
 
   // Net declarations
   wire [15:0] dat_o;
@@ -35,7 +35,8 @@ module testbench;
     .wb_ack_o (mem_ack)
   );
 
-  cpu cpu0 (
+  cpu cpu (
+    .dbg_block(1'b0),
     .wb_clk_i (clk),
     .wb_rst_i (rst),
     .wb_dat_i (dat_i),
@@ -47,7 +48,7 @@ module testbench;
     .wb_stb_o (stb),
     .wb_cyc_o (cyc),
     .wb_ack_i (ack),
-    .wb_tgc_i (intr),
+    .wb_tgc_i (1'b0),
     .wb_tgc_o (inta)
   );
 
@@ -78,8 +79,16 @@ module testbench;
       #2 rst <= 1'b0;
 
       #1000 intr <= 1'b1;
-      @(posedge inta)
+      //@(posedge inta)
       @(posedge clk) intr <= 1'b0;
     end
 
+  initial
+    begin
+      $readmemh("data.rtlrom", mem0.ram, 19'h78000);
+      $readmemb("../rtl/micro_rom.dat",
+        cpu.fetch0.decode0.mdata0.m0.rom);
+      $readmemb("../rtl/seq_rom.dat",
+        cpu.fetch0.decode0.mdata0.seq_rom0.rom);
+    end
 endmodule

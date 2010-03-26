@@ -16,7 +16,7 @@ module memory (
   );
 
   // Registers and nets
-  reg  [15:0] ram[2**19-1:0];
+  reg  [15:0] ram[0:2**19-1];
 
   wire       we;
   wire [7:0] bhw, blw;
@@ -35,6 +35,4 @@ module memory (
   always @(posedge wb_clk_i)
     if (we) ram[wb_adr_i] <= { bhw, blw };
 
-  initial $readmemh("/home/zeus/zet/sim/data.rtlrom",
-                    ram, 19'h78000);
 endmodule
