@@ -16,10 +16,6 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-`timescale 1ns/10ps
-
-`include "defines.v"
-
 module zet_regfile (
     output [15:0] a,
     output [15:0] b,

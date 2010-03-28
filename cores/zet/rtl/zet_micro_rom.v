@@ -35,5 +35,7 @@ module zet_micro_rom (
   assign q = rom[addr];
 
   // Behaviour
+`ifndef SIMULATION
   initial $readmemb("micro_rom.dat", rom);
+`endif
 endmodule

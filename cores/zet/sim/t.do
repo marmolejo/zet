@@ -9,8 +9,8 @@ add wave -label clk        -hex clk
 add wave -label rst        -hex rst
 
 add wave -label pc         -hex zet/pc
-add wave -label st         -hex zet/core/fetch/state
-add wave -label ns         -hex zet/core/fetch/next_state
+add wave -label st         -hex zet/core/fetch/st
+add wave -label ns         -hex zet/core/fetch/ns
 add wave -label opcode     -hex zet/core/opcode
 add wave -label modrm      -hex zet/core/modrm
 add wave -label seq_addr   -hex zet/core/seq_addr
@@ -41,8 +41,14 @@ add wave -label wr  -hex zet/core/exec/regfile/wr
 
 add wave -divider wb_master
 add wave -hex zet/wb_master/*
+
+add wave -divider f-e
+add wave -label ir  -hex zet/core/ir
+add wave -label imm -hex zet/core/imm
+add wave -label off -hex zet/core/off
+
 #add wave -label cpu_block -hex zet/cpu_block
-#add wave -label stb      -hex stb
+#add wave -label stb       -hex stb
 #add wave -label ack       -hex ack
 #add wave -label adr       -hex adr
 #add wave -label sel       -hex sel
@@ -62,10 +68,7 @@ add wave -hex zet/wb_master/*
 #add wave -label wr      -hex zet/core/exec/regfile/wr
 #add wave -label exec_st -hex zet/core/exec_st
 
-add wave -divider nstate
-add wave -hex zet/core/fetch/nstate/*
-
-add wave -divider decode
-add wave -hex zet/core/decode/*
+add wave -divider fetch
+add wave -hex zet/core/fetch/*
 
 run 1us

@@ -17,8 +17,6 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-`timescale 1ns/10ps
-
 `include "defines.v"
 
 module zet_exec (
@@ -40,11 +38,13 @@ module zet_exec (
     output        we,
     output        m_io,
     output        byteop,
-    input         block,
     output        div_exc,
     input         wrip0,
+    output        ifl,
 
-    output        ifl
+    input  [ 3:0] iid,
+    output        stb,
+    input         ack
   );
 
   // Net declarations
@@ -71,6 +71,7 @@ module zet_exec (
   wire        b_byte;
   wire        wr_high;
   wire        dive;
+  wire        block;
 
   // Module instances
   zet_alu alu( {c, a }, bus_b, aluout, t, func, alu_iflags, oflags,
@@ -96,6 +97,7 @@ module zet_exec (
   assign func   = ir[28:26];
   assign byteop = ir[29];
   assign memalu = ir[30];
+  assign stb    = 1'b0; //ir[31];
   assign m_io   = ir[32];
   assign b_imm  = ir[33];
   assign r_byte = ir[34];
@@ -122,4 +124,5 @@ module zet_exec (
   assign b_byte = r_byte;
   assign div_exc = dive && wr;
 
+  assign block = stb & !ack;
 endmodule

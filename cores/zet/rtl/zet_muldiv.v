@@ -57,6 +57,7 @@ module zet_muldiv (
     .d    (di),
     .q    (q),
     .s    (s),
+    .div0 (),
     .ovf  (ovf)
   );
 

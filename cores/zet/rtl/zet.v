@@ -17,8 +17,6 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-`timescale 1ns/10ps
-
 `include "defines.v"
 
 module zet (
@@ -86,7 +84,7 @@ module zet (
     .iid  (iid)
   );
 
-  zet_wb_master zet_wb_master (
+  zet_wb_master wb_master (
     .clk (clk_i),
     .rst (rst_i),
 

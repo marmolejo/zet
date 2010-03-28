@@ -17,8 +17,6 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-`timescale 1ns/10ps
-
 module zet_alu (
     input  [31:0] x,
     input  [15:0] y,

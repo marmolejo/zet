@@ -17,8 +17,6 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-`timescale 1ns/10ps
-
 `include "defines.v"
 
 module zet_fetch (
@@ -43,8 +41,8 @@ module zet_fetch (
     input end_seq,
 
     // to microcode
-    output reg [15:0] off_l,
-    output reg [15:0] imm_l,
+    output [15:0] off,
+    output [15:0] imm,
 
     // from microcode
     input [5:0] ftype,
@@ -84,27 +82,47 @@ module zet_fetch (
     EXECU = 3'd4;
 
   reg  [2:0] st;  // current state
-  reg  [2:0] ns;  // next state
+  wire [2:0] ns;  // next state
 
   wire prefix, repz_pr, sovr_pr;
   wire next_in_opco, next_in_exec;
 
-  reg [7:0] opcode_l, modrm_l;
-  reg [1:0] pref_l;
-  wire      block;
+  reg [ 7:0] opcode_l;
+  reg [ 7:0] modrm_l;
+  reg [15:0] off_l;
+  reg [15:0] imm_l;
+  reg [ 1:0] pref_l;
+  wire       block;
 
   // Module instantiation
   zet_next_or_not next_or_not(pref_l, opcode[7:1], cx_zero, zf, ext_int, next_in_opco,
                   next_in_exec);
-  zet_nstate nstate (st, prefix, need_modrm, need_off, need_imm, end_seq,
-             ftype, of, next_in_opco, next_in_exec, block, div_exc,
-             intr, ifl, ns);
+  zet_nstate nstate (
+    .state        (st),
+    .prefix       (prefix),
+    .need_modrm   (need_modrm),
+    .need_off     (need_off),
+    .need_imm     (need_imm),
+    .end_seq      (end_seq),
+    .ftype        (ftype),
+    .of           (of),
+    .next_in_opco (next_in_opco),
+    .next_in_exec (next_in_exec),
+    .block        (block),
+    .div_exc      (div_exc),
+    .intr         (intr),
+    .ifl          (ifl),
+    .next_state   (ns)
+  );
 
   // Assignments
   assign pc = (cs << 4) + ip;
 
   assign opcode = (st == OPCOD) ? data[7:0] : opcode_l;
   assign modrm  = (st == MODRM) ? data[7:0] : modrm_l;
+  assign off    = (st == OFFSE) ? data : off_l;
+  assign imm    = (st == IMMED) ? data : imm_l;
+
   assign bytefetch = (st == OFFSE) ? ~off_size
                    : ((st == IMMED) ? ~imm_size : 1'b1);
   assign exec_st = (st == EXECU);
@@ -118,7 +136,7 @@ module zet_fetch (
   assign prefix  = sovr_pr || repz_pr;
   assign ld_base = (ns == EXECU);
   assign rep     = pref_l[1];
-  assign stb     = !ld_base;
+  assign stb     = !exec_st;
   assign block   = stb && !ack;
 
   // Behaviour
@@ -132,7 +150,7 @@ module zet_fetch (
     else
       begin
         cs <= cs; // we don't change cs at the moment
-        ip <= stb ? (ip + imm_f) : ip;
+        ip <= ack ? (ip + imm_f) : ip;
       end
 
   // machine state

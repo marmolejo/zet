@@ -19,7 +19,8 @@
 
 LIB    = zet
 INC    = +incdir+../rtl
-VFLAGS = -work $(LIB) -lint
+DEFS   = +define+SIMULATION
+VFLAGS = -work $(LIB) -lint -nologo -quiet -timescale 10ns/1ns
 
 ZET_MODS    = zet_addsub \
               zet_alu \
@@ -65,7 +66,7 @@ vpath %.v ../rtl/altera
 all: $(LIB) $(SYS_LIBS)
 
 $(LIB)/%: %.v
-	vlog $(VFLAGS) $(INC) $<
+	vlog $(VFLAGS) $(DEFS) $(INC) $<
 
 $(LIB):
 	vlib $(LIB)

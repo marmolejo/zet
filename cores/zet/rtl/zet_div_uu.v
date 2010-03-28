@@ -56,10 +56,6 @@
 //
 //
 
-//synopsys translate_off
-`timescale 1ns/10ps
-//synopsys translate_on
-
 module zet_div_uu(clk, ena, z, d, q, s, div0, ovf);
 
 	//

@@ -16,8 +16,6 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-`timescale 1ns/10ps
-
 module zet_jmp_cond (
     input [4:0]  logic_flags,
     input [3:0]  cond,

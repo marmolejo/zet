@@ -125,8 +125,8 @@ module zet_core (
     .end_seq    (end_seq),
 
     // to microcode
-    .off_l (off_l),
-    .imm_l (imm_l),
+    .off (off_l),
+    .imm (imm_l),
 
     // from microcode
     .ftype (ftype),
@@ -158,7 +158,7 @@ module zet_core (
     .opcode  (opcode),
     .modrm   (modrm),
     .rep     (rep),
-    .block   (cpu_block),
+    .block   (1'b0),
     .exec_st (exec_st),
     .div_exc (div_exc),
     .ld_base (ld_base),
@@ -215,7 +215,7 @@ module zet_core (
     .ir      (ir),
     .off     (off),
     .imm     (imm),
-    .wrip0   (wr_ip0),
+    .wrip0   (1'b0),
 
     // to fetch
     .cs      (cs),
@@ -227,17 +227,19 @@ module zet_core (
     .div_exc (div_exc),
 
     // from wb
-    .memout  (iid_dat_i),
-    .wr_data (cpu_dat_o),
-    .addr    (addr_exec),
-    .we      (cpu_we_o),
-    .m_io    (cpu_m_io),
-    .byteop  (byte_exec),
-    .block   (cpu_block)
+    .iid     (iid),
+    .memout  (umie_dat_i),
+    .wr_data (umie_dat_o),
+    .addr    (umie_adr_o),
+    .we      (umie_we_o),
+    .m_io    (umie_tga_o),
+    .byteop  (umie_by_o),
+    .stb     (umie_stb_o),
+    .ack     (umie_ack_i)
   );
 
   // Assignments
-  assign cpu_mem_op = ir[`MEM_OP];
+//  assign cpu_mem_op = ir[`MEM_OP];
 
   assign ftype = rom_ir[28:23];
 
@@ -248,14 +250,12 @@ module zet_core (
         ir     <= 'd0;
         imm    <= 'd0;
         off    <= 'd0;
-        wr_ip0 <= 'd0;
       end
     else
       begin
-        ir     <= exec_st ? rom_ir : `ADD_IP;
-        imm    <= exec_st ? imm_d  : imm_f;
+        ir     <= ld_base ? rom_ir : `NOP_IR;
+        imm    <= imm_d;
         off    <= off_d;
-        wr_ip0 <= wr_ip0_f;
       end
 
 endmodule
