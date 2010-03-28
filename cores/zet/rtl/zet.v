@@ -22,9 +22,11 @@
 `include "defines.v"
 
 module zet (
+    // Common signals
+    input         clk_i,
+    input         rst_i,
+
     // Wishbone master interface
-    input         wb_clk_i,
-    input         wb_rst_i,
     input  [15:0] wb_dat_i,
     output [15:0] wb_dat_o,
     output [19:1] wb_adr_o,
@@ -34,69 +36,87 @@ module zet (
     output        wb_stb_o,
     output        wb_cyc_o,
     input         wb_ack_i,
-    input         wb_tgc_i,  // intr
-    output        wb_tgc_o,  // inta
+
+    // Interrupt line
+    input         intr, // interrupt request
+    output        inta, // interrupt acknowledge
+    input  [ 3:0] iid,  // interrupt id
 
     output [19:0] pc  // for debugging purposes
   );
 
   // Net declarations
-  wire [15:0] cpu_dat_o;
-  wire        cpu_block;
-  wire [19:0] cpu_adr_o;
+  wire [19:0] umif_adr_i;
+  wire [15:0] umif_dat_o;
+  wire        umif_stb_i;
+  wire        umif_by_i;
+  wire        umif_ack_o;
 
-  wire        cpu_byte_o;
-  wire        cpu_mem_op;
-  wire        cpu_m_io;
-  wire [15:0] cpu_dat_i;
-  wire        cpu_we_o;
-  wire [15:0] iid_dat_i;
+  wire [19:0] umie_adr_i;
+  wire [15:0] umie_dat_o;
+  wire [15:0] umie_dat_i;
+  wire        umie_we_i;
+  wire        umie_by_i;
+  wire        umie_stb_i;
+  wire        umie_ack_o;
+  wire        umie_tga_i;
 
-  // Module instantiations
+  // Module instances
   zet_core core (
-    .clk (wb_clk_i),
-    .rst (wb_rst_i),
+    .clk (clk_i),
+    .rst (rst_i),
 
-    .intr (wb_tgc_i),
-    .inta (wb_tgc_o),
+    .umif_adr_o (umif_adr_i),
+    .umif_dat_i (umif_dat_o),
+    .umif_stb_o (umif_stb_i),
+    .umif_by_o  (umif_by_i),
+    .umif_ack_i (umif_ack_o),
 
-    .cpu_adr_o  (cpu_adr_o),
-    .iid_dat_i  (iid_dat_i),
-    .cpu_dat_i  (cpu_dat_i),
-    .cpu_dat_o  (cpu_dat_o),
-    .cpu_byte_o (cpu_byte_o),
-    .cpu_block  (cpu_block),
-    .cpu_mem_op (cpu_mem_op),
-    .cpu_m_io   (cpu_m_io),
-    .cpu_we_o   (cpu_we_o),
+    .umie_adr_o (umie_adr_i),
+    .umie_dat_i (umie_dat_o),
+    .umie_dat_o (umie_dat_i),
+    .umie_we_o  (umie_we_i),
+    .umie_by_o  (umie_by_i),
+    .umie_stb_o (umie_stb_i),
+    .umie_ack_i (umie_ack_o),
+    .umie_tga_o (umie_tga_i),
 
-    .pc (pc)
+    .intr (intr),
+    .inta (inta),
+    .iid  (iid)
   );
 
-  zet_wb_master wb_master (
-    .cpu_byte_o (cpu_byte_o),
-    .cpu_memop  (cpu_mem_op),
-    .cpu_m_io   (cpu_m_io),
-    .cpu_adr_o  (cpu_adr_o),
-    .cpu_block  (cpu_block),
-    .cpu_dat_i  (cpu_dat_i),
-    .cpu_dat_o  (cpu_dat_o),
-    .cpu_we_o   (cpu_we_o),
+  zet_wb_master zet_wb_master (
+    .clk (clk_i),
+    .rst (rst_i),
 
-    .wb_clk_i  (wb_clk_i),
-    .wb_rst_i  (wb_rst_i),
-    .wb_dat_i  (wb_dat_i),
-    .wb_dat_o  (wb_dat_o),
-    .wb_adr_o  (wb_adr_o),
-    .wb_we_o   (wb_we_o),
-    .wb_tga_o  (wb_tga_o),
-    .wb_sel_o  (wb_sel_o),
-    .wb_stb_o  (wb_stb_o),
-    .wb_cyc_o  (wb_cyc_o),
-    .wb_ack_i  (wb_ack_i)
+    .umif_adr_i (umif_adr_i),
+    .umif_dat_o (umif_dat_o),
+    .umif_stb_i (umif_stb_i),
+    .umif_by_i  (umif_by_i),
+    .umif_ack_o (umif_ack_o),
+
+    .umie_adr_i (umie_adr_i),
+    .umie_dat_o (umie_dat_o),
+    .umie_dat_i (umie_dat_i),
+    .umie_we_i  (umie_we_i),
+    .umie_by_i  (umie_by_i),
+    .umie_stb_i (umie_stb_i),
+    .umie_ack_o (umie_ack_o),
+    .umie_tga_i (umie_tga_i),
+
+    .wb_dat_i (wb_dat_i),
+    .wb_dat_o (wb_dat_o),
+    .wb_adr_o (wb_adr_o),
+    .wb_we_o  (wb_we_o),
+    .wb_tga_o (wb_tga_o),
+    .wb_sel_o (wb_sel_o),
+    .wb_stb_o (wb_stb_o),
+    .wb_cyc_o (wb_cyc_o),
+    .wb_ack_i (wb_ack_i)
   );
 
-  // Assignments
-  assign iid_dat_i  = wb_tgc_o ? wb_dat_i : cpu_dat_i;
+  // Continuous assignments
+  assign pc = umif_adr_i;
 
 endmodule

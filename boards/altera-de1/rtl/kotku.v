@@ -115,17 +115,6 @@ module kotku (
   wire        vga_stb_i;
   wire        vga_ack_o;
 
-  // cross clock domain synchronized signals
-  wire [15:0] vga_dat_o_s;
-  wire [15:0] vga_dat_i_s;
-  wire        vga_tga_i_s;
-  wire [19:1] vga_adr_i_s;
-  wire [ 1:0] vga_sel_i_s;
-  wire        vga_we_i_s;
-  wire        vga_cyc_i_s;
-  wire        vga_stb_i_s;
-  wire        vga_ack_o_s;
-
   // wires to uart controller
   wire [15:0] uart_dat_o;
   wire [15:0] uart_dat_i;
@@ -239,8 +228,6 @@ module kotku (
 
   wire        sdram_clk;
 
-  wire        vga_clk;
-
   wire [ 7:0] intv;
   wire [ 2:0] iid;
   wire        intr;
@@ -254,8 +241,7 @@ module kotku (
   pll pll (
     .inclk0 (clk_50_),
     .c0     (sdram_clk),  // 100 Mhz
-    .c1     (vga_clk),    // 25 Mhz
-    .c2     (clk),        // 12.5 Mhz
+    .c1     (clk),        // 25 Mhz
     .locked (lock)
   );
 
@@ -437,38 +423,10 @@ module kotku (
     .sdram_dq    (sdram_data_)
   );
 
-  wb_abrg vga_brg (
-    .sys_rst (rst),
-
-    // Wishbone slave interface
-    .wbs_clk_i (clk),
-    .wbs_adr_i (vga_adr_i_s),
-    .wbs_dat_i (vga_dat_i_s),
-    .wbs_dat_o (vga_dat_o_s),
-    .wbs_sel_i (vga_sel_i_s),
-    .wbs_tga_i (vga_tga_i_s),
-    .wbs_stb_i (vga_stb_i_s),
-    .wbs_cyc_i (vga_cyc_i_s),
-    .wbs_we_i  (vga_we_i_s),
-    .wbs_ack_o (vga_ack_o_s),
-
-    // Wishbone master interface
-    .wbm_clk_i (vga_clk),
-    .wbm_adr_o (vga_adr_i),
-    .wbm_dat_o (vga_dat_i),
-    .wbm_dat_i (vga_dat_o),
-    .wbm_sel_o (vga_sel_i),
-    .wbm_tga_o (vga_tga_i),
-    .wbm_stb_o (vga_stb_i),
-    .wbm_cyc_o (vga_cyc_i),
-    .wbm_we_o  (vga_we_i),
-    .wbm_ack_i (vga_ack_o)
-  );
-
   vga vga (
     // Wishbone slave interface
     .wb_rst_i (rst),
-    .wb_clk_i (vga_clk),   // 25MHz VGA clock
+    .wb_clk_i (clk),   // 25MHz VGA clock
     .wb_dat_i (vga_dat_i),
     .wb_dat_o (vga_dat_o),
     .wb_adr_i (vga_adr_i[16:1]),    // 128K
@@ -687,14 +645,14 @@ module kotku (
     .s0_ack_i (fl_ack_o),
 
     // Slave 1 interface - vga
-    .s1_dat_i (vga_dat_o_s),
-    .s1_dat_o (vga_dat_i_s),
-    .s1_adr_o ({vga_tga_i_s,vga_adr_i_s}),
-    .s1_sel_o (vga_sel_i_s),
-    .s1_we_o  (vga_we_i_s),
-    .s1_cyc_o (vga_cyc_i_s),
-    .s1_stb_o (vga_stb_i_s),
-    .s1_ack_i (vga_ack_o_s),
+    .s1_dat_i (vga_dat_o),
+    .s1_dat_o (vga_dat_i),
+    .s1_adr_o ({vga_tga_i,vga_adr_i}),
+    .s1_sel_o (vga_sel_i),
+    .s1_we_o  (vga_we_i),
+    .s1_cyc_o (vga_cyc_i),
+    .s1_stb_o (vga_stb_i),
+    .s1_ack_i (vga_ack_o),
 
     // Slave 2 interface - uart
     .s2_dat_i (uart_dat_o),

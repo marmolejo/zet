@@ -23,29 +23,34 @@ module zet_core (
     input clk,
     input rst,
 
+    // UMI slave interface - fetch
+    output [19:0] umif_adr_o,
+    input  [15:0] umif_dat_i,
+    output        umif_stb_o,
+    output        umif_by_o,
+    input         umif_ack_i,
+
+    // UMI slave interface - exec
+    output [19:0] umie_adr_o,
+    input  [15:0] umie_dat_i,
+    output [15:0] umie_dat_o,
+    output        umie_we_o,
+    output        umie_by_o,
+    output        umie_stb_o,
+    input         umie_ack_i,
+    output        umie_tga_o,
+
     // interrupts
-    input  intr,
-    output inta,
-
-    // interface to wishbone
-    output [19:0] cpu_adr_o,
-    input  [15:0] iid_dat_i,
-    input  [15:0] cpu_dat_i,
-    output [15:0] cpu_dat_o,
-    output        cpu_byte_o,
-    input         cpu_block,
-    output        cpu_mem_op,
-    output        cpu_m_io,
-    output        cpu_we_o,
-
-    output [19:0] pc  // for debugging purposes
+    input        intr,
+    output       inta,
+    input  [3:0] iid
   );
 
   // Net declarations
-  wire [`IR_SIZE-1:0] ir;
-  wire [15:0] off;
-  wire [15:0] imm;
-  wire        wr_ip0;
+  reg [`IR_SIZE-1:0] ir;
+  reg [15:0] off;
+  reg [15:0] imm;
+  reg        wr_ip0;
 
   wire [15:0] cs;
   wire [15:0] ip;
@@ -87,6 +92,8 @@ module zet_core (
 
   // wires fetch - microcode
   wire [15:0] off_l;
+  wire [15:0] off_d;
+  wire        wr_ip0_f;
   wire [15:0] imm_l;
   wire [15:0] imm_d;
   wire [`IR_SIZE-1:0] rom_ir;
@@ -126,11 +133,9 @@ module zet_core (
 
     // to exec
     .imm_f  (imm_f),
-    .wr_ip0 (wr_ip0),
+    .wr_ip0 (wr_ip0_f),
 
     // from exec
-    .cs      (cs),
-    .ip      (ip),
     .of      (of),
     .zf      (zf),
     .ifl     (ifl),
@@ -138,11 +143,12 @@ module zet_core (
     .div_exc (div_exc),
 
     // to wb
-    .data          (cpu_dat_i),
-    .pc            (pc),
-    .bytefetch     (byte_fetch),
-    .block         (cpu_block),
-    .intr          (intr)
+    .data      (umif_dat_i),
+    .pc        (umif_adr_o),
+    .bytefetch (umif_by_o),
+    .stb       (umif_stb_o),
+    .ack       (umif_ack_i),
+    .intr      (intr)
   );
 
   zet_decode decode (
@@ -197,7 +203,7 @@ module zet_core (
 
     // to exec
     .ir    (rom_ir),
-    .off_o (off),
+    .off_o (off_d),
     .imm_o (imm_d)
   );
 
@@ -231,12 +237,25 @@ module zet_core (
   );
 
   // Assignments
-  assign cpu_adr_o  = exec_st ? addr_exec : pc;
-  assign cpu_byte_o = exec_st ? byte_exec : byte_fetch;
   assign cpu_mem_op = ir[`MEM_OP];
 
-  assign ir    = exec_st ? rom_ir : `ADD_IP;
-  assign imm   = exec_st ? imm_d  : imm_f;
   assign ftype = rom_ir[28:23];
+
+  // Behaviour
+  always @(posedge clk)
+    if (rst)
+      begin
+        ir     <= 'd0;
+        imm    <= 'd0;
+        off    <= 'd0;
+        wr_ip0 <= 'd0;
+      end
+    else
+      begin
+        ir     <= exec_st ? rom_ir : `ADD_IP;
+        imm    <= exec_st ? imm_d  : imm_f;
+        off    <= off_d;
+        wr_ip0 <= wr_ip0_f;
+      end
 
 endmodule

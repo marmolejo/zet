@@ -51,122 +51,141 @@ module zet_fetch (
 
     // to exec
     output [15:0] imm_f,
+    output wr_ip0,
 
-    input [15:0] cs,
-    input [15:0] ip,
+    // from exec
     input of,
     input zf,
+    input ifl,
     input cx_zero,
-    input [15:0] data,
+    input div_exc,
+
+    // to wb
+    input  [15:0] data,
     output [19:0] pc,
-    output bytefetch,
-    input  block,
-    input  div_exc,
-    output wr_ip0,
-    input  intr,
-    input  ifl
+    output        bytefetch,
+    output        stb,
+    input         ack,
+
+    input intr
   );
 
   // Registers, nets and parameters
-  parameter opcod_st = 3'h0;
-  parameter modrm_st = 3'h1;
-  parameter offse_st = 3'h2;
-  parameter immed_st = 3'h3;
-  parameter execu_st = 3'h4;
+  // cs and ip
+  reg [15:0] cs;
+  reg [15:0] ip;
 
-  reg  [2:0] state;
-  wire [2:0] next_state;
+  // symbolic names for sts
+  localparam [2:0]
+    OPCOD = 3'd0,
+    MODRM = 3'd1,
+    OFFSE = 3'd2,
+    IMMED = 3'd3,
+    EXECU = 3'd4;
+
+  reg  [2:0] st;  // current state
+  reg  [2:0] ns;  // next state
 
   wire prefix, repz_pr, sovr_pr;
   wire next_in_opco, next_in_exec;
 
   reg [7:0] opcode_l, modrm_l;
   reg [1:0] pref_l;
+  wire      block;
 
   // Module instantiation
   zet_next_or_not next_or_not(pref_l, opcode[7:1], cx_zero, zf, ext_int, next_in_opco,
                   next_in_exec);
-  zet_nstate nstate (state, prefix, need_modrm, need_off, need_imm, end_seq,
+  zet_nstate nstate (st, prefix, need_modrm, need_off, need_imm, end_seq,
              ftype, of, next_in_opco, next_in_exec, block, div_exc,
-             intr, ifl, next_state);
+             intr, ifl, ns);
 
   // Assignments
   assign pc = (cs << 4) + ip;
 
-  assign opcode = (state == opcod_st) ? data[7:0] : opcode_l;
-  assign modrm  = (state == modrm_st) ? data[7:0] : modrm_l;
-  assign bytefetch = (state == offse_st) ? ~off_size
-                   : ((state == immed_st) ? ~imm_size : 1'b1);
-  assign exec_st = (state == execu_st);
-  assign imm_f = ((state == offse_st) & off_size
-                | (state == immed_st) & imm_size) ? 16'd2
+  assign opcode = (st == OPCOD) ? data[7:0] : opcode_l;
+  assign modrm  = (st == MODRM) ? data[7:0] : modrm_l;
+  assign bytefetch = (st == OFFSE) ? ~off_size
+                   : ((st == IMMED) ? ~imm_size : 1'b1);
+  assign exec_st = (st == EXECU);
+  assign imm_f = ((st == OFFSE) & off_size
+                | (st == IMMED) & imm_size) ? 16'd2
                : 16'd1;
-  assign wr_ip0 = (state == opcod_st) && !pref_l[1] && !sop_l[2];
+  assign wr_ip0 = (st == OPCOD) && !pref_l[1] && !sop_l[2];
 
   assign sovr_pr = (opcode[7:5]==3'b001 && opcode[2:0]==3'b110);
   assign repz_pr = (opcode[7:1]==7'b1111_001);
   assign prefix  = sovr_pr || repz_pr;
-  assign ld_base = (next_state == execu_st);
+  assign ld_base = (ns == EXECU);
   assign rep     = pref_l[1];
+  assign stb     = !ld_base;
+  assign block   = stb && !ack;
 
   // Behaviour
+  // cs and ip logic
   always @(posedge clk)
     if (rst)
       begin
-        state <= execu_st;
-        opcode_l <= `OP_NOP;
+        cs <= 16'hf000;
+        ip <= 16'hfff0;
       end
+    else
+      begin
+        cs <= cs; // we don't change cs at the moment
+        ip <= stb ? (ip + imm_f) : ip;
+      end
+
+  // machine state
+  always @(posedge clk) st <= rst ? EXECU : ns;
+
+  always @(posedge clk)
+    if (rst) opcode_l <= `OP_NOP;
     else if (!block)
-      case (next_state)
+      case (ns)
         default:  // opcode or prefix
           begin
-            case (state)
-              opcod_st:
+            case (st)
+              OPCOD:
                 begin // There has been a prefix
                   pref_l <= repz_pr ? { 1'b1, opcode[0] } : pref_l;
                   sop_l  <= sovr_pr ? { 1'b1, opcode[4:3] } : sop_l;
                 end
               default: begin pref_l <= 2'b0; sop_l <= 3'b0; end
             endcase
-            state <= opcod_st;
             off_l <= 16'd0;
             modrm_l <= 8'b0000_0110;
           end
 
-        modrm_st:  // modrm
+        MODRM:  // modrm
           begin
             opcode_l  <= data[7:0];
-            state <= modrm_st;
           end
 
-        offse_st:  // offset
+        OFFSE:  // offset
           begin
-            case (state)
-              opcod_st: opcode_l <= data[7:0];
+            case (st)
+              OPCOD: opcode_l <= data[7:0];
               default: modrm_l <= data[7:0];
             endcase
-            state <= offse_st;
           end
 
-        immed_st:  // immediate
+        IMMED:  // immediate
           begin
-            case (state)
-              opcod_st: opcode_l <= data[7:0];
-              modrm_st: modrm_l <= data[7:0];
+            case (st)
+              OPCOD: opcode_l <= data[7:0];
+              MODRM: modrm_l <= data[7:0];
               default: off_l <= data;
             endcase
-            state <= immed_st;
           end
 
-        execu_st:  // execute
+        EXECU:  // execute
           begin
-            case (state)
-              opcod_st: opcode_l <= data[7:0];
-              modrm_st: modrm_l <= data[7:0];
-              offse_st: off_l <= data;
-              immed_st: imm_l <= data;
+            case (st)
+              OPCOD: opcode_l <= data[7:0];
+              MODRM: modrm_l <= data[7:0];
+              OFFSE: off_l <= data;
+              IMMED: imm_l <= data;
             endcase
-            state <= execu_st;
           end
       endcase
 endmodule

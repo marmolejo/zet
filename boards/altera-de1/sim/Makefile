@@ -52,6 +52,7 @@ ZET_MODS    = zet_addsub \
               zet_rxr8 \
               zet_rxr16 \
               zet_shrot \
+              zet_arlog \
               zet \
               zet_wb_master \
               zet_signmul17 \
