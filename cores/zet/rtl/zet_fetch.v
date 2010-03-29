@@ -58,6 +58,9 @@ module zet_fetch (
     input cx_zero,
     input div_exc,
 
+    // from control
+    input stall_f,
+
     // to wb
     input  [15:0] data,
     output [19:0] pc,
@@ -137,7 +140,7 @@ module zet_fetch (
   assign ld_base = (ns == EXECU);
   assign rep     = pref_l[1];
   assign stb     = !exec_st;
-  assign block   = stb && !ack;
+  assign block   = (stb & !ack) | stall_f;
 
   // Behaviour
   // cs and ip logic

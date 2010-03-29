@@ -102,6 +102,9 @@ module zet_core (
   // wires fetch - exec
   wire [15:0] imm_f;
 
+  // wires control - fetch
+  wire stall_f;
+
   // Module instantiations
   zet_fetch fetch (
     .clk  (clk),
@@ -142,6 +145,9 @@ module zet_core (
     .cx_zero (cx_zero),
     .div_exc (div_exc),
 
+    // from control
+    .stall_f (stall_f),
+
     // to wb
     .data      (umif_dat_i),
     .pc        (umif_adr_o),
@@ -158,7 +164,7 @@ module zet_core (
     .opcode  (opcode),
     .modrm   (modrm),
     .rep     (rep),
-    .block   (1'b0),
+    .block   (stall_f),
     .exec_st (exec_st),
     .div_exc (div_exc),
     .ld_base (ld_base),
@@ -241,7 +247,8 @@ module zet_core (
   // Assignments
 //  assign cpu_mem_op = ir[`MEM_OP];
 
-  assign ftype = rom_ir[28:23];
+  assign ftype   = rom_ir[28:23];
+  assign stall_f = umie_stb_o & !umie_ack_i;
 
   // Behaviour
   always @(posedge clk)

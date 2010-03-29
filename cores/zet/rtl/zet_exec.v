@@ -97,7 +97,7 @@ module zet_exec (
   assign func   = ir[28:26];
   assign byteop = ir[29];
   assign memalu = ir[30];
-  assign stb    = 1'b0; //ir[31];
+  assign stb    = ir[31];
   assign m_io   = ir[32];
   assign b_imm  = ir[33];
   assign r_byte = ir[34];

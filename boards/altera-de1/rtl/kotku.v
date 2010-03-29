@@ -579,11 +579,11 @@ module kotku (
   );
 
   zet zet (
-    .pc (pc),
+    // Common signals
+    .clk_i (clk),
+    .rst_i (rst),
 
     // Wishbone master interface
-    .wb_clk_i (clk),
-    .wb_rst_i (rst),
     .wb_dat_i (dat_i),
     .wb_dat_o (dat_o),
     .wb_adr_o (adr),
@@ -593,8 +593,13 @@ module kotku (
     .wb_stb_o (stb),
     .wb_cyc_o (cyc),
     .wb_ack_i (ack),
-    .wb_tgc_i (intr),
-    .wb_tgc_o (inta)
+
+    // Interrupt line
+    .intr (intr),
+    .inta (inta),
+    .iid  (iid),
+
+    .pc (pc)
   );
 
   wb_switch #(
@@ -739,8 +744,7 @@ module kotku (
   assign rst_lck         = !sw_[0] & lock;
   assign sdram_clk_      = sdram_clk;
 
-  assign dat_i = inta ? { 13'b0000_0000_0000_1, iid }
-               : sw_dat_o;
+  assign dat_i = sw_dat_o;
 
   assign ledg_[3:0] = pc[3:0];
 
