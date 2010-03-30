@@ -71,8 +71,9 @@ module zet_core (
   wire [3:0] base;
   wire [3:0] index;
   wire [1:0] seg;
-  wire       end_seq;
   wire [2:0] fdec;
+
+  wire       end_seq;
   wire       div;
 
   // wires fetch - decode
@@ -104,6 +105,14 @@ module zet_core (
 
   // wires control - fetch
   wire stall_f;
+
+  reg [`MICRO_ADDR_WIDTH-1:0] seq_addr_l;
+  reg [ 3:0] src_l;
+  reg [ 3:0] dst_l;
+  reg [ 3:0] base_l;
+  reg [ 3:0] index_l;
+  reg [ 1:0] seg_l;
+  reg [ 2:0] fdec_l;
 
   // Module instantiations
   zet_fetch fetch (
@@ -194,16 +203,19 @@ module zet_core (
   );
 
   zet_micro_data micro_data (
-    // from decode
-    .n_micro (seq_addr),
+    // from fetch
     .off_i   (off_l),
     .imm_i   (imm_l),
-    .src     (src),
-    .dst     (dst),
-    .base    (base),
-    .index   (index),
-    .seg     (seg),
-    .fdec    (fdec),
+
+    // from decode
+    .n_micro (seq_addr_l),
+    .src     (src_l),
+    .dst     (dst_l),
+    .base    (base_l),
+    .index   (index_l),
+    .seg     (seg_l),
+    .fdec    (fdec_l),
+
     .div     (div),
     .end_seq (end_seq),
 
@@ -251,18 +263,42 @@ module zet_core (
   assign stall_f = umie_stb_o & !umie_ack_i;
 
   // Behaviour
+  // microcode - exec registers
   always @(posedge clk)
     if (rst)
       begin
-        ir     <= 'd0;
-        imm    <= 'd0;
-        off    <= 'd0;
+        ir  <= 'd0;
+        imm <= 'd0;
+        off <= 'd0;
       end
     else
       begin
-        ir     <= ld_base ? rom_ir : `NOP_IR;
-        imm    <= imm_d;
-        off    <= off_d;
+        ir  <= ld_base ? rom_ir : `NOP_IR;
+        imm <= imm_d;
+        off <= off_d;
+      end
+
+  // decode - microcode registers
+  always @(posedge clk)
+    if (rst)
+      begin
+        seq_addr_l <= 'd0;
+        src_l      <= 'd0;
+        dst_l      <= 'd0;
+        base_l     <= 'd0;
+        index_l    <= 'd0;
+        seg_l      <= 'd0;
+        fdec_l     <= 'd0;
+      end
+    else
+      begin
+        seq_addr_l <= seq_addr;
+        src_l      <= src;
+        dst_l      <= dst;
+        base_l     <= base;
+        index_l    <= index;
+        seg_l      <= seg;
+        fdec_l     <= fdec;
       end
 
 endmodule

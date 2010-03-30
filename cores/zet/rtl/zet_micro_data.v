@@ -20,15 +20,19 @@
 `include "defines.v"
 
 module zet_micro_data (
+    // from decode
     input  [`MICRO_ADDR_WIDTH-1:0] n_micro,
-    input  [15:0] off_i,
-    input  [15:0] imm_i,
     input  [ 3:0] src,
     input  [ 3:0] dst,
     input  [ 3:0] base,
     input  [ 3:0] index,
     input  [ 1:0] seg,
     input  [ 2:0] fdec,
+
+    // from fetch
+    input  [15:0] off_i,
+    input  [15:0] imm_i,
+
     output        div,
     output        end_seq,
 
