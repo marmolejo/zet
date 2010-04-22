@@ -33,6 +33,7 @@ add wave -label si  -hex zet/core/exec/regfile/r\[6\]
 add wave -label di  -hex zet/core/exec/regfile/r\[7\]
 add wave -label sp  -hex zet/core/exec/regfile/r\[4\]
 add wave -label cs  -hex zet/core/exec/regfile/r\[9\]
+add wave -label ss  -hex zet/core/exec/regfile/r\[10\]
 add wave -label ds  -hex zet/core/exec/regfile/r\[11\]
 add wave -label ip  -hex zet/core/exec/regfile/r\[15\]
 add wave -label tmp -hex zet/core/exec/regfile/r\[13\]
@@ -68,4 +69,4 @@ add wave -hex zet/core/fetch/nstate/*
 add wave -divider decode
 add wave -hex zet/core/decode/*
 
-run 1us
+run 10us
