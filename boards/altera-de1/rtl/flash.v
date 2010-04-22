@@ -18,25 +18,25 @@
 
 module flash (
     // Wishbone slave interface
-    input         wb_clk_i,
-    input         wb_rst_i,
-    input  [15:0] wb_dat_i,
-    output [15:0] wb_dat_o,
-    input  [16:1] wb_adr_i,
-    input         wb_we_i,
-    input         wb_tga_i,
-    input         wb_stb_i,
-    input         wb_cyc_i,
-    input  [ 1:0] wb_sel_i,
-    output        wb_ack_o,
+    input             wb_clk_i,
+    input             wb_rst_i,
+    input      [15:0] wb_dat_i,
+    output reg [15:0] wb_dat_o,
+    input      [16:1] wb_adr_i,
+    input             wb_we_i,
+    input             wb_tga_i,
+    input             wb_stb_i,
+    input             wb_cyc_i,
+    input      [ 1:0] wb_sel_i,
+    output reg        wb_ack_o,
 
     // Pad signals
-    output [21:0] flash_addr_,
-    input  [ 7:0] flash_data_,
-    output        flash_we_n_,
-    output        flash_oe_n_,
-    output        flash_ce_n_,
-    output        flash_rst_n_
+    output reg [21:0] flash_addr_,
+    input      [ 7:0] flash_data_,
+    output            flash_we_n_,
+    output reg        flash_oe_n_,
+    output reg        flash_ce_n_,
+    output            flash_rst_n_
   );
 
   // Registers and nets
@@ -44,7 +44,8 @@ module flash (
   wire        opbase;
   wire        word;
   wire        op_word;
-  reg         st;
+  wire   
+  reg  [ 2:0] st;
   reg  [ 7:0] lb;
   reg  [11:0] base;
 
@@ -56,30 +57,50 @@ module flash (
 
   assign flash_rst_n_ = 1'b1;
   assign flash_we_n_  = 1'b1;
-  assign flash_oe_n_  = !op;
-  assign flash_ce_n_  = !op;
 
   assign flash_addr_[21:1] =
     wb_tga_i ? { 1'b1, base, wb_adr_i[8:1] }
              : { 5'h0, wb_adr_i };
 
-  assign flash_addr_[0] = (wb_sel_i==2'b10) | (word & st);
+  assign flash_addr_[0] = (wb_sel_i==2'b10) | (word & st[1]);
 
-  assign wb_ack_o = op & (word ? st : 1'b1);
+  assign wb_ack_o = op & st[0] & (word ? st[1] : 1'b1);
   assign wb_dat_o = wb_sel_i[1] ? { flash_data_, lb }
                                 : { 8'h0, flash_data_ };
 
   // Behaviour
   // st - state
   always @(posedge wb_clk_i)
-    st <= wb_rst_i ? 1'b0 : op_word;
+    st <= wb_rst_i ? 3'd0 : (op & !wb_ack_o ? st + 3'd1 : 3'd0);
 
   // lb - low byte
   always @(posedge wb_clk_i)
-    lb <= wb_rst_i ? 8'h0 : (op_word ? flash_data_ : 8'h0);
+    lb <= wb_rst_i ? 8'h0 : ((op_word & st[0]) ? flash_data_ : 8'h0);
 
   // base
   always @(posedge wb_clk_i)
     base <= wb_rst_i ? 12'h0: ((opbase) ? wb_dat_i[11:0] : base);
+
+  // flash_oe_n_ and flash_ce_n_
+  always @(posedge wb_clk_i)
+    if (wb_rst_i)
+      begin
+        flash_oe_n_ <= 1'b1;
+        flash_ce_n_ <= 1'b1;
+      end
+    else
+      begin
+        flash_oe_n_ <= !op;
+        flash_ce_n_ <= !op;
+      end
+
+  // flash_addr_
+  always @(posedge wb_clk_i)
+    if (wb_rst_i) flash_addr_ <= 22'h0;
+    else if (op)
+      flash_addr_ <= wb_tga_i ?
+        { 1'b1, base, wb_adr_i[8:1] }
+             : { 5'h0, wb_adr_i };
+
 
 endmodule
