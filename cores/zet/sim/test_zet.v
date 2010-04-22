@@ -90,7 +90,7 @@ module test_zet;
     else if (adr[15:1]==15'h5c & sel[0] && cyc && stb)
       io_reg[15:8] <= dat_o[7:0];
 
-  always #1 clk = ~clk;
+  always #1.5 clk = ~clk;
 
   initial
     begin
