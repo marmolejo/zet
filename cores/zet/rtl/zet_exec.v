@@ -113,7 +113,7 @@ module zet_exec (
   assign zf  = flags[3];
 
   assign iflags = oflags;
-  assign alu_iflags = { 4'b0, flags[8:3], 1'b0, flags[2], 1'b0, flags[1],
+  assign alu_iflags = { 4'b1111, flags[8:3], 1'b0, flags[2], 1'b0, flags[1],
                         1'b1, flags[0] };
   assign logic_flags = { flags[8], flags[4], flags[3], flags[1], flags[0] };
 
