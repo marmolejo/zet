@@ -95,6 +95,16 @@ module zet_core (
   // wires fetch - exec
   wire [15:0] imm_f;
 
+  wire block_or_hlt;
+
+  // wires and regs for hlt
+  wire hlt_op;
+  wire hlt_in;
+  wire hlt_out;
+
+  reg hlt_op_old;
+  reg hlt;
+
   // Module instantiations
   zet_fetch fetch (
     .clk  (clk),
@@ -141,7 +151,7 @@ module zet_core (
     .data          (cpu_dat_i),
     .pc            (pc),
     .bytefetch     (byte_fetch),
-    .block         (cpu_block),
+    .block         (cpu_block_or_hlt),
     .intr          (intr)
   );
 
@@ -152,7 +162,7 @@ module zet_core (
     .opcode  (opcode),
     .modrm   (modrm),
     .rep     (rep),
-    .block   (cpu_block),
+    .block   (cpu_block_or_hlt),
     .exec_st (exec_st),
     .div_exc (div_exc),
     .ld_base (ld_base),
@@ -227,7 +237,7 @@ module zet_core (
     .we      (cpu_we_o),
     .m_io    (cpu_m_io),
     .byteop  (byte_exec),
-    .block   (cpu_block)
+    .block   (cpu_block_or_hlt)
   );
 
   // Assignments
@@ -238,5 +248,29 @@ module zet_core (
   assign ir    = exec_st ? rom_ir : `ADD_IP;
   assign imm   = exec_st ? imm_d  : imm_f;
   assign ftype = rom_ir[28:23];
+
+  assign hlt_op = ((opcode == `OP_HLT) && exec_st); 
+  assign hlt_in = (hlt_op && !hlt_op_old && !hlt_out);
+  assign hlt_out = intr & ifl;
+  assign cpu_block_or_hlt = cpu_block | hlt | hlt_in;
+
+  // Behaviour
+  always @(posedge clk)
+    if (rst)
+      hlt_op_old <= 1'b0;
+    else
+      if (hlt_op)
+        hlt_op_old <= 1'b1;
+      else
+        hlt_op_old <= 1'b0;
+
+  always @(posedge clk)
+    if (rst)
+      hlt <= 1'b0;
+    else
+      if (hlt_in)
+        hlt <= 1'b1;
+      else if (hlt_out)
+        hlt <= 1'b0;
 
 endmodule

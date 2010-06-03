@@ -777,9 +777,9 @@ CoMplement Carry flag
  CMC    000__x_xx_xx_xx_xx__x__x__x__1__x_01__0_100_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx
 
 === hlt ===
-HaLT
+HaLT, actually NOP, requires external circuit
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- HLT    101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_1111_xxxx_xxxx_1111_xx
+ HLT    000__0_00_00_00_00__0__0__0__0__0_00__0_000_000__0_00__0__0_0000_0000_0000_0000_00  // (b) r->r
 
 === stc ===
 SeT Carry flag
@@ -795,3 +795,51 @@ SeT Direction flag
 SeT Interrupt flag
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
  STI    001__x_xx_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx
+
+=== esc ===
+ESCape, coprocessor operation
+* '''Register'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ESCRW  xxx__x_01_xx_xx_10__x__x__0__0__x_01__0_000_100__0_00__0__0_dddd_xxxx_xxxx_dddd_xx  // r
+* '''Memory'''
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ ESCMW  xxx__1_00_xx_01_01__1__x__0__0__0_10__0_000_111__0_00__0__0_1101_xxxx_mmmm_mmmm_mm  // ld
+ ESCMW  xxx__x_00_xx_xx_00__x__x__0__0__x_01__0_000_100__0_00__0__0_1101_xxxx_xxxx_1101_xx  // r
+
+=== pusha ===
+PUSH All registers onto stack
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ PUSHA  000__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_1101_xxxx_xxxx_0100_xx  // sp->tmp
+ PUSHA  010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ PUSHA  xxx__0_xx_10_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_0001_1100_1101_10  // st(cx)
+ PUSHA  xxx__0_xx_10_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_0000_1100_1101_10  // st(ax)
+ PUSHA  010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ PUSHA  xxx__0_xx_10_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_0011_1100_1101_10  // st(bx)
+ PUSHA  xxx__0_xx_10_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_0010_1100_1101_10  // st(dx)
+ PUSHA  010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ PUSHA  xxx__0_xx_10_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_0101_1100_1101_10  // st(bp)
+ PUSHA  xxx__0_xx_10_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1101_1100_1101_10  // st(tmp)
+ PUSHA  010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ PUSHA  xxx__0_xx_10_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_0111_1100_1101_10  // st(di)
+ PUSHA  xxx__0_xx_10_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_0110_1100_1101_10  // st(si)
+
+=== popa ===
+POP All registers from stack
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ POPA   xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_0111_xxxx_1100_0100_10  // ld(di)
+ POPA   xxx__0_00_xx_00_00__0__x__0__0__0_10__0_001_111__0_01__0__0_0110_xxxx_1100_0100_10  // ld(si)
+ POPA   010__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+4
+ POPA   xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_0101_xxxx_1100_0100_10  // ld(bp)
+ POPA   010__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+4
+ POPA   xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_0011_xxxx_1100_0100_10  // ld(bx)
+ POPA   xxx__0_00_xx_00_00__0__x__0__0__0_10__0_001_111__0_01__0__0_0010_xxxx_1100_0100_10  // ld(dx)
+ POPA   010__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+4
+ POPA   xxx__0_00_xx_00_00__0__x__0__0__0_10__0_000_111__0_01__0__0_0011_xxxx_1100_0100_10  // ld(cx)
+ POPA   xxx__0_00_xx_00_00__0__x__0__0__0_10__0_001_111__0_01__0__0_0010_xxxx_1100_0100_10  // ld(ax)
+ POPA   010__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp+4
+
+ === invop ===
+INValid OPcode, halt
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ INVOP  101__x_00_xx_xx_00__x__x__0__1__x_01__0_001_001__0_01__0__0_1111_xxxx_xxxx_1111_xx
+
