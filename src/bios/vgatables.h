@@ -1,10 +1,12 @@
-/*
- *
- * BIOS Memory 
- *
- */
-#define BIOSMEM_SEG 0x40
-
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//  ZET VGA Bios Tables
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+#ifndef vgatables_h_included
+#define vgatables_h_included
+//---------------------------------------------------------------------------
+#define BIOSMEM_SEG           0x40
 #define BIOSMEM_INITIAL_MODE  0x10
 #define BIOSMEM_CURRENT_MODE  0x49
 #define BIOSMEM_NB_COLS       0x4A
@@ -26,12 +28,11 @@
 #define BIOSMEM_VBE_FLAG      0xB9
 #define BIOSMEM_VBE_MODE      0xBA
 
-
-/*
- *
- * VGA registers
- *
- */
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//  VGA registers
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 #define VGAREG_ACTL_ADDRESS            0x3c0
 #define VGAREG_ACTL_WRITE_DATA         0x3c0
 #define VGAREG_ACTL_READ_DATA          0x3c1
@@ -72,11 +73,11 @@
 #define VGAMEM_CTEXT 0xB800
 #define VGAMEM_MTEXT 0xB000
 
-/*
- *
- * Tables of default values for each mode
- *
- */
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+// Tables of default values for each mode
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 #define MODE_MAX   15
 #define TEXT       0x00
 #define GRAPH      0x01
@@ -94,49 +95,64 @@
 #define LINEAR24   0x12
 #define LINEAR32   0x13
 
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+// Table defintions
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 typedef struct
-{Bit8u  svgamode;
- Bit8u  class;    /* TEXT, GRAPH */
- Bit8u  memmodel; /* CTEXT,MTEXT,CGA,PL1,PL2,PL4,P8,P15,P16,P24,P32 */
- Bit8u  pixbits;
- Bit16u sstart;
- Bit8u  pelmask;
- Bit8u  dacmodel; /* 0 1 2 3 */
+{
+    Bit8u  svgamode;
+    Bit8u  class;       // TEXT, GRAPH 
+    Bit8u  memmodel;    // CTEXT,MTEXT,CGA,PL1,PL2,PL4,P8,P15,P16,P24,P32 
+    Bit8u  pixbits;
+    Bit16u sstart;
+    Bit8u  pelmask;
+    Bit8u  dacmodel;    // 0 1 2 3 
 } VGAMODES;
 
-static VGAMODES vga_modes[MODE_MAX+1]=
-{//mode  class  model bits sstart  pelm  dac
- {0x00, TEXT,  CTEXT,   4, 0xB800, 0xFF, 0x02},
- {0x01, TEXT,  CTEXT,   4, 0xB800, 0xFF, 0x02},
- {0x02, TEXT,  CTEXT,   4, 0xB800, 0xFF, 0x02},
- {0x03, TEXT,  CTEXT,   4, 0xB800, 0xFF, 0x02},
- {0x04, GRAPH, CGA,     2, 0xB800, 0xFF, 0x01},
- {0x05, GRAPH, CGA,     2, 0xB800, 0xFF, 0x01},
- {0x06, GRAPH, CGA,     1, 0xB800, 0xFF, 0x01},
- {0x07, TEXT,  MTEXT,   4, 0xB000, 0xFF, 0x00},
- {0x0D, GRAPH, PLANAR4, 4, 0xA000, 0xFF, 0x01},
- {0x0E, GRAPH, PLANAR4, 4, 0xA000, 0xFF, 0x01},
- {0x0F, GRAPH, PLANAR1, 1, 0xA000, 0xFF, 0x00},
- {0x10, GRAPH, PLANAR4, 4, 0xA000, 0xFF, 0x02},
- {0x11, GRAPH, PLANAR1, 1, 0xA000, 0xFF, 0x02},
- {0x12, GRAPH, PLANAR4, 4, 0xA000, 0xFF, 0x02},
- {0x13, GRAPH, LINEAR8, 8, 0xA000, 0xFF, 0x03},
- {0x6A, GRAPH, PLANAR4, 4, 0xA000, 0xFF, 0x02}
+//---------------------------------------------------------------------------
+static VGAMODES vga_modes[MODE_MAX+1] =
+{
+    //mode  class  model bits sstart  pelm  dac
+    {0x00, TEXT,  CTEXT,   4, 0xB800, 0xFF, 0x02},
+    {0x01, TEXT,  CTEXT,   4, 0xB800, 0xFF, 0x02},
+    {0x02, TEXT,  CTEXT,   4, 0xB800, 0xFF, 0x02},
+    {0x03, TEXT,  CTEXT,   4, 0xB800, 0xFF, 0x02},
+    {0x04, GRAPH, CGA,     2, 0xB800, 0xFF, 0x01},
+    {0x05, GRAPH, CGA,     2, 0xB800, 0xFF, 0x01},
+    {0x06, GRAPH, CGA,     1, 0xB800, 0xFF, 0x01},
+    {0x07, TEXT,  MTEXT,   4, 0xB000, 0xFF, 0x00},
+    {0x0D, GRAPH, PLANAR4, 4, 0xA000, 0xFF, 0x01},
+    {0x0E, GRAPH, PLANAR4, 4, 0xA000, 0xFF, 0x01},
+    {0x0F, GRAPH, PLANAR1, 1, 0xA000, 0xFF, 0x00},
+    {0x10, GRAPH, PLANAR4, 4, 0xA000, 0xFF, 0x02},
+    {0x11, GRAPH, PLANAR1, 1, 0xA000, 0xFF, 0x02},
+    {0x12, GRAPH, PLANAR4, 4, 0xA000, 0xFF, 0x02},
+    {0x13, GRAPH, LINEAR8, 8, 0xA000, 0xFF, 0x03},
+    {0x6A, GRAPH, PLANAR4, 4, 0xA000, 0xFF, 0x02}
 };
 
-/* convert index in vga_modes[] to index in video_param_table[] */
+//---------------------------------------------------------------------------
+// convert index in vga_modes[] to index in video_param_table[] 
+//---------------------------------------------------------------------------
 static Bit8u line_to_vpti[MODE_MAX+1]={
     0x17, 0x17, 0x18, 0x18, 0x04, 0x05, 0x06, 0x07, 
     0x0d, 0x0e, 0x11, 0x12, 0x1a, 0x1b, 0x1c, 0x1d,
 };
 
-/* Default Palette */
+//---------------------------------------------------------------------------
+// Default Palette 
+//---------------------------------------------------------------------------
 #define DAC_MAX_MODEL 3
 
+//---------------------------------------------------------------------------
 static Bit8u dac_regs[DAC_MAX_MODEL+1]=
-{0x3f,0x3f,0x3f,0xff};
+    {0x3f,0x3f,0x3f,0xff};
 
-/* standard BIOS Video Parameter Table */
+//---------------------------------------------------------------------------
+// standard BIOS Video Parameter Table 
+//---------------------------------------------------------------------------
 typedef struct {
     Bit8u  twidth;
     Bit8u  theightm1;
@@ -150,7 +166,9 @@ typedef struct {
     Bit8u  grdc_regs[9];
 } VideoParamTableEntry;
 
-static VideoParamTableEntry video_param_table[30] = {
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+VideoParamTableEntry video_param_table[30] = {
 {
  /* index=0x00 no mode defined */
  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -528,7 +546,9 @@ static VideoParamTableEntry video_param_table[30] = {
 },
 };
 
-/* Mono */
+//---------------------------------------------------------------------------
+//  Mono 
+//---------------------------------------------------------------------------
 static Bit8u palette0[63+1][3]=
 {
   0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00,
@@ -604,6 +624,8 @@ static Bit8u palette3[256][3]=
   0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00
 };
 
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 static Bit8u static_functionality[0x10]=
 {
  /* 0 */ 0xff,  // All modes supported #1
@@ -620,3 +642,27 @@ static Bit8u static_functionality[0x10]=
  /* e */ 0x00,  // Change to add new functions
  /* f */ 0x00   // reserved
 };
+
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+Bit16u video_save_pointer_table[] = {
+            (Bit16u)video_param_table,
+            0xc000,
+            0,              // XXX: fill it 
+            0,
+            0,              // XXX: fill it 
+            0,
+            0,              // XXX: fill it 
+            0,
+            0,              // XXX: fill it 
+            0,
+            0,              // XXX: fill it 
+            0,
+            0,              // XXX: fill it 
+            0
+};
+
+//---------------------------------------------------------------------------
+#endif
+//---------------------------------------------------------------------------
+
