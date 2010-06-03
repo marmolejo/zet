@@ -1,7 +1,7 @@
-romimage: file=01_movb.out
+romimage: file=01_mov1.out
 cpu: count=1, ips=10000000, reset_on_triple_fault=1
 megs: 2
-vgaromimage: file=/tmp/bochs-2.4.2/bios/VGABIOS-lgpl-latest
+vgaromimage: file=../src/bochs-2.3.7-dbg/bios/VGABIOS-lgpl-latest
 #vgaromimage: file=/usr/share/vgabios/vgabios.bin
 vga: extension=none
 floppy_bootsig_check: disabled=0

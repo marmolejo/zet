@@ -123,7 +123,7 @@ module zet_wb_master (
     else
       case (ns)
         BY1E: wb_sel_o <= umie_adr_i[0] ? 2'b10
-                        : (umif_by_i ? 2'b01 : 2'b11);
+                        : (umie_by_i ? 2'b01 : 2'b11);
         BY2E: wb_sel_o <= 2'b01;
         default: wb_sel_o <= 2'b11;
       endcase

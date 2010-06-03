@@ -21,8 +21,12 @@ add wave -label off_size   -hex zet/core/off_size
 add wave -label need_imm   -hex zet/core/need_imm
 add wave -label imm_size   -hex zet/core/imm_size
 add wave -label ir         -hex zet/core/ir
-add wave -label imm        -hex zet/core/imm
-add wave -label off        -hex zet/core/off
+
+add wave -divider fetch
+add wave -label imm        -hex zet/core/fetch/imm
+add wave -label imm_l      -hex zet/core/fetch/imm_l
+add wave -label off        -hex zet/core/fetch/off
+add wave -label off_l      -hex zet/core/fetch/off_l
 
 add wave -divider regfile
 add wave -label ax  -hex zet/core/exec/regfile/r\[0\]
@@ -44,9 +48,11 @@ add wave -divider wb_master
 add wave -hex zet/wb_master/*
 
 add wave -divider f-e
-add wave -label ir  -hex zet/core/ir
-add wave -label imm -hex zet/core/imm
-add wave -label off -hex zet/core/off
+add wave -label ir    -hex zet/core/ir
+add wave -label imm   -hex zet/core/imm
+add wave -label imm_d -hex zet/core/imm_d
+add wave -label off   -hex zet/core/off
+add wave -label off_d -hex zet/core/off_d
 
 #add wave -label cpu_block -hex zet/cpu_block
 #add wave -label stb       -hex stb
@@ -78,7 +84,7 @@ add wave -hex zet/core/decode/*
 #add wave -divider core
 #add wave -hex zet/core/*
 
-#add wave -divider micro_data
-#add wave -hex zet/core/micro_data/*
+add wave -divider micro_data
+add wave -hex zet/core/micro_data/*
 
-run 10us
+run 465ns
