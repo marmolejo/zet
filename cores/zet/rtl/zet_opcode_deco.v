@@ -215,6 +215,28 @@ module zet_opcode_deco (
           dst <= { 1'b0, op[2:0] };
         end
 
+      8'b0110_0000: // pusha
+        begin
+          seq_addr <= `PUSHA;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
+
+      8'b0110_0001: // popa
+        begin
+          seq_addr <= `POPA;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
+
       8'b0110_10x0: // push imm
         begin
           seq_addr <= `PUSHI;
@@ -419,15 +441,24 @@ module zet_opcode_deco (
           dst <= 4'b0;
         end
 
+      8'b1001_1011: // wait
+        begin
+          seq_addr <= `NOP;
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+          imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
+
       8'b1001_1100: // pushf
         begin
           seq_addr <= `PUSHF;
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
-
           imm_size <= 1'b0;
-
           src <= 4'b0;
           dst <= 4'b0;
         end
@@ -771,6 +802,17 @@ module zet_opcode_deco (
           dst <= 4'b0;
         end
 
+      8'b1101_1xxx: // esc
+        begin
+          seq_addr <= (mod==2'b11) ? `ESCRW : `ESCMW;
+          need_modrm <= 1'b1;
+          need_off   <= need_off_mod;
+          need_imm   <= 1'b0;
+          imm_size   <= 1'b0;
+          src        <= { 1'b0, modrm[2:0] };
+          dst        <= 4'b0;
+        end
+
       8'b1110_0000: // loopne
         begin
           seq_addr <= `LOOPNE;
@@ -894,14 +936,24 @@ module zet_opcode_deco (
           dst <= 4'b0;
         end
 
-      8'b1111_0100: // hlt
+      8'b1111_0000: // lock prefix
         begin
-          seq_addr <= `HLT;
+          seq_addr <= `NOP;
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
           imm_size <= 1'b0;
+          src <= 4'b0;
+          dst <= 4'b0;
+        end
 
+      8'b1111_0100: // hlt
+        begin
+          seq_addr <= `HLT; // hlt processing is in zet_core.v
+          need_modrm <= 1'b0;
+          need_off <= 1'b0;
+          need_imm <= 1'b0;
+          imm_size <= 1'b0;
           src <= 4'b0;
           dst <= 4'b0;
         end
@@ -1048,14 +1100,13 @@ module zet_opcode_deco (
           dst <= 4'b0;
         end
 
-      default: // hlt
+      default: // invalid opcode
         begin
-          seq_addr <= `HLT;
+          seq_addr <= `INVOP;
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
           imm_size <= 1'b0;
-
           src <= 4'b0;
           dst <= 4'b0;
         end
