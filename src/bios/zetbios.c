@@ -1421,6 +1421,89 @@ static void print_boot_device(ipl_entry_t BASESTK *e)
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
+// INT14 Support Function - Serail Comm
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+void __cdecl int14_function(Bit16u rAX, Bit16u rDX, Bit16u rDS, Bit16u rIP, Bit16u rCS, Bit16u rFLAGS)
+{
+    Bit16u addr, timer, val16;
+    Bit8u  counter, val8;
+
+    addr    = read_word(0x0040, (rDX << 1));
+    counter = read_byte(0x0040, 0x007C + rDX);
+
+    __asm { sti };
+
+    if((rDX < 4) && (addr > 0)) {
+        switch(GET_AH()) {
+            case 0:
+                outb((addr + 3), inb(addr + 3) | 0x80);
+                if(GET_AL() & 0xE0 == 0) {
+                    outb(addr, 0x17);
+                    outb(addr+1, 0x04);
+                }
+                else {
+                    val16 = 0x600 >> (((GET_AL()) & 0xE0) >> 5);
+                    outb(addr, val16 & 0xFF);
+                    outb((addr + 1), val16 >> 8);
+                }
+                val8 = GET_AL() & 0x1F; outb((addr + 3), val8);
+                val8 = inb(addr + 5); SET_AH(val8);
+                val8 = inb(addr + 6); SET_AL(val8);
+                CLEAR_CF();
+                break;
+            case 1:
+                timer = read_word(0x0040, 0x006C);
+                while(((inb(addr+5) & 0x60) != 0x60) && (counter)) {
+                     val16 = read_word(0x0040, 0x006C);
+                    if(val16 != timer) {
+                        timer = val16;
+                        counter--;
+                    }
+                }
+                if(counter > 0) {
+                    outb(addr, GET_AL());
+                    val8 = inb(addr + 5); SET_AH(val8);
+                }
+                else {
+                    SET_AH(0x80);
+                }
+                CLEAR_CF();
+                break;
+            case 2:
+                timer = read_word(0x0040, 0x006C);
+                while(((inb(addr + 5) & 0x01) == 0) && (counter)) {
+                    val16 = read_word(0x0040, 0x006C);
+                    if(val16 != timer) {
+                        timer = val16;
+                        counter--;
+                    }
+                }
+                if(counter > 0) {
+                    val8 = inb(addr + 5); SET_AH(val8);
+                    val8 = inb(addr    ); SET_AL(val8);
+                }
+                else {
+                    SET_AH(0x80);
+                }
+                CLEAR_CF();
+                break;
+            case 3:
+                val8 = inb(addr + 5); SET_AH(val8);
+                val8 = inb(addr + 6); SET_AL(val8);
+                CLEAR_CF();
+                break;
+            default:
+                SET_CF();       // Unsupported
+        }
+    }
+    else {
+        SET_CF(); // Unsupported
+    }
+}
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 // INT19 Support Function
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------

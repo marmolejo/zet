@@ -65,6 +65,7 @@ IPL_TYPE_BEV            equ     080h     ;
                         EXTRN  _int13_harddisk         :proc      ; Contained in C source module
                         EXTRN  _boot_halt              :proc      ; Contained in C source module
                         EXTRN  _int19_function         :proc      ; Contained in C source module
+                        EXTRN  _int14_function         :proc      ; Contained in C source module
                         EXTRN  _int1a_function         :proc      ; Time-of-day Service Entry Point
                         EXTRN  _int09_function         :proc      ; BIOS Interupt 09
                         EXTRN  _int16_function         :proc      ; Keyboard Service Entry Point
@@ -193,6 +194,17 @@ ebda_post:              xor     ax, ax                                ;; mov EBD
                         mov     WORD PTR ds:00480h, bx
                         mov     bx, 003Eh                   ; keyboard pointer to end of buffer
                         mov     WORD PTR ds:00482h, bx
+
+                        mov     bx, 03F8h                   ; COM1 Adapter
+                        mov     WORD PTR ds:0400h, bx       ; Serial port Setup, hard coded rather
+                        mov     bx, 02F8h                   ; COM2 Adapter
+                        mov     WORD PTR ds:0402h, bx       ; than detecting them,
+                        
+                        ; Equipment list set up, This is the the only place
+                        ;           1111110000000000
+                        ;           5432109876543210
+                        mov     ax, 0000010001000001B       ; where we setup the equipment list, 
+                        mov     WORD PTR ds:0410h, ax       ; Equipment word bits 9..11 determing # serial ports
 
                         SET_INT_VECTOR 01Ah, 0F000h, int1a_handler    ;; CMOS RTC
                         SET_INT_VECTOR 010h, 0F000h, int10_handler    ;; int10_handler - Video Support Service Entry Point
@@ -545,6 +557,34 @@ int19_next_boot:        call    _int19_function     ;; Call the C code for the n
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
+;; INT14h - IBM entry point for Serial com. RS232 services
+;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
+                        org     (0e729h - startofrom) 
+int14_handler:          push    ds                  ; save on stack
+                        push    ax                  ; place ax on stack
+                        push    dx                  ; place ax on stack
+                        xor     ax, ax              ; Clear ax
+                        mov     ds, ax              ; make data segment 0
+                        call    _int14_function
+                        pop     dx
+                        pop     ax
+                        pop     ds
+                        iret                        ; Baud Rate Generator Table
+baud_rates:             dw      0417h               ;  110 baud clock divisor
+                        dw      0300h               ;  150 baud clock divisor
+                        dw      0180h               ;  300 baud clock divisor
+                        dw      00C0h               ;  600 baud clock divisor
+                        dw      0060h               ; 1200 baud clock divisor
+                        dw      0030h               ; 2400 baud clock divisor
+                        dw      0018h               ; 4800 baud clock divisor
+                        dw      000Ch               ; 9600 baud clock divisor
+
+;;int14_handler:          sti                         ; Serial com. RS232 services
+;;                        iret                        ;; return from interupt
+
+;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; INT16 Keyboard Service Entry Point -
 ;; This interupt service routine checks the AH register to see if the user
 ;; wants to check for a key or wait for a key. If AH==0, then the user is 
@@ -732,7 +772,7 @@ int12_handler:          push    ds
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
-;;INT11h -  INT 11h Equipment List Service Entry Point
+;; INT11h -  INT 11h Equipment List Service Entry Point, 2 bytes Equipment Word 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0f84dh - startofrom)

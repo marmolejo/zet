@@ -415,6 +415,7 @@ void __cdecl    MakeRamdisk(void);
 void __cdecl    print_bios_banner(void);
 void __cdecl    int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS);
 void __cdecl    int09_function(Bit16u rAX);
+void __cdecl    int14_function(Bit16u rAX, Bit16u rDX, Bit16u rDS, Bit16u rIP, Bit16u rCS, Bit16u rFLAGS);
 void __cdecl    int13_harddisk         (Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u);
 void __cdecl    int13_diskette_function(Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u);
 
