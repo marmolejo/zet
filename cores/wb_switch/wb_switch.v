@@ -42,8 +42,10 @@ module wb_switch #(
     parameter s6_mask_1 = 20'h00000,
     parameter s7_addr_1 = 20'h00000,
     parameter s7_mask_1 = 20'h00000,
-    parameter s7_addr_2 = 20'h00000,
-    parameter s7_mask_2 = 20'h00000
+    parameter s8_addr_1 = 20'h00000,
+    parameter s8_mask_1 = 20'h00000,
+    parameter s8_addr_2 = 20'h00000,
+    parameter s8_mask_2 = 20'h00000
   )
   (
     // Master interface
@@ -126,7 +128,7 @@ module wb_switch #(
     output        s6_stb_o,
     input         s6_ack_i,
 
-    // Slave 7 interface - masked default
+    // Slave 7 interface
     input  [15:0] s7_dat_i,
     output [15:0] s7_dat_o,
     output [20:1] s7_adr_o,
@@ -136,7 +138,7 @@ module wb_switch #(
     output        s7_stb_o,
     input         s7_ack_i,
 
-    // Slave 8 interface - default
+    // Slave 8 interface - masked default
     input  [15:0] s8_dat_i,
     output [15:0] s8_dat_o,
     output [20:1] s8_adr_o,
@@ -144,7 +146,17 @@ module wb_switch #(
     output        s8_we_o,
     output        s8_cyc_o,
     output        s8_stb_o,
-    input         s8_ack_i
+    input         s8_ack_i,
+
+    // Slave 9 interface - default
+    input  [15:0] s9_dat_i,
+    output [15:0] s9_dat_o,
+    output [20:1] s9_adr_o,
+    output [ 1:0] s9_sel_o,
+    output        s9_we_o,
+    output        s9_cyc_o,
+    output        s9_stb_o,
+    input         s9_ack_i
   );
 
   // address + byte select + data
@@ -152,7 +164,7 @@ module wb_switch #(
 `define mbusw_ls  20 + 2 + 16 + 1 + 1 + 1
 
   // Registers and nets
-  wire [ 8:0] slave_sel;
+  wire [ 9:0] slave_sel;
   wire [15:0] i_dat_s;   // internal shared bus, slave data to master
   wire        i_bus_ack; // internal shared bus, ack signal
 
@@ -165,7 +177,7 @@ module wb_switch #(
 
   assign i_bus_ack = s0_ack_i | s1_ack_i | s2_ack_i | s3_ack_i
                    | s4_ack_i | s5_ack_i | s6_ack_i | s7_ack_i
-                   | s8_ack_i;
+                   | s8_ack_i | s9_ack_i;
 
   assign i_dat_s =
      ({16{slave_sel[0]}} & s0_dat_i)
@@ -176,7 +188,8 @@ module wb_switch #(
     |({16{slave_sel[5]}} & s5_dat_i)
     |({16{slave_sel[6]}} & s6_dat_i)
     |({16{slave_sel[7]}} & s7_dat_i)
-    |({16{slave_sel[8]}} & s8_dat_i);
+    |({16{slave_sel[8]}} & s8_dat_i)
+    |({16{slave_sel[9]}} & s9_dat_i);
 
   assign slave_sel[0] = ((m_adr_i & s0_mask_1) == s0_addr_1)
                       | ((m_adr_i & s0_mask_2) == s0_addr_2)
@@ -190,11 +203,12 @@ module wb_switch #(
   assign slave_sel[4] = ((m_adr_i & s4_mask_1) == s4_addr_1);
   assign slave_sel[5] = ((m_adr_i & s5_mask_1) == s5_addr_1);
   assign slave_sel[6] = ((m_adr_i & s6_mask_1) == s6_addr_1);
-  assign slave_sel[7] = (((m_adr_i & s7_mask_1) == s7_addr_1)
-                      | ((m_adr_i & s7_mask_2) == s7_addr_2))
-                      & ~(|slave_sel[6:0]);
+  assign slave_sel[7] = ((m_adr_i & s7_mask_1) == s7_addr_1);
+  assign slave_sel[8] = (((m_adr_i & s8_mask_1) == s8_addr_1)
+                      | ((m_adr_i & s8_mask_2) == s8_addr_2))
+                      & ~(|slave_sel[7:0]);
 
-  assign slave_sel[8] = ~(|slave_sel[7:0]);
+  assign slave_sel[9] = ~(|slave_sel[8:0]);
 
   assign i_bus_m = {m_adr_i, m_sel_i, m_dat_i, m_we_i, m_cyc_i, m_stb_i};
 
@@ -244,5 +258,10 @@ module wb_switch #(
   assign {s8_adr_o, s8_sel_o, s8_dat_o, s8_we_o, s8_cyc_o}
     = i_bus_m[`mbusw_ls -1:1];
   assign s8_stb_o = i_bus_m[1] & i_bus_m[0] & slave_sel[8];
+
+  // slave 9
+  assign {s9_adr_o, s9_sel_o, s9_dat_o, s9_we_o, s9_cyc_o}
+    = i_bus_m[`mbusw_ls -1:1];
+  assign s9_stb_o = i_bus_m[1] & i_bus_m[0] & slave_sel[9];
 
 endmodule

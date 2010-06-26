@@ -75,7 +75,19 @@ module kotku (
     output        sd_sclk_,
     input         sd_miso_,
     output        sd_mosi_,
-    output        sd_ss_
+    output        sd_ss_,
+
+    // I2C
+    inout         i2c_sdat,
+    output        i2c_sclk,
+
+    // AUDIO CODEC
+    output        aud_adclrck,
+    input         aud_adcdat,
+    inout         aud_daclrck,
+    output        aud_dacdat,
+    inout         aud_bclk,
+    output        aud_xck
   );
 
   // Registers and nets
@@ -147,6 +159,17 @@ module kotku (
   wire        keyb_cyc_i;
   wire        keyb_stb_i;
   wire        keyb_ack_o;
+
+  // wires to timer controller
+  wire [15:0] timer_dat_o;
+  wire [15:0] timer_dat_i;
+  wire        timer_tga_i;
+  wire [19:1] timer_adr_i;
+  wire [ 1:0] timer_sel_i;
+  wire        timer_we_i;
+  wire        timer_cyc_i;
+  wire        timer_stb_i;
+  wire        timer_ack_o;
 
   // wires to sd controller
   wire [15:0] sd_dat_o;
@@ -241,6 +264,12 @@ module kotku (
 
   wire        vga_clk;
 
+  wire        timer_clk;
+
+  wire        timer2_o;
+  wire        spk;
+  wire [ 7:0] port61h;
+
   wire [ 7:0] intv;
   wire [ 2:0] iid;
   wire        intr;
@@ -257,6 +286,12 @@ module kotku (
     .c1     (vga_clk),    // 25 Mhz
     .c2     (clk),        // 12.5 Mhz
     .locked (lock)
+  );
+
+  timerclk timerclk (
+    .rst   (wb_rst_i),
+    .clk_i (vga_clk),  // 25 MHz
+    .clk_o (timer_clk) // 1.193182 MHz (actually 1.190476 MHz)
   );
 
 `ifndef SIMULATION
@@ -530,23 +565,36 @@ module kotku (
     .wb_clk_i (clk),
     .wb_rst_i (rst),
     .wb_adr_i (keyb_adr_i[2:1]),
+    .wb_sel_i (keyb_sel_i),
+    .wb_dat_i (keyb_dat_i),
     .wb_dat_o (keyb_dat_o),
     .wb_stb_i (keyb_stb_i),
     .wb_cyc_i (keyb_cyc_i),
+    .wb_we_i  (keyb_we_i),
     .wb_ack_o (keyb_ack_o),
     .wb_tgc_o (intv[1]),
 
     .ps2_clk_  (ps2_clk_),
-    .ps2_data_ (ps2_data_)
+    .ps2_data_ (ps2_data_),
+
+    .port61h  (port61h)
   );
 
-  timer #(
-    .res   (33),
-    .phase (12507)
-    ) timer0 (
+  timer timer (
     .wb_clk_i (clk),
     .wb_rst_i (rst),
-    .wb_tgc_o (intv[0])
+    .wb_adr_i (timer_adr_i[1]),
+    .wb_sel_i (timer_sel_i),
+    .wb_dat_i (timer_dat_i),
+    .wb_dat_o (timer_dat_o),
+    .wb_stb_i (timer_stb_i),
+    .wb_cyc_i (timer_cyc_i),
+    .wb_we_i  (timer_we_i),
+    .wb_ack_o (timer_ack_o),
+    .wb_tgc_o (intv[0]),
+    .tclk_i   (timer_clk),     // 1.193182 MHz = (14.31818/12) MHz
+    .gate2_i  (port61h[0]),
+    .out2_o   (timer2_out)
   );
 
   simple_pic pic0 (
@@ -660,10 +708,12 @@ module kotku (
     .s5_mask_1 (20'b1_0000_1111_1111_1111_110),
     .s6_addr_1 (20'b1_0000_1111_0010_0000_000), // io 0xf200 - 0xf20f
     .s6_mask_1 (20'b1_0000_1111_1111_1111_000),
-    .s7_addr_1 (20'b1_0000_1111_0011_0000_000), // io 0xf300 - 0xf3ff
-    .s7_mask_1 (20'b1_0000_1111_1111_0000_000),
-    .s7_addr_2 (20'b0_0000_0000_0000_0000_000), // mem 0x00000 - 0xfffff
-    .s7_mask_2 (20'b1_0000_0000_0000_0000_000)
+    .s7_addr_1 (20'b1_0000_0000_0000_0100_000), // io 0x40 - 0x43
+    .s7_mask_1 (20'b1_0000_1111_1111_1111_110),
+    .s8_addr_1 (20'b1_0000_1111_0011_0000_000), // io 0xf300 - 0xf3ff
+    .s8_mask_1 (20'b1_0000_1111_1111_0000_000),
+    .s8_addr_2 (20'b0_0000_0000_0000_0000_000), // mem 0x00000 - 0xfffff
+    .s8_mask_2 (20'b1_0000_0000_0000_0000_000)
     ) wbs (
 
     // Master interface
@@ -746,25 +796,35 @@ module kotku (
     .s6_stb_o (csrbrg_stb_s),
     .s6_ack_i (csrbrg_ack_s),
 
-    // Slave 7 interface - sdram
-    .s7_dat_i (fmlbrg_dat_r_s),
-    .s7_dat_o (fmlbrg_dat_w_s),
-    .s7_adr_o ({fmlbrg_tga_s,fmlbrg_adr_s}),
-    .s7_sel_o (fmlbrg_sel_s),
-    .s7_we_o  (fmlbrg_we_s),
-    .s7_cyc_o (fmlbrg_cyc_s),
-    .s7_stb_o (fmlbrg_stb_s),
-    .s7_ack_i (fmlbrg_ack_s),
+    // Slave 7 interface - timer
+    .s7_dat_i (timer_dat_o),
+    .s7_dat_o (timer_dat_i),
+    .s7_adr_o ({timer_tga_i,timer_adr_i}),
+    .s7_sel_o (timer_sel_i),
+    .s7_we_o  (timer_we_i),
+    .s7_cyc_o (timer_cyc_i),
+    .s7_stb_o (timer_stb_i),
+    .s7_ack_i (timer_ack_o),
+
+    // Slave 8 interface - sdram
+    .s8_dat_i (fmlbrg_dat_r_s),
+    .s8_dat_o (fmlbrg_dat_w_s),
+    .s8_adr_o ({fmlbrg_tga_s,fmlbrg_adr_s}),
+    .s8_sel_o (fmlbrg_sel_s),
+    .s8_we_o  (fmlbrg_we_s),
+    .s8_cyc_o (fmlbrg_cyc_s),
+    .s8_stb_o (fmlbrg_stb_s),
+    .s8_ack_i (fmlbrg_ack_s),
 
     // Slave 8 interface - default
-    .s8_dat_i (16'hffff),
-    .s8_dat_o (),
-    .s8_adr_o (),
-    .s8_sel_o (),
-    .s8_we_o  (),
-    .s8_cyc_o (def_cyc_i),
-    .s8_stb_o (def_stb_i),
-    .s8_ack_i (def_cyc_i & def_stb_i)
+    .s9_dat_i (16'hffff),
+    .s9_dat_o (),
+    .s9_adr_o (),
+    .s9_sel_o (),
+    .s9_we_o  (),
+    .s9_cyc_o (def_cyc_i),
+    .s9_stb_o (def_stb_i),
+    .s9_ack_i (def_cyc_i & def_stb_i)
   );
 
   hex_display hex16 (
@@ -785,5 +845,80 @@ module kotku (
                : sw_dat_o;
 
   assign ledg_[3:0] = pc[3:0];
+
+  assign spk = timer2_out & port61h[1];
+
+  // System speaker audio output
+  wire [15:0] audio_l;
+  assign audio_l = {spk, 15'h4000};
+  wire [15:0] audio_r;
+  assign audio_r = {spk, 15'h4000};
+
+  I2C_AV_Config av_init (
+    // Host Side
+    .iCLK     (clk_50_),
+    .iRST_N   (~rst),
+
+    // I2C Side
+    .I2C_SCLK (i2c_sclk),
+    .I2C_SDAT (i2c_sdat)
+  );
+
+  // Audio
+  audio_if # (
+    .REF_CLK       (18432000),  // Set REF clk frequency here
+    .SAMPLE_RATE   (48000),     // 48000 samples/sec
+    .DATA_WIDTH    (16),                          //    16              Bits
+    .CHANNEL_NUM   (2)                            //    Dual Channel
+  ) audif_inst (
+    // Inputs
+    .clk           (clk),
+    .reset         (rst),
+    .datal         (audio_l),
+    .datar         (audio_r),
+
+    // Outputs
+    .aud_xck       (aud_xck),
+    .aud_adclrck   (aud_adclrck),
+    .aud_daclrck   (aud_daclrck),
+    .aud_bclk      (aud_bclk),
+    .aud_dacdat    (aud_dacdat)
+    //.next_sample   ()
+  );
+
+endmodule
+
+module timerclk (
+  input rst,
+  input clk_i,
+  output reg clk_o
+  );
+
+  reg [4:0] rCnt;
+
+  // divide 25 MHz by 21 -> 1.190476 MHz (0.2% error)
+  always @(posedge clk_i or posedge rst)
+  begin
+    if (rst)
+    begin
+      clk_o <= 0;
+      rCnt <= 0;
+    end
+    else
+    begin
+      if (rCnt == 10)
+      begin
+        clk_o <= 1;
+        rCnt <= rCnt + 1;
+      end
+      else if (rCnt == 20)
+      begin
+        clk_o <= 0;
+        rCnt <= 0;
+      end
+      else
+        rCnt <= rCnt + 1;
+    end
+  end
 
 endmodule
