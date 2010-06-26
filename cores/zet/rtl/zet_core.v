@@ -95,7 +95,7 @@ module zet_core (
   // wires fetch - exec
   wire [15:0] imm_f;
 
-  wire block_or_hlt;
+  wire cpu_block_or_hlt;
 
   // wires and regs for hlt
   wire cpu_block_or_hlt;
