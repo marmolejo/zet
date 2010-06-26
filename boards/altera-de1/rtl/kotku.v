@@ -594,7 +594,7 @@ module kotku (
     .wb_tgc_o (intv[0]),
     .tclk_i   (timer_clk),     // 1.193182 MHz = (14.31818/12) MHz
     .gate2_i  (port61h[0]),
-    .out2_o   (timer2_out)
+    .out2_o   (timer2_o)
   );
 
   simple_pic pic0 (
@@ -846,7 +846,7 @@ module kotku (
 
   assign ledg_[3:0] = pc[3:0];
 
-  assign spk = timer2_out & port61h[1];
+  assign spk = timer2_o & port61h[1];
 
   // System speaker audio output
   wire [15:0] audio_l;
