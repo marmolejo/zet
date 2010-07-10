@@ -46,8 +46,7 @@ module wb_switch #(
     parameter s8_mask_1 = 20'h00000,
     parameter s8_addr_2 = 20'h00000,
     parameter s8_mask_2 = 20'h00000
-  )
-  (
+  )(
     // Master interface
     input  [15:0] m_dat_i,
     output [15:0] m_dat_o,
