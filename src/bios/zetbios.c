@@ -1504,6 +1504,455 @@ void __cdecl int14_function(Bit16u rAX, Bit16u rDX, Bit16u rDS, Bit16u rIP, Bit1
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
+// INT15 STUB - Support Function - nothing really supported here 
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+void __cdecl int15_function(rDI, rSI, rBP, rBX, rDX, rCX, rAX, rES, rDS,  rIP, rCS, rFLAGS)
+Bit16u rDI, rSI, rBP, rBX, rDX, rCX, rAX;   // REGS pushed via pusha
+Bit16u rES, rDS,  rIP, rCS, rFLAGS;
+{                           
+    Bit16u ebda_seg=read_word(0x0040,0x000E);        // BX_DEBUG_INT15("int15 AX=%04x\n",regs.u.r16.ax);
+
+    switch(GET_AH()) {
+
+         case 0x52:         // removable media eject
+            CLEAR_CF();
+            SET_AH(0);      // "ok ejection may proceed"
+            break;
+
+        case 0x91:          // Interrupt complete.  Called by Int 16h when key becomes available 
+            CLEAR_CF();
+            SET_AH(0);      // "ok ejection may proceed"
+            break;
+
+        case 0xc0:
+            SET_WORD(rBX, BIOS_CONFIG_TABLE);   // This table is hard coded into the bios at this location
+            SET_WORD(rES, 0xf000);              // This is the segment address of the rom bios
+            SET_AH(0);                          // success
+            CLEAR_CF();                         // CF clear on success
+            break;
+
+        case 0xc1:
+            SET_WORD(rES, ebda_seg);  // return ebda segment address on stack
+            CLEAR_CF();
+            break;
+      
+        default:        
+            BX_INT15_DEBUG_PRINTF("INT15 Unsupported Function AL= %02x AH= %02x\n", (GET_AL()), (GET_AH()));  
+            SET_CF();
+            SET_AH(UNSUPPORTED_FUNCTION);
+            break;
+    }
+}
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+// INT15 - Mouse Support Function
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+void __cdecl int15_function_mouse(rDI, rSI, rBP, rBX, rDX, rCX, rAX, rES, rDS,  rIP, rCS, rFLAGS)
+Bit16u rDI, rSI, rBP, rBX, rDX, rCX, rAX;   // REGS pushed via pusha
+Bit16u rES, rDS,  rIP, rCS, rFLAGS;
+{
+    Bit8u  comm_byte, mouse_data1, mouse_data2, mouse_data3;
+    Bit8u  mouse_flags_1, mouse_flags_2, try;
+    Bit16u mouse_driver_seg;
+    Bit16u mouse_driver_offset;
+    Bit16u ebda_seg = read_word(0x0040,0x000E);
+
+    BX_INT15_DEBUG_PRINTF("INT15 AL= %02x BH= %02x\n", (GET_AL()), (GET_BH()));        // Debugging info 
+   
+    if(GET_AH() != 0xC2) {          // Defensive measute, should always be 0xC2 here due to asm call
+        SET_CF();
+        SET_AH(UNSUPPORTED_FUNCTION);      
+        BX_INT15_DEBUG_PRINTF("Error int15 mouse AH != 0xC2\n", (unsigned)(GET_AH()));
+        return;
+    }
+
+    // Return Codes status in AH
+    // =========================
+    // 00: success
+    // 01: invalid subfunction (AL > 7)
+    // 02: invalid input value (out of allowable range)
+    // 03: interface error
+    // 04: resend command received from mouse controller, device driver should attempt command again
+    // 05: cannot enable mouse, since no far call has been installed
+    // 80/86: mouse service not implemented
+
+    switch(GET_AL()) {
+        case 0:                     // Disable/Enable Mouse functions, set by BH
+            switch(GET_BH()) {
+                case 0:                                     // Disable Mouse            
+                    inhibit_mouse_int_and_events();         // disable IRQ12 and packets
+                    mouse_data1 = send_to_mouse_ctrl(0xF5); // disable mouse command
+                    if(mouse_data1 == 0xFA) {               // Proper Ack was returned
+                        CLEAR_CF();                         // Sucess flag indication
+                        SET_AH(0);                          // Sucess Code
+                    }
+                    else {                                  // Did not receive ack
+                        SET_CF();                           // Error flag
+                        SET_AH(3);                          // Interface error code
+                        BX_INT15_DEBUG_PRINTF("Disable Mouse returned %02x (should be ack)\n", (unsigned)mouse_data1); 
+                    }
+                    break;
+                    
+                case 1:                                         // Enable Mouse 
+                    mouse_flags_2 = read_byte(ebda_seg, 0x027);
+                    if((mouse_flags_2 & 0x80) == 0) {           // INT 15h C2 Enable Mouse, no far call handler
+                        SET_CF();                               // Error Flag
+                        SET_AH(5);                              // No far call installed Error code
+                    }
+                    else {
+                        inhibit_mouse_int_and_events();         // disable IRQ12 and packets
+                        mouse_data1 = send_to_mouse_ctrl(0xF4); // Send enable mouse command to mouse
+                        if(mouse_data1 == 0xFA) {           // Proper Ack was returned
+                            enable_mouse_int_and_events();  // turn IRQ12 and packet generation on
+                            CLEAR_CF();                     // Sucess flag indication
+                            SET_AH(0);                      // Sucess Code
+                        }
+                        else {                              // did not receive ack from mouse
+                            SET_CF();                       // Error flag
+                            SET_AH(3);                      // Interface error code
+                            BX_INT15_DEBUG_PRINTF("Enable Mouse returned %02x (should be ack)\n", (unsigned)mouse_data1); 
+                        }
+                    }
+                    break;
+
+                default:            // Invalid subfunction  
+                    SET_CF();       // Error Flag
+                    SET_AH(1);      // Invalid subfunction return code
+                    break;
+            }
+            break;
+            
+        case 5:                             // Initialize Mouse 
+            if((GET_BH()) == 3) {                                       // Must always be a 3
+                write_byte(ebda_seg, 0x0026, 0x00);                     // Set packet size 
+                write_byte(ebda_seg, 0x0027, 0x03);                     // Reset packet count
+                CLEAR_CF();                                             // Sucess flag indication
+                SET_AH(0);                                              // Sucess Code
+            }
+            else {                          // Invalid input
+                SET_CF();                   // Error Flag
+                SET_AH(2);                  // Invalid input return code
+                BX_INT15_DEBUG_PRINTF("Initialize Mouse invalid input %02x\n", (unsigned)(GET_BH())); 
+            }
+            break;
+                
+        case 1:                                         // Reset Mouse
+            inhibit_mouse_int_and_events();             // disable IRQ12 and packets
+            write_byte(ebda_seg, 0x0026, 0x00);         // Set packet size 
+            write_byte(ebda_seg, 0x0027, 0x03);         // Reset packet count
+            mouse_data3 = send_to_mouse_ctrl(0xFF);     // reset mouse command
+            if(mouse_data3 == 0xFA) {                   // Received proper ack
+                mouse_data1 = get_mouse_data();         // Mouse should return AA
+                mouse_data2 = get_mouse_data();         // Mouse should return 00
+                enable_mouse_int_and_events();          // turn IRQ12 and packet generation on
+                CLEAR_CF();                             // Sucess flag indication
+                SET_AH(0);                              // Sucess Code
+                SET_BL(mouse_data1);                    // Return mouse codes
+                SET_BH(mouse_data2);                    // Return mouse codes
+            }                        
+            else if(mouse_data3 == 0xFE) {              // Mouse sends this if there is some problem
+                SET_CF();                               // Error Flag
+                SET_AH(3);                              // Interface error return code
+                BX_INT15_DEBUG_PRINTF("Reset Mouse returned %02x\n", (unsigned)mouse_data3); 
+                
+            }
+            else {                                      // no valid mouse response received
+                SET_CF();                               // Error Flag
+                SET_AH(3);                              // Interface error return code
+                BX_INT15_DEBUG_PRINTF("Mouse reset returned %02x (should be ack)\n", (unsigned)mouse_data3);                
+            }
+            break;
+
+        case 2:                                     // Set Sample Rate   
+            switch(GET_BH()) {
+                case 0:  mouse_data1 =  10; break; //  10 reports/sec
+                case 1:  mouse_data1 =  20; break; //  20 reports/sec
+                case 2:  mouse_data1 =  40; break; //  40 reports/sec
+                case 3:  mouse_data1 =  60; break; //  60 reports/sec
+                case 4:  mouse_data1 =  80; break; //  80 reports/sec
+                case 5:  mouse_data1 = 100; break; // 100 reports/sec (default)
+                case 6:  mouse_data1 = 200; break; // 200 reports/sec
+                default: mouse_data1 =   0;
+            }
+            if(mouse_data1 == 0) {
+                SET_CF();                               // Error Flag
+                SET_AH(UNSUPPORTED_FUNCTION);           // Return unsupported function code
+                BX_INT15_DEBUG_PRINTF("Set Sample Rate Invalid parm %02x\n", (unsigned)(GET_BH()));                
+            }
+            else {                                          // User tried to send an unsupported value
+                mouse_data2 = send_to_mouse_ctrl(0xF3);     // set sample rate command to mouse
+                if(mouse_data2 == 0xFA) {                          // If we received proper ack code
+                    mouse_data2 = send_to_mouse_ctrl(mouse_data1); // then send the data
+//                    if(mouse_data2 == 0xFA) {                      // If we received proper ack code
+                        CLEAR_CF();                     // Sucess flag indication 
+                        SET_AH(0);                      // Sucess Code
+//                    }
+                }
+                else {                                  // Mouse did not send the ack code
+                    SET_CF();                           // Error Flag
+                    SET_AH(UNSUPPORTED_FUNCTION);       // Return unsupported function code
+                    BX_INT15_DEBUG_PRINTF("Set Sample Rate returned %02x (should be ack)\n", (unsigned)mouse_data2); 
+                }
+            }
+            break;
+
+        case 3:             // Set Resolution       
+            // BH:
+            //      0 =  25 dpi, 1 count  per millimeter
+            //      1 =  50 dpi, 2 counts per millimeter
+            //      2 = 100 dpi, 4 counts per millimeter
+            //      3 = 200 dpi, 8 counts per millimeter
+            if((GET_BH()) < 4) {                                // Make sure this is a supported value
+                comm_byte = inhibit_mouse_int_and_events();     // disable IRQ12 and packets
+                mouse_data1 = send_to_mouse_ctrl(0xE8);         // set resolution command
+                if(mouse_data1 != 0xFA) {
+                    SET_CF();                           // Error Flag
+                    SET_AH(UNSUPPORTED_FUNCTION);       // Return unsupported function code
+                    BX_INT15_DEBUG_PRINTF("Set Resolution returned1 %02x (should be ack)\n", (unsigned)mouse_data1);                                    
+                }
+                else {
+                    mouse_data1 = send_to_mouse_ctrl(GET_BH());    // Send value to mouse
+                    if(mouse_data1 != 0xFA) {
+                        SET_CF();                           // Error Flag
+                        SET_AH(3);                          // Interface error return code
+                        BX_INT15_DEBUG_PRINTF("Set Resolution returned2 %02x (should be ack)\n", (unsigned)mouse_data1);                                    
+                    }
+                    else {                                  // If all acks were received properly   
+                        CLEAR_CF();                         // Sucess flag indication 
+                        SET_AH(0);                          // Sucess Code
+                    }
+                }
+                set_kbd_command_byte(comm_byte);            // restore IRQ12 and serial enable
+            }
+            else {                                      // User sent an unsupported value to us
+                SET_CF();                               // Error Flag
+                SET_AH(UNSUPPORTED_FUNCTION);           // Return unsupported function code
+                BX_INT15_DEBUG_PRINTF("Set Resolution invalid parm %02x\n", (unsigned)(GET_BH()));                                    
+            }
+            break;
+
+        case 4:                                     // Get Device ID 
+            inhibit_mouse_int_and_events();         // disable IRQ12 and packets
+            mouse_data1 = send_to_mouse_ctrl(0xF2); // get mouse ID command
+            if(mouse_data1 == 0xFA) {               // If ack received
+                mouse_data2 = get_mouse_data();     // get device ID
+                CLEAR_CF();                         // Sucess flag indication 
+                SET_AH(0);                          // Sucess Code
+                SET_BH(mouse_data2);                // return the paramter
+            }
+            else {                                  // Mouse did not recognize the 0xF2 command
+                SET_CF();                           // Error Flag
+                SET_AH(UNSUPPORTED_FUNCTION);       // Return unsupported function code
+                BX_INT15_DEBUG_PRINTF("Get Device ID returned %02x (should be ack)\n", (unsigned)mouse_data1);                                    
+            }
+            break;
+
+        case 6:                    // Return Status & Set Scaling Factor...
+            switch(GET_BH()) {
+                case 0:                             // Return Status
+                    comm_byte = inhibit_mouse_int_and_events();     // disable IRQ12 and packets
+                    mouse_data1 = send_to_mouse_ctrl(0xE9);         // get mouse info command
+                    if(mouse_data1 == 0xFA) {
+                        mouse_data1 = get_mouse_data();
+                        mouse_data2 = get_mouse_data();
+                        mouse_data3 = get_mouse_data();
+                        CLEAR_CF();
+                        SET_AH(0);
+                        SET_BL(mouse_data1);
+                        SET_CL(mouse_data2);
+                        SET_DL(mouse_data3);
+                    }
+                    else {
+                        SET_CF();                           // Error Flag
+                        SET_AH(UNSUPPORTED_FUNCTION);       // Return unsupported function code
+                        BX_INT15_DEBUG_PRINTF("Get Status returned %02x (should be ack)\n", (unsigned)mouse_data1);                                    
+                    }
+                    set_kbd_command_byte(comm_byte);        // restore IRQ12 and serial enable
+                    break;
+
+                case 1:     // Set Scaling Factor to 1:1
+                case 2:     // Set Scaling Factor to 2:1
+                    comm_byte = inhibit_mouse_int_and_events(); // disable IRQ12 and packets
+                    if((GET_BH()) == 1) mouse_data1 = send_to_mouse_ctrl(0xE6);
+                    else                mouse_data1 = send_to_mouse_ctrl(0xE7);
+                    if(mouse_data1 == 0xFA) {
+                        CLEAR_CF();
+                        SET_AH(0);
+                    }
+                    else {
+                        SET_CF();                           // Error Flag
+                        SET_AH(UNSUPPORTED_FUNCTION);
+                        BX_INT15_DEBUG_PRINTF("Set Scaling returned1 %02x (should be ack)\n", (unsigned)mouse_data1);                                    
+                    }
+                    set_kbd_command_byte(comm_byte); // restore IRQ12 and serial enable
+                    break;
+
+                default: BX_INT15_DEBUG_PRINTF("Error: INT 15h C2 AL=6, BH=%02x\n", (unsigned)(GET_BH()));
+                    break;
+            }
+            break;
+
+       case 7:         // Set Mouse Handler Address       
+           mouse_driver_seg    = rES;
+           mouse_driver_offset = rBX;
+           write_word(ebda_seg, 0x0022, mouse_driver_offset);
+           write_word(ebda_seg, 0x0024, mouse_driver_seg);
+           mouse_flags_2 = read_byte(ebda_seg, 0x0027);
+           if(mouse_driver_offset == 0 && mouse_driver_seg == 0) {  // remove handler 
+               if((mouse_flags_2 & 0x80) != 0 ) {
+                   mouse_flags_2 &= ~0x80;
+                   inhibit_mouse_int_and_events(); // disable IRQ12 and packets
+               }
+           }
+           else {      // install handler 
+               mouse_flags_2 |= 0x80;
+           }
+           write_byte(ebda_seg, 0x0027, mouse_flags_2);
+           CLEAR_CF();
+           SET_AH(0);
+           break;
+
+       default:        
+           BX_INT15_DEBUG_PRINTF("case default\n");
+           SET_AH(1);                   // invalid function
+           SET_CF();
+           break;
+    }
+}
+
+//--------------------------------------------------------------------------
+static char panic_msg_keyb_buffer_full[] = "%s: keyboard input buffer full\n";
+
+//--------------------------------------------------------------------------
+// Wait for data - waits for data to come in by checking control register.
+// returns after either the data came in, or there was a time out
+//--------------------------------------------------------------------------
+static void wait_mouse_event(void)
+{
+    Bit8u  ticks;
+    ticks = read_byte(0x0040, 0x006C); // get current tick count
+    #if PS2_COMPLIANT
+        while((inb(MOUSE_CNTL) & 0x01) != 0x01) {
+            if((ticks +10) < read_byte(0x0040, 0x006C)) {
+                BX_INT15_DEBUG_PRINTF("wait mouse timeout\n");
+                break; // time out
+            }
+        }
+    #else
+        while((inb(MOUSE_STAT) & 0x01) == 0x00) {   // wait for it
+            if(ticks != read_byte(0x0040, 0x006C)) break; // time out    
+        }
+    #endif
+}
+
+
+//--------------------------------------------------------------------------
+// Turn off IRQ generation and aux data line
+//--------------------------------------------------------------------------
+static Bit8u inhibit_mouse_int_and_events(void)
+{
+    #if PS2_COMPLIANT
+        Bit8u command_byte, prev_command_byte;
+//        if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"inhibmouse");
+        outb(MOUSE_CNTL, 0x20);             // send command to read command byte
+        wait_mouse_event();
+        prev_command_byte = inb(MOUSE_PORT);
+        command_byte = prev_command_byte;                   //while ( (inb(0x64) & 0x02) );
+//        if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"inhibmouse");
+        command_byte &= 0xfd;       // turn off IRQ 12 generation
+        command_byte |= 0x20;       // disable mouse serial clock line
+        outb(MOUSE_CNTL, 0x60);     // write command byte
+        outb(MOUSE_PORT, command_byte);
+        return(prev_command_byte);
+    #else
+        outb(MOUSE_CNTL, 0x00);     // send command byte to turn off interupts
+        return(0x01);
+    #endif    
+}
+
+//--------------------------------------------------------------------------
+// Turn on IRQ generation and aux data line
+//--------------------------------------------------------------------------
+static void enable_mouse_int_and_events(void)
+{
+    #if PS2_COMPLIANT
+        Bit8u command_byte;
+//        if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"enabmouse");
+        outb(MOUSE_CNTL, 0x21);              // send command byte
+        outb(MOUSE_CNTL, 0x20);              // send command byte
+        wait_mouse_event();
+        command_byte = inb(0x60);
+//        if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"enabmouse");
+        command_byte |= 0x02;       // turn on IRQ 12 generation
+        command_byte &= 0xdf;       // enable mouse serial clock line
+        outb(MOUSE_CNTL, 0x60);           // write command byte
+        outb(MOUSE_PORT, command_byte);
+    #else
+        outb(MOUSE_CNTL, 0x01);     // send command byte to turn interrupt generation on
+    #endif
+}
+
+//--------------------------------------------------------------------------
+// Send Keyboard command byte
+//--------------------------------------------------------------------------
+static void set_kbd_command_byte(Bit8u command_byte)
+{
+    #if PS2_COMPLIANT
+//        if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"setkbdcomm");
+//      outb(MOUSE_CNTL, 0xD4);
+        outb(MOUSE_CNTL, 0x60);           // write command byte
+        outb(MOUSE_PORT, command_byte);
+    #else
+        outb(MOUSE_CNTL, command_byte);     // send command byte to turn interrupt generation on
+        return;     // Do nothing, we do not have integrated mouse kbd
+    #endif
+}
+
+//--------------------------------------------------------------------------
+// wait for chance to write to ctrl
+//--------------------------------------------------------------------------
+static Bit8u send_to_mouse_ctrl(Bit8u sendbyte)
+{
+    #if PS2_COMPLIANT         // wait for chance to write to ctrl
+//        if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"sendmouse");
+
+    Bit8u try, mouse_data; 
+    try = 3;                                    // Try 3 times before giving up
+    do {
+        outb(MOUSE_CNTL, 0xD4);                 // Enable sending to mouse
+        outb(MOUSE_PORT, sendbyte);             // Send the byte to mouse
+        mouse_data = get_mouse_data();          // if no mouse attached, it will return RESEND
+        if(mouse_data == 0xFA) break;           // Success
+        try--;                                  // Decerement tries
+    } while(try);                               // Keep going until try is zero
+    return(mouse_data);
+
+    #else
+        outb(MOUSE_PORT, sendbyte);
+    #endif
+}
+
+//--------------------------------------------------------------------------
+// Get Mouse Data
+//--------------------------------------------------------------------------
+static Bit8u get_mouse_data(void)
+{
+    Bit8u  data;
+    #if PS2_COMPLIANT
+        wait_mouse_event();
+        data = inb(MOUSE_PORT);
+    #else
+        wait_mouse_event();
+        data = inb(MOUSE_PORT);         // get it
+    #endif
+    return(data);
+}
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 // INT19 Support Function
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------

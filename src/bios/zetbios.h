@@ -25,22 +25,32 @@
 #define zetbios1H
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-#define SHOW_DEBUG_MSGS      0
+#define SHOW_INFO_MSGS          0
+#define SHOW_INT15_DEBUG_MSGS   1
 //---------------------------------------------------------------------------
 #define BIOS_PRINTF_HALT     1
 #define BIOS_PRINTF_SCREEN   2
-#if SHOW_DEBUG_MSGS 
-#define BIOS_PRINTF_INFO     BIOS_PRINTF_SCREEN
+
+#if     SHOW_INFO_MSGS 
+        #define BIOS_PRINTF_INFO     BIOS_PRINTF_SCREEN
 #else
-#define BIOS_PRINTF_INFO     4
+        #define BIOS_PRINTF_INFO     4
 #endif
-#define BIOS_PRINTF_DEBUG    8
+
+#if     SHOW_INT15_DEBUG_MSGS 
+        #define BIOS_INT15_DEBUG    BIOS_PRINTF_SCREEN
+#else
+        #define BIOS_INT15_DEBUG    8
+#endif
+
 #define BIOS_PRINTF_ALL      (BIOS_PRINTF_SCREEN | BIOS_PRINTF_INFO)
 #define BIOS_PRINTF_DEBHALT  (BIOS_PRINTF_SCREEN | BIOS_PRINTF_INFO | BIOS_PRINTF_HALT)
 
 #define printf(format,  ...)  bios_printf(BIOS_PRINTF_SCREEN, format, ## __VA_ARGS__)
 #define BX_INFO(format,  ...)   bios_printf(BIOS_PRINTF_INFO, format, ## __VA_ARGS__)
 #define BX_PANIC(format,  ...)  bios_printf(BIOS_PRINTF_DEBHALT, format, ## __VA_ARGS__)
+
+#define BX_INT15_DEBUG_PRINTF(format,  ...)  bios_printf(BIOS_INT15_DEBUG, format, ## __VA_ARGS__)
 
 #define FLASH_PAGE_REG       0xE000
 #define EMS_PAGE1_REG        0x0208
@@ -68,6 +78,15 @@
 #define UNSUPPORTED_FUNCTION 0x86
 #define none                 0
 #define MAX_SCAN_CODE        0x58
+
+
+//---------------------------------------------------------------------------
+// 1K of base memory used for Extended Bios Data Area (EBDA)
+// EBDA is used for PS/2 mouse support, and IDE BIOS, etc.
+//---------------------------------------------------------------------------
+#define EBDA_SEG         0x9FC0
+#define EBDA_SIZE        1              // In KB
+#define BASE_MEM_IN_K   (640 - EBDA_SIZE)
 
 //---------------------------------------------------------------------------
 // Compatibility type definitions
@@ -130,6 +149,42 @@ typedef           int  BOOL;
 #define GET_DH()   ( rDX >> 8 )
 #define GET_CF()   ( rFLAGS & 0x0001 )
 #define GET_ZF()   ( rFLAGS & 0x0040 )
+
+//---------------------------------------------------------------------------
+// INT15 / INT74 PS2 Mouse support function
+// For zet, we do a special hack and use COM2 INT3 and IO PORT
+//
+// MOUSE_PORT           is the R/W IO port
+// MOUSE_CNTL           is W control port
+// MOUST_STAT           is R Status register
+// 
+// Read Status port:
+// ------------------
+// MOUSE_CNTL & 0x01    then data is ready to be read
+//
+// Write to control port:
+// MOUSE_CNTL = 0x00    inhibit PS2 mouse from sending stuff
+// MOUSE_CNTL = 0x01    enable PS2 mouse from sending stuff
+//
+// PS2_COMPLIANT    Set this to 1 if the HW is fully PS2 compliant
+//                  Set it to 0 if using Donna's hack
+//---------------------------------------------------------------------------
+#define PS2_COMPLIANT   1           // Set to 1 if HW is fully PS2 compliant
+#if PS2_COMPLIANT
+    #define MOUSE_PORT      0x0060      // Bus Mouse port, use this instead of 0x60
+    #define MOUSE_CNTL      0x0064      // Bus Mouse control port, use this instead of 0x64
+    #define MOUSE_INTR      12          // The correct Intetrupt for PS2
+#else
+    #define MOUSE_PORT      0x0238      // Bus Mouse port
+    #define MOUSE_CNTL      0x0239      // Bus Mouse control port
+    #define MOUSE_STAT      0x0239      // Bus Mouse status port
+    #define MOUSE_INTR      3           // We use Interuptt 3 here instead of for COM2
+#endif
+
+//---------------------------------------------------------------------------
+// INT15 - AH=C0, configuration table; model byte 0xFC = AT 
+//---------------------------------------------------------------------------
+#define BIOS_CONFIG_TABLE   0xe6f5
 
 //---------------------------------------------------------------------------
 // IPL Structure for INT19 support function
@@ -411,6 +466,13 @@ static Bit16u   GetRamdiskSector(Bit16u Sector);
 static void     set_diskette_ret_status(Bit8u value);
 static void     set_diskette_current_cyl(Bit8u drive, Bit8u cyl);
 
+
+static Bit8u    inhibit_mouse_int_and_events(void);
+static void     enable_mouse_int_and_events(void);
+static Bit8u    send_to_mouse_ctrl(Bit8u sendbyte);
+static Bit8u    get_mouse_data(void);
+static void     set_kbd_command_byte(Bit8u command_byte);
+
 void __cdecl    MakeRamdisk(void);
 void __cdecl    print_bios_banner(void);
 void __cdecl    int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS);
@@ -423,6 +485,9 @@ void __cdecl    init_boot_vectors(void);
 void __cdecl    int19_function(void);
 void __cdecl    boot_halt(void);
 void __cdecl    int1a_function(Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u);
+
+void __cdecl    int15_function(Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u);
+void __cdecl    int15_function_mouse(Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u);
 
 //---------------------------------------------------------------------------
 // External linkages

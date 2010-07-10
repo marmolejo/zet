@@ -41,6 +41,7 @@
 ;; $fff0 ; Power-up Entry Point
 ;; $fff5 ; ASCII Date ROM was built - 8 characters in MM/DD/YY
 ;; $fffe ; System Model ID
+
 ;;--------------------------------------------------------------------------
 
 ;;--------------------------------------------------------------------------
@@ -66,6 +67,8 @@ IPL_TYPE_BEV            equ     080h     ;
                         EXTRN  _boot_halt              :proc      ; Contained in C source module
                         EXTRN  _int19_function         :proc      ; Contained in C source module
                         EXTRN  _int14_function         :proc      ; Contained in C source module
+                        EXTRN  _int15_function         :proc      ; Contained in C source module
+                        EXTRN  _int15_function_mouse   :proc      ; Contained in C source module
                         EXTRN  _int1a_function         :proc      ; Time-of-day Service Entry Point
                         EXTRN  _int09_function         :proc      ; BIOS Interupt 09
                         EXTRN  _int16_function         :proc      ; Keyboard Service Entry Point
@@ -75,12 +78,48 @@ IPL_TYPE_BEV            equ     080h     ;
 ;; Set vector macro:
 ;; This macro is called by the POST sections andsets the interupt vectors in 
 ;; the BDA (BIOS Data Area) at memory location 0040:0000 to 0040:0100
+;; INT 08 - IRQ0  - SYSTEM TIMER; CPU-generated (80286+)
+;; INT 09 - IRQ1  - KEYBOARD DATA READY; CPU-generated 
+;; INT 0A - IRQ2  - LPT2/EGA,VGA/IRQ9; CPU-generated (80286+)
+;; INT 0B - IRQ3  - SERIAL COMMUNICATIONS (COM2); CPU-generated (80286+)
+;; INT 0C - IRQ4  - SERIAL COMMUNICATIONS (COM1); CPU-generated (80286+)
+;; INT 0D - IRQ5  - FIXED DISK/LPT2/reserved; CPU-generated (80286+)
+;; INT 0E - IRQ6  - DISKETTE CONTROLLER; CPU-generated (80386+)
+;; INT 0F - IRQ7  - PARALLEL PRINTER
+;; INT 70 - IRQ8  - CMOS REAL-TIME CLOCK
+;; INT 71 - IRQ9  - REDIRECTED TO INT 0A BY BIOS
+;; INT 72 - IRQ10 - RESERVED
+;; INT 73 - IRQ11 - RESERVED
+;; INT 74 - IRQ12 - POINTING DEVICE (PS)
+;; INT 75 - IRQ13 - MATH COPROCESSOR EXCEPTION (AT and up)
+;; INT 76 - IRQ14 - HARD DISK CONTROLLER (AT and later)
+;; INT 77 - IRQ15 - RESERVED (AT,PS); POWER CONSERVATION (Compaq)
 ;;--------------------------------------------------------------------------
 SET_INT_VECTOR MACRO parm1, parm2, parm3
                         mov     ax, parm3
                         mov     ds:[parm1*4], ax
                         mov     ax, parm2
                         mov     ds:[parm1*4+2], ax
+ENDM
+;;--------------------------------------------------------------------------
+PUSHALL MACRO
+                        push    ax
+                        push    cx
+                        push    dx
+                        push    bx
+                        push    bp
+                        push    si
+                        push    di
+ENDM
+;;--------------------------------------------------------------------------
+POPALL MACRO
+                        pop     di
+                        pop     si
+                        pop     bp
+                        pop     bx
+                        pop     dx
+                        pop     cx
+                        pop     ax
 ENDM
 
 ;;--------------------------------------------------------------------------
@@ -170,13 +209,22 @@ post_default_ints:      mov     [bx], ax             ; Store dummy return handle
                         SET_INT_VECTOR 011h, 0F000h, int11_handler    ;; Equipment Configuration Check vector
                         SET_INT_VECTOR 012h, 0F000h, int12_handler    ;; Memory Size Check vector
 
-ebda_post:              xor     ax, ax                                ;; mov EBDA seg into 40E
-                        mov     ds, ax
-                        mov     word ptr ds:[040Eh], EBDA_SEG         ;; set the value
+ebda_post:              mov     ax, EBDA_SEG                          ;; EBDA Segment
+                        mov     ds, ax                                ;; Set data segment to it
+                        mov     byte ptr ds:0x0000, EBDA_SIZE         ;; Load the size in to 1st byte
+                        mov     byte ptr ds:0x0027, 0x00              ;; Clear flags
+                        xor     ax, ax                                ;; BDA Segment
+                        mov     ds, ax                                ;; Set data segment to it
+                        mov     word ptr ds:0x040E, EBDA_SEG          ;; Save the EBDA seg in BDA 
 
-                        SET_INT_VECTOR 008h, 0F000h, int08_handler    ;; PIT setup - int 1C already points at dummy_iret_handler (above)
-                        SET_INT_VECTOR 009h, 0F000h, int09_handler    ;; Keyboard Hardware Service Entry Point
+                        SET_INT_VECTOR 008h, 0F000h, int08_handler    ;; IRQ0 - PIT setup - int 1C already points at dummy_iret_handler (above)
+                        SET_INT_VECTOR 009h, 0F000h, int09_handler    ;; IRQ1 -  Keyboard Hardware Service Entry Point
                         SET_INT_VECTOR 016h, 0F000h, int16_handler    ;; Keyboard Service Entry Point
+
+                        SET_INT_VECTOR 015h, 0F000h, int15_handler    ;; Mouse interface 
+                        
+                        SET_INT_VECTOR 074h, 0F000h, int74_handler    ;; Mouse hardware interupt vector
+                        SET_INT_VECTOR 00Bh, 0F000h, int0B_handler    ;; IRQ3 - COM2/Mouse hardware interupt vector 
 
                         xor     ax, ax
                         mov     ds, ax
@@ -203,7 +251,8 @@ ebda_post:              xor     ax, ax                                ;; mov EBD
                         ; Equipment list set up, This is the the only place
                         ;           1111110000000000
                         ;           5432109876543210
-                        mov     ax, 0000010001000001B       ; where we setup the equipment list, 
+                    ;;  mov     ax, 0000010001000001B    ; where we setup the equipment list, see INT11 
+                        mov     ax, 0000001000100101B    ; where we setup the equipment list, see INT11 
                         mov     WORD PTR ds:0410h, ax       ; Equipment word bits 9..11 determing # serial ports
 
                         SET_INT_VECTOR 01Ah, 0F000h, int1a_handler    ;; CMOS RTC
@@ -513,11 +562,6 @@ int13_handler:          push    ax                      ;; This will save them a
 
                         push    ss                  ;; Push the stack segment
                         pop     ds                  ;; Pop it to the Data segment, now we have DS set for our C call
-
-;;                        push    bx                  ;; Save BX reg just for a second here
-;;                        mov     bx, 0f000h          ;; Load the Bios Data segment
-;;                        mov     ds, bx              ;; Set the data seg to the bios
-;;                        pop     bx                  ;; Restore BX back
                         
                         test    dl,80h                      ;; Test to see if current drive is HD
                         jnz     int13_HardDisk              ;; If so, do that, otherwise do floppy
@@ -543,9 +587,8 @@ int13_out:                                                  ;; diskette jumps to
 ;; - INT19h - INT 19h Boot Load Service Entry Point
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
-                        org     (0e6f2h - startofrom) 
-int19_handler:          
-                        push    bp                  ;; int19 was beginning to be really complex, so now it
+                        org     (0e6e0h - startofrom) 
+int19_relocated:        push    bp                  ;; int19 was beginning to be really complex, so now it
                         mov     bp, sp              ;; just calls a C function that does the work
 
                         mov     ax, 0fffeh          ;; Reset SS and SP
@@ -555,13 +598,90 @@ int19_handler:
 int19_next_boot:        call    _int19_function     ;; Call the C code for the next boot device
                         int     018h                ;; Boot failed: invoke the boot recovery function
 
+                        org     (0e6f2h - startofrom) 
+int19_handler:          jmp     int19_relocated                        
+
+;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
+;; System BIOS Configuration Data Table
+;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
+SYS_MODEL_ID            equ     0xFC
+SYS_SUBMODEL_ID         equ     0x00
+BIOS_REVISION           equ     1
+;--------------------------------------------------------------------------
+                        org     (0e6f5h - startofrom) 
+                        db      0x08                  ; Table size (bytes) -Lo
+                        db      0x00                  ; Table size (bytes) -Hi
+                        db      SYS_MODEL_ID
+                        db      SYS_SUBMODEL_ID
+                        db      BIOS_REVISION
+;--------------------------------------------------------------------------
+; Feature byte 1
+; b7: 1=DMA channel 3 used by hard disk
+; b6: 1=2 interrupt controllers present
+; b5: 1=RTC present
+; b4: 1=BIOS calls int 15h/4Fh every key
+; b3: 1=wait for extern event supported (Int 15h/41h)
+; b2: 1=extended BIOS data area used
+; b1: 0=AT or ESDI bus, 1=MicroChannel
+; b0: 1=Dual bus (MicroChannel + ISA)
+;--------------------------------------------------------------------------
+; db (0 << 7)|(1 << 6)|(1 << 5)|(BX_CALL_INT15_4F << 4)|(0 << 3)|(BX_USE_EBDA << 2)|(0 << 1)|(0 << 0)
+;                               76543210
+                       db       00000100b
+   
+;--------------------------------------------------------------------------
+; Feature byte 2
+; b7: 1=32-bit DMA supported
+; b6: 1=int16h, function 9 supported
+; b5: 1=int15h/C6h (get POS data) supported
+; b4: 1=int15h/C7h (get mem map info) supported
+; b3: 1=int15h/C8h (en/dis CPU) supported
+; b2: 1=non-8042 kb controller
+; b1: 1=data streaming supported
+; b0: reserved
+;--------------------------------------------------------------------------
+; db (0 << 7)|(1 << 6)|(0 << 5)|(0 << 4)|(0 << 3)|(0 << 2)|(0 << 1)|(0 << 0)
+
+                        db      01000000b
+;--------------------------------------------------------------------------
+; Feature byte 3
+; b7: not used
+; b6: reserved
+; b5: reserved
+; b4: POST supports ROM-to-RAM enable/disable
+; b3: SCSI on system board
+; b2: info panel installed
+; b1: Initial Machine Load (IML) system - BIOS on disk
+; b0: SCSI supported in IML
+;--------------------------------------------------------------------------
+                        db 0x00
+;--------------------------------------------------------------------------
+; Feature byte 4
+; b7: IBM private
+; b6: EEPROM present
+; b5-3: ABIOS presence (011 = not supported)
+; b2: private
+; b1: memory split above 16Mb supported
+; b0: POSTEXT directly supported by POST
+;--------------------------------------------------------------------------
+                        db 0x00
+;--------------------------------------------------------------------------
+; Feature byte 5 (IBM)
+; b1: enhanced mouse
+; b0: flash EPROM
+;--------------------------------------------------------------------------
+                        db 0x00
+
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 ;; INT14h - IBM entry point for Serial com. RS232 services
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0e729h - startofrom) 
-int14_handler:          push    ds                  ; save on stack
+int14_handler:        sti                         ; Serial com. RS232 services
+                        push    ds                  ; save on stack
                         push    ax                  ; place ax on stack
                         push    dx                  ; place ax on stack
                         xor     ax, ax              ; Clear ax
@@ -570,6 +690,7 @@ int14_handler:          push    ds                  ; save on stack
                         pop     dx
                         pop     ax
                         pop     ds
+                        cli                         ; enale interrupts
                         iret                        ; Baud Rate Generator Table
 baud_rates:             dw      0417h               ;  110 baud clock divisor
                         dw      0300h               ;  150 baud clock divisor
@@ -580,8 +701,9 @@ baud_rates:             dw      0417h               ;  110 baud clock divisor
                         dw      0018h               ; 4800 baud clock divisor
                         dw      000Ch               ; 9600 baud clock divisor
 
-;;int14_handler:          sti                         ; Serial com. RS232 services
-;;                        iret                        ;; return from interupt
+;int14_handler:          sti                         ; Serial com. RS232 services
+;                        cli                         ; enale interrupts
+;                        iret                        ; Baud Rate Generator Table
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -661,6 +783,65 @@ int16_key_found:        mov     bx, 0f000h              ;; Otherwise, just check
                         pop     ds                      ;;
                         iret                            ;; return from interupt
 
+
+;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
+;; INT74h : PS/2 mouse hardware interrupt -
+;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
+MOUSE_PORT              equ     0x0060                  ;; Bus Mouse port
+;MOUSE_PORT             equ     0x0238                  ;; Bus Mouse port
+
+;;--------------------------------------------------------------------------
+int0B_handler:          sti                             ;; Disable interupt
+;                        int     0x74                    ;; Vector to official mouse interrupt
+;                        cli                             ;; Enable interupts
+;                        iret                            ;; Return from interrupt
+;;--------------------------------------------------------------------------
+int74_handler:          sti                             ;; Disable interupt
+                        PUSHALL                         ;; same as push ax cx dx bx bp si di (or pusha on 286)
+                        push    ds                      ;; save DS
+                        xor     ax, ax                  ;; Get BDA Segment (0x0000)
+                        mov     ds, ax                  ;; Set data segment to BDA
+                        mov     ax, word ptr ds:0x040E  ;; Get the EBDA segment
+                        mov     ds, ax                  ;; Set data segment to EBDA
+                                                        ;; ds = ebda seg now, so now we can do mouse stuff
+                        mov     dx, MOUSE_PORT          ;; load address of mouse port
+                        in      al, dx                  ;; Get input byte
+                        mov     bl, byte ptr ds:0x26    ;; Get current packet counter (and other flags)
+                        mov     dl, bl                  ;; Save it as is with other flags in dl
+                        and     bx, 0x07                ;; mask off upper bits in bx so we can use it as an index
+                        mov     byte ptr ds:[0x28+bx],al ; Save the input byte into circular buffer
+                        inc     dl                      ;; Increment packet counter by 1 (preserving other junk)
+                        mov     byte ptr ds:0x26,dl     ;; Save new packet count in it's little place
+                        inc     bl                      ;; Add 1 for the compare coming up
+                        mov     cl, byte ptr ds:0x27    ;; Get packet size for this mousey (it is almost always 3)
+                        and     cl, 0x07                ;; Mask off upper bits so we can do a comparison
+                        cmp     cl, bl                  ;; Compare the numbers cl>bl (cl - bl) = !ZF
+                        jg      int74_done              ;; If cl > bl, then we are done for now  
+                        xor     bl, bl                  ;; Otherwise we have a complete packet so, Clear the count
+                        mov     byte ptr ds:0x26, bl    ;; Save new packet count which is now 0
+                                                        ;; -Make far call to driver
+                        mov     cl, byte ptr ds:0x27    ;; Check to see if driver is loaded
+                        and     cl, 0x80                ;; Ss the flag set ? (driver sets this)
+                        jz      int74_done              ;; If set, then get ready to do the far call, otherwise exit
+                        xor     ax,ax                   ;; Clear upper byte (this is probably not necessary)
+                        mov     al, byte ptr ds:0x28    ;; Status  argument (button presses)
+                        push    ax                      ;; Push argument onto stack 
+                        mov     al, byte ptr ds:0x29    ;; X argument
+                        push    ax                      ;; Push argument onto stack 
+                        mov     al, byte ptr ds:0x2A    ;; Y argument
+                        push    ax                      ;; Push argument onto stack 
+                        xor     ax,ax                   ;; Z = 0, this is a dummy argument, no idea what is for
+                        push    ax                      ;; Push argument onto stack 
+                        call    far ptr ds:[0022h]      ;; call far routine (call_Ep DS:0022 :opcodes 0xff, 0x1e, 0x22, 0x00)
+                        add     sp, 8                   ;; pop status, x, y, z
+                                                        ;; -End of far call
+int74_done:             pop     ds                      ;; restore DS
+                        POPALL                          ;; same as popa on 286
+                        cli                             ;; Enable interupts
+                        iret                            ;; Return from interrupt
+  
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 ;; INT09h : Keyboard Hardware Service Entry Point -
@@ -754,8 +935,8 @@ int1E_table:            db      0xAF                   ; Disk parameter table
 ;;--------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
                         org     (0f065h - startofrom)    
-int10_handler:                  ; dont do anything, since 
-                        iret    ; the VGA BIOS handles int10h requests
+int10_handler:                                          ; dont do anything, since 
+                        iret                            ; the VGA BIOS handles int10h requests
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -773,6 +954,25 @@ int12_handler:          push    ds
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 ;; INT11h -  INT 11h Equipment List Service Entry Point, 2 bytes Equipment Word 
+;;           40:10  2 bytes  Equipment list flags (see INT 11)
+;;
+;;                |7|6|5|4|3|2|1|0| 40:10 (value in INT 11 register AL)
+;;                 | | | | | | | `- IPL diskette installed
+;;                 | | | | | | `-- math coprocessor
+;;                 | | | | |-+--- old PC system board RAM < 256K
+;;                 | | | | | `-- pointing device installed (PS/2)
+;;                 | | | | `--- not used on PS/2
+;;                 | | `------ initial video mode
+;;                 `--------- # of diskette drives, less 1
+;;
+;;                |7|6|5|4|3|2|1|0| 40:11  (value in INT 11 register AH)
+;;                 | | | | | | | `- 0 if DMA installed
+;;                 | | | | `------ number of serial ports
+;;                 | | | `------- game adapter
+;;                 | | `-------- not used, internal modem (PS/2)
+;;                 `----------- number of printer ports
+;;
+;; we should return 0000_0010 0100_0101 = 0205h
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0f84dh - startofrom)
@@ -782,7 +982,32 @@ int11_handler:          push    ds                      ;; save data segment reg
                         mov     ax, WORD PTR ds:[0010h] ;; get equipment list pointer
                         pop     ds
                         iret
-                      
+
+;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
+;;  INT15h - System Services Entry Point
+;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
+                        org     (0f859h - startofrom)
+int15_handler:          sti                             ;; Disable interrupts
+                        push    ds                      ;; Save data segment
+                        push    es                      ;; Save Extra segment
+                        cmp     ah, 0x86                ;; Compare to 0x86
+                        je      int15_handler32_ret     ;; We got no support for that
+                        cmp     ah, 0xE8                ;; Compare to 0xE8 command
+                        je      int15_handler32_ret     ;; We got no support for that
+                        PUSHALL                         ;; Same as push ax cx dx bx bp si di
+                        cmp     ah, 0xC2                ;; PS2 Mouse commands
+                        je      int15_handle_mouse      ;; Handle mouse events
+                        call    _int15_function         ;; Some other INT15 command 
+                        jmp     int15_return            ;; All done
+int15_handle_mouse:     call    _int15_function_mouse   ;; USE PS2 MOUSE
+int15_return:           POPALL                          ;; Same as pop di si bp bx dx cx ax
+int15_handler32_ret:    pop     es                      ;; Restore
+                        pop     ds                      ;; Restore
+                        cli                             ;; Enale interrupts
+                        iret                            ;; Return from Interrupt
+                     
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 ;; - INT1Ah - INT 1Ah Time-of-day Service Entry Point
@@ -791,20 +1016,17 @@ int11_handler:          push    ds                      ;; save data segment reg
                         org     (0fe6eh - startofrom)    
 int1a_handler:          push    ds                      ;; Save all registers that
                         push    bx                      ;; on return
-                        push    bp                      ;;
-                        push    si                      ;;
-                        push    di                      ;;
-                        
+                        push    bp                      ;; Save Base Pointer
+                        push    si                      ;; Save segment index
+                        push    di                      ;; Save data index
                         mov     ax, 0f000h              ;; Bios data segment
                         mov     ds, ax                  ;; set the data seg to the bios                        
-
                         push    dx                      ;; for the C program to receive
                         push    cx                      ;; for the C program to receive
                         push    ax                      ;; Pass the user command
-
                         call    _int1a_function         ;; Now call the function
                         pop     ax                      ;; Now restor the stack
-                        pop     cx                      ;;
+                        pop     cx                      ;; 
                         pop     dx                      ;;
                         pop     di                      ;; Now restore all the saved
                         pop     si                      ;; registers from above
@@ -897,7 +1119,7 @@ MSG1:                   db      BIOS_COPYRIGHT_STRING
                                 org     (0fff5h - startofrom)   ;; ASCII Date ROM was built - 8 characters in MM/DD/YY
 MSG2:                   db      BIOS_BUILD_DATE
                                 org     (0fffeh -startofrom)    ;; Put the 
-SYS_MODEL_ID                    equ     0FCh                    ;; System Model ID 
+;;SYS_MODEL_ID                    equ     0FCh                    ;; System Model ID 
                                 db      SYS_MODEL_ID            ;; here
                                 db      0
 
