@@ -355,6 +355,7 @@ set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sram/rtl/csr_sram.v
 set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
+set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer_counter.v
 set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
 set_global_assignment -name VERILOG_FILE ../../../cores/debug/rtl/send_serial.v
 set_global_assignment -name VERILOG_FILE ../../../cores/debug/rtl/pc_trace.v
