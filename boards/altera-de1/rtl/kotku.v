@@ -82,11 +82,11 @@ module kotku (
     output        i2c_sclk,
 
     // AUDIO CODEC
-    output        aud_adclrck,
+    input         aud_adclrck, //
     input         aud_adcdat,
-    inout         aud_daclrck,
+    input         aud_daclrck, //
     output        aud_dacdat,
-    inout         aud_bclk,
+    input         aud_bclk, //
     output        aud_xck
   );
 
@@ -270,6 +270,9 @@ module kotku (
   wire        spk;
   wire [ 7:0] port61h;
 
+  wire [15:0] audio_l;
+  wire [15:0] audio_r;
+
   wire [ 7:0] intv;
   wire [ 2:0] iid;
   wire        intr;
@@ -288,10 +291,22 @@ module kotku (
     .locked (lock)
   );
 
-  timerclk timerclk (
-    .rst   (wb_rst_i),
-    .clk_i (vga_clk),  // 25 MHz
-    .clk_o (timer_clk) // 1.193182 MHz (actually 1.190476 MHz)
+  clk_gen #(
+    .res   (21),
+    .phase (100091)
+    ) timerclk (
+    .clk_i (vga_clk),    // 25 MHz
+    .rst_i (rst),
+    .clk_o (timer_clk)   // 1.193178 MHz (required 1.193182 MHz)
+  );
+
+  clk_gen #(
+    .res   (18),
+    .phase (29595)
+    ) audioclk (
+    .clk_i (sdram_clk),  // 100 MHz (use highest freq to minimize jitter)
+    .rst_i (rst),
+    .clk_o (aud_xck)     // 11.28960 MHz (required 11.28960 MHz)
   );
 
 `ifndef SIMULATION
@@ -837,6 +852,31 @@ module kotku (
     .hex3 (hex3_)
   );
 
+  audio_if audio_if (
+    .clk_i         (sdram_clk),
+    .rst_i         (rst),
+    .datal_i       (audio_l),
+    .datar_i       (audio_r),
+    .datal_o       (),
+    .datar_o       (),
+    .ready_o       (),
+    .aud_bclk_i    (aud_bclk),
+    .aud_daclrck_i (aud_daclrck),
+    .aud_dacdat_o  (aud_dacdat),
+    .aud_adclrck_i (aud_adclrck),
+    .aud_adcdat_i  (aud_adcdat)
+  );
+
+  I2C_AV_Config av_init (
+    // Host Side
+    .iCLK     (vga_clk),
+    .iRST_N   (~rst),
+
+    // I2C Side
+    .I2C_SCLK (i2c_sclk),
+    .I2C_SDAT (i2c_sdat)
+  );
+
   // Continuous assignments
   assign rst_lck         = !sw_[0] & lock;
   assign sdram_clk_      = sdram_clk;
@@ -846,79 +886,10 @@ module kotku (
 
   assign ledg_[3:0] = pc[3:0];
 
+  // System speaker
   assign spk = timer2_o & port61h[1];
-
   // System speaker audio output
-  wire [15:0] audio_l;
   assign audio_l = {spk, 15'h4000};
-  wire [15:0] audio_r;
   assign audio_r = {spk, 15'h4000};
-
-  I2C_AV_Config av_init (
-    // Host Side
-    .iCLK     (clk_50_),
-    .iRST_N   (~rst),
-
-    // I2C Side
-    .I2C_SCLK (i2c_sclk),
-    .I2C_SDAT (i2c_sdat)
-  );
-
-  // Audio
-  audio_if # (
-    .REF_CLK       (18432000),  // Set REF clk frequency here
-    .SAMPLE_RATE   (48000),     // 48000 samples/sec
-    .DATA_WIDTH    (16),                          //    16              Bits
-    .CHANNEL_NUM   (2)                            //    Dual Channel
-  ) audif_inst (
-    // Inputs
-    .clk           (clk),
-    .reset         (rst),
-    .datal         (audio_l),
-    .datar         (audio_r),
-
-    // Outputs
-    .aud_xck       (aud_xck),
-    .aud_adclrck   (aud_adclrck),
-    .aud_daclrck   (aud_daclrck),
-    .aud_bclk      (aud_bclk),
-    .aud_dacdat    (aud_dacdat)
-    //.next_sample   ()
-  );
-
-endmodule
-
-module timerclk (
-  input rst,
-  input clk_i,
-  output reg clk_o
-  );
-
-  reg [4:0] rCnt;
-
-  // divide 25 MHz by 21 -> 1.190476 MHz (0.2% error)
-  always @(posedge clk_i or posedge rst)
-  begin
-    if (rst)
-    begin
-      clk_o <= 0;
-      rCnt <= 0;
-    end
-    else
-    begin
-      if (rCnt == 10)
-      begin
-        clk_o <= 1;
-        rCnt <= rCnt + 1;
-      end
-      else if (rCnt == 20)
-      begin
-        clk_o <= 0;
-        rCnt <= 0;
-      end
-      else
-        rCnt <= rCnt + 1;
-    end
-  end
 
 endmodule
