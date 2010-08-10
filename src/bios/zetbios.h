@@ -26,7 +26,7 @@
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 #define SHOW_INFO_MSGS          0
-#define SHOW_INT15_DEBUG_MSGS   1
+#define SHOW_INT15_DEBUG_MSGS   0
 //---------------------------------------------------------------------------
 #define BIOS_PRINTF_HALT     1
 #define BIOS_PRINTF_SCREEN   2
@@ -152,34 +152,12 @@ typedef           int  BOOL;
 
 //---------------------------------------------------------------------------
 // INT15 / INT74 PS2 Mouse support function
-// For zet, we do a special hack and use COM2 INT3 and IO PORT
-//
-// MOUSE_PORT           is the R/W IO port
-// MOUSE_CNTL           is W control port
-// MOUST_STAT           is R Status register
-// 
-// Read Status port:
-// ------------------
-// MOUSE_CNTL & 0x01    then data is ready to be read
-//
-// Write to control port:
-// MOUSE_CNTL = 0x00    inhibit PS2 mouse from sending stuff
-// MOUSE_CNTL = 0x01    enable PS2 mouse from sending stuff
-//
 // PS2_COMPLIANT    Set this to 1 if the HW is fully PS2 compliant
 //                  Set it to 0 if using Donna's hack
 //---------------------------------------------------------------------------
-#define PS2_COMPLIANT   1           // Set to 1 if HW is fully PS2 compliant
-#if PS2_COMPLIANT
-    #define MOUSE_PORT      0x0060      // Bus Mouse port, use this instead of 0x60
-    #define MOUSE_CNTL      0x0064      // Bus Mouse control port, use this instead of 0x64
-    #define MOUSE_INTR      12          // The correct Intetrupt for PS2
-#else
-    #define MOUSE_PORT      0x0238      // Bus Mouse port
-    #define MOUSE_CNTL      0x0239      // Bus Mouse control port
-    #define MOUSE_STAT      0x0239      // Bus Mouse status port
-    #define MOUSE_INTR      3           // We use Interuptt 3 here instead of for COM2
-#endif
+#define MOUSE_PORT      0x0060      // Bus Mouse port, use this instead of 0x60
+#define MOUSE_CNTL      0x0064      // Bus Mouse control port, use this instead of 0x64
+#define MOUSE_INTR      12          // The correct Intetrupt for PS2
 
 //---------------------------------------------------------------------------
 // INT15 - AH=C0, configuration table; model byte 0xFC = AT 

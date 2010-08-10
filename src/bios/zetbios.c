@@ -1560,7 +1560,7 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
     Bit16u mouse_driver_offset;
     Bit16u ebda_seg = read_word(0x0040,0x000E);
 
-    BX_INT15_DEBUG_PRINTF("INT15 AL= %02x BH= %02x\n", (GET_AL()), (GET_BH()));        // Debugging info 
+//  BX_INT15_DEBUG_PRINTF("INT15 AL= %02x BH= %02x\n", (GET_AL()), (GET_BH()));        // Debugging info 
    
     if(GET_AH() != 0xC2) {          // Defensive measute, should always be 0xC2 here due to asm call
         SET_CF();
@@ -1834,43 +1834,31 @@ static void wait_mouse_event(void)
 {
     Bit8u  ticks;
     ticks = read_byte(0x0040, 0x006C); // get current tick count
-    #if PS2_COMPLIANT
-        while((inb(MOUSE_CNTL) & 0x01) != 0x01) {
-            if((ticks +10) < read_byte(0x0040, 0x006C)) {
-                BX_INT15_DEBUG_PRINTF("wait mouse timeout\n");
-                break; // time out
-            }
+    while((inb(MOUSE_CNTL) & 0x01) != 0x01) {
+        if((ticks +10) < read_byte(0x0040, 0x006C)) {
+            BX_INT15_DEBUG_PRINTF("wait mouse timeout\n");
+            break; // time out
         }
-    #else
-        while((inb(MOUSE_STAT) & 0x01) == 0x00) {   // wait for it
-            if(ticks != read_byte(0x0040, 0x006C)) break; // time out    
-        }
-    #endif
+    }
 }
-
 
 //--------------------------------------------------------------------------
 // Turn off IRQ generation and aux data line
 //--------------------------------------------------------------------------
 static Bit8u inhibit_mouse_int_and_events(void)
 {
-    #if PS2_COMPLIANT
-        Bit8u command_byte, prev_command_byte;
-//        if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"inhibmouse");
-        outb(MOUSE_CNTL, 0x20);             // send command to read command byte
-        wait_mouse_event();
-        prev_command_byte = inb(MOUSE_PORT);
-        command_byte = prev_command_byte;                   //while ( (inb(0x64) & 0x02) );
-//        if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"inhibmouse");
-        command_byte &= 0xfd;       // turn off IRQ 12 generation
-        command_byte |= 0x20;       // disable mouse serial clock line
-        outb(MOUSE_CNTL, 0x60);     // write command byte
-        outb(MOUSE_PORT, command_byte);
-        return(prev_command_byte);
-    #else
-        outb(MOUSE_CNTL, 0x00);     // send command byte to turn off interupts
-        return(0x01);
-    #endif    
+    Bit8u command_byte, prev_command_byte;
+//  if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"inhibmouse");
+    outb(MOUSE_CNTL, 0x20);             // send command to read command byte
+    wait_mouse_event();
+    prev_command_byte = inb(MOUSE_PORT);
+    command_byte = prev_command_byte;                   //while ( (inb(0x64) & 0x02) );
+//  if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"inhibmouse");
+    command_byte &= 0xfd;       // turn off IRQ 12 generation
+    command_byte |= 0x20;       // disable mouse serial clock line
+    outb(MOUSE_CNTL, 0x60);     // write command byte
+    outb(MOUSE_PORT, command_byte);
+    return(prev_command_byte);
 }
 
 //--------------------------------------------------------------------------
@@ -1878,21 +1866,17 @@ static Bit8u inhibit_mouse_int_and_events(void)
 //--------------------------------------------------------------------------
 static void enable_mouse_int_and_events(void)
 {
-    #if PS2_COMPLIANT
-        Bit8u command_byte;
-//        if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"enabmouse");
-        outb(MOUSE_CNTL, 0x21);              // send command byte
-        outb(MOUSE_CNTL, 0x20);              // send command byte
-        wait_mouse_event();
-        command_byte = inb(0x60);
-//        if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"enabmouse");
-        command_byte |= 0x02;       // turn on IRQ 12 generation
-        command_byte &= 0xdf;       // enable mouse serial clock line
-        outb(MOUSE_CNTL, 0x60);           // write command byte
-        outb(MOUSE_PORT, command_byte);
-    #else
-        outb(MOUSE_CNTL, 0x01);     // send command byte to turn interrupt generation on
-    #endif
+    Bit8u command_byte;
+//  if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"enabmouse");
+    outb(MOUSE_CNTL, 0x21);              // send command byte
+    outb(MOUSE_CNTL, 0x20);              // send command byte
+    wait_mouse_event();
+    command_byte = inb(0x60);
+//  if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"enabmouse");
+    command_byte |= 0x02;       // turn on IRQ 12 generation
+    command_byte &= 0xdf;       // enable mouse serial clock line
+    outb(MOUSE_CNTL, 0x60);           // write command byte
+    outb(MOUSE_PORT, command_byte);
 }
 
 //--------------------------------------------------------------------------
@@ -1900,15 +1884,10 @@ static void enable_mouse_int_and_events(void)
 //--------------------------------------------------------------------------
 static void set_kbd_command_byte(Bit8u command_byte)
 {
-    #if PS2_COMPLIANT
-//        if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"setkbdcomm");
-//      outb(MOUSE_CNTL, 0xD4);
-        outb(MOUSE_CNTL, 0x60);           // write command byte
-        outb(MOUSE_PORT, command_byte);
-    #else
-        outb(MOUSE_CNTL, command_byte);     // send command byte to turn interrupt generation on
-        return;     // Do nothing, we do not have integrated mouse kbd
-    #endif
+//  if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"setkbdcomm");
+//  outb(MOUSE_CNTL, 0xD4);
+    outb(MOUSE_CNTL, 0x60);           // write command byte
+    outb(MOUSE_PORT, command_byte);
 }
 
 //--------------------------------------------------------------------------
@@ -1916,9 +1895,7 @@ static void set_kbd_command_byte(Bit8u command_byte)
 //--------------------------------------------------------------------------
 static Bit8u send_to_mouse_ctrl(Bit8u sendbyte)
 {
-    #if PS2_COMPLIANT         // wait for chance to write to ctrl
-//        if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"sendmouse");
-
+//  if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"sendmouse");
     Bit8u try, mouse_data; 
     try = 3;                                    // Try 3 times before giving up
     do {
@@ -1929,10 +1906,6 @@ static Bit8u send_to_mouse_ctrl(Bit8u sendbyte)
         try--;                                  // Decerement tries
     } while(try);                               // Keep going until try is zero
     return(mouse_data);
-
-    #else
-        outb(MOUSE_PORT, sendbyte);
-    #endif
 }
 
 //--------------------------------------------------------------------------
@@ -1941,13 +1914,8 @@ static Bit8u send_to_mouse_ctrl(Bit8u sendbyte)
 static Bit8u get_mouse_data(void)
 {
     Bit8u  data;
-    #if PS2_COMPLIANT
-        wait_mouse_event();
-        data = inb(MOUSE_PORT);
-    #else
-        wait_mouse_event();
-        data = inb(MOUSE_PORT);         // get it
-    #endif
+    wait_mouse_event();
+    data = inb(MOUSE_PORT);
     return(data);
 }
 
@@ -2090,22 +2058,33 @@ Bit16u rAX, rCX, rDX, rDI, rSI, rBP, rBX, rDS, rIP, rCS, rFLAGS;
     Bit8u  midnight_flag;
     
     __asm { sti }
-    switch(GET_AL()) {
-        case 0:             // get current clock count
+    switch(GET_AH()) {
+        case 0:             // Get current clock count
             __asm { cli }
             ticks_low     = read_word(0x0040, 0x006C);
             ticks_high    = read_word(0x0040, 0x006E);
             midnight_flag = read_byte(0x0040, 0x0070);
-            
             SET_CX(ticks_high);
             SET_DX(ticks_low); 
             SET_AL(midnight_flag);
-
             write_byte(0x0040, 0x0070, 0);  // reset flag
             __asm { sti }
-            CLEAR_CF();       // OK  AH already 0
+            CLEAR_CF();       // Status OK, AH should already be 0  
             break;
 
+        case 1:             // Set Current Clock Count
+            __asm { cli }
+            ticks_high    = rCX;
+            ticks_low     = rDX;
+            midnight_flag = 0;      // reset flag
+            write_word(0x0040, 0x006C, ticks_low);
+            write_word(0x0040, 0x006E, ticks_high);
+            write_word(0x0040, 0x0070, midnight_flag);
+            __asm { sti }
+            SET_AH(0);
+            CLEAR_CF();       // Status OK  
+            break;
+            
         default:
             SET_CF(); // Unsupported
     }
