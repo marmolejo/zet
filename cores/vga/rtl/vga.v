@@ -47,6 +47,8 @@ module vga (
     output [ 1:0] sram_bw_n_
   );
 
+assign vert_sync = ~graphics_alpha ^ w_vert_sync;
+
   // Registers and nets
   //
   // csr address
@@ -193,7 +195,7 @@ module vga (
     .v_retrace  (v_retrace),
     .vh_retrace (vh_retrace)
   );
-
+wire w_vert_sync;
   lcd lcd0 (
     .clk (wb_clk_i),
     .rst (wb_rst_i),
@@ -222,7 +224,7 @@ module vga (
     .vga_green_o (vga_green_o),
     .vga_blue_o  (vga_blue_o),
     .horiz_sync  (horiz_sync),
-    .vert_sync   (vert_sync),
+    .vert_sync   (w_vert_sync),
 
     .cur_start  (cur_start),
     .cur_end    (cur_end),
