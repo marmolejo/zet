@@ -82,11 +82,11 @@ module kotku (
     output        i2c_sclk,
 
     // AUDIO CODEC
-    input         aud_adclrck, //
+    input         aud_adclrck,
     input         aud_adcdat,
-    input         aud_daclrck, //
+    input         aud_daclrck,
     output        aud_dacdat,
-    input         aud_bclk, //
+    input         aud_bclk,
     output        aud_xck
   );
 
@@ -888,6 +888,7 @@ module kotku (
 
   // System speaker
   assign spk = timer2_o & port61h[1];
+
   // System speaker audio output
   assign audio_l = {spk, 15'h4000};
   assign audio_r = {spk, 15'h4000};
