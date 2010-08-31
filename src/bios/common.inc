@@ -35,8 +35,11 @@ ff.rom: ff$(E)
 #  -ecc force use of __cedecl calls
 #  -wx  set to maximum warning level
 #
-CFLAGS = -0 -wx -zu -s -ot -d0 -ecc -ms 
-AFLAGS = -0 -wx 
+CFLAGS = -0 -wx -zu -s -ot -d0 -ecc -ms
+
+RELVERS   = v1.1.1:15:g8c8e616
+BIOS_VERS = -dBIOS_VERS=\"$(RELVERS)\"
+AFLAGS  = -0 -wx $(BIOS_VERS)
 
 #
 # This section compiles and links the ROM BIOS module. The result of this

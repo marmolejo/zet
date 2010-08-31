@@ -72,7 +72,7 @@ vgasums: vgasums.c
 	gcc vgasums.c -o vgasums
 
 clean:
-	rm -f *.o *.sym *.rom *.exe *.err *.map ff biossums vgasums
+	rm -f *.o *.sym *.rom *.exe *.err *.map *.flash ff biossums vgasums
 
 #
 #  End of make.

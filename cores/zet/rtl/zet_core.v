@@ -98,6 +98,7 @@ module zet_core (
   wire block_or_hlt;
 
   // wires and regs for hlt
+  wire cpu_block_or_hlt;
   wire hlt_op;
   wire hlt_in;
   wire hlt_out;

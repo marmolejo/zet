@@ -776,11 +776,6 @@ CoMplement Carry flag
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
  CMC    000__x_xx_xx_xx_xx__x__x__x__1__x_01__0_100_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx
 
-=== hlt ===
-HaLT, actually NOP, requires external circuit
- ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- HLT    000__0_00_00_00_00__0__0__0__0__0_00__0_000_000__0_00__0__0_0000_0000_0000_0000_00  // (b) r->r
-
 === stc ===
 SeT Carry flag
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s

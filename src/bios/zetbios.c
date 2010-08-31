@@ -277,10 +277,10 @@ static void bios_printf(Bit16u action, Bit8u *s, ...)
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 #define BIOS_COPYRIGHT_STRING   "(c) 2009, 2010 Zeus Gomez Marmolejo and (c) 2002 MandrakeSoft S.A."
-#define BIOS_BANNER             "Zet Test BIOS - build date: "
-#define BIOS_BUILD_DATE         "05/22/2010\n"
-#define BIOS_VERS               " Version: Special\n"
-#define BIOS_DATE               " Date: 5/9/2010\n\n"
+#define BIOS_BANNER             "Zet SoC BIOS - build date: "
+#define BIOS_BUILD_DATE         "31 Aug 2010\n"
+#define BIOS_VERS               "  Version: v1.1.1:15:g8c8e616\n"
+#define BIOS_DATE               "  Release date: 31 Aug 2010\n\n"
 void __cdecl print_bios_banner(void)
 {
     bios_printf(BIOS_PRINTF_SCREEN,BIOS_BANNER);
@@ -1409,14 +1409,14 @@ static void print_boot_device(ipl_entry_t BASESTK *e)
     if(type == IPL_TYPE_BEV) type = 0x04; // NIC appears as type 0x80 
     if(type == 0 || type > 0x04) BX_PANIC("Bad drive type\n");
 
-    bios_printf(BIOS_PRINTF_SCREEN, "Booting from %s", drivetypes[type]);
+    bios_printf(BIOS_PRINTF_SCREEN, "Booting device: %s", drivetypes[type]);
  
     if(type == 4 && e->description != 0) {    // print product string if BEV, first 32 bytes are significant 
         memcpyb(ss, (Bit16u)&description, (Bit16u)(e->description >> 16), (Bit16u)(e->description & 0xffff), 32);
         description[32] = 0; // terminate string 
         bios_printf(BIOS_PRINTF_SCREEN, " [%S]", ss, description);
     }
-    bios_printf(BIOS_PRINTF_SCREEN, "...\n\n");
+    bios_printf(BIOS_PRINTF_SCREEN, "\n\n");
 }
 
 //--------------------------------------------------------------------------

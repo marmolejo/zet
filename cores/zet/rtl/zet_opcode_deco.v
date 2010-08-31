@@ -949,7 +949,7 @@ module zet_opcode_deco (
 
       8'b1111_0100: // hlt
         begin
-          seq_addr <= `HLT; // hlt processing is in zet_core.v
+          seq_addr <= `NOP; // hlt processing is in zet_core.v
           need_modrm <= 1'b0;
           need_off <= 1'b0;
           need_imm <= 1'b0;
