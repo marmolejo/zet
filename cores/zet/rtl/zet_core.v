@@ -95,10 +95,8 @@ module zet_core (
   // wires fetch - exec
   wire [15:0] imm_f;
 
-  wire cpu_block_or_hlt;
-
   // wires and regs for hlt
-  wire cpu_block_or_hlt;
+  wire block_or_hlt;
   wire hlt_op;
   wire hlt_in;
   wire hlt_out;
@@ -152,7 +150,7 @@ module zet_core (
     .data          (cpu_dat_i),
     .pc            (pc),
     .bytefetch     (byte_fetch),
-    .block         (cpu_block_or_hlt),
+    .block         (block_or_hlt),
     .intr          (intr)
   );
 
@@ -163,7 +161,7 @@ module zet_core (
     .opcode  (opcode),
     .modrm   (modrm),
     .rep     (rep),
-    .block   (cpu_block_or_hlt),
+    .block   (block_or_hlt),
     .exec_st (exec_st),
     .div_exc (div_exc),
     .ld_base (ld_base),
@@ -238,7 +236,7 @@ module zet_core (
     .we      (cpu_we_o),
     .m_io    (cpu_m_io),
     .byteop  (byte_exec),
-    .block   (cpu_block_or_hlt)
+    .block   (block_or_hlt)
   );
 
   // Assignments
@@ -253,7 +251,7 @@ module zet_core (
   assign hlt_op = ((opcode == `OP_HLT) && exec_st); 
   assign hlt_in = (hlt_op && !hlt_op_old && !hlt_out);
   assign hlt_out = intr & ifl;
-  assign cpu_block_or_hlt = cpu_block | hlt | hlt_in;
+  assign block_or_hlt = cpu_block | hlt | hlt_in;
 
   // Behaviour
   always @(posedge clk)
