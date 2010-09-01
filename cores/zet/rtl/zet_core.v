@@ -151,7 +151,7 @@ module zet_core (
     .of      (of),
     .zf      (zf),
     .ifl     (ifl),
-    .cx_zero (cx_zero),
+//    .cx_zero (cx_zero), // still to resolve jumps
     .div_exc (div_exc),
 
     // from control
