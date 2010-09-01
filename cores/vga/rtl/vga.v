@@ -47,7 +47,6 @@ module vga (
     output [ 1:0] sram_bw_n_
   );
 
-assign vert_sync = ~graphics_alpha ^ w_vert_sync;
 
   // Registers and nets
   //
@@ -69,6 +68,7 @@ assign vert_sync = ~graphics_alpha ^ w_vert_sync;
   wire        csr_stb_o;
   wire        v_retrace;
   wire        vh_retrace;
+  wire        w_vert_sync;
 
   // VGA configuration registers
   wire        shift_reg1;
@@ -195,7 +195,7 @@ assign vert_sync = ~graphics_alpha ^ w_vert_sync;
     .v_retrace  (v_retrace),
     .vh_retrace (vh_retrace)
   );
-wire w_vert_sync;
+
   lcd lcd0 (
     .clk (wb_clk_i),
     .rst (wb_rst_i),
@@ -321,9 +321,10 @@ wire w_vert_sync;
   );
 
   // Continous assignments
-  assign wb_dat_o = wb_tga_i ? conf_wb_dat_o : mem_wb_dat_o;
-  assign wb_ack_o = wb_tga_i ? conf_wb_ack_o : mem_wb_ack_o;
-  assign stb      = wb_stb_i & wb_cyc_i;
+  assign wb_dat_o  = wb_tga_i ? conf_wb_dat_o : mem_wb_dat_o;
+  assign wb_ack_o  = wb_tga_i ? conf_wb_ack_o : mem_wb_ack_o;
+  assign stb       = wb_stb_i & wb_cyc_i;
+  assign vert_sync = ~graphics_alpha ^ w_vert_sync;
 
   // Behaviour
   // csr_adr_i
