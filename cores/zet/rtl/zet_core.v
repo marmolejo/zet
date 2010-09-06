@@ -81,6 +81,7 @@ module zet_core (
   wire [7:0] modrm;
   wire       rep;
   wire       exec_st;
+  wire       exec_ns;
   wire       ld_base;
   wire [2:0] sop_l;
 
@@ -124,6 +125,7 @@ module zet_core (
     .modrm   (modrm),
     .rep     (rep),
     .exec_st (exec_st),
+    .exec_ns (exec_ns),
     .ld_base (ld_base),
     .sop_l   (sop_l),
 
@@ -175,6 +177,7 @@ module zet_core (
     .rep     (rep),
     .block   (stall_f),
     .exec_st (exec_st),
+    .exec_ns (exec_ns),
     .div_exc (div_exc),
     .ld_base (ld_base),
     .div     (div),

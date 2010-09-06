@@ -28,6 +28,7 @@ module zet_fetch (
     output     [7:0] modrm,
     output           rep,
     output           exec_st,
+    output           exec_ns,
     output           ld_base,
     output reg [2:0] sop_l,
 
@@ -129,6 +130,7 @@ module zet_fetch (
   assign bytefetch = (st == OFFSE) ? ~off_size
                    : ((st == IMMED) ? ~imm_size : 1'b1);
   assign exec_st = (st == EXECU);
+  assign exec_ns = (ns == EXECU);
   assign imm_f = ((st == OFFSE) & off_size
                 | (st == IMMED) & imm_size) ? 16'd2
                : 16'd1;

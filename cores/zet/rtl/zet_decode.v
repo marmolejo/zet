@@ -27,6 +27,7 @@ module zet_decode (
     input       rep,
     input block,
     input exec_st,
+    input exec_ns,
     input div_exc,
     input ld_base,
     input div,
@@ -83,7 +84,7 @@ module zet_decode (
          : block ? seq
          : end_seq ? `MICRO_ADDR_WIDTH'd0
          : |div_cnt ? seq
-         : exec_st ? (seq + `MICRO_ADDR_WIDTH'd1) : `MICRO_ADDR_WIDTH'd0;
+         : exec_ns ? (seq + `MICRO_ADDR_WIDTH'd1) : `MICRO_ADDR_WIDTH'd0;
 
   // div_cnt - divisor counter
   always @(posedge clk)
