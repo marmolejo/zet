@@ -1,17 +1,6 @@
 /*
- *  8254 timer simplified for Zet SoC:
- *   - Wishbone interface
- *   - Modes (binary) 2 and 3 only
- *   - Common clock for all 3 Timers (tclk_i)
- *   - Gate input for Timer2 only (gate2_i)
- *  Assumptions:
- *   1. tclk_i is asynchronous simple wire (1.193182 MHz by default)
- *   2. gate2_i is synchronous (comes from Wishbone controlled register)
- *   3. Wishbone clock wb_clk_i is running always and it has much higher 
- *      frequency than tclk_i
- *
- *  Copyright (c) 2010  YS
- *  Copyright (c) 2009  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *  8254 timer simplified for Zet SoC
+ *  Copyright (c) 2010  YS <ys05@mail.ru>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -26,6 +15,19 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Zet; see the file COPYING. If not, see
  *  <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ *  This module uses:
+ *   - Wishbone interface
+ *   - Modes (binary) 2 and 3 only
+ *   - Common clock for all 3 Timers (tclk_i)
+ *   - Gate input for Timer2 only (gate2_i)
+ *  Assumptions:
+ *   1. tclk_i is asynchronous simple wire (1.193182 MHz by default)
+ *   2. gate2_i is synchronous (comes from Wishbone controlled register)
+ *   3. Wishbone clock wb_clk_i is running always and it has much higher
+ *      frequency than tclk_i
  */
 
 `define WB_UNBUFFERED_8254

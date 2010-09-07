@@ -1,14 +1,7 @@
 /*
- *  Single channel counter of 8254 timer simplified for Zet SoC:
- *   - Modes (binary) 2 and 3 only
- *  Assumptions:
- *   1. clkt is asynchronous simple wire (1.193182 MHz by default)
- *   2. gate is synchronous (comes from Wishbone controlled register)
- *   3. clkrw read/write clock (derived from Wishbone clock) is running 
- *      always and it has much higher frequency than clkt
- *
- *  Copyright (c) 2010  YS
- *  Copyright (c) 2009  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *  Single channel counter of 8254 timer simplified for Zet SoC
+ *  Copyright (c) 2010  YS <ys05@mail.ru>
+ *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -23,6 +16,16 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Zet; see the file COPYING. If not, see
  *  <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ *  This module uses:
+ *   - Modes (binary) 2 and 3 only
+ *  Assumptions:
+ *   1. clkt is asynchronous simple wire (1.193182 MHz by default)
+ *   2. gate is synchronous (comes from Wishbone controlled register)
+ *   3. clkrw read/write clock (derived from Wishbone clock) is running
+ *      always and it has much higher frequency than clkt
  */
 
 module timer_counter(
@@ -83,7 +86,7 @@ module timer_counter(
   assign out = bOut;
 
   // Write to Control Word Register
-  always @(posedge clkrw or posedge rst)
+  always @(posedge clkrw)
   begin
     if (rst)
     begin
@@ -115,7 +118,7 @@ module timer_counter(
   end
 
   // Write to Constant Register
-  always @(posedge clkrw or posedge rst)
+  always @(posedge clkrw)
   begin
     if (rst)
     begin
@@ -159,7 +162,7 @@ module timer_counter(
   end
 
   // Synchronizing Count Clock with Wishbone Clock
-  always @(posedge clkrw or posedge rst)
+  always @(posedge clkrw)
   begin
     if (rst)
     begin
@@ -184,7 +187,7 @@ module timer_counter(
   end  
 
   // Timer Counter in mode 2 or mode 3
-  always @(posedge clkrw or posedge rst)
+  always @(posedge clkrw)
   begin
     if (rst)
     begin
@@ -220,7 +223,7 @@ module timer_counter(
   end
 
   // Output Latch Control
-  always @(posedge clkrw or posedge rst)
+  always @(posedge clkrw)
   begin
     if (rst)
     begin
@@ -262,7 +265,7 @@ module timer_counter(
   assign fReadEnd = !rdd && rdd1; // 1 clock pulse after read
 
   // Read Data/State
-  always @(posedge clkrw or posedge rst)
+  always @(posedge clkrw)
   begin
     if (rst)
     begin
@@ -289,5 +292,5 @@ module timer_counter(
         fToggleHigh <= !fToggleHigh;
     end
   end
-    
+
 endmodule

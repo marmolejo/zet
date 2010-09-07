@@ -1,25 +1,6 @@
 /*
- *  DE1/DE2 Audio Interface (WM8731 audio chip):
- *   - aud_xck should be generated and sent to audio chip externally
- *   - Setup in I2C_AV_Config.v:
- *     SET_FORMAT:  16'h0E42 (Slave / I2S / 16 bit)
- *     -  aud_xck        = 11.2896 MHz
- *        MCLK = aud_xck = 11.2896 MHz
- *     SAMPLE_CTRL: 16'h1020 (fs=44.1kHz / MCLK=256fs)
- *     -  aud_xck        = 5.6448 MHz
- *        MCLK = aud_xck = 5.6448 MHz
- *     SAMPLE_CTRL: 16'h103C (fs=44.1kHz / MCLK=128fs)
- *     -  aud_xck          = 11.2896 MHz
- *        MCLK = aud_xck/2 =  5.6448 MHz
- *     SAMPLE_CTRL: 16'h107C (fs=44.1kHz / MCLK=128fs)
- *   - clk_i should be much faster than aud_bclk_i
- *   - suppose in slave mode aud_daclrck_i == aud_adclrck_i, otherwise
- *     aud_adclrck_i may need separate processing and ready_o should 
- *     be splitted into readydac_o and readyadc_o
- *   - ADC part is not tested
- *
- *  Copyright (c) 2010  YS
- *  Copyright (c) 2009  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *  DE1/DE2 Audio Interface (WM8731 audio chip)
+ *  Copyright (c) 2010  YS <ys05@mail.ru>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -35,8 +16,27 @@
  *  along with Zet; see the file COPYING. If not, see
  *  <http://www.gnu.org/licenses/>.
  */
+/*
+ *   - aud_xck should be generated and sent to audio chip externally
+ *   - Setup in I2C_AV_Config.v:
+ *     SET_FORMAT:  16'h0E42 (Slave / I2S / 16 bit)
+ *     -  aud_xck        = 11.2896 MHz
+ *        MCLK = aud_xck = 11.2896 MHz
+ *     SAMPLE_CTRL: 16'h1020 (fs=44.1kHz / MCLK=256fs)
+ *     -  aud_xck        = 5.6448 MHz
+ *        MCLK = aud_xck = 5.6448 MHz
+ *     SAMPLE_CTRL: 16'h103C (fs=44.1kHz / MCLK=128fs)
+ *     -  aud_xck          = 11.2896 MHz
+ *        MCLK = aud_xck/2 =  5.6448 MHz
+ *     SAMPLE_CTRL: 16'h107C (fs=44.1kHz / MCLK=128fs)
+ *   - clk_i should be much faster than aud_bclk_i
+ *   - suppose in slave mode aud_daclrck_i == aud_adclrck_i, otherwise
+ *     aud_adclrck_i may need separate processing and ready_o should
+ *     be splitted into readydac_o and readyadc_o
+ *   - ADC part is not tested
+ */
 
-module audio_if 
+module audio_if
   (
     // Main system interface
     input                     clk_i, 

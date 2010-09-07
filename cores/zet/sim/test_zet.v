@@ -67,7 +67,7 @@ module test_zet;
     else if (adr[15:1]==15'h5c & sel[0] && cyc && stb)
       io_reg[15:8] <= dat_o[7:0];
 
-  always #1 clk = ~clk;
+  always #4 clk = ~clk;  // 12.5 Mhz
 
   initial
     begin
@@ -75,7 +75,7 @@ module test_zet;
          clk <= 1'b1;
          rst <= 1'b0;
       #5 rst <= 1'b1;
-      #2 rst <= 1'b0;
+      #5 rst <= 1'b0;
 
       #1000 intr <= 1'b1;
       //@(posedge inta)

@@ -1,8 +1,14 @@
-/*
- * These fonts come from ftp://ftp.simtel.net/pub/simtelnet/msdos/screen/fntcol16.zip
- * The package is (c) by Joseph Gil
- * The individual fonts are public domain
- */ 
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+// ZET VGA Bios:
+// These fonts come from ftp://ftp.simtel.net/pub/simtelnet/msdos/screen/fntcol16.zip
+// The package is (c) by Joseph Gil
+// The individual fonts are public domain
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+#ifndef vgafonts_h_included
+#define vgafonts_h_included
+//---------------------------------------------------------------------------
 static Bit8u vgafont8[256*8]=
 {
  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -782,3 +788,8 @@ static Bit8u vgafont16[256*16]=
 };
 static Bit8u vgafont14alt[1]={0x00};
 static Bit8u vgafont16alt[1]={0x00};
+
+//---------------------------------------------------------------------------
+#endif
+//---------------------------------------------------------------------------
+
