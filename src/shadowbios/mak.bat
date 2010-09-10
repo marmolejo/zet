@@ -1,0 +1,4 @@
+cls 
+wmake
+mifer
+

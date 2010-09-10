@@ -2,7 +2,7 @@
 module kotku (
     input        clk_50_,
     output [9:0] ledr_,
-
+    output 		 chasis_spk,
     input  [9:0] sw_,
     input  [2:0] key_,
     output [6:0] hex0_,
@@ -51,14 +51,7 @@ module kotku (
     output        sd_sclk_,
     input         sd_miso_,
     output        sd_mosi_,
-    output        sd_ss_,
-
-    // SPI Flash signals
-    output        spi_sclk_,
-    input         spi_miso_,
-    output        spi_mosi_,
-    output        spi_sels_
-
+    output        sd_ss_
   );
 
   // Registers and nets
@@ -144,6 +137,17 @@ module kotku (
   wire        keyb_stb_i;
   wire        keyb_ack_o;
 
+  // wires to timer controller
+  wire [15:0] timer_dat_o;
+  wire [15:0] timer_dat_i;
+  wire        timer_tga_i;
+  wire [19:1] timer_adr_i;
+  wire [ 1:0] timer_sel_i;
+  wire        timer_we_i;
+  wire        timer_cyc_i;
+  wire        timer_stb_i;
+  wire        timer_ack_o;  
+  
   // wires to sd controller
   wire [15:0] sd_dat_o;
   wire [15:0] sd_dat_i;
@@ -230,23 +234,15 @@ module kotku (
   // wires to default stb/ack
   wire 		  def_cyc_i;
   wire 		  def_stb_i;
-
   wire [15:0] sw_dat_o;
-
   wire        sdram_clk;
-
   wire        vga_clk;
 
   wire [ 7:0] intv;
   wire [ 2:0] iid;
   wire        intr;
   wire        inta;
-
-  wire [15:0] ip;
   wire [19:0] pc;
-  wire [15:0] cs;
-  wire [ 2:0] state;
-
   reg  [16:0] rst_debounce;
 
   // Module instantiations
@@ -257,6 +253,20 @@ module kotku (
     .c2     (clk),        // 12.5 Mhz
     .locked (lock)
   );
+  
+  wire        timer_clk;
+  wire        timer2_o;
+  wire [ 7:0] port61h;  
+
+  clk_gen #(
+    .res   (21),
+    .phase (100091)
+    ) 
+	timerclk (
+    .clk_i (vga_clk),    // 25 MHz
+    .rst_i (rst),
+    .clk_o (timer_clk)   // 1.193178 MHz (required 1.193182 MHz)
+  );  
 
 `ifndef SIMULATION
   /*
@@ -455,44 +465,24 @@ module kotku (
     .vert_sync   (tft_lcd_vsync_)
   );
 
-  uart_top com1 (
-    .wb_clk_i   (clk), 			// Wishbone slave interface
-    .wb_rst_i   (rst),
-    .wb_adr_i   ({uart_adr_i[2:1],~uart_sel_i[0]}),
-    .wb_dat_i   (uart_dat_i),
-    .wb_dat_o   (uart_dat_o),
-    .wb_we_i    (uart_we_i),
-    .wb_stb_i   (uart_stb_i),
-    .wb_cyc_i   (uart_cyc_i),
-    .wb_ack_o   (uart_ack_o),
-    .wb_sel_i   (4'b0),
-    .int_o      (intv[4]), 		// interrupt request
-    .stx_pad_o  (uart_txd_),	// UART signals
-    .srx_pad_i  (uart_rxd_),	// serial input/output
-    .cts_pad_i  (1'b1),			// modem signals
-    .dsr_pad_i  (1'b1),
-    .ri_pad_i   (1'b0),
-    .dcd_pad_i  (1'b0)
+  WB_Serial com1(					// RS232 COM1 Port
+    .wb_clk_i (clk),				// Main Clock 
+    .wb_rst_i (rst),  				// Reset Line
+    .wb_adr_i (uart_adr_i[2:1]),	// Address lines
+    .wb_sel_i (uart_sel_i),			// Select lines
+    .wb_dat_i (uart_dat_i),			// Command to send 
+    .wb_dat_o (uart_dat_o),
+    .wb_we_i  (uart_we_i),          // Write enable
+    .wb_stb_i (uart_stb_i),
+    .wb_cyc_i (uart_cyc_i),
+    .wb_ack_o (uart_ack_o),
+    .wb_tgc_o (intv[4]),            // Interrupt request
+
+    .rs232_tx (uart_txd_),			// UART signals
+    .rs232_rx (uart_rxd_)			// serial input/output
   );
+  
 
-  WB_SPI_Flash SPI_Flash(
-    .wb_clk_i(clk),					// Main Clock 
-    .wb_rst_i(rst),  				// Reset Line
-    .wb_dat_i(wb_spi_dat_i[8:0]),   // Command to send
-    .wb_dat_o(wb_spi_dat_o[7:0]),   // Received data
-    .wb_cyc_i(wb_spi_cyc_i),        // Cycle
-    .wb_stb_i(wb_spi_stb_i),        // Strobe
-    .wb_sel_i(wb_spi_sel_i),        // Select lines
-    .wb_we_i(wb_spi_we_i),          // Write enable
-    .wb_ack_o(wb_spi_ack_o),        // Normal bus termination
-
-    .sclk(spi_sclk_),				// Serial pad signal
-    .miso(spi_miso_),
-    .mosi(spi_mosi_),
-    .sels(spi_sels_)
-  );
-
- 
   WB_PS2 PS2(
     .wb_clk_i(clk),					// Main Clock 
     .wb_rst_i(rst),  				// Reset Line
@@ -500,28 +490,36 @@ module kotku (
     .wb_sel_i(keyb_sel_i),			// Select lines
     .wb_dat_i(keyb_dat_i),			// Command to send to Ethernet
     .wb_dat_o(keyb_dat_o),
-    .wb_we_i(keyb_we_i),            // Write enable
+    .wb_we_i (keyb_we_i),            // Write enable
     .wb_stb_i(keyb_stb_i),
     .wb_cyc_i(keyb_cyc_i),
     .wb_ack_o(keyb_ack_o),
     .wb_tgk_o(intv[1]),             // Keyboard Interrupt request
     .wb_tgm_o(intv[3]),             // Mouse Interrupt request
 
+	.port61h(port61h),				// Chasis Speaker port
+
     .PS2_KBD_CLK(ps2_kclk_),.PS2_KBD_DAT(ps2_kdat_),
 	.PS2_MSE_CLK(ps2_mclk_),.PS2_MSE_DAT(ps2_mdat_)
   );  
- 
-  
-  timer #(
-    .res   (33),
-    .phase (12507)
-    ) 
-    timer0 (
+
+  timer timer (
     .wb_clk_i (clk),
     .wb_rst_i (rst),
-    .wb_tgc_o (intv[0])
-  );
-
+    .wb_adr_i (timer_adr_i[1]),
+    .wb_sel_i (timer_sel_i),
+    .wb_dat_i (timer_dat_i),
+    .wb_dat_o (timer_dat_o),
+    .wb_stb_i (timer_stb_i),
+    .wb_cyc_i (timer_cyc_i),
+    .wb_we_i  (timer_we_i),
+    .wb_ack_o (timer_ack_o),
+    .wb_tgc_o (intv[0]),
+    .tclk_i   (timer_clk),     // 1.193182 MHz = (14.31818/12) MHz
+    .gate2_i  (port61h[0]),
+    .out2_o   (timer2_o)
+  );  
+  
   simple_pic pic0 (
     .clk  (clk),
     .rst  (rst),
@@ -583,25 +581,25 @@ module kotku (
     .sw_   	  (sw_)
   );
 
-  cpu zet_proc (
-    .ip         (ip),
-    .cs         (cs),
-    .state      (state),
-    .dbg_block  (1'b0),
-    .wb_clk_i 	(clk),			// Wishbone master interface
-    .wb_rst_i 	(rst),
-    .wb_dat_i 	(dat_i),
-    .wb_dat_o 	(dat_o),
-    .wb_adr_o 	(adr),
-    .wb_we_o  	(we),
-    .wb_tga_o 	(tga),
-    .wb_sel_o 	(sel),
-    .wb_stb_o 	(stb),
-    .wb_cyc_o 	(cyc),
-    .wb_ack_i 	(ack),
-    .wb_tgc_i 	(intr),
-    .wb_tgc_o 	(inta)
+zet zet (
+    .pc (pc),
+
+    // Wishbone master interface
+    .wb_clk_i (clk),
+    .wb_rst_i (rst),
+    .wb_dat_i (dat_i),
+    .wb_dat_o (dat_o),
+    .wb_adr_o (adr),
+    .wb_we_o  (we),
+    .wb_tga_o (tga),
+    .wb_sel_o (sel),
+    .wb_stb_o (stb),
+    .wb_cyc_o (cyc),
+    .wb_ack_i (ack),
+    .wb_tgc_i (intr),
+    .wb_tgc_o (inta)
   );
+  
 
   wb_switch #(
     .s0_addr_1 (20'b0_1111_0000_0000_0000_000), // mem 0xf0000 - 0xfffff 
@@ -613,12 +611,8 @@ module kotku (
     .s0_addr_3 (20'b1_0000_1110_0000_0000_000), // io 0xe000 - 0xfeff
     .s0_mask_3 (20'b1_0000_1111_1110_0000_000), // Bios ROM
     
-//    .s1_addr_1 (20'b0_1010_0000_0000_0000_000), // mem 0xa0000 - 0xbffff
-//    .s1_mask_1 (20'b1_1110_0000_0000_0000_000), // VGA Memory
-
     .s1_addr_1 (20'b0_1011_1000_0000_0000_000), // mem 0xb8000 - 0xbffff
-    .s1_mask_1 (20'b1_1111_1000_0000_0000_000), // VGA Memory
-
+    .s1_mask_1 (20'b1_1111_1000_0000_0000_000), // VGA Text Memory
     
     .s1_addr_2 (20'b1_0000_0000_0011_1100_000), // io 0x3c0 - 0x3df
     .s1_mask_2 (20'b1_0000_1111_1111_1110_000), // VGA IO
@@ -638,9 +632,9 @@ module kotku (
     .s6_addr_1 (20'b1_0000_1111_0010_0000_000), // io 0xf200 - 0xf20f
     .s6_mask_1 (20'b1_0000_1111_1111_1111_000), // CSR Bridge
 
-    .s7_addr_1 (20'b1_0000_0000_0010_0011_100), // io 0x0238 - 0x023f
-    .s7_mask_1 (20'b1_0000_1111_1111_1111_100), // Temporary SPI Flash
-
+    .s7_addr_1 (20'b1_0000_0000_0000_0100_000), // io 0x40 - 0x43
+    .s7_mask_1 (20'b1_0000_1111_1111_1111_110),	// Timer control port
+	
     .s8_addr_1 (20'b1_0000_1111_0011_0000_000), // io 0xf300 - 0xf3ff
     .s8_mask_1 (20'b1_0000_1111_1111_0000_000), // SDRAM Control
     
@@ -720,15 +714,16 @@ module kotku (
     .s6_stb_o (csrbrg_stb_s),
     .s6_ack_i (csrbrg_ack_s),
 
-    .s7_dat_i (wb_spi_dat_o),		    // Slave 7 interface - SPI Flash
-    .s7_dat_o (wb_spi_dat_i),
-    .s7_adr_o ({wb_spi_tga_i,wb_spi_adr_i}),
-    .s7_sel_o (wb_spi_sel_i),
-    .s7_we_o  (wb_spi_we_i),
-    .s7_cyc_o (wb_spi_cyc_i),
-    .s7_stb_o (wb_spi_stb_i),
-    .s7_ack_i (wb_spi_ack_o),
-
+    // Slave 7 interface - timer
+    .s7_dat_i (timer_dat_o),
+    .s7_dat_o (timer_dat_i),
+    .s7_adr_o ({timer_tga_i,timer_adr_i}),
+    .s7_sel_o (timer_sel_i),
+    .s7_we_o  (timer_we_i),
+    .s7_cyc_o (timer_cyc_i),
+    .s7_stb_o (timer_stb_i),
+    .s7_ack_i (timer_ack_o),	
+	
     .s8_dat_i (fmlbrg_dat_r_s),		// Slave 8 interface - sdram
     .s8_dat_o (fmlbrg_dat_w_s),
     .s8_adr_o ({fmlbrg_tga_s,fmlbrg_adr_s}),
@@ -761,6 +756,9 @@ module kotku (
   assign rst_lck	= key_[0] & lock;
   assign sdram_clk_	= sdram_clk;
   assign dat_i 		= inta ? { 13'b0000_0000_0000_1, iid } : sw_dat_o;
-  assign pc  		= (cs << 4) + ip;
+
+  // System speaker
+  assign chasis_spk = timer2_o & port61h[1];
+  
 
 endmodule

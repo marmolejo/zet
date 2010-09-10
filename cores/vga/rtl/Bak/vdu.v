@@ -1,24 +1,39 @@
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-// Module:      vdu.v
-// Description: Wishbone Compatible Text only VGA core.
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
+/*
+ *  Copyright (c) 2008  Zeus Gomez Marmolejo <zeus@opencores.org>
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ */
+
 `timescale 1ns/10ps
-// --------------------------------------------------------------------
+
 module vdu (
+    // Wishbone signals
     input             wb_clk_i,     // 25 Mhz VDU clock
-    input             wb_rst_i,		// Wishbone signals
+    input             wb_rst_i,
     input      [15:0] wb_dat_i,
     output reg [15:0] wb_dat_o,
-    input      [19:1] wb_adr_i,
+    input      [11:1] wb_adr_i,
     input             wb_we_i,
     input             wb_tga_i,
     input      [ 1:0] wb_sel_i,
     input             wb_stb_i,
     input             wb_cyc_i,
     output            wb_ack_o,
-    output reg [ 1:0] vga_red_o,		// VGA pad signals
+
+    // VGA pad signals
+    output reg [ 1:0] vga_red_o,
     output reg [ 1:0] vga_green_o,
     output reg [ 1:0] vga_blue_o,
     output reg        horiz_sync,
@@ -26,6 +41,7 @@ module vdu (
   );
 
   // Net, registers and parameters
+
   // Synchronization constants, these values are taken from:
   //  http://tinyvga.com/vga-timing/640x400@70Hz
 
@@ -41,7 +57,7 @@ module vdu (
   parameter VER_SYNC_BEG = 9'd411;  // start of vertical synch pulse
   parameter VER_SYNC_END = 9'd413;  // end of vertical synch pulse
   parameter VER_SCAN_END = 9'd448;  // Last scan row in the frame
-  parameter VER_DISP_CHR = 5'd25;   // Number of character rows displayed
+  parameter VER_DISP_CHR = 6'd25;   // Number of character rows displayed
 
   reg        cursor_on_v;
   reg        cursor_on_h;
@@ -52,10 +68,10 @@ module vdu (
   reg [22:0] blink_count;
 
   // Character generator ROM
-  wire        char_cs;			// never used
-  wire        char_we;			// not used
+  wire        char_cs;
+  wire        char_we;
   wire [11:0] char_addr;
-  wire [7:0]  char_data_in;		// not used
+  wire [7:0]  char_data_in;
   wire [7:0]  char_data_out;
 
   // Control registers
@@ -175,9 +191,11 @@ module vdu (
   assign status_reg1 = { 11'b0, v_retrace, 3'b0, vh_retrace };
   assign wb_ack_o    = wb_tga_i ? stb : vga5_rw;
 
-  // Behaviour - CPU write interface
+  // Behaviour
+  // CPU write interface
   always @(posedge wb_clk_i)
-    if(wb_rst_i) begin
+    if (wb_rst_i)
+      begin
         attr0_addr    <= 11'b0;
         attr0_we      <= 1'b0;
         attr_data_in  <= 8'h0;
@@ -185,49 +203,51 @@ module vdu (
         buff0_we      <= 1'b0;
         buff_data_in  <= 8'h0;
       end
-    else begin
-        if(stb && !wb_tga_i) begin
-										 //                      1111 1111 1100 0000 0000
-										 // 0xa0000 - 0xbffff    9876 5432 1098 7654 3210
-//	if(wb_adr_i[19:12] &  8'h18) begin   // 0xB8000 — 0xBFFFF =  1011_1000_xxxx_xxxx_xxxs
-          
-            attr0_addr   <= wb_adr_i[11:1];
-            buff0_addr   <= wb_adr_i[11:1];
-
+    else
+      begin
+        if (stb && !wb_tga_i)
+          begin
+            attr0_addr   <= wb_adr_i;
             attr0_we     <= wb_we_i & wb_sel_i[1];
-            buff0_we     <= wb_we_i & wb_sel_i[0];
-
-//	end
-
             attr_data_in <= wb_dat_i[15:8];
+            buff0_addr   <= wb_adr_i;
+            buff0_we     <= wb_we_i & wb_sel_i[0];
             buff_data_in <= wb_dat_i[7:0];
           end
       end
 
   // CPU read interface
+  // wb_dat_o
   always @(posedge wb_clk_i)
-    wb_dat_o <= wb_rst_i ? 16'h0 : (wb_tga_i ? status_reg1 : (vga4_rw ? out_data : wb_dat_o));
+    wb_dat_o <= wb_rst_i ? 16'h0 : (wb_tga_i ? status_reg1
+                                 : (vga4_rw ? out_data : wb_dat_o));
 
   // Control registers
   always @(posedge wb_clk_i)
-    reg_adr <= wb_rst_i ? 4'h0 : (wr_adr ? wb_dat_i[3:0] : reg_adr);
+    reg_adr <= wb_rst_i ? 4'h0
+      : (wr_adr ? wb_dat_i[3:0] : reg_adr);
 
   always @(posedge wb_clk_i)
-    reg_hcursor <= wb_rst_i ? 7'h0 : (wr_hcursor ? wb_dat_i[14:8] : reg_hcursor);
+    reg_hcursor <= wb_rst_i ? 7'h0
+      : (wr_hcursor ? wb_dat_i[14:8] : reg_hcursor);
 
   always @(posedge wb_clk_i)
-    reg_vcursor <= wb_rst_i ? 5'h0 : (wr_vcursor ? wb_dat_i[12:8] : reg_vcursor);
+    reg_vcursor <= wb_rst_i ? 5'h0
+      : (wr_vcursor ? wb_dat_i[12:8] : reg_vcursor);
 
   always @(posedge wb_clk_i)
-    reg_cur_start <= wb_rst_i ? 4'he : (wr_cur_start ? wb_dat_i[11:8] : reg_cur_start);
+    reg_cur_start <= wb_rst_i ? 4'he
+      : (wr_cur_start ? wb_dat_i[11:8] : reg_cur_start);
 
   always @(posedge wb_clk_i)
-    reg_cur_end <= wb_rst_i ? 4'hf : (wr_cur_end ? wb_dat_i[11:8] : reg_cur_end);
+    reg_cur_end <= wb_rst_i ? 4'hf
+      : (wr_cur_end ? wb_dat_i[11:8] : reg_cur_end);
 
   // Sync generation & timing process
   // Generate horizontal and vertical timing signals for video signal
   always @(posedge wb_clk_i)
-    if(wb_rst_i) begin
+    if (wb_rst_i)
+      begin
         h_count     <= 10'b0;
         horiz_sync  <= 1'b1;
         v_count     <= 9'b0;
@@ -238,47 +258,59 @@ module vdu (
         cursor_on_v <= 1'b0;
         blink_count <= 22'b0;
       end
-    else begin
+    else
+      begin
         h_count    <= (h_count==HOR_SCAN_END) ? 10'b0 : h_count + 10'b1;
-        horiz_sync <= (h_count==HOR_SYNC_BEG) ? 1'b0  : ((h_count==HOR_SYNC_END) ? 1'b1 : horiz_sync);
-        v_count    <= (v_count==VER_SCAN_END && h_count==HOR_SCAN_END) ? 9'b0 : ((h_count==HOR_SYNC_END) ? v_count + 9'b1 : v_count);
-        vert_sync  <= (v_count==VER_SYNC_BEG) ? 1'b0 : ((v_count==VER_SYNC_END) ? 1'b1 : vert_sync);
-        video_on_h <= (h_count==HOR_VIDEO_ON) ? 1'b1 : ((h_count==HOR_VIDEO_OFF) ? 1'b0 : video_on_h);
-        video_on_v <= (v_count==9'h0) ? 1'b1 : ((v_count==VER_DISP_END) ? 1'b0 : video_on_v);
+        horiz_sync <= (h_count==HOR_SYNC_BEG) ? 1'b0
+                    : ((h_count==HOR_SYNC_END) ? 1'b1 : horiz_sync);
+        v_count    <= (v_count==VER_SCAN_END && h_count==HOR_SCAN_END) ? 9'b0
+                    : ((h_count==HOR_SYNC_END) ? v_count + 9'b1 : v_count);
+        vert_sync  <= (v_count==VER_SYNC_BEG) ? 1'b0
+                    : ((v_count==VER_SYNC_END) ? 1'b1 : vert_sync);
+        video_on_h <= (h_count==HOR_VIDEO_ON) ? 1'b1
+                    : ((h_count==HOR_VIDEO_OFF) ? 1'b0 : video_on_h);
+        video_on_v <= (v_count==9'h0) ? 1'b1
+                    : ((v_count==VER_DISP_END) ? 1'b0 : video_on_v);
         cursor_on_h <= (h_count[9:3] == reg_hcursor[6:0]);
-        cursor_on_v <= (v_count[8:4] == reg_vcursor[4:0]) && (v_count[3:0] >= reg_cur_start) && (v_count[3:0] <= reg_cur_end);
+        cursor_on_v <= (v_count[8:4] == reg_vcursor[4:0])
+                    && (v_count[3:0] >= reg_cur_start)
+                    && (v_count[3:0] <= reg_cur_end);
         blink_count <= blink_count + 22'd1;
       end
 
   // Video memory access
   always @(posedge wb_clk_i)
-    if(wb_rst_i) begin
-        vga0_we   <= 1'b0;
-        vga0_rw   <= 1'b1;
-        row_addr  <= 5'b0;
-        col_addr  <= 7'b0;
+    if (wb_rst_i)
+      begin
+        vga0_we <= 1'b0;
+        vga0_rw <= 1'b1;
+        row_addr <= 5'b0;
+        col_addr <= 7'b0;
 
-        vga1_we   <= 1'b0;
-        vga1_rw   <= 1'b1;
+        vga1_we  <= 1'b0;
+        vga1_rw  <= 1'b1;
         row1_addr <= 5'b0;
         col1_addr <= 7'b0;
 
-        vga2_we   <= 1'b0;
-        vga2_rw   <= 1'b0;
-        vga3_rw   <= 1'b0;
-        vga4_rw   <= 1'b0;
-        vga5_rw   <= 1'b0;
-        ver_addr  <= 7'b0;
-        hor_addr  <= 7'b0;
+        vga2_we  <= 1'b0;
+        vga2_rw  <= 1'b0;
+        vga3_rw  <= 1'b0;
+        vga4_rw  <= 1'b0;
+        vga5_rw  <= 1'b0;
+        ver_addr <= 7'b0;
+        hor_addr <= 7'b0;
 
         buff_addr <= 10'b0;
         attr_addr <= 10'b0;
         buff_we   <= 1'b0;
         attr_we   <= 1'b0;
       end
-    else begin  					// on h_count = 0 initiate character write
-        case (h_count[2:0])			// all other cycles are reads
-          3'b000:   				// pipeline character write
+    else
+      begin
+        // on h_count = 0 initiate character write
+        // all other cycles are reads
+        case (h_count[2:0])
+          3'b000:   // pipeline character write
             begin
               vga0_we <= wb_we_i;
               vga0_rw <= stb;
@@ -296,7 +328,8 @@ module vdu (
         // row1_addr = (row_addr % 80)
         vga1_we <= vga0_we;
         vga1_rw <= vga0_rw;
-        row1_addr <= (row_addr < VER_DISP_CHR) ? row_addr : row_addr - VER_DISP_CHR;
+        row1_addr <= (row_addr < VER_DISP_CHR) ? row_addr
+                    : row_addr - VER_DISP_CHR;
         col1_addr <= col_addr;
 
         // on vdu_clk + 2 calculate vertical address
@@ -319,7 +352,8 @@ module vdu (
 
   // Video shift register
   always @(posedge wb_clk_i)
-    if(wb_rst_i) begin
+    if (wb_rst_i)
+      begin
         video_on      <= 1'b0;
         cursor_on     <= 1'b0;
         vga_bg_colour <= 3'b000;
@@ -329,8 +363,10 @@ module vdu (
         vga_green_o   <= 1'b0;
         vga_blue_o    <= 1'b0;
       end
-    else begin
-        if(h_count[2:0] == 3'b000) begin
+    else
+      begin
+        if (h_count[2:0] == 3'b000)
+          begin
             video_on      <= video_on1;
             cursor_on     <= (cursor_on1 | attr_data_out[7]) & blink_count[22];
             vga_fg_colour <= attr_data_out[2:0];
@@ -340,63 +376,23 @@ module vdu (
           end
         else vga_shift <= { vga_shift[6:0], 1'b0 };
 
+        //
         // Colour mask is
         //  7  6  5  4  3  2  1  0
         //  X BR BG BB  X FR FG FB
-        vga_blue_o <= video_on ? (fg_or_bg ? { vga_fg_colour[0], intense } : { vga_bg_colour[0], 1'b0 }) : 2'b0;
+        //
+        vga_blue_o   <= video_on ? (fg_or_bg ? { vga_fg_colour[0], intense }
+                                            : { vga_bg_colour[0], 1'b0 })
+                                : 2'b0;
 
         // Green color exception with color brown
         // http://en.wikipedia.org/wiki/Color_Graphics_Adapter#With_an_RGBI_monitor
-        vga_green_o  <= video_on ? (fg_or_bg ? (brown_fg ? 2'b01 : { vga_fg_colour[1], intense })
-                     : (brown_bg ? 2'b01 : { vga_bg_colour[1], 1'b0 })) : 2'b0;
-        vga_red_o    <= video_on ? (fg_or_bg ? { vga_fg_colour[2], intense } : { vga_bg_colour[2], 1'b0 }) : 2'b0;
+        vga_green_o  <= video_on ?
+           (fg_or_bg ? (brown_fg ? 2'b01 : { vga_fg_colour[1], intense })
+                     : (brown_bg ? 2'b01 : { vga_bg_colour[1], 1'b0 }))
+                                : 2'b0;
+        vga_red_o    <= video_on ? (fg_or_bg ? { vga_fg_colour[2], intense }
+                                            : { vga_bg_colour[2], 1'b0 })
+                                : 2'b0;
       end
 endmodule
-
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-// Module:      ram_2k.v
-// Description: Video RAM Module
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-module ram_2k (
-    input             clk,
-    input             rst,
-    input             cs,
-    input             we,
-    input      [10:0] addr,
-    output reg [ 7:0] rdata,
-    input      [ 7:0] wdata
-  );
-  reg [7:0] mem[0:2047];  // Registers and nets
-  always @(posedge clk) rdata <= rst ? 8'h0 : mem[addr];
-  always @(posedge clk) if (we && cs) mem[addr] <= wdata;
-
-endmodule
-
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-// Module:      char_rom.v
-// Description: Video Character Generator Module
-// The following is to get rid of the warning about not initializing the ROM
-// altera message_off 10030
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-module char_rom (
-    input             clk,
-    input      [11:0] addr,
-    output reg [ 7:0] q
-  );
-
-  // Registers, nets and parameters
-  reg [7:0] rom[0:4095];
-
-  // Behaviour
-  always @(posedge clk) q <= rom[addr];
-
-  initial $readmemh("char_rom.dat", rom);
-  
-endmodule
-
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------

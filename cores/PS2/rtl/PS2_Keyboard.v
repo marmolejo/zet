@@ -1,48 +1,4 @@
 // --------------------------------------------------------------------
-// PS2 Wishbone 8042 compatible keyboard controller
-// --------------------------------------------------------------------
-module WB_PS2_Keyboard (
-    input            wb_clk_i,   // Wishbone slave interface
-    input            wb_rst_i,
-    input     [ 2:1] wb_adr_i,
-    output    [15:0] wb_dat_o,   // scancode
-    input            wb_stb_i,
-    input            wb_cyc_i,
-    output           wb_ack_o,
-    output reg       wb_tgc_o,   // intr
-
-    inout            ps2_clk_,   // PS2 PAD signals
-    inout            ps2_data_
-);
-
-assign wb_ack_o = wb_stb_i & wb_cyc_i;
-assign wb_dat_o = wb_adr_i[2] ? 16'h10 : { 8'h0, dat_o };
-
-// --------------------------------------------------------------------
-// Behaviour
-// --------------------------------------------------------------------
-always @(posedge wb_clk_i) wb_tgc_o <= wb_rst_i ? 1'b0 : rx_output_strobe;
-
-wire       rx_output_strobe;
-wire [7:0] dat_o;
-
-PS2_Keyboard #(
-    .TIMER_60USEC_VALUE_PP (750),
-    .TIMER_60USEC_BITS_PP  (10),
-    .TIMER_5USEC_VALUE_PP  (60),
-    .TIMER_5USEC_BITS_PP   (6)
- ) kbd(.clk(wb_clk_i), .reset(wb_rst_i),
-             .scancode(dat_o),                    // scancode
-             .rx_output_strobe(rx_output_strobe), // Signals a key presseed
-             .ps2_clk_(ps2_clk_),                 // PS2 PAD signals
-             .ps2_data_(ps2_data_)
-);
-
-// --------------------------------------------------------------------
-endmodule
-// --------------------------------------------------------------------
-
-// --------------------------------------------------------------------
 // PS2 8042 partially compatible keyboard controller
 // (can not receive commands from host)
 // --------------------------------------------------------------------
@@ -370,16 +326,10 @@ module translate_8042 (
     output     [6:0] xt_code
 );
 
-// Registers, nets and parameters
-reg [7:0] rom[0:2**7-1];
-
-assign xt_code = rom[at_code][6:0];
-
-// Behaviour
-initial $readmemh("xt_codes.dat", rom);
+reg [7:0] rom[0:2**7-1];   // Instatiate memory array
+assign xt_code = rom[at_code][6:0]; // assign output
+initial $readmemh("xt_codes.dat", rom);  // Load rom from data file
 
 // --------------------------------------------------------------------
 endmodule
 // --------------------------------------------------------------------
-
-

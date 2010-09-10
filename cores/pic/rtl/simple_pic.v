@@ -1,4 +1,9 @@
-/*  Super Simple Priority Interrupt Controller  */
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+// Module:      simple_pic.v
+// Description: Super Simple Priority Interrupt Controller
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
 module simple_pic (
     input             clk,
     input             rst,
@@ -27,9 +32,6 @@ module simple_pic (
   always @(posedge clk)
     irr[1] <= rst ? 1'b0 : (intv[1] | irr[1] & !(iid == 3'b001 && inta_r && !inta));
 
-//  always @(posedge clk)
-//    irr[3] <= rst ? 1'b0 : (intv[3] | irr[3] & !(iid == 3'b011 && inta_r && !inta));
-
   always @(posedge clk)
     irr[3] <= rst ? 1'b0 : ((intv[3] && !int3_r) | irr[3] & !(iid == 3'b011 && inta_r && !inta));
   always @(posedge clk) int3_r <= rst ? 1'b0 : intv[3];		// int3_r
@@ -46,4 +48,7 @@ module simple_pic (
                         (irr[4] ? 3'b100 : 
                                   3'b000
                         )))));
+
+// --------------------------------------------------------------------
 endmodule
+// --------------------------------------------------------------------
