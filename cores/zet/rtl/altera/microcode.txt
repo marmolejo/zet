@@ -81,18 +81,18 @@ POP word off stack to destination
 === in ===
 INput byte or word by '''I'''mmediate or DX '''R'''egister
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- INIB   100__x_00_xx_xx_xx__x__x__x__1__1_00__1_110_000__0_01__0__0_0000_xxxx_xxxx_xxxx_xx
- INIW   100__x_00_xx_xx_xx__x__x__x__1__1_00__0_110_000__0_01__0__0_0000_xxxx_xxxx_xxxx_xx
- INRB   000__x_00_xx_00_xx__x__x__x__1__1_00__1_001_001__0_01__0__0_0000_xxxx_xxxx_0010_xx
- INRW   000__x_00_xx_00_xx__x__x__x__1__1_00__0_001_001__0_01__0__0_0000_xxxx_xxxx_0010_xx
+ INIB   100__x_00_xx_xx_xx__x__x__x__1__1_00__1_110_000__0_01__0__0_0000_xxxx_xxxx_xxxx_xx  // ld
+ INIW   100__x_00_xx_xx_xx__x__x__x__1__1_00__0_110_000__0_01__0__0_0000_xxxx_xxxx_xxxx_xx  // ld
+ INRB   000__x_00_xx_00_xx__x__x__x__1__1_00__1_001_001__0_01__0__0_0000_xxxx_xxxx_0010_xx  // ld
+ INRW   000__x_00_xx_00_xx__x__x__x__1__1_00__0_001_001__0_01__0__0_0000_xxxx_xxxx_0010_xx  // ld
 
 === out ===
 OUTput byte or word by '''I'''mmediate or DX '''R'''egister
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- OUTIB  100__x_xx_00_xx_xx__x__x__x__1__1_0x__1_110_000__0_00__1__0_xxxx_0000_xxxx_xxxx_xx
- OUTIW  100__x_xx_00_xx_xx__x__x__x__1__1_0x__0_110_000__0_00__1__0_xxxx_0000_xxxx_xxxx_xx
- OUTRB  000__x_xx_00_00_xx__x__1__x__1__1_0x__1_001_001__0_00__1__0_xxxx_0000_xxxx_0010_xx
- OUTRW  000__x_xx_00_00_xx__x__0__x__1__1_0x__0_001_001__0_00__1__0_xxxx_0000_xxxx_0010_xx
+ OUTIB  100__x_xx_00_xx_xx__x__x__x__1__1_0x__1_110_000__0_00__1__0_xxxx_0000_xxxx_xxxx_xx  // st
+ OUTIW  100__x_xx_00_xx_xx__x__x__x__1__1_0x__0_110_000__0_00__1__0_xxxx_0000_xxxx_xxxx_xx  // st
+ OUTRB  000__x_xx_00_00_xx__x__1__x__1__1_0x__1_001_001__0_00__1__0_xxxx_0000_xxxx_0010_xx  // st
+ OUTRW  000__x_xx_00_00_xx__x__0__x__1__1_0x__0_001_001__0_00__1__0_xxxx_0000_xxxx_0010_xx  // st
 
 === lahf ===
 * Load register AH from Flags
@@ -114,7 +114,7 @@ Store AH into flags
 === lea ===
 * Load Effective address, '''Arguments:''' ssss (reg), (mem)
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
- LEA    xxx__1_10_xx_01_01__x__x__0__0__x_01__0_010_111__0_01__0__0_ssss_xxxx_mmmm_mmmm_xx
+ LEA    xxx__1_10_xx_01_01__x__x__0__0__x_01__0_010_111__0_01__0__0_ssss_xxxx_mmmm_mmmm_xx  // r->r
 
 === les ===
 Load Extra Segment register
