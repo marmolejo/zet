@@ -1158,7 +1158,7 @@ biosloop:               mov     ax, bx                  ;; Put bx into ax
 
 ;;---------------------------------------------------------------------------
                         org     (0fff5h - startofrom)   ;; ASCII Date ROM was built - 8 characters in MM/DD/YY
-BIOS_BUILD_DATE         equ     "07/19/10\n"
+BIOS_BUILD_DATE         equ     "09/09/10\n"
 MSG2:                   db      BIOS_BUILD_DATE
 
                         org     (0fffeh -startofrom)    ;; Put the 

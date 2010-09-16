@@ -10,7 +10,7 @@
 //  Originally modified from the Bochs bios by Zeus Gomez Marmolejo
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-#include "zetbios_c.h"
+#include "bios_de0_c.h"
 
 //--------------------------------------------------------------------------
 // Low level assembly functions
@@ -95,12 +95,25 @@ static void wrch(Bit8u character)
     }
 }
 //--------------------------------------------------------------------------
+static void wcomport(Bit8u c)
+{
+    Bit8u  ticks;
+    ticks = read_byte(0x0040, 0x006C); // get current tick count
+
+    while(!inb(UART_LS & 0x40)) {     // wait for transmitter buffer to empty
+        if((ticks + 50) < read_byte(0x0040, 0x006C)) break;
+    }
+    while((ticks + 70) < read_byte(0x0040, 0x006C));
+    outb(UART,c);
+}
+//--------------------------------------------------------------------------
 static void send(Bit16u action, Bit8u  c)
 {
     if(action & BIOS_PRINTF_SCREEN) {
         if(c == '\n') wrch('\r');
         wrch(c);
     }
+    if(action & BIOS_PRINTF_COMPORT)  wcomport(c);
 }
 //--------------------------------------------------------------------------
 static void put_int(Bit16u action, short val, short width, bx_bool neg)
@@ -167,10 +180,11 @@ static void bios_printf(Bit16u action, Bit8u *s, ...)
     in_format = 0;
     format_width = 0;
 
-    if((action & BIOS_PRINTF_DEBHALT) == BIOS_PRINTF_DEBHALT)
+    if((action & BIOS_PRINTF_DEBHALT) == BIOS_PRINTF_DEBHALT) {
         bios_printf(BIOS_PRINTF_SCREEN, "FATAL: ");
-
-        while(c = read_byte(get_CS(), (Bit16u)s)) {
+    }
+    
+    while(c = read_byte(get_CS(), (Bit16u)s)) {
         if( c == '%' ) {
             in_format = 1;
             format_width = 0;
@@ -241,11 +255,12 @@ static void bios_printf(Bit16u action, Bit8u *s, ...)
         }
         s ++;
     }
+
     if(action & BIOS_PRINTF_HALT) {  // freeze in a busy loop.
         __asm {
-                        cli
-            halt2_loop: hlt
-                        jmp halt2_loop
+                            cli
+            halt2_loop:     hlt
+                            jmp halt2_loop
         }
     }
 }
@@ -257,9 +272,9 @@ static void bios_printf(Bit16u action, Bit8u *s, ...)
 //--------------------------------------------------------------------------
 #define BIOS_COPYRIGHT_STRING   "(c) 2009, 2010 Zeus Gomez Marmolejo and (c) 2002 MandrakeSoft S.A."
 #define BIOS_BANNER             "Zet Test BIOS - build date: "
-#define BIOS_BUILD_DATE         "07/9/2010\n"
-#define BIOS_VERS               " Version: Shadow\n"
-#define BIOS_DATE               " Date: 7/2/2010\n\n"
+#define BIOS_BUILD_DATE         "09/9/2010\n"
+#define BIOS_VERS               " Version: Special\n"
+#define BIOS_DATE               " Date: 9/9/2010\n\n"
 void __cdecl print_bios_banner(void)
 {
     bios_printf(BIOS_PRINTF_SCREEN,BIOS_BANNER);
@@ -311,8 +326,8 @@ void __cdecl init_boot_vectors(void)
     }
     else {            // Get the boot sequence from the switches
         switches = inb(0xf100);
-        if(switches & 0x01) { hdi = 1; fdi = 0; }
-        else                { hdi = 0; fdi = 1; }
+        if(switches) { hdi = 1; fdi = 0; }
+        else         { hdi = 0; fdi = 1; }
 
         e.type = IPL_TYPE_HARDDISK; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
         memcpyb(IPL_SEG, IPL_TABLE_OFFSET + hdi * sizeof(e), ss, (Bit16u)&e, sizeof(e));
@@ -1043,52 +1058,6 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-//  Transfer Sector drive
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-static void transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset)
-{
-    __asm {
-                push  ax
-                push  bx
-                push  cx
-                push  dx
-                push  di
-                push  ds
-
-                mov  ax, s_segment       // segment
-                mov  ds, ax
-                mov  bx, s_offset        // offset
-                cmp  bx, 0xfe00          // adjust if there will be an overrun
-                jbe  transf_no_adjust
-                        
-                sub   bx, 0x0200         // sub 512 bytes from offset
-                mov   ax, ds
-                add   ax, 0x0020         // add 512 to segment
-                mov   ds, ax
-
-    transf_no_adjust:
-                mov  dx, 0xe000
-                mov  cx, 256
-                xor  di, di
-    one_sect:   in   ax, dx              // read word from flash
-                mov  ds:[bx+di], ax      // write word
-                inc  dx
-                inc  dx
-                inc  di
-                inc  di
-                loop one_sect
-                pop  ds
-                pop  di
-                pop  dx
-                pop  cx
-                pop  bx
-                pop  ax
-    }
-}
-
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
 // The principle of this routine is to copy directly from flash to the ram disk
 // Using the same call that is used to read the flash disk. This routine is
 // called from The assembly section during post. It is commented out here
@@ -1124,6 +1093,83 @@ static Bit16u GetRamdiskSector(Bit16u Sector)
     outb(EMS_PAGE1_REG, Page);       // Set the first 16K
     return((Sector & 0x001F) << 9); // Return the memory location within the sector
 }
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//  Transfer Sector drive
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+#define FLASH_FLOPPY   0x020000         // Starting address of floppy on flash
+//--------------------------------------------------------------------------
+static void transf_sect_drive_a(Bit16u Sector, Bit16u s_segment, Bit16u s_offset)
+{
+    Bit32u Flash_Addr;
+    Bit16u  MSB, LSB;
+
+    Flash_Addr = (Bit32u)Sector;
+    Flash_Addr = (Flash_Addr * 512 + FLASH_FLOPPY) & 0x00FFFFFF; // can not be more than 24 bits
+    MSB = (Flash_Addr >> 16) & 0xFFFF;  // Most  siginificant bits of the address
+    LSB = (Flash_Addr      ) & 0xFFFF;  // Least siginificant bits  of the address
+    
+/*
+    // trickey math to compute bytes of address
+    // example sector # 2048 = 0x800 *512 = 0x10_00_00 
+    // example sector # 2048 = 0x800, USB = Sector / <<1  = 0x10_00    so LSB is always 00 
+    // note, to get USB, you can do a >>7 which is 8-1, or /128 (remember LSR is same /2)
+
+    Bit8u  USB, MSB;
+    Sector += 0x100;                    // this could easily be moved into assembly 
+    USB = (Sector / 128) & 0xFF;        // Compute the upper most significan byte of the address
+    MSB = (Sector *   2) & 0xFF;        // Compute the middle byte of the address
+*/                            
+    __asm {
+                push  ax                 // Save all the registers we are
+                push  bx                 // about to use onto the stack
+                push  cx
+                push  dx
+                push  di
+                push  ds
+
+                mov   ax, s_segment      // Load the segment address
+                mov   ds, ax             // intot the data segment register
+                mov   bx, s_offset       // load the offset
+                cmp   bx, 0xfe00         // adjust if there will be an overrun
+                jbe   transf_dat         // If no adjustment needed, do the transfer
+                        
+                sub   bx, 0x0200         // sub 512 bytes from offset
+                mov   ax, ds             // get the old segment
+                add   ax, 0x0020         // add 512 to segment
+                mov   ds, ax             // make this our new segment
+
+    transf_dat: mov   dx, FLASH_PORT+4   // Set DX reg to FLASH IO port for upper address bits
+                mov   ax, MSB            // Load start address MSB
+                out   dx, ax             // Save MSB address word
+                mov   cx, 256            // 512 bytes in 1 sector, done 1 word at a time
+                xor   di, di             // Clear data index register
+                mov   bx, LSB            // Flash LSB 
+
+   sectloop:    mov   ax, bx             // Put bx into ax
+                mov   dx, FLASH_PORT+2   // Set DX reg to FLASH IO port for LSB
+                out   dx, ax             // Save LSB address word
+                mov   dx, FLASH_PORT     // Set DX reg to FLASH IO port
+                in    ax, dx             // read byte from flash
+                mov   ds:[bx+di], ax     // write word
+                inc   di                 // Increment to next RAM address
+                inc   di                 // Increment to next RAM address
+                inc   bx                 // Increment to next flash address location
+                loop  sectloop           // Loop 256 times
+
+                pop   ds                  
+                pop   di
+                pop   dx
+                pop   cx
+                pop   bx                 // Restore all our
+                pop   ax                 // saved registers from the stack
+    }
+}
+
+
+
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -1172,11 +1218,10 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             }
 
             log_sector  = track * 36 + head * 18 + sector - 1;  // Calculate the first sector we are going to read
-            if(drive == DRIVE_A) {      // This is the Flash Based Drive
+            if(drive == DRIVE_A) {                   // This is the Flash Based Drive
                 for(j = 0; j < num_sectors; j++) {
-                    outw(FLASH_PAGE_REG, log_sector + j);       // We now have the correct page of flash selected 
-                    transf_sect_drive_a(rES, (rBX + (j << 9)));  // now just pass the place to copy it too, j<<9 is the same thing as multiplying by 512
-                }                                                // a good optimizing compiler probably does this for you anyway
+                    transf_sect_drive_a((log_sector + j), rES, (rBX + (j << 9)));   // now just pass the place to copy it too, j<<9 is the same thing as multiplying by 512
+                }                                                                   // a good optimizing compiler probably does this for you anyway
             }
             else {                  // This is the SDRAM based drive
                 base_address = (rES << 4) + rBX;           // Base Address is upper 12 bits of segment + offset
@@ -1541,7 +1586,7 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
 
     BX_INT15_DEBUG_PRINTF("INT15 AL= %02x BH= %02x\n", (GET_AL()), (GET_BH()));        // Debugging info 
    
-    if(GET_AH() != 0xC2) {          // Defensive measute, should always be 0xC2 here due to asm call
+    if(GET_AH() != 0xC2) {          // Defensive measure, should always be 0xC2 here due to asm call
         SET_CF();
         SET_AH(UNSUPPORTED_FUNCTION);      
         BX_INT15_DEBUG_PRINTF("Error int15 mouse AH != 0xC2\n", (unsigned)(GET_AH()));
@@ -1606,8 +1651,8 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
             
         case 5:                             // Initialize Mouse 
             if((GET_BH()) == 3) {                                       // Must always be a 3
-                write_byte(ebda_seg, 0x0026, 0x00);                     // Set packet size 
-                write_byte(ebda_seg, 0x0027, 0x03);                     // Reset packet count
+                write_byte(ebda_seg, 0x0026, 0x00);                     // Reset packet count
+                write_byte(ebda_seg, 0x0027, 0x03);                     // Set packet size 
                 CLEAR_CF();                                             // Sucess flag indication
                 SET_AH(0);                                              // Sucess Code
             }
@@ -1620,8 +1665,8 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
                 
         case 1:                                         // Reset Mouse
             inhibit_mouse_int_and_events();             // disable IRQ12 and packets
-            write_byte(ebda_seg, 0x0026, 0x00);         // Set packet size 
-            write_byte(ebda_seg, 0x0027, 0x03);         // Reset packet count
+            write_byte(ebda_seg, 0x0026, 0x00);         // Reset packet count
+            write_byte(ebda_seg, 0x0027, 0x03);         // Set packet size
             mouse_data3 = send_to_mouse_ctrl(0xFF);     // reset mouse command
             if(mouse_data3 == 0xFA) {                   // Received proper ack
                 mouse_data1 = get_mouse_data();         // Mouse should return AA
@@ -1662,13 +1707,19 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
                 BX_INT15_DEBUG_PRINTF("Set Sample Rate Invalid parm %02x\n", (unsigned)(GET_BH()));                
             }
             else {                                          // User tried to send an unsupported value
+//                mouse_data2 = send_to_mouse_ctrl(0xF3);     // set sample rate command to mouse
+//                mouse_data2 = send_to_mouse_ctrl(mouse_data1); // then send the data
+                CLEAR_CF();                     // Sucess flag indication 
+                SET_AH(0);                      // Sucess Code
+            }
+/*
                 mouse_data2 = send_to_mouse_ctrl(0xF3);     // set sample rate command to mouse
                 if(mouse_data2 == 0xFA) {                          // If we received proper ack code
                     mouse_data2 = send_to_mouse_ctrl(mouse_data1); // then send the data
-//                    if(mouse_data2 == 0xFA) {                      // If we received proper ack code
+                    if(mouse_data2 == 0xFA) {                      // If we received proper ack code
                         CLEAR_CF();                     // Sucess flag indication 
                         SET_AH(0);                      // Sucess Code
-//                    }
+                    }
                 }
                 else {                                  // Mouse did not send the ack code
                     SET_CF();                           // Error Flag
@@ -1676,6 +1727,7 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
                     BX_INT15_DEBUG_PRINTF("Set Sample Rate returned %02x (should be ack)\n", (unsigned)mouse_data2); 
                 }
             }
+*/
             break;
 
         case 3:             // Set Resolution       
@@ -1795,7 +1847,7 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
            break;
 
        default:        
-           BX_INT15_DEBUG_PRINTF("case default\n");
+           BX_INT15_DEBUG_PRINTF("case default INT 15h C2 AL=%02x, BH=%02x\n", (unsigned char)(GET_AH()),(unsigned char)(GET_BH()));
            SET_AH(1);                   // invalid function
            SET_CF();
            break;
@@ -1813,41 +1865,31 @@ static void wait_mouse_event(void)
 {
     Bit8u  ticks;
     ticks = read_byte(0x0040, 0x006C); // get current tick count
-    #if PS2_COMPLIANT
-        while((inb(MOUSE_CNTL) & 0x01) != 0x01) {
-            if((ticks +10) < read_byte(0x0040, 0x006C)) {
-                BX_INT15_DEBUG_PRINTF("wait mouse timeout\n");
-                break; // time out
-            }
+    while((inb(MOUSE_CNTL) & 0x01) != 0x01) {
+        if((ticks +10) < read_byte(0x0040, 0x006C)) {
+            BX_INT15_DEBUG_PRINTF("wait mouse timeout\n");
+            break; // time out
         }
-    #else
-        while((inb(MOUSE_STAT) & 0x01) == 0x00) {   // wait for it
-            if(ticks != read_byte(0x0040, 0x006C)) break; // time out    
-        }
-    #endif
+    }
 }
-
 
 //--------------------------------------------------------------------------
 // Turn off IRQ generation and aux data line
 //--------------------------------------------------------------------------
 static Bit8u inhibit_mouse_int_and_events(void)
 {
-    #if PS2_COMPLIANT
-        Bit8u command_byte, prev_command_byte;
-        outb(MOUSE_CNTL, 0x20);             // send command to read command byte
-        wait_mouse_event();
-        prev_command_byte = inb(MOUSE_PORT);
-        command_byte = prev_command_byte;                   //while ( (inb(0x64) & 0x02) );
-        command_byte &= 0xfd;       // turn off IRQ 12 generation
-        command_byte |= 0x20;       // disable mouse serial clock line
-        outb(MOUSE_CNTL, 0x60);     // write command byte
-        outb(MOUSE_PORT, command_byte);
-        return(prev_command_byte);
-    #else
-        outb(MOUSE_CNTL, 0x00);     // send command byte to turn off interupts
-        return(0x01);
-    #endif    
+    Bit8u command_byte, prev_command_byte;
+//  if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"inhibmouse");
+    outb(MOUSE_CNTL, 0x20);             // send command to read command byte
+    wait_mouse_event();
+    prev_command_byte = inb(MOUSE_PORT);
+    command_byte = prev_command_byte;                   //while ( (inb(0x64) & 0x02) );
+//  if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"inhibmouse");
+    command_byte &= 0xfd;       // turn off IRQ 12 generation
+    command_byte |= 0x20;       // disable mouse serial clock line
+    outb(MOUSE_CNTL, 0x60);     // write command byte
+    outb(MOUSE_PORT, command_byte);
+    return(prev_command_byte);
 }
 
 //--------------------------------------------------------------------------
@@ -1855,19 +1897,17 @@ static Bit8u inhibit_mouse_int_and_events(void)
 //--------------------------------------------------------------------------
 static void enable_mouse_int_and_events(void)
 {
-    #if PS2_COMPLIANT
-        Bit8u command_byte;
-        outb(MOUSE_CNTL, 0x21);              // send command byte
-        outb(MOUSE_CNTL, 0x20);              // send command byte
-        wait_mouse_event();
-        command_byte = inb(0x60);
-        command_byte |= 0x02;       // turn on IRQ 12 generation
-        command_byte &= 0xdf;       // enable mouse serial clock line
-        outb(MOUSE_CNTL, 0x60);           // write command byte
-        outb(MOUSE_PORT, command_byte);
-    #else
-        outb(MOUSE_CNTL, 0x01);     // send command byte to turn interrupt generation on
-    #endif
+    Bit8u command_byte;
+//  if(inb(MOUSE_CNTL) & 0x02)  BX_PANIC(panic_msg_keyb_buffer_full,"enabmouse");
+    outb(MOUSE_CNTL, 0x21);              // send command byte
+    outb(MOUSE_CNTL, 0x20);              // send command byte
+    wait_mouse_event();
+    command_byte = inb(0x60);
+//  if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"enabmouse");
+    command_byte |= 0x02;       // turn on IRQ 12 generation
+    command_byte &= 0xdf;       // enable mouse serial clock line
+    outb(MOUSE_CNTL, 0x60);           // write command byte
+    outb(MOUSE_PORT, command_byte);
 }
 
 //--------------------------------------------------------------------------
@@ -1875,13 +1915,10 @@ static void enable_mouse_int_and_events(void)
 //--------------------------------------------------------------------------
 static void set_kbd_command_byte(Bit8u command_byte)
 {
-    #if PS2_COMPLIANT
-        outb(MOUSE_CNTL, 0x60);           // write command byte
-        outb(MOUSE_PORT, command_byte);
-    #else
-        outb(MOUSE_CNTL, command_byte);     // send command byte to turn interrupt generation on
-        return;     // Do nothing, we do not have integrated mouse kbd
-    #endif
+//  if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"setkbdcomm");
+//  outb(MOUSE_CNTL, 0xD4);
+    outb(MOUSE_CNTL, 0x60);           // write command byte
+    outb(MOUSE_PORT, command_byte);
 }
 
 //--------------------------------------------------------------------------
@@ -1889,20 +1926,17 @@ static void set_kbd_command_byte(Bit8u command_byte)
 //--------------------------------------------------------------------------
 static Bit8u send_to_mouse_ctrl(Bit8u sendbyte)
 {
-    #if PS2_COMPLIANT         // wait for chance to write to ctrl
-        Bit8u try, mouse_data; 
-        try = 3;                                    // Try 3 times before giving up
-        do {
-            outb(MOUSE_CNTL, 0xD4);                 // Enable sending to mouse
-            outb(MOUSE_PORT, sendbyte);             // Send the byte to mouse
-            mouse_data = get_mouse_data();          // if no mouse attached, it will return RESEND
-            if(mouse_data == 0xFA) break;           // Success
-            try--;                                  // Decerement tries
-        } while(try);                               // Keep going until try is zero
-        return(mouse_data);
-    #else
-        outb(MOUSE_PORT, sendbyte);
-    #endif
+//  if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"sendmouse");
+    Bit8u try, mouse_data; 
+    try = 5;                                    // Try 3 times before giving up
+    do {
+        outb(MOUSE_CNTL, 0xD4);                 // Enable sending to mouse
+        outb(MOUSE_PORT, sendbyte);             // Send the byte to mouse
+        mouse_data = get_mouse_data();          // if no mouse attached, it will return RESEND
+        if(mouse_data == 0xFA) break;           // Success
+        try--;                                  // Decerement tries
+    } while(try);                               // Keep going until try is zero
+    return(mouse_data);
 }
 
 //--------------------------------------------------------------------------
@@ -1911,13 +1945,8 @@ static Bit8u send_to_mouse_ctrl(Bit8u sendbyte)
 static Bit8u get_mouse_data(void)
 {
     Bit8u  data;
-    #if PS2_COMPLIANT
-        wait_mouse_event();
-        data = inb(MOUSE_PORT);
-    #else
-        wait_mouse_event();
-        data = inb(MOUSE_PORT);         // get it
-    #endif
+    wait_mouse_event();
+    data = inb(MOUSE_PORT);
     return(data);
 }
 
@@ -1934,6 +1963,13 @@ void __cdecl int19_function(void)
     Bit16u bootip;
     Bit16u status;
     ipl_entry_t e;
+
+    #if SHOW_INT15_DEBUG_MSGS
+        outb(UART_LC, 0x83);    // set up uart for 115.2kbps 
+        outb(UART_TR, 0x01);    // set up uart for 115.2kbps 
+        outb(UART_IE, 0x00);    // set up uart for 115.2kbps 
+        outb(UART_LC, 0x03);    // set up uart for 115.2kbps 
+    #endif
 
     // Here we assume that BX_ELTORITO_BOOT is defined, so
     //   CMOS regs 0x3D and 0x38 contain the boot sequence:
@@ -2060,22 +2096,33 @@ Bit16u rAX, rCX, rDX, rDI, rSI, rBP, rBX, rDS, rIP, rCS, rFLAGS;
     Bit8u  midnight_flag;
     
     __asm { sti }
-    switch(GET_AL()) {
-        case 0:             // get current clock count
+    switch(GET_AH()) {
+        case 0:             // Get current clock count
             __asm { cli }
             ticks_low     = read_word(0x0040, 0x006C);
             ticks_high    = read_word(0x0040, 0x006E);
             midnight_flag = read_byte(0x0040, 0x0070);
-            
             SET_CX(ticks_high);
             SET_DX(ticks_low); 
             SET_AL(midnight_flag);
-
             write_byte(0x0040, 0x0070, 0);  // reset flag
             __asm { sti }
-            CLEAR_CF();       // OK  AH already 0
+            CLEAR_CF();       // Status OK, AH should already be 0  
             break;
 
+        case 1:             // Set Current Clock Count
+            __asm { cli }
+            ticks_high    = rCX;
+            ticks_low     = rDX;
+            midnight_flag = 0;      // reset flag
+            write_word(0x0040, 0x006C, ticks_low);
+            write_word(0x0040, 0x006E, ticks_high);
+            write_word(0x0040, 0x0070, midnight_flag);
+            __asm { sti }
+            SET_AH(0);
+            CLEAR_CF();       // Status OK  
+            break;
+            
         default:
             SET_CF(); // Unsupported
     }

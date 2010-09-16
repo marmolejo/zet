@@ -6,21 +6,22 @@
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 #define SHOW_INFO_MSGS          0
-#define SHOW_INT15_DEBUG_MSGS   1
+#define SHOW_INT15_DEBUG_MSGS   0
 //---------------------------------------------------------------------------
-#define BIOS_PRINTF_HALT     1
-#define BIOS_PRINTF_SCREEN   2
+#define BIOS_PRINTF_HALT        1
+#define BIOS_PRINTF_SCREEN      2
+#define BIOS_PRINTF_COMPORT     8
 
-#if     SHOW_INFO_MSGS 
-        #define BIOS_PRINTF_INFO     BIOS_PRINTF_SCREEN
+#if SHOW_INFO_MSGS 
+    #define BIOS_PRINTF_INFO    BIOS_PRINTF_SCREEN
 #else
-        #define BIOS_PRINTF_INFO     4
+    #define BIOS_PRINTF_INFO    4
 #endif
 
-#if     SHOW_INT15_DEBUG_MSGS 
-        #define BIOS_INT15_DEBUG    BIOS_PRINTF_SCREEN
+#if SHOW_INT15_DEBUG_MSGS 
+    #define BIOS_INT15_DEBUG    BIOS_PRINTF_COMPORT
 #else
-        #define BIOS_INT15_DEBUG    8
+    #define BIOS_INT15_DEBUG    4
 #endif
 
 #define BIOS_PRINTF_ALL      (BIOS_PRINTF_SCREEN | BIOS_PRINTF_INFO)
@@ -132,34 +133,31 @@ typedef           int  BOOL;
 
 //---------------------------------------------------------------------------
 // INT15 / INT74 PS2 Mouse support function
-// For zet, we do a special hack and use COM2 INT3 and IO PORT
-//
-// MOUSE_PORT           is the R/W IO port
-// MOUSE_CNTL           is W control port
-// MOUST_STAT           is R Status register
-// 
-// Read Status port:
-// ------------------
-// MOUSE_CNTL & 0x01    then data is ready to be read
-//
-// Write to control port:
-// MOUSE_CNTL = 0x00    inhibit PS2 mouse from sending stuff
-// MOUSE_CNTL = 0x01    enable PS2 mouse from sending stuff
-//
 // PS2_COMPLIANT    Set this to 1 if the HW is fully PS2 compliant
 //                  Set it to 0 if using Donna's hack
 //---------------------------------------------------------------------------
-#define PS2_COMPLIANT   1           // Set to 1 if HW is fully PS2 compliant
-#if PS2_COMPLIANT
-    #define MOUSE_PORT      0x0060      // Bus Mouse port, use this instead of 0x60
-    #define MOUSE_CNTL      0x0064      // Bus Mouse control port, use this instead of 0x64
-    #define MOUSE_INTR      12          // The correct Intetrupt for PS2
-#else
-    #define MOUSE_PORT      0x0238      // Bus Mouse port
-    #define MOUSE_CNTL      0x0239      // Bus Mouse control port
-    #define MOUSE_STAT      0x0239      // Bus Mouse status port
-    #define MOUSE_INTR      3           // We use Interuptt 3 here instead of for COM2
-#endif
+#define MOUSE_PORT      0x0060      // Bus Mouse port, use this instead of 0x60
+#define MOUSE_CNTL      0x0064      // Bus Mouse control port, use this instead of 0x64
+#define MOUSE_INTR      12          // The correct Intetrupt for PS2
+
+
+//---------------------------------------------------------------------------
+// Flash RAM IO Definition
+//---------------------------------------------------------------------------
+#define FLASH_PORT   0x0238      // Flash RAM port
+
+//---------------------------------------------------------------------------
+// COMPORT IO Definitions
+//---------------------------------------------------------------------------
+#define UART            0x03F8  // Base Register IO port for RS232 
+#define UART_TR  UART + 0       // RW - Transmit / Receive register
+#define UART_IE  UART + 1       // RW - Interrupt enable
+#define UART_II  UART + 2       // R  - Interrupt identification 
+#define UART_LC  UART + 3       // RW - Line Control
+#define UART_MC  UART + 4       // W  - Modem control
+#define UART_LS  UART + 5       // R  - Line status
+#define UART_MS  UART + 6       // R  - Modem status
+#define UART_SR  UART + 7       // RW - Scratch register
 
 //---------------------------------------------------------------------------
 // INT15 - AH=C0, configuration table; model byte 0xFC = AT 
@@ -441,7 +439,7 @@ static void     print_boot_device(ipl_entry_t BASESTK *e);
 static void     print_boot_failure(Bit16u type, Bit8u reason);
 static BOOL     dequeue_key(Bit8u BASESTK *scan_code, Bit8u BASESTK *ascii_code, int incr);
 static BOOL     enqueue_key(Bit8u scan_code, Bit8u ascii_code);
-static void     transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset);
+static void     transf_sect_drive_a(Bit16u Sector, Bit16u s_segment, Bit16u s_offset);
 static Bit16u   GetRamdiskSector(Bit16u Sector);
 static void     set_diskette_ret_status(Bit8u value);
 static void     set_diskette_current_cyl(Bit8u drive, Bit8u cyl);

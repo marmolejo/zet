@@ -1,4 +1,2 @@
 cls 
 wmake
-mifer
-
