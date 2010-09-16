@@ -3,11 +3,6 @@ module kotku (
     input        clk_50_,
     output [9:0] ledr_,
 
-    output 		 chasis_spk,
-	output	     speaker_L,			// Speaker output, Left channel	
-	output	     speaker_R,			// Speaker output, Right channel	
-
-
     input  [9:0] sw_,
     input  [2:0] key_,
     output [6:0] hex0_,
@@ -56,7 +51,14 @@ module kotku (
     output        sd_sclk_,
     input         sd_miso_,
     output        sd_mosi_,
-    output        sd_ss_
+    output        sd_ss_,
+
+    // SPI Flash signals
+    output        spi_sclk_,
+    input         spi_miso_,
+    output        spi_mosi_,
+    output        spi_sels_
+
   );
 
   // Registers and nets
@@ -83,17 +85,6 @@ module kotku (
   wire        rom_cyc_i;
   wire        rom_stb_i;
   wire        rom_ack_o;
-  
-  // wires to flash controller
-  wire [15:0] fl_dat_o;
-  wire [15:0] fl_dat_i;
-  wire        fl_tga_i;
-  wire [19:1] fl_adr_i;
-  wire [ 1:0] fl_sel_i;
-  wire        fl_we_i;
-  wire        fl_cyc_i;
-  wire        fl_stb_i;
-  wire        fl_ack_o;
 
   // wires to vga controller
   wire [15:0] vga_dat_o;
@@ -131,28 +122,6 @@ module kotku (
   wire        uart_stb_i;
   wire        uart_ack_o;
 
-  // wires for Sound module
-  wire [19:1] wb_sb_adr_i;			// Sound Address 
-  wire [15:0] wb_sb_dat_i;        	// Sound  
-  wire [15:0] wb_sb_dat_o;        	// Sound  
-  wire [ 1:0] wb_sb_sel_i;        	// Sound  
-  wire        wb_sb_cyc_i;     		// Sound  
-  wire        wb_sb_stb_i;     		// Sound  
-  wire        wb_sb_we_i;      		// Sound  
-  wire        wb_sb_ack_o;     		// Sound  
-  wire        wb_sb_tga_i;			// Sound  
-  
-  // wires for SPI Flash controller
-  wire [15:0] wb_spi_dat_o;          // Wishbone bus slave interface
-  wire [15:0] wb_spi_dat_i;          // Wishbone bus slave interface
-  wire [ 1:0] wb_spi_sel_i;
-  wire [19:1] wb_spi_adr_i;
-  wire        wb_spi_tga_i;
-  wire        wb_spi_we_i;
-  wire        wb_spi_cyc_i;
-  wire        wb_spi_stb_i;
-  wire        wb_spi_ack_o;  
-  
   // wires to keyboard controller
   wire [15:0] keyb_dat_o;
   wire [15:0] keyb_dat_i;
@@ -164,17 +133,6 @@ module kotku (
   wire        keyb_stb_i;
   wire        keyb_ack_o;
 
-  // wires to timer controller
-  wire [15:0] timer_dat_o;
-  wire [15:0] timer_dat_i;
-  wire        timer_tga_i;
-  wire [19:1] timer_adr_i;
-  wire [ 1:0] timer_sel_i;
-  wire        timer_we_i;
-  wire        timer_cyc_i;
-  wire        timer_stb_i;
-  wire        timer_ack_o;  
-  
   // wires to sd controller
   wire [15:0] sd_dat_o;
   wire [15:0] sd_dat_i;
@@ -261,15 +219,23 @@ module kotku (
   // wires to default stb/ack
   wire 		  def_cyc_i;
   wire 		  def_stb_i;
+
   wire [15:0] sw_dat_o;
+
   wire        sdram_clk;
+
   wire        vga_clk;
 
   wire [ 7:0] intv;
   wire [ 2:0] iid;
   wire        intr;
   wire        inta;
+
+  wire [15:0] ip;
   wire [19:0] pc;
+  wire [15:0] cs;
+  wire [ 2:0] state;
+
   reg  [16:0] rst_debounce;
 
   // Module instantiations
@@ -280,20 +246,6 @@ module kotku (
     .c2     (clk),        // 12.5 Mhz
     .locked (lock)
   );
-  
-  wire        timer_clk;
-  wire        timer2_o;
-  wire [ 7:0] port61h;  
-
-  clk_gen #(
-    .res   (21),
-    .phase (100091)
-    ) 
-	timerclk (
-    .clk_i (vga_clk),    // 25 MHz
-    .rst_i (rst),
-    .clk_o (timer_clk)   // 1.193178 MHz (required 1.193182 MHz)
-  );  
 
 `ifndef SIMULATION
   /*
@@ -314,40 +266,6 @@ module kotku (
 `endif
 
 
-  BIOSROM bios(
-    .wb_clk_i (clk),				// Wishbone slave interface
-    .wb_rst_i (rst),
-    .wb_dat_i (rom_dat_i),
-    .wb_dat_o (rom_dat_o),
-    .wb_adr_i (rom_adr_i),
-    .wb_we_i  (rom_we_i ),
-    .wb_tga_i (rom_tga_i),
-    .wb_stb_i (rom_stb_i),
-    .wb_cyc_i (rom_cyc_i),
-    .wb_sel_i (rom_sel_i),
-    .wb_ack_o (rom_ack_o)
-  );
-  
-  WB_Flash Flash(
-    .wb_clk_i (clk),				// Main Clock 
-    .wb_rst_i (rst),  				// Reset Line
-    .wb_adr_i (fl_adr_i[2:1]),		// Address lines
-    .wb_sel_i (fl_sel_i),       	// Select lines
-    .wb_dat_i (fl_dat_i),  			// Command to send
-    .wb_dat_o (fl_dat_o),  			// Received data
-    .wb_cyc_i (fl_cyc_i),       	// Cycle
-    .wb_stb_i (fl_stb_i),       	// Strobe
-    .wb_we_i  (fl_we_i),        	// Write enable
-    .wb_ack_o (fl_ack_o),       	// Normal bus termination
-
-    .flash_addr_  (flash_addr_),		// Pad signals
-    .flash_data_  (flash_data_),
-    .flash_we_n_  (flash_we_n_),
-    .flash_oe_n_  (flash_oe_n_),
-    .flash_ce_n_  (flash_ce_n_),
-    .flash_rst_n_ (flash_rst_n_)   	
-  );
-  
   wb_abrgr wb_fmlbrg (
     .sys_rst (rst),
     .wbs_clk_i (clk),			    // Wishbone slave interface
@@ -506,7 +424,7 @@ module kotku (
     .vert_sync   (tft_lcd_vsync_)
   );
 
-  WB_Serial com1(					// RS232 COM1 Port
+  WB_Serial(						// RS232 COM1 Port
     .wb_clk_i (clk),				// Main Clock 
     .wb_rst_i (rst),  				// Reset Line
     .wb_adr_i (uart_adr_i[2:1]),	// Address lines
@@ -522,25 +440,51 @@ module kotku (
     .rs232_tx (uart_txd_),			// UART signals
     .rs232_rx (uart_rxd_)			// serial input/output
   );
-  
-  // Sound Module Instantiation
-  sound snd1(					
+
+  BIOSROM bios(
+    .wb_clk_i (clk),				// Wishbone slave interface
+    .wb_rst_i (rst),
+    .wb_dat_i (rom_dat_i),
+    .wb_dat_o (rom_dat_o),
+    .wb_adr_i (rom_adr_i),
+    .wb_we_i  (rom_we_i ),
+    .wb_tga_i (rom_tga_i),
+    .wb_stb_i (rom_stb_i),
+    .wb_cyc_i (rom_cyc_i),
+    .wb_sel_i (rom_sel_i),
+    .wb_ack_o (rom_ack_o)
+  );
+
+  // wires to flash controller
+  wire [15:0] fl_dat_o;
+  wire [15:0] fl_dat_i;
+  wire        fl_tga_i;
+  wire [19:1] fl_adr_i;
+  wire [ 1:0] fl_sel_i;
+  wire        fl_we_i;
+  wire        fl_cyc_i;
+  wire        fl_stb_i;
+  wire        fl_ack_o;  
+  WB_Flash Flash(
     .wb_clk_i (clk),				// Main Clock 
     .wb_rst_i (rst),  				// Reset Line
-    .wb_dat_i (wb_sb_dat_i),        // Command to send 
-    .wb_dat_o (wb_sb_dat_o),        // Received data
-    .wb_cyc_i (wb_sb_cyc_i),        // Cycle
-    .wb_stb_i (wb_sb_stb_i),        // Strobe
-    .wb_adr_i (wb_sb_adr_i[3:1]),	// Address lines
-    .wb_sel_i (wb_sb_sel_i),        // Select lines
-    .wb_we_i  (wb_sb_we_i),         // Write enable
-    .wb_ack_o (wb_sb_ack_o),        // Normal bus termination
+    .wb_adr_i (fl_adr_i[2:1]),		// Address lines
+    .wb_sel_i (fl_sel_i),       	// Select lines
+    .wb_dat_i (fl_dat_i),  			// Command to send
+    .wb_dat_o (fl_dat_o),  			// Received data
+    .wb_cyc_i (fl_cyc_i),       	// Cycle
+    .wb_stb_i (fl_stb_i),       	// Strobe
+    .wb_we_i  (fl_we_i),        	// Write enable
+    .wb_ack_o (fl_ack_o),       	// Normal bus termination
 
-    .dac_clk(clk_50_),				// DAC Clock
-    .audio_L(speaker_L),			// Audio Output Left  Channel
-    .audio_R(speaker_R)				// Audio Output Right Channel
+    .flash_addr_  (flash_addr_),		// Pad signals
+    .flash_data_  (flash_data_),
+    .flash_we_n_  (flash_we_n_),
+    .flash_oe_n_  (flash_oe_n_),
+    .flash_ce_n_  (flash_ce_n_),
+    .flash_rst_n_ (flash_rst_n_)   	
   );
-  
+
   WB_PS2 PS2(
     .wb_clk_i(clk),					// Main Clock 
     .wb_rst_i(rst),  				// Reset Line
@@ -548,36 +492,27 @@ module kotku (
     .wb_sel_i(keyb_sel_i),			// Select lines
     .wb_dat_i(keyb_dat_i),			// Command to send to Ethernet
     .wb_dat_o(keyb_dat_o),
-    .wb_we_i (keyb_we_i),            // Write enable
+    .wb_we_i(keyb_we_i),            // Write enable
     .wb_stb_i(keyb_stb_i),
     .wb_cyc_i(keyb_cyc_i),
     .wb_ack_o(keyb_ack_o),
     .wb_tgk_o(intv[1]),             // Keyboard Interrupt request
     .wb_tgm_o(intv[3]),             // Mouse Interrupt request
 
-	.port61h(port61h),				// Chasis Speaker port
-
     .PS2_KBD_CLK(ps2_kclk_),.PS2_KBD_DAT(ps2_kdat_),
 	.PS2_MSE_CLK(ps2_mclk_),.PS2_MSE_DAT(ps2_mdat_)
   );  
-
-  timer timer (
+  
+  timer #(
+    .res   (33),
+    .phase (12507)
+    ) 
+    timer0 (
     .wb_clk_i (clk),
     .wb_rst_i (rst),
-    .wb_adr_i (timer_adr_i[1]),
-    .wb_sel_i (timer_sel_i),
-    .wb_dat_i (timer_dat_i),
-    .wb_dat_o (timer_dat_o),
-    .wb_stb_i (timer_stb_i),
-    .wb_cyc_i (timer_cyc_i),
-    .wb_we_i  (timer_we_i),
-    .wb_ack_o (timer_ack_o),
-    .wb_tgc_o (intv[0]),
-    .tclk_i   (timer_clk),     // 1.193182 MHz = (14.31818/12) MHz
-    .gate2_i  (port61h[0]),
-    .out2_o   (timer2_o)
-  );  
-  
+    .wb_tgc_o (intv[0])
+  );
+
   simple_pic pic0 (
     .clk  (clk),
     .rst  (rst),
@@ -639,33 +574,33 @@ module kotku (
     .sw_   	  (sw_)
   );
 
-zet zet (
-    .pc (pc),
-
-    // Wishbone master interface
-    .wb_clk_i (clk),
-    .wb_rst_i (rst),
-    .wb_dat_i (dat_i),
-    .wb_dat_o (dat_o),
-    .wb_adr_o (adr),
-    .wb_we_o  (we),
-    .wb_tga_o (tga),
-    .wb_sel_o (sel),
-    .wb_stb_o (stb),
-    .wb_cyc_o (cyc),
-    .wb_ack_i (ack),
-    .wb_tgc_i (intr),
-    .wb_tgc_o (inta)
+  cpu zet_proc (
+    .ip         (ip),
+    .cs         (cs),
+    .state      (state),
+    .dbg_block  (1'b0),
+    .wb_clk_i 	(clk),			// Wishbone master interface
+    .wb_rst_i 	(rst),
+    .wb_dat_i 	(dat_i),
+    .wb_dat_o 	(dat_o),
+    .wb_adr_o 	(adr),
+    .wb_we_o  	(we),
+    .wb_tga_o 	(tga),
+    .wb_sel_o 	(sel),
+    .wb_stb_o 	(stb),
+    .wb_cyc_o 	(cyc),
+    .wb_ack_i 	(ack),
+    .wb_tgc_i 	(intr),
+    .wb_tgc_o 	(inta)
   );
-  
 
   wb_switch #(
     .s0_addr_1 (20'b0_1111_1111_1111_0000_000), // Bios BOOT mem 0xF_FF00 - 0xF_FFFF
     .s0_mask_1 (20'b1_1111_1111_1111_0000_000), // Bios BOOT ROM Memory 
-	
-    .s1_addr_1 (20'b0_1011_1000_0000_0000_000), // mem 0xb8000 - 0xbffff
-    .s1_mask_1 (20'b1_1111_1000_0000_0000_000), // VGA Text Memory
-    
+
+    .s1_addr_1 (20'b0_1011_1000_0000_0000_000), // mem 0xB_8000 - 0xB_FFFF
+    .s1_mask_1 (20'b1_1111_1000_0000_0000_000), // VGA Memory. text only
+
     .s1_addr_2 (20'b1_0000_0000_0011_1100_000), // io 0x3c0 - 0x3df
     .s1_mask_2 (20'b1_0000_1111_1111_1110_000), // VGA IO
     
@@ -682,21 +617,16 @@ zet zet (
     .s5_mask_1 (20'b1_0000_1111_1111_1111_110), // GPIO
     
     .s6_addr_1 (20'b1_0000_1111_0010_0000_000), // io 0xf200 - 0xf20f
-    .s6_mask_1 (20'b1_0000_1111_1111_1111_000), // CSR Bridge SDRAM Control
+    .s6_mask_1 (20'b1_0000_1111_1111_1111_000), // CSR Bridge
 
-    .s7_addr_1 (20'b1_0000_0000_0000_0100_000), // io 0x40 - 0x43
-    .s7_mask_1 (20'b1_0000_1111_1111_1111_110),	// Timer control port
-	
-    .s8_addr_1 (20'b1_0000_0000_0010_0011_100), // io 0x0238 - 0x023f
-    .s8_mask_1 (20'b1_0000_1111_1111_1111_100), // Flash IO port
-	
-    .s9_addr_1 (20'b1_0000_0000_0010_0001_000), // io 0x0210 - 0x021F
-    .s9_mask_1 (20'b1_0000_1111_1111_1111_000), // Sound Blaster
-	
-    .sA_addr_1 (20'b1_0000_1111_0011_0000_000), // io 0xf300 - 0xf3ff
-    .sA_mask_1 (20'b1_0000_1111_1111_0000_000), // SDRAM Control
-    .sA_addr_2 (20'b0_0000_0000_0000_0000_000), // mem 0x00000 - 0xfffff
-    .sA_mask_2 (20'b1_0000_0000_0000_0000_000)  // Base RAM
+    .s7_addr_1 (20'b1_0000_0000_0010_0011_100), // io 0x0238 - 0x023f
+    .s7_mask_1 (20'b1_0000_1111_1111_1111_100), // Temporary SPI Flash
+
+    .s8_addr_1 (20'b1_0000_1111_0011_0000_000), // io 0xf300 - 0xf3ff
+    .s8_mask_1 (20'b1_0000_1111_1111_0000_000), // SDRAM Control
+    
+    .s8_addr_2 (20'b0_0000_0000_0000_0000_000), // mem 0x0_0000 - 0xF_FFFF
+    .s8_mask_2 (20'b1_0000_0000_0000_0000_000)  // Base RAM
     ) 
     wbs (
     .m_dat_i (dat_o),				// Master interface
@@ -771,51 +701,32 @@ zet zet (
     .s6_stb_o (csrbrg_stb_s),
     .s6_ack_i (csrbrg_ack_s),
 
-
-    .s7_dat_i (timer_dat_o),    		// Slave 7 interface - timer
-    .s7_dat_o (timer_dat_i),
-    .s7_adr_o ({timer_tga_i,timer_adr_i}),
-    .s7_sel_o (timer_sel_i),
-    .s7_we_o  (timer_we_i),
-    .s7_cyc_o (timer_cyc_i),
-    .s7_stb_o (timer_stb_i),
-    .s7_ack_i (timer_ack_o),	
+    .s7_dat_i  (fl_dat_o),		    // Slave 7 interface - Flash
+    .s7_dat_o  (fl_dat_i),
+    .s7_adr_o ({fl_tga_i,fl_adr_i}),
+    .s7_sel_o  (fl_sel_i),
+    .s7_we_o   (fl_we_i),
+    .s7_cyc_o  (fl_cyc_i),
+    .s7_stb_o  (fl_stb_i),
+    .s7_ack_i  (fl_ack_o),
 	
-    .s8_dat_i  (fl_dat_o),		    // Slave 7 interface - Flash
-    .s8_dat_o  (fl_dat_i),
-    .s8_adr_o ({fl_tga_i,fl_adr_i}),
-    .s8_sel_o  (fl_sel_i),
-    .s8_we_o   (fl_we_i),
-    .s8_cyc_o  (fl_cyc_i),
-    .s8_stb_o  (fl_stb_i),
-    .s8_ack_i  (fl_ack_o),
-	
-    .s9_dat_i (wb_sb_dat_o),			 // Slave 8 interface - Sound Blaster
-    .s9_dat_o (wb_sb_dat_i),
-    .s9_adr_o ({wb_sb_tga_i,wb_sb_adr_i}),
-    .s9_sel_o (wb_sb_sel_i),
-    .s9_we_o  (wb_sb_we_i),
-    .s9_cyc_o (wb_sb_cyc_i),
-    .s9_stb_o (wb_sb_stb_i),
-    .s9_ack_i (wb_sb_ack_o),	
+    .s8_dat_i (fmlbrg_dat_r_s),		// Slave 8 interface - sdram
+    .s8_dat_o (fmlbrg_dat_w_s),
+    .s8_adr_o ({fmlbrg_tga_s,fmlbrg_adr_s}),
+    .s8_sel_o (fmlbrg_sel_s),
+    .s8_we_o  (fmlbrg_we_s),
+    .s8_cyc_o (fmlbrg_cyc_s),
+    .s8_stb_o (fmlbrg_stb_s),
+    .s8_ack_i (fmlbrg_ack_s),
 
-    .sA_dat_i (fmlbrg_dat_r_s),		// Slave 8 interface - sdram
-    .sA_dat_o (fmlbrg_dat_w_s),
-    .sA_adr_o ({fmlbrg_tga_s,fmlbrg_adr_s}),
-    .sA_sel_o (fmlbrg_sel_s),
-    .sA_we_o  (fmlbrg_we_s),
-    .sA_cyc_o (fmlbrg_cyc_s),
-    .sA_stb_o (fmlbrg_stb_s),
-    .sA_ack_i (fmlbrg_ack_s),
-
-    .sB_dat_i (16'hffff),			// Slave 9 interface - default
-    .sB_dat_o (),
-    .sB_adr_o (),
-    .sB_sel_o (),
-    .sB_we_o  (),
-    .sB_cyc_o (def_cyc_i),
-    .sB_stb_o (def_stb_i),
-    .sB_ack_i (def_cyc_i & def_stb_i)
+    .s9_dat_i (16'hffff),			// Slave 9 interface - default
+    .s9_dat_o (),
+    .s9_adr_o (),
+    .s9_sel_o (),
+    .s9_we_o  (),
+    .s9_cyc_o (def_cyc_i),
+    .s9_stb_o (def_stb_i),
+    .s9_ack_i (def_cyc_i & def_stb_i)
   );
 
   hex_display hex16 (
@@ -831,9 +742,6 @@ zet zet (
   assign rst_lck	= key_[0] & lock;
   assign sdram_clk_	= sdram_clk;
   assign dat_i 		= inta ? { 13'b0000_0000_0000_1, iid } : sw_dat_o;
-
-  // System speaker
-  assign chasis_spk = timer2_o & port61h[1];
-  
+  assign pc  		= (cs << 4) + ip;
 
 endmodule
