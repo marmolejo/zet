@@ -1,0 +1,22 @@
+To make this sound module work, you just need to hook up
+to any type of pc amplified speaker or whatever. I recommend
+this hook up to get started. If you want something fancier,
+take a look at the schematics in my ZBC repository
+
+
+                    1k resistor
+ GPIO Pin  0---------/\/\/\/\-----+----------------------> to amplifier input
+                                  |
+                                  |
+                                  |
+                                  - .1uf capacitor
+                                  -
+                                  |
+                                  +----------------------> to amplifier ground
+                                  |
+                                  |
+                                  _ GPIO gnd
+
+
+That is it, if you want stereo, do 2 of these.
+

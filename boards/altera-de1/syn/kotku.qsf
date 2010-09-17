@@ -17,8 +17,8 @@
 # -------------------------------------------------------------------------- #
 #
 # Quartus II
-# Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Web Edition
-# Date created = 05:27:13  September 08, 2010
+# Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
+# Date created = 21:39:45  September 17, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -344,7 +344,6 @@ set_location_assignment PIN_B3 -to i2c_sdat
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name ENABLE_CLOCK_LATENCY ON
-set_global_assignment -name USE_TIMEQUEST_TIMING_ANALYZER OFF
 
 # Analysis & Synthesis Assignments
 # ================================
