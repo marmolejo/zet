@@ -32,7 +32,7 @@ Step 4.  Plug in and power on your board to the USB port on your computer
          
 Step 5.  Find the file "bios_de0.hex" this is the HEX version of the Main BIOS 
          that will be loaded into the flash ram on the DE0 board. Go to the 
-         "Memory" tab, and select FLASH (20000h WORDS) from the drop down 
+         "Memory" tab, and select FLASH (10000h) from the drop down 
          menu. Then Click on Memory Erase. It will take a minute to erase 
          the flash.
          
@@ -54,6 +54,6 @@ Step 7.  Your board should now have it's bios loaded into flash. Now you will
 Note:    For the Floppy Disk, you just need to take the floppy image file you
          have and run it through the hexer.exe program to make the hex version
          of it and then go into the DE0_ControlPanel.exe and load it starting
-         at 0x020000. 
+         at 0x010000. 
 
 

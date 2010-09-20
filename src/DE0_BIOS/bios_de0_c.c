@@ -1134,7 +1134,7 @@ static void transf_sect_drive_a(Bit16u Sector, Bit16u s_segment, Bit16u s_offset
                 mov   ax, MSB            // Load start address MSB
                 out   dx, ax             // Save MSB address word
                 mov   cx, 256            // 512 bytes in 1 sector, done 1 word at a time
-                xor   di, di             // Clear data index register
+                mov   di, bx             // put offset into data index register
                 mov   bx, LSB            // Flash LSB 
 
    sectloop:    mov   ax, bx             // Put bx into ax
@@ -1142,7 +1142,7 @@ static void transf_sect_drive_a(Bit16u Sector, Bit16u s_segment, Bit16u s_offset
                 out   dx, ax             // Save LSB address word
                 mov   dx, FLASH_PORT     // Set DX reg to FLASH IO port
                 in    ax, dx             // read byte from flash
-                mov   ds:[bx+di], ax     // write word
+                mov   ds:[di], ax        // write word
                 inc   di                 // Increment to next RAM address
                 inc   di                 // Increment to next RAM address
                 inc   bx                 // Increment to next flash address location
