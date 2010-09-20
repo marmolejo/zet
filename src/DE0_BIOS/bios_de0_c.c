@@ -1099,7 +1099,7 @@ static Bit16u GetRamdiskSector(Bit16u Sector)
 //  Transfer Sector drive
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-#define FLASH_FLOPPY   0x020000         // Starting address of floppy on flash
+#define FLASH_FLOPPY   0x010000         // Starting address of floppy on flash
 //--------------------------------------------------------------------------
 static void transf_sect_drive_a(Bit16u Sector, Bit16u s_segment, Bit16u s_offset)
 {
@@ -1107,21 +1107,10 @@ static void transf_sect_drive_a(Bit16u Sector, Bit16u s_segment, Bit16u s_offset
     Bit16u  MSB, LSB;
 
     Flash_Addr = (Bit32u)Sector;
-    Flash_Addr = (Flash_Addr * 512 + FLASH_FLOPPY) & 0x00FFFFFF; // can not be more than 24 bits
+    Flash_Addr = (Flash_Addr * 256 + FLASH_FLOPPY) & 0x00FFFFFF; // can not be more than 24 bits
     MSB = (Flash_Addr >> 16) & 0xFFFF;  // Most  siginificant bits of the address
     LSB = (Flash_Addr      ) & 0xFFFF;  // Least siginificant bits  of the address
-    
-/*
-    // trickey math to compute bytes of address
-    // example sector # 2048 = 0x800 *512 = 0x10_00_00 
-    // example sector # 2048 = 0x800, USB = Sector / <<1  = 0x10_00    so LSB is always 00 
-    // note, to get USB, you can do a >>7 which is 8-1, or /128 (remember LSR is same /2)
-
-    Bit8u  USB, MSB;
-    Sector += 0x100;                    // this could easily be moved into assembly 
-    USB = (Sector / 128) & 0xFF;        // Compute the upper most significan byte of the address
-    MSB = (Sector *   2) & 0xFF;        // Compute the middle byte of the address
-*/                            
+                         
     __asm {
                 push  ax                 // Save all the registers we are
                 push  bx                 // about to use onto the stack
@@ -1216,7 +1205,12 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                 SET_CF();        // An error occurred
                 return;
             }
-
+            
+            // a 1.44MB floppy actually has 1,474,560 bytes, 2*80*18= 2880 sectors *512= 1,474,560 (ta da)
+            //   2 sides (2 heads)
+            //  80 tracks per side
+            //  18 sectors per track
+            // 512 bytes per sector
             log_sector  = track * 36 + head * 18 + sector - 1;  // Calculate the first sector we are going to read
             if(drive == DRIVE_A) {                   // This is the Flash Based Drive
                 for(j = 0; j < num_sectors; j++) {
