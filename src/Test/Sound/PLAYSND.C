@@ -13,7 +13,7 @@ void main(int argc, char *argv[])
 		intv = atoi(argv[2]);
 		if(intv == 0) intv = 200;
 	}
-	else intv = 200;
+	else intv = 100;
 	outportb(REG(2), (intv >>   8));
 	outportb(REG(3), (intv & 0xff));
 	printf("Interval = 0x%02x%02x\n",inportb(REG(2)),inportb(REG(3)));
@@ -29,14 +29,14 @@ void main(int argc, char *argv[])
 		exit(1);  		/* terminate program if can not open the file*/
 	}
 	fseek(fp, 0L, SEEK_END);	/* seek to end of file */
-	length = ftell(fp);		/* tell me the length  */
+	length = (unsigned int)ftell(fp);		/* tell me the length  */
 	fseek(fp, SEEK_SET, 0);		/* seek back tot he start */
 	if(length > 0xFFFF) {
 		printf("Sorry, that file is too big for me\n");
 		fclose(fp);		/* close the file */
       	exit(1);  		/* terminate program if not enough memory */
 	}
-	else printf("PCM File size = %u bytes\n", length );
+	else printf("PCM File size = %ud bytes\n", length );
 
 	if((ptr = (unsigned char *) malloc(length)) == NULL) { 		/* allocate memory for string */
 		printf("Not enough memory to allocate buffer.\n");
