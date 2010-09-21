@@ -65,8 +65,9 @@ here is the hook up:
 
 
 J5
-               390
+               330
 Pin  2  o----/\/\/\/\---------+
+                              |
                               |
                               #/| Speaker
                               #\|
@@ -94,17 +95,17 @@ The default for this build was to use pins AB19 and AB20 for the stereo outputs,
 equate to GPIO1_D1 and GPIO1_D3, which are pins 4 and 6 on J5. 
 (keep in mind, you can use whichever pins on the GPIO you want).
 
-               4.7K
-Pin  4  o----/\/\/\/\---------+
+               4.7K     1uf
+Pin  4  o----/\/\/\/\---)|----+
                               |
-                              +=O Left line out
+                              O Left line out
+                              
+Pin 12  o---------------------O Gnd
+                              
+                              O Right line out
                               |
-Pin 12  o---------------------+
-                              |
-                              +=O Right line out
-                              |
-Pin  4  o----/\/\/\/\---------+
-               4.7K
+Pin  4  o----/\/\/\/\---)|----+
+               4.7K     1uf
 
 You can experiment with the value for your speaker set up, but remember, for this 
 set up, you need amplified speakers. Also, you probably will need an audio jack for this.
