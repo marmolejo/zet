@@ -8,4 +8,6 @@ del  *.err
 del  *.map
 del  *.hex
 del  *.dat
+del  *.flash
+
 

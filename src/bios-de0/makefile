@@ -15,16 +15,16 @@
 # This section converts the bios rom binary file into a hex file that the 
 # DE0 loader program can use to program the Flash Ram on the DE0 board.
 # ---------------------------------------------------------------------------- 
-bios_de0.hex: bios_de0.rom hexer.exe zetbios_de0.dat
-  hexer bios_de0.rom  
+bios.hex: bios.rom hexer.exe zetbios.dat
+  hexer bios.rom
 
 # DAT SHADOW ROM MAKE -------------------------------------------------------- 
 # This section converts the last 256 bytes of the bios rom to a dat file (hex)
 # that needs to be included in the Quartus project build. The last 256 bytes
 # of the ROM is the shadow boot rom section.
 # ---------------------------------------------------------------------------- 
-zetbios_de0.dat: zetbios_de0.rom mifer.exe
-  mifer zetbios_de0.rom
+zetbios.dat: zetbios.rom mifer.exe
+  mifer zetbios.rom
     
 # ROM BUILD ------------------------------------------------------------------ 
 # This section combines all 3 rom sections built below, into one 128K ROM  
@@ -33,8 +33,8 @@ zetbios_de0.dat: zetbios_de0.rom mifer.exe
 # can not download this file directly into your DE1 board Flash RAM, it first
 # has to be converted to HEX. The previous section does that.
 # ---------------------------------------------------------------------------- 
-bios_de0.rom: vgabios.rom ff.rom zetbios_de0.rom meow.exe
-  meow vgabios.rom ff.rom zetbios_de0.rom > $@
+bios.rom: vgabios.rom ff.rom zetbios.rom meow.exe
+  meow vgabios.rom ff.rom zetbios.rom > $@
  
 # FF.ROM Filler -------------------------------------------------------------- 
 # This is a little utility that makes a 32k padding binary file so that it 
@@ -60,38 +60,38 @@ COPTS = -i="C:\WATCOM/h;C:\WATCOM/h/nt" -w4 -e25 -zq -od -d2 -6r -bt=nt -fo=.obj
 ff.exe: ff.obj .autodepend
     wlink name ff d all sys nt op m op maxe=25 op q op symf FIL ff.obj
 
-ff.obj: ff.c
-    wcc386 $(COPTS) ff.c
+ff.obj: ..\tools\ff.c
+    wcc386 $(COPTS) ..\tools\ff.c
  
 biossums.exe: biossums.obj .autodepend
     wlink name biossums d all sys nt op m op maxe=25 op q op symf FIL biossums.obj
  
-biossums.obj: biossums.c
-    wcc386 $(COPTS) biossums.c
+biossums.obj: ..\tools\biossums.c
+    wcc386 $(COPTS) ..\tools\biossums.c
  
 vgasums.exe: vgasums.obj .autodepend 
     wlink name vgasums d all sys nt op m op maxe=25 op q op symf FIL vgasums.obj
  
-vgasums.obj: vgasums.c
-    wcc386 $(COPTS) vgasums.c
+vgasums.obj: ..\tools\vgasums.c
+    wcc386 $(COPTS) ..\tools\vgasums.c
     
 hexer.exe: hexer.obj .autodepend 
     wlink name hexer d all sys nt op m op maxe=25 op q op symf FIL hexer.obj
  
-hexer.obj: hexer.c
-    wcc386 $(COPTS) hexer.c
+hexer.obj: ..\tools\hexer.c
+    wcc386 $(COPTS) ..\tools\hexer.c
     
 meow.exe: meow.obj .autodepend 
     wlink name meow d all sys nt op m op maxe=25 op q op symf FIL meow.obj
  
-meow.obj: meow.c
-    wcc386 $(COPTS) meow.c
+meow.obj: ..\tools\meow.c
+    wcc386 $(COPTS) ..\tools\meow.c
 
 mifer.exe: mifer.obj .autodepend 
     wlink name mifer d all sys nt op m op maxe=25 op q op symf FIL mifer.obj
  
-mifer.obj: mifer.c
-    wcc386 $(COPTS) mifer.c    
+mifer.obj: ..\tools\mifer.c
+    wcc386 $(COPTS) ..\tools\mifer.c
  
 # ---------------------------------------------------------------------------- 
 # Compiler flags for ZET Code: 
@@ -110,7 +110,7 @@ AFLAGS = -0 -wx
 # operation will be later fed through the biossums program in order to  
 # compute the checksum and tag that on the end. 
 # ---------------------------------------------------------------------------- 
-zetbios_de0.rom: bios_de0_c.obj bios_de0_a.obj biossums.exe
+zetbios.rom: zetbios.obj entry.obj biossums.exe
     wlink name $@ system dos &
         OPTION quiet &
         OPTION NOFARCALLS &
@@ -121,7 +121,7 @@ zetbios_de0.rom: bios_de0_c.obj bios_de0_a.obj biossums.exe
         clname DATA segment _DATA    segaddr=0xf000 offset=0x0000 &
         clname CODE segment _TEXT    segaddr=0xf000 offset=0x1000 &
                     segment _BIOSSEG segaddr=0xf000 offset=0xe000 &
-        FILE { bios_de0_c.obj bios_de0_a.obj } &
+        FILE { zetbios.obj entry.obj } &
         LIBRARY clibs.lib &
         disable 1014
     biossums $@
@@ -129,18 +129,18 @@ zetbios_de0.rom: bios_de0_c.obj bios_de0_a.obj biossums.exe
 # Make BIOS Object files ----------------------------------------------------- 
 # This section tells make to compile only if the files have been changed  
 # ---------------------------------------------------------------------------- 
-bios_de0_c.obj: .autodepend
-  wcc $(CFLAGS) bios_de0_c.c
+zetbios.obj: .autodepend
+  wcc $(CFLAGS) zetbios.c
 
-bios_de0_a.obj: .autodepend 
-  wasm $(AFLAGS) bios_de0_a.asm
+entry.obj: .autodepend
+  wasm $(AFLAGS) entry.asm
 
 # Link VGA BIOS Object Files ------------------------------------------------- 
 # This section compiles and links the VGA BIOS module. The result of this 
 # operation will be later fed through the vgasums program in order to  
 # compute the checksum and tag that on the end. 
 # ---------------------------------------------------------------------------- 
-vgabios.rom: vgabios_c.obj vgabios_a.obj vgasums.exe
+vgabios.rom: vgabios.obj vga.obj vgasums.exe
     wlink name $@ system dos &
         OPTION quiet &
         OPTION FILLCHAR=0xFF &
@@ -150,7 +150,7 @@ vgabios.rom: vgabios_c.obj vgabios_a.obj vgasums.exe
                     segment _VGASEG segaddr=0xC000 offset=0x0000 &
                     segment _TEXT   segaddr=0xC000 offset=0x1000 &
         clname DATA segment _DATA   segaddr=0xC000 offset=0x4000 &
-        FILE { vgabios_c.obj vgabios_a.obj } &
+        FILE { vgabios.obj vga.obj } &
         LIBRARY clibs.lib &
         disable 1014
     vgasums $@
@@ -158,11 +158,11 @@ vgabios.rom: vgabios_c.obj vgabios_a.obj vgasums.exe
 # Make VGA Object files ------------------------------------------------------ 
 # This section tells make to compile only if the files have been changed  
 # ---------------------------------------------------------------------------- 
-vgabios_c.obj: .autodepend
-    wcc $(CFLAGS) vgabios_c.c
+vgabios.obj: .autodepend
+    wcc $(CFLAGS) vgabios.c
 
-vgabios_a.obj: .autodepend
-    wasm $(AFLAGS) vgabios_a.asm
+vga.obj: .autodepend
+    wasm $(AFLAGS) vga.asm
 
 # ---------------------------------------------------------------------------- 
 #  End of make. 

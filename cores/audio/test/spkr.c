@@ -1,6 +1,6 @@
 /*
- *  This utility simply makes a binary file filled with 0xFF for filler
- *  Copyright (C) 2008-2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
+ *  Utility to test the PC speaker
+ *  Copyright (C) 2010  Donna Polehn <dpolehn@verizon.net>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -17,17 +17,30 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
+#include <dos.h>
 
-int main(int argc, char *argv[])
+#define PORT 0x0061
+
+
+void main(void)
 {
-  int f = -1;
-  int i, top;
+  char cmd = ' ';
+  unsigned char d;
 
-  if (argc==2) top=atoi (argv[1]);
-  else top = 1000000;
+  printf("\nTest chasis speaker\n");
+  printf(" o to turn speaker on\n");
+  printf(" space bar to turn speaker off\n");
+  printf(" q to quit\n");
 
-  for (i=0; i<top; i++)
-    write (1, &f, 4);
-
-  return 0;
+  outportb(PORT,0x80);
+  printf("%02x ",inportb(PORT));
+  for(;;) {
+    if(kbhit()) {
+      cmd = getch();
+      if(cmd == 'q') break;
+    }
+    outportb(PORT, cmd);
+  }
+  printf("Hit any key to continue\n"); getch();
 }
