@@ -1,5 +1,5 @@
 #
-#  Makefile for building the Zet BIOS in Linux
+#  Makefile for building the Zet BIOS in Windows
 #  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
 #  Copyright (C) 2010  Donna Polehn <dpolehn@verizon.net>
 #
@@ -19,7 +19,7 @@
 #
 
 #
-#  ZET BIOS BUILD MAKE - Linux version - 06-02-2010
+#  ZET BIOS BUILD MAKE - Windows version - 05-24-2010
 #  ----------------------------------------------------------------------------
 #
 #  This is the make file for the Zet Rom BIOS and VGA BIOS Builds. 
@@ -30,15 +30,22 @@
 #
 
 # File extension in Windows
-O = .o
-E = 
+O = .obj
+E = .exe
 
 # Current directory (for executing programs)
-CDIR = ./
+CDIR = .\
 
 !include "common.inc"
 
 all: bios.rom
+
+#
+# This is a simple copy of the vga.asm, as we cannot execute git describe and
+# execute "sed" in Windows. Anyway, this is only important in the release
+#
+vga_vers.asm: vga.asm
+	copy vga.asm vga_vers.asm
 
 #
 # This section combines all 3 rom sections built below, into one 128K ROM 
@@ -47,7 +54,7 @@ all: bios.rom
 # download into your DE1 board.
 #
 bios.rom: vgabios.rom ff.rom zetbios.rom
-	cat vgabios.rom ff.rom zetbios.rom > $@
+	copy /b vgabios.rom+ff.rom+zetbios.rom $@
 
 #
 # This section compiles and links the biossums, vgasums and ff utilities.
@@ -62,17 +69,26 @@ bios.rom: vgabios.rom ff.rom zetbios.rom
 # these utilities will run on your PC not on the ZET
 #
 
-ff: ff.c
-	gcc ff.c -o ff
+ff$(E): ff$(O) .autodepend
+	wlink name ff d all sys nt op m op maxe=25 op q op symf FIL ff.obj
 
-biossums: biossums.c
-	gcc biossums.c -o biossums
+ff$(O): ..\tools\ff.c
+	wcc386 $(COPTS) ..\tools\ff.c
 
-vgasums: vgasums.c
-	gcc vgasums.c -o vgasums
+biossums$(E): biossums$(O) .autodepend
+	wlink name biossums d all sys nt op m op maxe=25 op q op symf FIL biossums.obj
+
+biossums$(O): ..\tools\biossums.c
+	wcc386 $(COPTS) ..\tools\biossums.c
+
+vgasums$(E): vgasums$(O) .autodepend
+	wlink name vgasums d all sys nt op m op maxe=25 op q op symf FIL vgasums.obj
+
+vgasums$(O): ..\tools\vgasums.c
+	wcc386 $(COPTS) ..\tools\vgasums.c
 
 clean:
-	rm -f *.o *.sym *.rom *.exe *.err *.map *.flash ff biossums vgasums
+	del  *.o *.obj *.sym *.rom *.exe *.err *.map *.flash vga_vers.asm ff biossums vgasums
 
 #
 #  End of make.

@@ -18,6 +18,7 @@
 ;  <http://www.gnu.org/licenses/>.
 ;
 
+;;--------------------------------------------------------------------------
 ;; $0000 ; Signature
 ;; $0003 ; Entry Point
 ;;--------------------------------------------------------------------------
@@ -127,7 +128,7 @@ vgabios_name:           db      "Zet processor and SoC,"
                         db      0x00
 vgabios_version_str:    db      " version "
                         db      0x00
-vgabios_version:        db      BIOS_VERS
+vgabios_version:        db      "(git)"
                         db      0x0a,0x0d,0x00
 vgabios_copyright:      db      "Copyright (C) 2008-2010, Zeus Gomez Marmolejo <zeus@aluzina.org>"
                         db      0x0a,0x0d

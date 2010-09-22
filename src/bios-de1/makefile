@@ -1,5 +1,5 @@
 #
-#  Makefile for building the Zet BIOS in Windows
+#  Makefile for building the Zet BIOS in Linux
 #  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
 #  Copyright (C) 2010  Donna Polehn <dpolehn@verizon.net>
 #
@@ -19,7 +19,7 @@
 #
 
 #
-#  ZET BIOS BUILD MAKE - Windows version - 05-24-2010
+#  ZET BIOS BUILD MAKE - Linux version - 06-02-2010
 #  ----------------------------------------------------------------------------
 #
 #  This is the make file for the Zet Rom BIOS and VGA BIOS Builds. 
@@ -29,16 +29,19 @@
 #  messages, this is normal.
 #
 
-# File extension in Windows
-O = .obj
-E = .exe
+# File extension in Linux
+O = .o
+E = 
 
 # Current directory (for executing programs)
-CDIR = .\
+CDIR = ./
+
+all: bios.rom
 
 !include "common.inc"
 
-all: bios.rom
+vga_vers.asm: vga.asm
+	bash -c "sed 's/(git)/$$(git describe)/g' vga.asm > vga_vers.asm"
 
 #
 # This section combines all 3 rom sections built below, into one 128K ROM 
@@ -47,7 +50,7 @@ all: bios.rom
 # download into your DE1 board.
 #
 bios.rom: vgabios.rom ff.rom zetbios.rom
-	copy /b vgabios.rom+ff.rom+zetbios.rom $@
+	cat vgabios.rom ff.rom zetbios.rom > $@
 
 #
 # This section compiles and links the biossums, vgasums and ff utilities.
@@ -62,26 +65,17 @@ bios.rom: vgabios.rom ff.rom zetbios.rom
 # these utilities will run on your PC not on the ZET
 #
 
-ff$(E): ff$(O) .autodepend
-	wlink name ff d all sys nt op m op maxe=25 op q op symf FIL ff.obj
+ff: ../tools/ff.c
+	gcc ../tools/ff.c -o ff
 
-ff$(O): ff.c
-	wcc386 $(COPTS) ff.c 
+biossums: ../tools/biossums.c
+	gcc ../tools/biossums.c -o biossums
 
-biossums$(E): biossums$(O) .autodepend
-	wlink name biossums d all sys nt op m op maxe=25 op q op symf FIL biossums.obj
-
-biossums$(O): biossums.c
-	wcc386 $(COPTS) biossums.c 
-
-vgasums$(E): vgasums$(O) .autodepend
-	wlink name vgasums d all sys nt op m op maxe=25 op q op symf FIL vgasums.obj
-
-vgasums$(O): vgasums.c
-	wcc386 $(COPTS) vgasums.c 
+vgasums: ../tools/vgasums.c
+	gcc ../tools/vgasums.c -o vgasums
 
 clean:
-	del  *.obj *.sym *.rom *.exe *.err *.map
+	rm -f *.o *.obj *.sym *.rom *.exe *.err *.map *.flash vga_vers.asm ff biossums vgasums
 
 #
 #  End of make.

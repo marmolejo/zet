@@ -36,10 +36,7 @@ ff.rom: ff$(E)
 #  -wx  set to maximum warning level
 #
 CFLAGS = -0 -wx -zu -s -ot -d0 -ecc -ms
-
-RELVERS   = v1.1.1:15:g8c8e616
-BIOS_VERS = -dBIOS_VERS=\"$(RELVERS)\"
-AFLAGS  = -0 -wx $(BIOS_VERS)
+AFLAGS  = -0 -wx
 
 #
 # This section compiles and links the ROM BIOS module. The result of this
@@ -77,7 +74,7 @@ entry$(O): .autodepend
 # operation will be later fed through the vgasums program in order to 
 # compute the checksum and tag that on the end.
 #
-vgabios.rom: vgabios$(O) vga$(O) vgasums$(E)
+vgabios.rom: vgabios$(O) vga_vers$(O) vgasums$(E)
 	wlink name $@ system dos &
         OPTION quiet &
         OPTION FILLCHAR=0xFF &
@@ -87,7 +84,7 @@ vgabios.rom: vgabios$(O) vga$(O) vgasums$(E)
 	               segment _VGASEG segaddr=0xC000 offset=0x0000 &
 	               segment _TEXT   segaddr=0xC000 offset=0x1000 &
         clname DATA  segment _DATA   segaddr=0xC000 offset=0x4000 &
-        file { vgabios$(O) vga$(O) } &
+        file { vgabios$(O) vga_vers$(O) } &
         library clibs.lib &
         disable 1014
 	$(CDIR)vgasums $@
@@ -98,5 +95,5 @@ vgabios.rom: vgabios$(O) vga$(O) vgasums$(E)
 vgabios$(O): .autodepend
 	wcc $(CFLAGS) vgabios.c
 
-vga$(O): .autodepend
-	wasm $(AFLAGS) vga.asm
+vga_vers$(O): vga_vers.asm
+	wasm $(AFLAGS) vga_vers.asm
