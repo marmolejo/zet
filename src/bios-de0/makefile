@@ -71,7 +71,7 @@ bios.hex: bios.rom hexer zetbios.dat
 # ----------------------------------------------------------------------------
 zetbios.dat: zetbios.rom mifer
 	$(CDIR)mifer zetbios.rom
-	cp zetbios.dat ../../boards/altera-de0/rtl
+	cp -f zetbios.dat ../../boards/altera-de0/rtl/biosrom.dat
 
 #
 # This section compiles and links the biossums, vgasums and ff utilities.

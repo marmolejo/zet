@@ -243,15 +243,18 @@ set_location_assignment PIN_T5 -to flash_data_[8]
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0-vdu/syn/kotku.dpf"
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-vdu/syn/kotku.dpf"
 set_location_assignment PIN_AA20 -to chasis_spk
+set_location_assignment PIN_AB19 -to speaker_L
+set_location_assignment PIN_AB20 -to speaker_R
+set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../rtl/biosrom.v
+set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/sound.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
 set_global_assignment -name VERILOG_FILE ../rtl/pll.v
 set_global_assignment -name VERILOG_FILE ../rtl/clk_gen.v
 set_global_assignment -name VERILOG_FILE ../rtl/wb_switch.v
-set_global_assignment -name VERILOG_FILE ../rtl/BIOSROM.v
 set_global_assignment -name VERILOG_FILE ../rtl/WB_Flash.v
 set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu.v
-set_global_assignment -name VERILOG_FILE ../../../cores/Audio/Sound.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart16450/WB_Serial.v
 set_global_assignment -name VERILOG_FILE ../../../cores/PS2/rtl/WB_PS2.v
 set_global_assignment -name VERILOG_FILE ../../../cores/PS2/rtl/PS2_Keyboard.v
@@ -311,6 +314,3 @@ set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_alu.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_addsub.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/altera/zet_signmul17.v
-set_location_assignment PIN_AB19 -to speaker_L
-set_location_assignment PIN_AB20 -to speaker_R
-set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.dpf"

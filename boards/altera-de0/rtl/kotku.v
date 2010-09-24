@@ -315,9 +315,9 @@ module kotku (
 `endif
 
 
-  BIOSROM bios(
-    .wb_clk_i (clk),            // Wishbone slave interface
-    .wb_rst_i (rst),
+  biosrom bios(
+    .clk (clk),            // Wishbone slave interface
+    .rst (rst),
     .wb_dat_i (rom_dat_i),
     .wb_dat_o (rom_dat_o),
     .wb_adr_i (rom_adr_i),
