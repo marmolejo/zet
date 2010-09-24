@@ -45,6 +45,9 @@ all: bios.hex zetbios.dat
 vga_vers.asm: vga.asm
 	bash -c "sed 's/(git)/$$(git describe)/g' vga.asm > vga_vers.asm"
 
+zetbios_vers.c: zetbios.c
+	bash -c "sed 's/(git)/$$(git describe)/g' zetbios.c | sed 's/(build-date)/$$(date -R)/g' | sed 's/(commit-date)/$$(git log -1 --pretty=format:%cD)/g' > zetbios_vers.c"
+
 #
 # This section combines all 3 rom sections built below, into one 128K ROM
 # ready to be installed. When everything is done running and if all goes well
@@ -99,7 +102,7 @@ mifer: ../tools/mifer.c
 	gcc ../tools/mifer.c -o mifer
 
 clean:
-	rm -f *.dat *.hex *.o *.obj *.sym *.rom *.exe *.err *.map *.flash vga_vers.asm ff biossums vgasums mifer hexer
+	rm -f *.dat *.hex *.o *.obj *.sym *.rom *.exe *.err *.map *.flash zetbios_vers.c vga_vers.asm ff biossums vgasums mifer hexer
 
 #
 #  End of make.

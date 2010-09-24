@@ -47,6 +47,9 @@ all: bios.hex zetbios.dat
 vga_vers.asm: vga.asm
 	copy vga.asm vga_vers.asm
 
+zetbios_vers.c: zetbios.c
+	copy zetbios.c zetbios_vers.c
+
 #
 # This section combines all 3 rom sections built below, into one 128K ROM
 # ready to be installed. When everything is done running and if all goes well
@@ -117,6 +120,6 @@ mifer$(O): ..\tools\mifer.c
     wcc386 $(C386OPTS) ..\tools\mifer.c
 
 clean:
-	del  *.dat *.hex *.o *.obj *.sym *.rom *.exe *.err *.map *.flash vga_vers.asm ff biossums vgasums mifer hexer
+	del  *.dat *.hex *.o *.obj *.sym *.rom *.exe *.err *.map *.flash zetbios_vers.c vga_vers.asm ff biossums vgasums mifer hexer
 
 

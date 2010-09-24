@@ -43,7 +43,7 @@ AFLAGS  = -0 -wx
 # operation will be later fed through the biossums program in order to
 # compute the checksum and tag that on the end.
 #
-zetbios.rom: zetbios$(O) entry$(O) biossums$(E)
+zetbios.rom: zetbios_vers$(O) entry$(O) biossums$(E)
 	wlink name $@ system dos &
         OPTION quiet &
         OPTION NOFARCALLS &
@@ -54,7 +54,7 @@ zetbios.rom: zetbios$(O) entry$(O) biossums$(E)
         clname DATA segment _DATA    segaddr=0xf000 offset=0x0000 &
         clname CODE segment _TEXT    segaddr=0xf000 offset=0x1000 &
                     segment _BIOSSEG segaddr=0xf000 offset=0xe000 &
-        FILE { zetbios$(O) entry$(O) } &
+        FILE { zetbios_vers$(O) entry$(O) } &
         LIBRARY clibs.lib &
         disable 1014
 	$(CDIR)biossums $@
@@ -63,8 +63,8 @@ zetbios.rom: zetbios$(O) entry$(O) biossums$(E)
 #
 # This section tells make to compile only if the files have been changed
 #
-zetbios$(O): .autodepend
-	wcc $(CFLAGS) zetbios.c
+zetbios_vers$(O): zetbios_vers.c .autodepend
+	wcc $(CFLAGS) zetbios_vers.c
 
 entry$(O): .autodepend
 	wasm $(AFLAGS) entry.asm

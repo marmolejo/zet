@@ -4,7 +4,7 @@
 ;   ported to Open Watcom compiler by Donna Polehn <dpolehn@verizon.net>
 ;
 ;  This file is part of the Zet processor. This program is free software;
-;  you can redistribute it and/or modify it under the terms of the GNU
+;  you can redistribute it and/or modify it under the terms of the GNU 
 ;  General Public License as published by the Free Software Foundation;
 ;  either version 3, or (at your option) any later version.
 ;
@@ -18,6 +18,7 @@
 ;  <http://www.gnu.org/licenses/>.
 ;
 
+;;--------------------------------------------------------------------------
 ;; $0000 ; Signature
 ;; $0003 ; Entry Point
 ;;--------------------------------------------------------------------------
@@ -120,25 +121,24 @@ vgarom:                 org     0x0000         ;; start of ROM, get placed at 00
                         db      0x40           ;; BIOS extension length in units of 512 bytes 
 vgabios_entry_point:    jmp     vgabios_init_func
 ;;--------------------------------------------------------------------------
-vgabios_name:           db      "Zet VGA bios "
+vgabios_name:           db      "Zet processor and SoC,"
                         db      0x00
                         org     0x001e
                         db      "IBM"
                         db      0x00
-vgabios_version:        db      "Special Build "
-vgabios_date:           db      "May 20, 2010"
-                        db      0x0a,0x0d, 0x00
-vgabios_copyright:      db      "(C) 2003 the LGPL VGABios developers Team"
+vgabios_version_str:    db      " version "
+                        db      0x00
+vgabios_version:        db      "(git)"
                         db      0x0a,0x0d,0x00
-vgabios_license:        db      "This VGA/VBE Bios is released under the GNU LGPL"
-                        db      0x0a,0x0d,0x0a,0x0d,0x00
-vgabios_website:        db      "Please visit :",0x0a,0x0d
+vgabios_copyright:      db      "Copyright (C) 2008-2010, Zeus Gomez Marmolejo <zeus@aluzina.org>"
+                        db      0x0a,0x0d
+                        db      "  and Zet development team."
+                        db      0x0a,0xd,0x0a,0x0d,0x00
+vgabios_license:        db      "All files are released under the GNU GPL v3. "
+                        db      0x00
+vgabios_website:        db      "Available at:",0x0a,0x0d
                         db      "  http://zet.aluzina.org"
-                        db      0x0a,0x0d
-                        db      "  http://bochs.sourceforge.net"
-                        db      0x0a,0x0d
-                        db      "  http://www.nongnu.org/vgabios"
-                        db      0x0a,0x0d,0x0a,0x0d,0x00
+                        db      0x0a,0x0d,0x0a,0x0d,0x0a,0x0d,0x00
                         
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -282,7 +282,11 @@ display_info:           mov     ax, 0xC000
                         mov     ds, ax
                         mov     si, near ptr vgabios_name 
                         call    display_string
+                        mov     si, near ptr vgabios_version_str
+                        call    display_string
                         mov     si, near ptr vgabios_version
+                        call    display_string
+                        mov     si, near ptr vgabios_copyright
                         call    display_string
                         mov     si, near ptr vgabios_license
                         call    display_string
