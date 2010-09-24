@@ -123,7 +123,7 @@ module ps2keyb (
   // Module instantiation
   ps2keyb_xtcodes xtcodes (
 //    .clk     (wb_clk_i),
-    .at_code (q[7:1]),
+    .at_code ({q[7:2],q[8]^q[1]}), // q[8]^q[1] for F7 key code 8'h83
     .xt_code (xt_code)
   );
 
@@ -361,7 +361,8 @@ module ps2keyb (
   always @(posedge wb_clk_i)
     if (wb_rst_i) dat_o <= 8'b0;
     else dat_o <=
-      (rx_output_strobe && q[8:1]) ? (q[8] ? q[8:1]
+    // 8'h83 the only code (F7 key - xt_code 8'h41) with the MSB bit set
+      (rx_output_strobe && q[8:1]) ? ((q[8] && (q[8:1] != 8'h83)) ? q[8:1]
         : {hold_released,xt_code})
      : dat_o;
 
