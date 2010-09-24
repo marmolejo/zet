@@ -52,6 +52,22 @@ vga_vers.asm: vga.asm
 bios.rom: vgabios.rom ff.rom zetbios.rom
 	cat vgabios.rom ff.rom zetbios.rom > $@
 
+# HEX ROM MAKE ---------------------------------------------------------------
+# This section converts the bios rom binary file into a hex file that the
+# DE0 loader program can use to program the Flash Ram on the DE0 board.
+# ----------------------------------------------------------------------------
+bios.hex: bios.rom hexer zetbios.dat
+	hexer bios.rom
+
+# DAT SHADOW ROM MAKE --------------------------------------------------------
+# This section converts the last 256 bytes of the bios rom to a dat file (hex)
+# that needs to be included in the Quartus project build. The last 256 bytes
+# of the ROM is the shadow boot rom section.
+# ----------------------------------------------------------------------------
+zetbios.dat: zetbios.rom mifer
+	mifer zetbios.rom
+	cp zetbios.dat ../../boards/altera-de0/rtl
+
 #
 # This section compiles and links the biossums, vgasums and ff utilities.
 # The biossums is used to computer the checksum byte which is then tacked 
