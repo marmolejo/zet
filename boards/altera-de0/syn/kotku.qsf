@@ -82,8 +82,6 @@ set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
 set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
 set_global_assignment -name DEVICE_FILTER_PIN_COUNT 484
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0/syn/kotku.dpf"
-set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
-set_global_assignment -name TIMEQUEST_DO_CCPP_REMOVAL ON
 set_location_assignment PIN_G21 -to clk_50_
 set_location_assignment PIN_R2 -to flash_addr_[21]
 set_location_assignment PIN_P3 -to flash_addr_[20]
