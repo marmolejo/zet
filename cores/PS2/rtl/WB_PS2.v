@@ -4,7 +4,7 @@
 // Description: Wishbone Compatible PS2 core.
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-module WB_PS2(
+module ps2 (
 	input              wb_clk_i,         // Clock Input
 	input              wb_rst_i,         // Reset Input
 	input       [15:0] wb_dat_i,         // Command to send to mouse
@@ -20,10 +20,10 @@ module WB_PS2(
    
     output reg   [7:0] port61h,			 // chasis Speaker port
 	
-	inout              PS2_KBD_CLK,      // PS2 Keyboard Clock, Bidirectional
-	inout              PS2_KBD_DAT,      // PS2 Keyboard Data, Bidirectional
-	inout              PS2_MSE_CLK,      // PS2 Mouse Clock, Bidirectional
-	inout              PS2_MSE_DAT       // PS2 Mouse Data, Bidirectional
+	inout              ps2_kbd_clk,      // PS2 Keyboard Clock, Bidirectional
+	inout              ps2_kbd_dat,      // PS2 Keyboard Data, Bidirectional
+	inout              ps2_mse_clk,      // PS2 Mouse Clock, Bidirectional
+	inout              ps2_mse_dat       // PS2 Mouse Data, Bidirectional
 );
 
 // --------------------------------------------------------------------
@@ -288,8 +288,8 @@ wire        MSE_SEND = cmd_msnd;	// Signal to transmit data
 PS2_NO_FIFO ps2u1(
 	.clk(wb_clk_i),
 	.reset(wb_rst_i),
-	.PS2_CLK(PS2_MSE_CLK),
-	.PS2_DAT(PS2_MSE_DAT),
+	.PS2_CLK(ps2_mse_clk),
+	.PS2_DAT(ps2_mse_dat),
 	
     .writedata(MSE_dat_i),				// data to send
     .write(MSE_SEND),					// signal to send it
@@ -328,8 +328,8 @@ PS2_Keyboard #(
 			.tx_shifting_done(KBD_Txdone),		// done transmiting
             .scancode(KBD_dat_o),               // scancode
             .rx_output_strobe(KBD_INT), 		// Signals a key presseed
-            .ps2_clk_(PS2_KBD_CLK),             // PS2 PAD signals
-            .ps2_data_(PS2_KBD_DAT)
+            .ps2_clk_(ps2_kbd_clk),             // PS2 PAD signals
+            .ps2_data_(ps2_kbd_dat)
 );
 
 // --------------------------------------------------------------------

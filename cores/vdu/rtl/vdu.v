@@ -52,10 +52,7 @@ module vdu (
   reg [22:0] blink_count;
 
   // Character generator ROM
-  wire        char_cs;			// never used
-  wire        char_we;			// not used
   wire [11:0] char_addr;
-  wire [7:0]  char_data_in;		// not used
   wire [7:0]  char_data_out;
 
   // Control registers
@@ -147,9 +144,6 @@ module vdu (
   // Assignments
   assign video_on1  = video_on_h && video_on_v;
   assign cursor_on1 = cursor_on_h && cursor_on_v;
-  assign char_cs    = 1'b1;
-  assign char_we    = 1'b0;
-  assign char_data_in = 8'b0;
   assign char_addr  = { vga_data_out, v_count[3:0] };
   assign vga_addr   = { 4'b0, hor_addr} + { ver_addr, 4'b0 };
   assign out_data   = {attr_data_out, vga_data_out};
@@ -189,7 +183,7 @@ module vdu (
         if(stb && !wb_tga_i) begin
 										 //                      1111 1111 1100 0000 0000
 										 // 0xa0000 - 0xbffff    9876 5432 1098 7654 3210
-//	if(wb_adr_i[19:12] &  8'h18) begin   // 0xB8000 — 0xBFFFF =  1011_1000_xxxx_xxxx_xxxs
+//	if(wb_adr_i[19:12] &  8'h18) begin   // 0xB8000 ï¿½ 0xBFFFF =  1011_1000_xxxx_xxxx_xxxs
           
             attr0_addr   <= wb_adr_i[11:1];
             buff0_addr   <= wb_adr_i[11:1];

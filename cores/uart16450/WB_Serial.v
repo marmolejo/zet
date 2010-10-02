@@ -4,7 +4,7 @@
 // Description: Wishbone Compatible RS232 core.                          
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-module WB_Serial(
+module serial (
     input             	wb_clk_i,		// Clock Input
     input             	wb_rst_i,		// Reset Input
     input       [15:0]	wb_dat_i,		// Command to send to mouse

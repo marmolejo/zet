@@ -1,4 +1,0 @@
-NET clk_ LOC = AE14;
-NET clk_ IOSTANDARD = LVCMOS33;
-
-NET trx_ LOC = W1;
