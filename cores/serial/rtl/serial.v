@@ -309,6 +309,9 @@ module serial (
     .txd_busy  (tx_busy)
   );
 
+  assign rx_over  = 1'b0;
+  assign to_error = 1'b0;
+
   // --------------------------------------------------------------------
   //  1.8432Mhz Baud Clock Generator:
   //  This module generates the standard 1.8432Mhz Baud Clock. Using this clock
@@ -358,7 +361,9 @@ module serial (
   reg  [18:0] BaudAcc1;
   reg  [15:0] BaudAcc8;
   wire [18:0] BaudInc =  19'd2416/Baudiv;
-  always @(posedge wb_clk_i) BaudAcc1 <= BaudAcc1[17:0] + BaudInc;
-  always @(posedge wb_clk_i) BaudAcc8 <= BaudAcc8[14:0] + BaudInc;
+  always @(posedge wb_clk_i)
+    BaudAcc1 <= {1'b0, BaudAcc1[17:0]} + BaudInc;
+  always @(posedge wb_clk_i)
+    BaudAcc8 <= {1'b0, BaudAcc8[14:0]} + BaudInc[15:0];
 
 endmodule

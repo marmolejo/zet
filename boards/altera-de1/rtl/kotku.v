@@ -78,16 +78,16 @@ module kotku (
     output        sd_ss_,
 
     // I2C
-    inout         i2c_sdat,
-    output        i2c_sclk,
+    inout         i2c_sdat_,
+    output        i2c_sclk_,
 
     // AUDIO CODEC
-    input         aud_adclrck,
-    input         aud_adcdat,
-    input         aud_daclrck,
-    output        aud_dacdat,
-    input         aud_bclk,
-    output        aud_xck
+    input         aud_adclrck_,
+    input         aud_adcdat_,
+    input         aud_daclrck_,
+    output        aud_dacdat_,
+    input         aud_bclk_,
+    output        aud_xck_
   );
 
   // Registers and nets
@@ -150,7 +150,7 @@ module kotku (
   wire        uart_ack_o;
 
   // wires to keyboard controller
-  wire [15:0] keyb_dat_o;
+  wire [ 7:0] keyb_dat_o;
   wire [15:0] keyb_dat_i;
   wire        keyb_tga_i;
   wire [19:1] keyb_adr_i;
@@ -261,17 +261,20 @@ module kotku (
   wire [15:0] sw_dat_o;
 
   wire        sdram_clk;
-
   wire        vga_clk;
-
   wire        timer_clk;
-
   wire        timer2_o;
-  wire        spk;
-  wire [ 7:0] port61h;
 
-  wire [15:0] audio_l;
-  wire [15:0] audio_r;
+  // Audio only signals
+  wire [ 7:0] aud_dat_o;
+  wire        aud_cyc_i;
+  wire        aud_ack_o;
+  wire        aud_sel_cond;
+
+  // Keyboard-audio shared signals
+  wire [ 7:0] kaud_dat_o;
+  wire        kaud_cyc_i;
+  wire        kaud_ack_o;
 
   wire [ 7:0] intv;
   wire [ 2:0] iid;
@@ -306,7 +309,7 @@ module kotku (
     ) audioclk (
     .clk_i (sdram_clk),  // 100 MHz (use highest freq to minimize jitter)
     .rst_i (rst),
-    .clk_o (aud_xck)     // 11.28960 MHz (required 11.28960 MHz)
+    .clk_o (aud_xck_)     // 11.28960 MHz (required 11.28960 MHz)
   );
 
 `ifndef SIMULATION
@@ -582,10 +585,41 @@ module kotku (
     .wb_tgc_o (intv[1]),
 
     .ps2_clk_  (ps2_clk_),
-    .ps2_data_ (ps2_data_),
-
-    .port61h  (port61h)
+    .ps2_data_ (ps2_data_)
   );
+
+  audio audio (
+    .clk (clk),
+    .rst (rst),
+
+    .wb_dat_i (keyb_dat_i[15:8]),
+    .wb_dat_o (aud_dat_o),
+    .wb_we_i  (keyb_we_i),
+    .wb_stb_i (keyb_stb_i),
+    .wb_cyc_i (aud_cyc_i),
+    .wb_ack_o (aud_ack_o),
+
+    .clk_100M (sdram_clk),
+    .clk_25M  (vga_clk),
+    .timer2   (timer2_o),
+
+    .i2c_sclk_ (i2c_sclk_),
+    .i2c_sdat_ (i2c_sdat_),
+
+    .aud_adclrck_ (aud_adclrck_),
+    .aud_adcdat_  (aud_adcdat_),
+    .aud_daclrck_ (aud_daclrck_),
+    .aud_dacdat_  (aud_dacdat_),
+    .aud_bclk_    (aud_bclk_)
+  );
+
+  // Selection logic between keyboard and audio ports (port 65h: audio)
+  assign aud_sel_cond = keyb_adr_i[2:1]==2'b00 && keyb_sel_i[1];
+  assign aud_cyc_i    = kaud_cyc_i && aud_sel_cond;
+  assign keyb_cyc_i   = kaud_cyc_i && !aud_sel_cond;
+  assign kaud_ack_o   = aud_cyc_i & aud_ack_o | keyb_cyc_i & keyb_ack_o;
+  assign kaud_dat_o   = {8{aud_cyc_i}} & aud_dat_o
+                      | {8{keyb_cyc_i}} & keyb_dat_o;
 
   timer timer (
     .wb_clk_i (clk),
@@ -600,7 +634,7 @@ module kotku (
     .wb_ack_o (timer_ack_o),
     .wb_tgc_o (intv[0]),
     .tclk_i   (timer_clk),     // 1.193182 MHz = (14.31818/12) MHz
-    .gate2_i  (port61h[0]),
+    .gate2_i  (aud_dat_o[0]),
     .out2_o   (timer2_o)
   );
 
@@ -673,6 +707,16 @@ module kotku (
     // GPIO inputs/outputs
     .leds_ ({ledr_,ledg_[7:4]}),
     .sw_   (sw_)
+  );
+
+  hex_display hex16 (
+    .num (pc[19:4]),
+    .en  (1'b1),
+
+    .hex0 (hex0_),
+    .hex1 (hex1_),
+    .hex2 (hex2_),
+    .hex3 (hex3_)
   );
 
   zet zet (
@@ -764,14 +808,14 @@ module kotku (
     .s2_ack_i (uart_ack_o),
 
     // Slave 3 interface - keyb
-    .s3_dat_i (keyb_dat_o),
+    .s3_dat_i ({kaud_dat_o,keyb_dat_o}),
     .s3_dat_o (keyb_dat_i),
     .s3_adr_o ({keyb_tga_i,keyb_adr_i}),
     .s3_sel_o (keyb_sel_i),
     .s3_we_o  (keyb_we_i),
-    .s3_cyc_o (keyb_cyc_i),
+    .s3_cyc_o (kaud_cyc_i),
     .s3_stb_o (keyb_stb_i),
-    .s3_ack_i (keyb_ack_o),
+    .s3_ack_i (kaud_ack_o),
 
     // Slave 4 interface - sd
     .s4_dat_i (sd_dat_o_s),
@@ -834,41 +878,6 @@ module kotku (
     .s9_ack_i (def_cyc_i & def_stb_i)
   );
 
-  hex_display hex16 (
-    .num (pc[19:4]),
-    .en  (1'b1),
-
-    .hex0 (hex0_),
-    .hex1 (hex1_),
-    .hex2 (hex2_),
-    .hex3 (hex3_)
-  );
-
-  audio_if audio_if (
-    .clk_i         (sdram_clk),
-    .rst_i         (rst),
-    .datal_i       (audio_l),
-    .datar_i       (audio_r),
-    .datal_o       (),
-    .datar_o       (),
-    .ready_o       (),
-    .aud_bclk_i    (aud_bclk),
-    .aud_daclrck_i (aud_daclrck),
-    .aud_dacdat_o  (aud_dacdat),
-    .aud_adclrck_i (aud_adclrck),
-    .aud_adcdat_i  (aud_adcdat)
-  );
-
-  i2c_av_config i2c_av_config (
-    // Host Side
-    .iCLK     (vga_clk),
-    .iRST_N   (~rst),
-
-    // I2C Side
-    .I2C_SCLK (i2c_sclk),
-    .I2C_SDAT (i2c_sdat)
-  );
-
   // Continuous assignments
   assign rst_lck         = !sw_[0] & lock;
   assign sdram_clk_      = sdram_clk;
@@ -877,12 +886,5 @@ module kotku (
                : sw_dat_o;
 
   assign ledg_[3:0] = pc[3:0];
-
-  // System speaker
-  assign spk = timer2_o & port61h[1];
-
-  // System speaker audio output
-  assign audio_l = {spk, 15'h4000};
-  assign audio_r = {spk, 15'h4000};
 
 endmodule

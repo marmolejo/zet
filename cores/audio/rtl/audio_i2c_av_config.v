@@ -32,18 +32,18 @@
 
 //`define I2C_VIDEO
 
-module i2c_av_config (  //      Host Side
-                                                iCLK,
-                                                iRST_N,
+module audio_i2c_av_config (  //      Host Side
+                                                clk_i,
+                                                rst_n_i,
                                                 //      I2C Side
-                                                I2C_SCLK,
-                                                I2C_SDAT        );
+                                                i2c_sclk,
+                                                i2c_sdat        );
 //      Host Side
-input           iCLK;
-input           iRST_N;
+input           clk_i;
+input           rst_n_i;
 //      I2C Side
-output          I2C_SCLK;
-inout           I2C_SDAT;
+output          i2c_sclk;
+inout           i2c_sdat;
 //      Internal Registers/Wires
 reg     [15:0]  mI2C_CLK_DIV;
 reg     [23:0]  mI2C_DATA;
@@ -81,9 +81,9 @@ parameter       SET_VIDEO       =       10;
 `endif
 
 /////////////////////   I2C Control Clock       ////////////////////////
-always@(posedge iCLK or negedge iRST_N)
+always@(posedge clk_i or negedge rst_n_i)
 begin
-        if(!iRST_N)
+        if(!rst_n_i)
         begin
                 mI2C_CTRL_CLK   <=      0;
                 mI2C_CLK_DIV    <=      0;
@@ -91,7 +91,7 @@ begin
         else
         begin
                 if( mI2C_CLK_DIV        < (CLK_Freq/I2C_Freq) )
-                mI2C_CLK_DIV    <=      mI2C_CLK_DIV+1;
+                mI2C_CLK_DIV    <=      mI2C_CLK_DIV+16'h1;
                 else
                 begin
                         mI2C_CLK_DIV    <=      0;
@@ -100,19 +100,19 @@ begin
         end
 end
 ////////////////////////////////////////////////////////////////////
-i2c_controller  u0      (       .CLOCK(mI2C_CTRL_CLK),          //      Controller Work Clock
-                                                .I2C_SCLK(I2C_SCLK),            //      I2C CLOCK
-                                                .I2C_SDAT(I2C_SDAT),            //      I2C DATA
+audio_i2c_controller  i2c_controller (       .CLOCK(mI2C_CTRL_CLK),          //      Controller Work Clock
+                                                .I2C_SCLK(i2c_sclk),            //      I2C CLOCK
+                                                .I2C_SDAT(i2c_sdat),            //      I2C DATA
                                                 .I2C_DATA(mI2C_DATA),           //      DATA:[SLAVE_ADDR,SUB_ADDR,DATA]
                                                 .GO(mI2C_GO),                           //      GO transfor
                                                 .END(mI2C_END),                         //      END transfor 
                                                 .ACK(mI2C_ACK),                         //      ACK
-                                                .RESET(iRST_N)  );
+                                                .RESET(rst_n_i)  );
 ////////////////////////////////////////////////////////////////////
 //////////////////////  Config Control  ////////////////////////////
-always@(posedge mI2C_CTRL_CLK or negedge iRST_N)
+always@(posedge mI2C_CTRL_CLK or negedge rst_n_i)
 begin
-        if(!iRST_N)
+        if(!rst_n_i)
         begin
                 LUT_INDEX       <=      0;
                 mSetup_ST       <=      0;
@@ -144,7 +144,7 @@ begin
                                         end
                                 end
                         2:      begin
-                                        LUT_INDEX       <=      LUT_INDEX+1;
+                                        LUT_INDEX       <=      LUT_INDEX+6'h1;
                                         mSetup_ST       <=      0;
                                 end
                         endcase

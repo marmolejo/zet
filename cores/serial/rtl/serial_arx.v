@@ -80,11 +80,11 @@ module serial_arx (
   always @(posedge clk)
   if(baud8tick && next_bit && state[3]) rxd_data <= {~rxd_bit_inv, rxd_data[7:1]};
 
-  reg rxd_data_error;
+  //reg rxd_data_error;
   always @(posedge clk)
   begin
     rxd_data_ready <= (baud8tick && next_bit && state==4'b0001 && ~rxd_bit_inv);  // ready only if the stop bit is received
-    rxd_data_error <= (baud8tick && next_bit && state==4'b0001 &&  rxd_bit_inv);  // error if the stop bit is not received
+    //rxd_data_error <= (baud8tick && next_bit && state==4'b0001 &&  rxd_bit_inv);  // error if the stop bit is not received
   end
 
   reg [4:0] gap_count;

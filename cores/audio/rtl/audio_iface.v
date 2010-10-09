@@ -36,7 +36,7 @@
  *   - ADC part is not tested
  */
 
-module audio_if
+module audio_iface
   (
     // Main system interface
     input                     clk_i, 

@@ -48,9 +48,7 @@ module ps2keyb (
 
     // PS2 PAD signals
     inout            ps2_clk_,
-    inout            ps2_data_,
-
-    output reg [7:0] port61h
+    inout            ps2_data_
   );
 
   // Parameter declarations
@@ -157,15 +155,9 @@ module ps2keyb (
   assign released = (q[8:1] == `RELEASE_CODE) && rx_shifting_done;
 
   assign wb_ack_o = wb_stb_i & wb_cyc_i;
-  assign wb_dat_o =  wb_adr_i[2] ? 16'h10
-    : (wb_sel_i[1] ? { port61h, 8'h0 } : { 8'h0, dat_o });
+  assign wb_dat_o =  wb_adr_i[2] ? 16'h10 : { 8'h0, dat_o };
 
   // Behaviour
-  always @(posedge wb_clk_i)
-    if (wb_rst_i) port61h <= 8'b0;
-    else if (wb_ack_o && (wb_adr_i == 2'b0) && wb_sel_i[1] && wb_we_i)
-      port61h <= wb_dat_i[15:8];
-
   // wb_tgc_o
   always @(posedge wb_clk_i)
     wb_tgc_o <= wb_rst_i ? 1'b0 : rx_output_strobe;

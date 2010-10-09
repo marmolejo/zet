@@ -547,7 +547,8 @@ module kotku (
     .vert_sync   (tft_lcd_vsync_)
   );
 
-  serial com1 (                   // RS232 COM1 Port
+  // RS232 COM1 Port
+  serial com1 (
     .wb_clk_i (clk),              // Main Clock
     .wb_rst_i (rst),              // Reset Line
     .wb_adr_i (uart_adr_i[2:1]),  // Address lines

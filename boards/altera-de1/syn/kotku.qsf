@@ -18,7 +18,7 @@
 #
 # Quartus II
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 19:36:30  October 09, 2010
+# Date created = 22:04:13  October 09, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -43,6 +43,10 @@ set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
 set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/audio_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/audio_i2c_controller.v
+set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/audio_i2c_av_config.v
+set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/audio.v
 set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_atx.v
 set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_arx.v
 set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial.v
@@ -62,7 +66,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_config_iface
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_char_rom.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_c4_iface.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga.v
-set_global_assignment -name VERILOG_FILE ../rtl/audio_if.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_arlog.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_shrot.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_core.v
@@ -109,8 +112,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch.v
-set_global_assignment -name VERILOG_FILE ../rtl/i2c_controller.v
-set_global_assignment -name VERILOG_FILE ../rtl/i2c_av_config.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
 set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
@@ -318,14 +319,14 @@ set_location_assignment PIN_W20 -to sd_miso_
 set_location_assignment PIN_Y20 -to sd_mosi_
 set_location_assignment PIN_V20 -to sd_sclk_
 set_location_assignment PIN_U20 -to sd_ss_
-set_location_assignment PIN_B6 -to aud_adcdat
-set_location_assignment PIN_A6 -to aud_adclrck
-set_location_assignment PIN_A4 -to aud_bclk
-set_location_assignment PIN_B5 -to aud_dacdat
-set_location_assignment PIN_A5 -to aud_daclrck
-set_location_assignment PIN_B4 -to aud_xck
-set_location_assignment PIN_A3 -to i2c_sclk
-set_location_assignment PIN_B3 -to i2c_sdat
+set_location_assignment PIN_B6 -to aud_adcdat_
+set_location_assignment PIN_A6 -to aud_adclrck_
+set_location_assignment PIN_A4 -to aud_bclk_
+set_location_assignment PIN_B5 -to aud_dacdat_
+set_location_assignment PIN_A5 -to aud_daclrck_
+set_location_assignment PIN_B4 -to aud_xck_
+set_location_assignment PIN_A3 -to i2c_sclk_
+set_location_assignment PIN_B3 -to i2c_sdat_
 
 # Classic Timing Assignments
 # ==========================
@@ -343,14 +344,14 @@ set_global_assignment -name TOP_LEVEL_ENTITY kotku
 set_global_assignment -name DEVICE EP2C20F484C7
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS OUTPUT DRIVING GROUND"
-set_instance_assignment -name IO_STANDARD LVTTL -to aud_adcdat
-set_instance_assignment -name IO_STANDARD LVTTL -to aud_adclrck
-set_instance_assignment -name IO_STANDARD LVTTL -to aud_bclk
-set_instance_assignment -name IO_STANDARD LVTTL -to aud_dacdat
-set_instance_assignment -name IO_STANDARD LVTTL -to aud_daclrck
-set_instance_assignment -name IO_STANDARD LVTTL -to aud_xck
-set_instance_assignment -name IO_STANDARD LVTTL -to i2c_sclk
-set_instance_assignment -name IO_STANDARD LVTTL -to i2c_sdat
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_adcdat_
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_adclrck_
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_bclk_
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_dacdat_
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_daclrck_
+set_instance_assignment -name IO_STANDARD LVTTL -to aud_xck_
+set_instance_assignment -name IO_STANDARD LVTTL -to i2c_sclk_
+set_instance_assignment -name IO_STANDARD LVTTL -to i2c_sdat_
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
 

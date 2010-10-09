@@ -108,9 +108,9 @@ module zet_shrot (
   assign rol8  = { 1'b0, -y[2:0] };
 
   assign rcr16 = (y[4:0] <= 5'd16) ? y[4:0] : { 1'b0, y[3:0] - 4'b1 };
-  assign rcl16 = (y[4:0] <= 5'd17) ? 5'd17 - y[4:0] : 6'd34 - y[4:0];
+  assign rcl16 = (y[4:0] <= 5'd17) ? 5'd17 - y[4:0] : 5'd2 - y[4:0];
   assign rcr8  = y[3:0] <= 4'd8 ? y[3:0] : { 1'b0, y[2:0] - 3'b1 };
-  assign rcl8  = y[3:0] <= 4'd9 ? 4'd9 - y[3:0] : 5'd18 - y[3:0];
+  assign rcl8  = y[3:0] <= 4'd9 ? 4'd9 - y[3:0] : 4'd2 - y[3:0];
 
   assign rot8 = func[1] ? (func[0] ? rcr8 : rcl8 )
                         : (func[0] ? ror8 : rol8 );
