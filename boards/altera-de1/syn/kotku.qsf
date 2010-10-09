@@ -18,7 +18,7 @@
 #
 # Quartus II
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 21:39:45  September 17, 2010
+# Date created = 18:16:39  October 09, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -43,6 +43,21 @@ set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
 set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_write_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_text_mode.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_read_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_planar.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_palette_regs.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_mem_arbitrer.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_linear.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_lcd.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_dac_regs.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_csr_sram.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_cpu_mem_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_config_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_char_rom.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_c4_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga.v
 set_global_assignment -name VERILOG_FILE ../rtl/clk_gen.v
 set_global_assignment -name VERILOG_FILE ../rtl/audio_if.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_arlog.v
@@ -91,37 +106,17 @@ set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/planar.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/c4_iface.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/linear.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/dac_regs.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/palette_regs.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/char_rom.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/write_iface.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/read_iface.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/text_mode.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/mem_arbitrer.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/cpu_mem_iface.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/lcd.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/config_iface.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga.v
 set_global_assignment -name VERILOG_FILE ../rtl/I2C_Controller.v
 set_global_assignment -name VERILOG_FILE ../rtl/I2C_AV_Config.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_tfifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_rfifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
-set_global_assignment -name VERILOG_FILE ../../../cores/sram/rtl/csr_sram.v
 set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
 set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer_counter.v
 set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
-set_global_assignment -name VERILOG_FILE ../../../cores/debug/rtl/send_serial.v
-set_global_assignment -name VERILOG_FILE ../../../cores/debug/rtl/pc_trace.v
-set_global_assignment -name VERILOG_FILE ../../../cores/debug/rtl/send_addr.v
-set_global_assignment -name VERILOG_FILE ../../../cores/debug/rtl/clk_uart.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/hex_display.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/seg_7.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ems/rtl/ems.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/raminfr.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_debug_if.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_receiver.v
@@ -393,7 +388,7 @@ set_global_assignment -name INCREMENTAL_COMPILATION OFF
 	# EDA Netlist Writer Assignments
 	# ==============================
 	set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
-set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
+	set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
 
 # end EDA_TOOL_SETTINGS(eda_simulation)
 # -------------------------------------

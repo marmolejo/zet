@@ -35,7 +35,7 @@
   *  3db: 0000_0011_1101_1011 not used
   */
 
-module config_iface (
+module vga_config_iface (
     // Wishbone slave signals
     input             wb_clk_i,
     input             wb_rst_i,

@@ -17,7 +17,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module lcd (
+module vga_lcd (
     input clk,              // 25 Mhz clock
     input rst,
 
@@ -120,7 +120,7 @@ module lcd (
   wire [7:0] blue;
 
   // Module instances
-  text_mode tm (
+  vga_text_mode text_mode (
     .clk (clk),
     .rst (rst),
 
@@ -144,7 +144,7 @@ module lcd (
     .horiz_sync_o (horiz_sync_tm)
   );
 
-  planar wm (
+  vga_planar planar (
     .clk (clk),
     .rst (rst),
 
@@ -166,7 +166,7 @@ module lcd (
     .horiz_sync_o (horiz_sync_wm)
   );
 
-  linear gm (
+  vga_linear linear (
     .clk (clk),
     .rst (rst),
 
@@ -185,7 +185,7 @@ module lcd (
     .horiz_sync_o (horiz_sync_gm)
   );
 
-  palette_regs pr (
+  vga_palette_regs palette_regs (
     .clk (clk),
 
     .attr  (attr),
@@ -197,7 +197,7 @@ module lcd (
     .write_data (pal_write)
   );
 
-  dac_regs dr (
+  vga_dac_regs dac_regs (
     .clk (clk),
 
     .index (index),

@@ -1,5 +1,5 @@
 /*
- *  Palette register file for VGA
+ *  Character ROM for text mode fonts
  *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
@@ -17,32 +17,20 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module palette_regs (
-    input clk,
-
-    // VGA read interface
-    input      [3:0] attr,
-    output reg [7:0] index,
-
-    // CPU interface
-    input      [3:0] address,
-    input            write,
-    output reg [7:0] read_data,
-    input      [7:0] write_data
+// altera message_off 10030
+//  get rid of the warning about
+//  not initializing the ROM
+module vga_char_rom (
+    input             clk,
+    input      [11:0] addr,
+    output reg [ 7:0] q
   );
 
-  // Registers
-  reg [7:0] palette [0:15];
+  // Registers, nets and parameters
+  reg [7:0] rom[0:4095];
 
   // Behaviour
-  // VGA read interface
-  always @(posedge clk) index <= palette[attr];
+  always @(posedge clk) q <= rom[addr];
 
-  // CPU read interface
-  always @(posedge clk) read_data <= palette[address];
-
-  // CPU write interface
-  always @(posedge clk)
-    if (write) palette[address] <= write_data;
-
+  initial $readmemh("char_rom.dat", rom);
 endmodule

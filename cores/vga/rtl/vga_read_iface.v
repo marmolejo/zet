@@ -17,7 +17,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module read_iface (
+module vga_read_iface (
     // Wishbone common signals
     input         wb_clk_i,
     input         wb_rst_i,

@@ -1,6 +1,6 @@
 # -------------------------------------------------------------------------- #
 #
-# Copyright (C) 1991-2009 Altera Corporation
+# Copyright (C) 1991-2010 Altera Corporation
 # Your use of Altera Corporation's design tools, logic functions 
 # and other software and tools, and its AMPP partner logic 
 # functions, and any output files from any of the foregoing 
@@ -17,8 +17,8 @@
 # -------------------------------------------------------------------------- #
 #
 # Quartus II
-# Version 9.0 Build 132 02/25/2009 SJ Full Version
-# Date created = 11:09:38  March 18, 2009
+# Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
+# Date created = 17:48:52  October 09, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -36,52 +36,94 @@
 # -------------------------------------------------------------------------- #
 
 
-set_global_assignment -name FAMILY "Cyclone III"
-set_global_assignment -name DEVICE EP3C16F484C6
-set_global_assignment -name TOP_LEVEL_ENTITY kotku
+
+# Project-Wide Assignments
+# ========================
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
 set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
-set_global_assignment -name USE_GENERATED_PHYSICAL_CONSTRAINTS OFF -section_id eda_blast_fpga
-set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
-set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
-set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
-set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
-set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
-set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
-set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
-set_global_assignment -name SIMULATION_MODE FUNCTIONAL
-
-set_global_assignment -name FMAX_REQUIREMENT "50 MHz" -section_id clk_50_
-set_instance_assignment -name CLOCK_SETTINGS clk_50_ -to clk_50_
-set_global_assignment -name ENABLE_CLOCK_LATENCY ON
-
-set_global_assignment -name ENABLE_SIGNALTAP OFF
-set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
-set_global_assignment -name INCREMENTAL_COMPILATION OFF
-set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
-set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT -section_id Top
-
-set_global_assignment -name STRATIX_CONFIGURATION_DEVICE EPCS4
-set_instance_assignment -name REPORT_DELAY ON -from * -to sdram_addr_[*]
-set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
-set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
-set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
-
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl/boards/altera-de1/syn/kotku.dpf"
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl2/boards/de1-modified/syn/kotku.dpf"
-set_global_assignment -name USE_CONFIGURATION_DEVICE ON
-set_global_assignment -name ENABLE_ADVANCED_IO_TIMING ON
-set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
-set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
-set_global_assignment -name DEVICE_FILTER_PIN_COUNT 484
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0/syn/kotku.dpf"
+set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0-vdu/syn/kotku.dpf"
+set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-vdu/syn/kotku.dpf"
+set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu_ram_2k.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu_char_rom.v
+set_global_assignment -name VERILOG_FILE ../../../cores/uart16450/rtl/serial_atx.v
+set_global_assignment -name VERILOG_FILE ../../../cores/uart16450/rtl/serial_arx.v
+set_global_assignment -name VERILOG_FILE ../../../cores/uart16450/rtl/serial.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_nofifo.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_datain.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_cmdout.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb_xtcodes.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2.v
+set_global_assignment -name VERILOG_FILE ../../../cores/sound/rtl/sound_dac8.v
+set_global_assignment -name VERILOG_FILE ../../../cores/sound/rtl/sound.v
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch_11.v
+set_global_assignment -name VERILOG_FILE ../rtl/flash.v
+set_global_assignment -name VERILOG_FILE ../rtl/biosrom.v
+set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
+set_global_assignment -name VERILOG_FILE ../rtl/pll.v
+set_global_assignment -name VERILOG_FILE ../rtl/clk_gen.v
+set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu.v
+set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
+set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/hex_display.v
+set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/seg_7.v
+set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
+set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer_counter.v
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrgr.v
+set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg_datamem.v
+set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_sdrio.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_banktimer.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_busif.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_ctlif.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_datactl.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_mgmt.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc.v
+set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
+set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_wb_master.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/rom_def.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/defines.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_shrot.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_rxr16.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_rxr8.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_regfile.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_othop.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_opcode_deco.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_nstate.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_next_or_not.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_mux8_16.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_mux8_1.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_muldiv.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_micro_rom.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_micro_data.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_memory_regs.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_jmp_cond.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_fulladd16.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_fetch.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_exec.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_div_uu.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_div_su.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_decode.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_core.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_conv.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_bitlog.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_arlog.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_alu.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_addsub.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/altera/zet_signmul17.v
+
+# Pin & Location Assignments
+# ==========================
 set_location_assignment PIN_G21 -to clk_50_
 set_location_assignment PIN_R2 -to flash_addr_[21]
 set_location_assignment PIN_P3 -to flash_addr_[20]
@@ -238,79 +280,125 @@ set_location_assignment PIN_U2 -to flash_data_[11]
 set_location_assignment PIN_T4 -to flash_data_[10]
 set_location_assignment PIN_T7 -to flash_data_[9]
 set_location_assignment PIN_T5 -to flash_data_[8]
-set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0-vdu/syn/kotku.dpf"
-set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-vdu/syn/kotku.dpf"
 set_location_assignment PIN_AA20 -to chasis_spk
 set_location_assignment PIN_AB19 -to speaker_l
 set_location_assignment PIN_AB20 -to speaker_r
-set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.dpf"
-set_global_assignment -name VERILOG_FILE ../../../cores/uart16450/rtl/serial_atx.v
-set_global_assignment -name VERILOG_FILE ../../../cores/uart16450/rtl/serial_arx.v
-set_global_assignment -name VERILOG_FILE ../../../cores/uart16450/rtl/serial.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_nofifo.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_datain.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_cmdout.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb_xtcodes.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2.v
-set_global_assignment -name VERILOG_FILE ../../../cores/sound/rtl/sound_dac8.v
-set_global_assignment -name VERILOG_FILE ../../../cores/sound/rtl/sound.v
-set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch_11.v
-set_global_assignment -name VERILOG_FILE ../rtl/flash.v
-set_global_assignment -name VERILOG_FILE ../rtl/biosrom.v
-set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
-set_global_assignment -name VERILOG_FILE ../rtl/pll.v
-set_global_assignment -name VERILOG_FILE ../rtl/clk_gen.v
-set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu.v
-set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
-set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/hex_display.v
-set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/seg_7.v
-set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
-set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer_counter.v
-set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrgr.v
-set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg_datamem.v
-set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_sdrio.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_banktimer.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_busif.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_ctlif.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_datactl.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_mgmt.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc.v
-set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
-set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
-set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_wb_master.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/rom_def.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/defines.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_shrot.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_rxr16.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_rxr8.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_regfile.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_othop.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_opcode_deco.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_nstate.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_next_or_not.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_mux8_16.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_mux8_1.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_muldiv.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_micro_rom.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_micro_data.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_memory_regs.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_jmp_cond.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_fulladd16.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_fetch.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_exec.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_div_uu.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_div_su.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_decode.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_core.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_conv.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_bitlog.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_arlog.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_alu.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_addsub.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/altera/zet_signmul17.v
+
+# Classic Timing Assignments
+# ==========================
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ENABLE_CLOCK_LATENCY ON
+set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
+
+# Analysis & Synthesis Assignments
+# ================================
+set_global_assignment -name FAMILY "Cyclone III"
+set_global_assignment -name TOP_LEVEL_ENTITY kotku
+set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
+set_global_assignment -name DEVICE_FILTER_PIN_COUNT 484
+
+# Fitter Assignments
+# ==================
+set_global_assignment -name DEVICE EP3C16F484C6
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
+set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
+
+# EDA Netlist Writer Assignments
+# ==============================
+set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
+
+# Assembler Assignments
+# =====================
+set_global_assignment -name STRATIX_CONFIGURATION_DEVICE EPCS4
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+
+# Simulator Assignments
+# =====================
+set_global_assignment -name SIMULATION_MODE FUNCTIONAL
+
+# SignalTap II Assignments
+# ========================
+set_global_assignment -name ENABLE_SIGNALTAP OFF
+set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
+
+# Incremental Compilation Assignments
+# ===================================
+set_global_assignment -name INCREMENTAL_COMPILATION OFF
+
+# Advanced I/O Timing Assignments
+# ===============================
+set_global_assignment -name ENABLE_ADVANCED_IO_TIMING ON
+
+# start EDA_TOOL_SETTINGS(eda_simulation)
+# ---------------------------------------
+
+	# EDA Netlist Writer Assignments
+	# ==============================
+	set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
+	set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
+
+# end EDA_TOOL_SETTINGS(eda_simulation)
+# -------------------------------------
+
+# start EDA_TOOL_SETTINGS(eda_blast_fpga)
+# ---------------------------------------
+
+	# Analysis & Synthesis Assignments
+	# ================================
+	set_global_assignment -name USE_GENERATED_PHYSICAL_CONSTRAINTS OFF -section_id eda_blast_fpga
+
+# end EDA_TOOL_SETTINGS(eda_blast_fpga)
+# -------------------------------------
+
+# start CLOCK(clk_50_)
+# --------------------
+
+	# Classic Timing Assignments
+	# ==========================
+	set_global_assignment -name FMAX_REQUIREMENT "50 MHz" -section_id clk_50_
+
+# end CLOCK(clk_50_)
+# ------------------
+
+# -------------------
+# start ENTITY(kotku)
+
+	# Pin & Location Assignments
+	# ==========================
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
+	set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
+
+	# Classic Timing Assignments
+	# ==========================
+	set_instance_assignment -name CLOCK_SETTINGS clk_50_ -to clk_50_
+	set_instance_assignment -name REPORT_DELAY ON -from * -to sdram_addr_[*]
+
+	# start LOGICLOCK_REGION(Root Region)
+	# -----------------------------------
+
+		# LogicLock Region Assignments
+		# ============================
+		set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
+		set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
+
+	# end LOGICLOCK_REGION(Root Region)
+	# ---------------------------------
+
+	# start DESIGN_PARTITION(Top)
+	# ---------------------------
+
+		# Incremental Compilation Assignments
+		# ===================================
+		set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+		set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+		set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+		set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT -section_id Top
+
+	# end DESIGN_PARTITION(Top)
+	# -------------------------
+
+# end ENTITY(kotku)
+# -----------------

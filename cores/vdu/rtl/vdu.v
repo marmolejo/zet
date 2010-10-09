@@ -1,14 +1,27 @@
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-// Module:      vdu.v
-// Description: Wishbone Compatible Text only VGA core.
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-`timescale 1ns/10ps
-// --------------------------------------------------------------------
+/*
+ *  Wishbone Compatible Text only VGA core
+ *  Copyright (c) 2008,2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ */
+
 module vdu (
-    input             wb_clk_i,     // 25 Mhz VDU clock
-    input             wb_rst_i,		// Wishbone signals
+    input             wb_clk_i,   // 25 Mhz VDU clock
+
+    // Wishbone slave interface
+    input             wb_rst_i,
     input      [15:0] wb_dat_i,
     output reg [15:0] wb_dat_o,
     input      [19:1] wb_adr_i,
@@ -18,7 +31,9 @@ module vdu (
     input             wb_stb_i,
     input             wb_cyc_i,
     output            wb_ack_o,
-    output reg [ 1:0] vga_red_o,		// VGA pad signals
+
+    // VGA pad signals
+    output reg [ 1:0] vga_red_o,
     output reg [ 1:0] vga_green_o,
     output reg [ 1:0] vga_blue_o,
     output reg        horiz_sync,
@@ -115,13 +130,13 @@ module vdu (
   wire        v_retrace;
 
   // Module instantiation
-  char_rom vdu_char_rom (
+  vdu_char_rom char_rom (
     .clk  (wb_clk_i),
     .addr (char_addr),
     .q    (char_data_out)
   );
 
-  ram_2k char_buff_ram (
+  vdu_ram_2k ram_2k_char (
     .clk   (wb_clk_i),
     .rst   (wb_rst_i),
     .cs    (vga_cs),
@@ -131,7 +146,7 @@ module vdu (
     .rdata (vga_data_out)
   );
 
-  ram_2k attr_buff_ram (
+  vdu_ram_2k ram_2k_attr (
     .clk   (wb_clk_i),
     .rst   (wb_rst_i),
     .cs    (vga_cs),
@@ -181,17 +196,16 @@ module vdu (
       end
     else begin
         if(stb && !wb_tga_i) begin
-										 //                      1111 1111 1100 0000 0000
-										 // 0xa0000 - 0xbffff    9876 5432 1098 7654 3210
-//	if(wb_adr_i[19:12] &  8'h18) begin   // 0xB8000 � 0xBFFFF =  1011_1000_xxxx_xxxx_xxxs
-          
+          // 1111 1111 1100 0000 0000
+          // 0xa0000 - 0xbffff    9876 5432 1098 7654 3210
+          // if(wb_adr_i[19:12] &  8'h18) begin
+            // 0xB8000 - 0xBFFFF =  1011_1000_xxxx_xxxx_xxxs
             attr0_addr   <= wb_adr_i[11:1];
             buff0_addr   <= wb_adr_i[11:1];
 
             attr0_we     <= wb_we_i & wb_sel_i[1];
             buff0_we     <= wb_we_i & wb_sel_i[0];
-
-//	end
+            //  end
 
             attr_data_in <= wb_dat_i[15:8];
             buff_data_in <= wb_dat_i[7:0];
@@ -200,23 +214,29 @@ module vdu (
 
   // CPU read interface
   always @(posedge wb_clk_i)
-    wb_dat_o <= wb_rst_i ? 16'h0 : (wb_tga_i ? status_reg1 : (vga4_rw ? out_data : wb_dat_o));
+    wb_dat_o <= wb_rst_i ? 16'h0 : (wb_tga_i ? status_reg1
+                                 : (vga4_rw ? out_data : wb_dat_o));
 
   // Control registers
   always @(posedge wb_clk_i)
-    reg_adr <= wb_rst_i ? 4'h0 : (wr_adr ? wb_dat_i[3:0] : reg_adr);
+    reg_adr <= wb_rst_i ? 4'h0
+      : (wr_adr ? wb_dat_i[3:0] : reg_adr);
 
   always @(posedge wb_clk_i)
-    reg_hcursor <= wb_rst_i ? 7'h0 : (wr_hcursor ? wb_dat_i[14:8] : reg_hcursor);
+    reg_hcursor <= wb_rst_i ? 7'h0
+      : (wr_hcursor ? wb_dat_i[14:8] : reg_hcursor);
 
   always @(posedge wb_clk_i)
-    reg_vcursor <= wb_rst_i ? 5'h0 : (wr_vcursor ? wb_dat_i[12:8] : reg_vcursor);
+    reg_vcursor <= wb_rst_i ? 5'h0
+      : (wr_vcursor ? wb_dat_i[12:8] : reg_vcursor);
 
   always @(posedge wb_clk_i)
-    reg_cur_start <= wb_rst_i ? 4'he : (wr_cur_start ? wb_dat_i[11:8] : reg_cur_start);
+    reg_cur_start <= wb_rst_i ? 4'he
+      : (wr_cur_start ? wb_dat_i[11:8] : reg_cur_start);
 
   always @(posedge wb_clk_i)
-    reg_cur_end <= wb_rst_i ? 4'hf : (wr_cur_end ? wb_dat_i[11:8] : reg_cur_end);
+    reg_cur_end <= wb_rst_i ? 4'hf
+      : (wr_cur_end ? wb_dat_i[11:8] : reg_cur_end);
 
   // Sync generation & timing process
   // Generate horizontal and vertical timing signals for video signal
@@ -270,9 +290,9 @@ module vdu (
         buff_we   <= 1'b0;
         attr_we   <= 1'b0;
       end
-    else begin  					// on h_count = 0 initiate character write
-        case (h_count[2:0])			// all other cycles are reads
-          3'b000:   				// pipeline character write
+    else begin  // on h_count = 0 initiate character write
+        case (h_count[2:0])  // all other cycles are reads
+          3'b000:            // pipeline character write
             begin
               vga0_we <= wb_we_i;
               vga0_rw <= stb;
@@ -346,51 +366,3 @@ module vdu (
         vga_red_o    <= video_on ? (fg_or_bg ? { vga_fg_colour[2], intense } : { vga_bg_colour[2], 1'b0 }) : 2'b0;
       end
 endmodule
-
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-// Module:      ram_2k.v
-// Description: Video RAM Module
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-module ram_2k (
-    input             clk,
-    input             rst,
-    input             cs,
-    input             we,
-    input      [10:0] addr,
-    output reg [ 7:0] rdata,
-    input      [ 7:0] wdata
-  );
-  reg [7:0] mem[0:2047];  // Registers and nets
-  always @(posedge clk) rdata <= rst ? 8'h0 : mem[addr];
-  always @(posedge clk) if (we && cs) mem[addr] <= wdata;
-
-endmodule
-
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-// Module:      char_rom.v
-// Description: Video Character Generator Module
-// The following is to get rid of the warning about not initializing the ROM
-// altera message_off 10030
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-module char_rom (
-    input             clk,
-    input      [11:0] addr,
-    output reg [ 7:0] q
-  );
-
-  // Registers, nets and parameters
-  reg [7:0] rom[0:4095];
-
-  // Behaviour
-  always @(posedge clk) q <= rom[addr];
-
-  initial $readmemh("char_rom.dat", rom);
-  
-endmodule
-
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------

@@ -17,7 +17,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module linear (
+module vga_linear (
     input clk,
     input rst,
 

@@ -32,7 +32,7 @@
  *   001  vga_blue_o <= vga_shift[7]
  */
 
-module text_mode (
+module vga_text_mode (
     input clk,
     input rst,
 
@@ -91,7 +91,7 @@ module text_mode (
   wire cursor_on1;
 
   // Module instances
-  char_rom vdu_char_rom (
+  vga_char_rom char_rom (
     .clk  (clk),
     .addr (char_addr),
     .q    (char_data_out)

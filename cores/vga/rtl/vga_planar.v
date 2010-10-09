@@ -17,7 +17,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module planar (
+module vga_planar (
     input clk,
     input rst,
 

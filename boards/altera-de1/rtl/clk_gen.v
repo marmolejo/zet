@@ -3,8 +3,7 @@
  *   Output Frequency Fo = Fc * N / 2^bits
  *   Output Jitter = 1/Fc
  *
- *  Copyright (c) 2009  Zeus Gomez Marmolejo <zeus@opencores.org>
- *  adapted from the opencores keyboard controller from John Clayton
+ *  Copyright (c) 2009,2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -24,8 +23,7 @@
 module clk_gen #(
     parameter res,    // bits - bit resolution
     parameter phase   // N - phase value for the counter
-  )
-  (
+  )(
     input      clk_i, // Fc - input frequency
     input      rst_i,
     output     clk_o  // Fo - output frequency
@@ -39,6 +37,6 @@ module clk_gen #(
 
   // Behaviour
   always @(posedge clk_i)
-    cnt <= rst_i ? 0 : (cnt + phase);
+    cnt <= rst_i ? {res{1'b0}} : (cnt + phase);
 
 endmodule

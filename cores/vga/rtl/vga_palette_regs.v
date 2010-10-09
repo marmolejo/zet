@@ -1,9 +1,6 @@
 /*
- *  Phase accumulator clock generator:
- *   Output Frequency Fo = Fc * N / 2^bits
- *   Output Jitter = 1/Fc
- *
- *  Copyright (c) 2009,2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
+ *  Palette register file for VGA
+ *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -20,23 +17,32 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module clk_gen #(
-    parameter res,    // bits - bit resolution
-    parameter phase   // N - phase value for the counter
-  )(
-    input      clk_i, // Fc - input frequency
-    input      rst_i,
-    output     clk_o  // Fo - output frequency
+module vga_palette_regs (
+    input clk,
+
+    // VGA read interface
+    input      [3:0] attr,
+    output reg [7:0] index,
+
+    // CPU interface
+    input      [3:0] address,
+    input            write,
+    output reg [7:0] read_data,
+    input      [7:0] write_data
   );
 
-  // Registers and nets
-  reg [res-1:0] cnt;
-
-  // Continuous assignments
-  assign clk_o = cnt[res-1];
+  // Registers
+  reg [7:0] palette [0:15];
 
   // Behaviour
-  always @(posedge clk_i)
-    cnt <= rst_i ? {res{1'b0}} : (cnt + phase);
+  // VGA read interface
+  always @(posedge clk) index <= palette[attr];
+
+  // CPU read interface
+  always @(posedge clk) read_data <= palette[address];
+
+  // CPU write interface
+  always @(posedge clk)
+    if (write) palette[address] <= write_data;
 
 endmodule

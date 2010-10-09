@@ -17,7 +17,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module mem_arbitrer (
+module vga_mem_arbitrer (
     input clk_i,
     input rst_i,
 

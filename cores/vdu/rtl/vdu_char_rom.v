@@ -1,5 +1,5 @@
 /*
- *  Internal RAM for VGA
+ *  Character ROM for text mode fonts
  *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
@@ -17,23 +17,20 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module ram_2k (
+// altera message_off 10030
+//  get rid of the warning about
+//  not initializing the ROM
+module vdu_char_rom (
     input             clk,
-    input             rst,
-    input             cs,
-    input             we,
-    input      [10:0] addr,
-    output reg [ 7:0] rdata,
-    input      [ 7:0] wdata
+    input      [11:0] addr,
+    output reg [ 7:0] q
   );
 
-  // Registers and nets
-  reg [7:0] mem[0:2047];
+  // Registers, nets and parameters
+  reg [7:0] rom[0:4095];
 
-  always @(posedge clk)
-    rdata <= rst ? 8'h0 : mem[addr];
+  // Behaviour
+  always @(posedge clk) q <= rom[addr];
 
-  always @(posedge clk)
-    if (we && cs) mem[addr] <= wdata;
-
+  initial $readmemh("char_rom.dat", rom);
 endmodule

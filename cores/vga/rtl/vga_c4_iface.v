@@ -17,7 +17,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module c4_iface (
+module vga_c4_iface (
     // Wishbone common signals
     input         wb_clk_i,
     input         wb_rst_i,

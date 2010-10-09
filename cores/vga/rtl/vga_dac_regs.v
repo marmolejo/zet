@@ -17,7 +17,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module dac_regs (
+module vga_dac_regs (
     input clk,
 
     // VGA read interface

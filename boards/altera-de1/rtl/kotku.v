@@ -293,7 +293,7 @@ module kotku (
 
   clk_gen #(
     .res   (21),
-    .phase (100091)
+    .phase (21'd100091)
     ) timerclk (
     .clk_i (vga_clk),    // 25 MHz
     .rst_i (rst),
@@ -302,7 +302,7 @@ module kotku (
 
   clk_gen #(
     .res   (18),
-    .phase (29595)
+    .phase (18'd29595)
     ) audioclk (
     .clk_i (sdram_clk),  // 100 MHz (use highest freq to minimize jitter)
     .rst_i (rst),

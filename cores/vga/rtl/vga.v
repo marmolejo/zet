@@ -137,7 +137,7 @@ module vga (
 
   // Module instances
   //
-  config_iface config_if (
+  vga_config_iface config_iface (
     .wb_clk_i (wb_clk_i),
     .wb_rst_i (wb_rst_i),
     .wb_dat_i (wb_dat_i),
@@ -196,7 +196,7 @@ module vga (
     .vh_retrace (vh_retrace)
   );
 
-  lcd lcd0 (
+  vga_lcd lcd (
     .clk (wb_clk_i),
     .rst (wb_rst_i),
 
@@ -246,7 +246,7 @@ module vga (
     .vh_retrace (vh_retrace)
   );
 
-  cpu_mem_iface cpu_mem_iface0 (
+  vga_cpu_mem_iface cpu_mem_iface (
     .wb_clk_i (wb_clk_i),
     .wb_rst_i (wb_rst_i),
 
@@ -280,7 +280,7 @@ module vga (
     .color_dont_care  (color_dont_care)
   );
 
-  mem_arbitrer arbitrer (
+  vga_mem_arbitrer mem_arbitrer (
     .clk_i (wb_clk_i),
     .rst_i (wb_rst_i),
 
@@ -303,7 +303,7 @@ module vga (
     .csrm_dat_i (csrm_dat_i)
   );
 
-  csr_sram sram (
+  vga_csr_sram csr_sram (
     .sys_clk (wb_clk_i),
 
     .csr_adr_i (csrm_adr_o),

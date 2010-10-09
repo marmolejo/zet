@@ -1,4 +1,5 @@
 /*
+ *  VGA CSR interface for SRAM
  *  Copyright (c) 2009  Zeus Gomez Marmolejo <zeus@opencores.org>
  *
  *  This file is part of the Zet processor. This processor is free
@@ -16,7 +17,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module csr_sram (
+module vga_csr_sram (
     input sys_clk,
 
     // CSR slave interface

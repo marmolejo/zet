@@ -17,7 +17,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module cpu_mem_iface (
+module vga_cpu_mem_iface (
     // Wishbone common signals
     input wb_clk_i,
     input wb_rst_i,
@@ -84,7 +84,7 @@ module cpu_mem_iface (
   wire [7:0] latch0, latch1, latch2, latch3;
 
   // Module instances
-  read_iface rd_iface (
+  vga_read_iface read_iface (
     .wb_clk_i (wb_clk_i),
     .wb_rst_i (wb_rst_i),
 
@@ -111,7 +111,7 @@ module cpu_mem_iface (
     .latch3 (latch3)
   );
 
-  write_iface wr_iface (
+  vga_write_iface write_iface (
     .wb_clk_i (wb_clk_i),
     .wb_rst_i (wb_rst_i),
 
@@ -141,7 +141,7 @@ module cpu_mem_iface (
     .latch3 (latch3)
   );
 
-  c4_iface c4 (
+  vga_c4_iface c4_iface (
     .wb_clk_i  (wb_clk_i),
     .wb_rst_i  (wb_rst_i),
 
