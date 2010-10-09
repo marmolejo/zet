@@ -18,7 +18,7 @@
 #
 # Quartus II
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 22:39:12  October 09, 2010
+# Date created = 23:47:45  October 09, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -43,6 +43,10 @@ set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
 set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_i2c_controller.v
+set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_i2c_av_config.v
+set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_nofifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_datain.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_cmdout.v
@@ -50,10 +54,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb_xtcodes.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2.v
-set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/audio_iface.v
-set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/audio_i2c_controller.v
-set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/audio_i2c_av_config.v
-set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/audio.v
 set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_atx.v
 set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_arx.v
 set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial.v

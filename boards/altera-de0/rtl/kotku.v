@@ -1,5 +1,5 @@
 /*
- *  Zet SoC top level file
+ *  Zet SoC top level file for Altera DE0 board
  *  Copyright (C) 2009, 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
@@ -71,9 +71,9 @@ module kotku (
     output        sd_mosi_,
     output        sd_ss_,
 
-    output        chasis_spk,
-    output        speaker_l,   // Speaker output, left channel
-    output        speaker_r    // Speaker output, right channel
+    output        chassis_spk_,
+    output        speaker_l_,   // Speaker output, left channel
+    output        speaker_r_    // Speaker output, right channel
   );
 
   // Registers and nets
@@ -288,7 +288,17 @@ module kotku (
 
   wire        timer_clk;
   wire        timer2_o;
-  wire [ 7:0] port61h;
+
+  // Audio only signals
+  wire [ 7:0] aud_dat_o;
+  wire        aud_cyc_i;
+  wire        aud_ack_o;
+  wire        aud_sel_cond;
+
+  // Keyboard-audio shared signals
+  wire [ 7:0] kaud_dat_o;
+  wire        kaud_cyc_i;
+  wire        kaud_ack_o;
 
   // Module instantiations
   pll pll (
@@ -579,8 +589,8 @@ module kotku (
     .wb_ack_o (wb_sb_ack_o),        // Normal bus termination
 
     .dac_clk (clk_50_),             // DAC Clock
-    .audio_l (speaker_l),           // Audio Output Left  Channel
-    .audio_r (speaker_r)            // Audio Output Right Channel
+    .audio_l (speaker_l_),          // Audio Output Left  Channel
+    .audio_r (speaker_r_)           // Audio Output Right Channel
   );
 
   ps2 ps2 (
@@ -597,13 +607,35 @@ module kotku (
     .wb_tgk_o (intv[1]),         // Keyboard Interrupt request
     .wb_tgm_o (intv[3]),         // Mouse Interrupt request
 
-    .port61h (port61h),          // Chasis Speaker port
-
     .ps2_kbd_clk_ (ps2_kclk_),
     .ps2_kbd_dat_ (ps2_kdat_),
     .ps2_mse_clk_ (ps2_mclk_),
     .ps2_mse_dat_ (ps2_mdat_)
   );
+
+  speaker speaker (
+    .clk (clk),
+    .rst (rst),
+
+    .wb_dat_i (keyb_dat_i[15:8]),
+    .wb_dat_o (aud_dat_o),
+    .wb_we_i  (keyb_we_i),
+    .wb_stb_i (keyb_stb_i),
+    .wb_cyc_i (aud_cyc_i),
+    .wb_ack_o (aud_ack_o),
+
+    .timer2   (timer2_o),
+
+    .speaker_ (chassis_spk_)
+  );
+
+  // Selection logic between keyboard and audio ports (port 65h: audio)
+  assign aud_sel_cond = keyb_adr_i[2:1]==2'b00 && keyb_sel_i[1];
+  assign aud_cyc_i    = kaud_cyc_i && aud_sel_cond;
+  assign keyb_cyc_i   = kaud_cyc_i && !aud_sel_cond;
+  assign kaud_ack_o   = aud_cyc_i & aud_ack_o | keyb_cyc_i & keyb_ack_o;
+  assign kaud_dat_o   = {8{aud_cyc_i}} & aud_dat_o
+                      | {8{keyb_cyc_i}} & keyb_dat_o[15:8];
 
   timer timer (
     .wb_clk_i (clk),
@@ -618,7 +650,7 @@ module kotku (
     .wb_ack_o (timer_ack_o),
     .wb_tgc_o (intv[0]),
     .tclk_i   (timer_clk),     // 1.193182 MHz = (14.31818/12) MHz
-    .gate2_i  (port61h[0]),
+    .gate2_i  (aud_dat_o[0]),
     .out2_o   (timer2_o)
   );
 
@@ -788,14 +820,14 @@ module kotku (
     .s2_ack_i (uart_ack_o),
 
     // Slave 3 interface - keyb
-    .s3_dat_i (keyb_dat_o),
+    .s3_dat_i ({kaud_dat_o,keyb_dat_o[7:0]}),
     .s3_dat_o (keyb_dat_i),
     .s3_adr_o ({keyb_tga_i,keyb_adr_i}),
     .s3_sel_o (keyb_sel_i),
     .s3_we_o  (keyb_we_i),
-    .s3_cyc_o (keyb_cyc_i),
+    .s3_cyc_o (kaud_cyc_i),
     .s3_stb_o (keyb_stb_i),
-    .s3_ack_i (keyb_ack_o),
+    .s3_ack_i (kaud_ack_o),
 
     // Slave 4 interface - sd
     .s4_dat_i (sd_dat_o_s),
@@ -895,8 +927,5 @@ module kotku (
   assign tft_lcd_r_[1:0] = tft_lcd_r_[3:2];  // Text only
   assign tft_lcd_g_[1:0] = tft_lcd_g_[3:2];  // Text only
   assign tft_lcd_b_[1:0] = tft_lcd_b_[3:2];  // Text only
-
-  // System speaker
-  assign chasis_spk = timer2_o & port61h[1];
 
 endmodule

@@ -17,7 +17,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module audio (
+module speaker (
     // Clocks
     input clk,
     input rst,
@@ -54,7 +54,7 @@ module audio (
   wire        spk;
 
   // Module instances
-  audio_iface iface (
+  speaker_iface iface (
     .clk_i         (clk_100M),
     .rst_i         (rst),
     .datal_i       (audio_l),
@@ -69,7 +69,7 @@ module audio (
     .aud_adcdat_i  (aud_adcdat_)
   );
 
-  audio_i2c_av_config i2c_av_config (
+  speaker_i2c_av_config i2c_av_config (
     // Host Side
     .clk_i   (clk_25M),
     .rst_n_i (!rst),

@@ -32,8 +32,6 @@ module ps2 (
     output        wb_tgk_o,  // Interrupt request
     output        wb_tgm_o,  // Interrupt request
 
-    output reg [7:0] port61h,  // chasis Speaker port
-
     inout ps2_kbd_clk_,  // PS2 Keyboard Clock, Bidirectional
     inout ps2_kbd_dat_,  // PS2 Keyboard Data, Bidirectional
     inout ps2_mse_clk_,  // PS2 Mouse Clock, Bidirectional
@@ -106,11 +104,14 @@ module ps2 (
   reg  [7:0]  PS_CNTL;        // Control Register
   wire        PS_INT  = PS_CNTL[0];  // 0: IBF Interrupt Disabled, 1: IBF Interrupt Enabled - Keyboard driver at software int 0x09 handles input.
   wire        PS_INT2 = PS_CNTL[1];  // 0: Auxillary IBF Interrupt Disabled, 1: Auxillary IBF Interrupt Enabled
+/*
+ * We comment this out as they are never read
+ *
   wire        PS_SYSF = PS_CNTL[2];  // 0: Power-on value - Tells POST to perform power-on tests/initialization. 1: BAT code received - Tells POST to perform "warm boot" tests/initiailization.
   wire        PS_EN   = PS_CNTL[4];  // 0: Enable - Keyboard interface enabled. 1: Disable - All keyboard communication is disabled.
   wire        PS_EN2  = PS_CNTL[5];  // 0: Enable - Auxillary PS/2 device interface enabled 1: Disable - Auxillary PS/2 device interface disabled
   wire        PS_XLAT = PS_CNTL[6];  // 0: Translation disabled - Data appears at input buffer exactly as read from keyboard 1: Translation enabled - Scan codes translated to set 1 before put in input buffer
-
+*/
 `define     default_cntl  8'b0100_0111
 
   // --------------------------------------------------------------------
@@ -172,11 +173,6 @@ module ps2 (
 
 `define PS2_DAT_REG    3'b000    // 0x60 - RW Transmit / Receive register
 `define PS2_CMD_REG    3'b100    // 0x64 - RW - Status / command register
-`define PS2_SPK_REG    3'b001    // 0x61 - RW - chasis speaker register
-
-  wire        SPK_SEL  = (wb_ps2_addr == `PS2_SPK_REG);
-  wire        SPK_wr   = SPK_SEL && write_i;
-  wire        SPK_rd   = SPK_SEL && read_i;
 
   wire        DAT_SEL  = (wb_ps2_addr == `PS2_DAT_REG);
   wire        DAT_wr   = DAT_SEL && write_i;
@@ -193,7 +189,7 @@ module ps2 (
   // --------------------------------------------------------------------
   // Command Behavior
   // --------------------------------------------------------------------
-  wire [7:0]  dat_o    = SPK_SEL    ? port61h   : d_dat_o;  // Select register
+  wire [7:0]  dat_o    = d_dat_o;  // Select register
   wire [7:0]  d_dat_o  = DAT_SEL    ? r_dat_o   : PS_STAT;  // Select register
   wire [7:0]  r_dat_o  = cnt_r_flag ? PS_CNTL   : t_dat_o;  // return control or data
   wire [7:0]  t_dat_o  = cmd_r_test ? ps_tst_o  : i_dat_o;  // return control or data
@@ -222,8 +218,7 @@ module ps2 (
     cmd_w_msnd  <= 1'b0;        // Reset the flag
     cmd_r_test  <= 1'b0;        // Reset the flag
     cmd_r_mint  <= 1'b0;        // Reset the flag
-    port61h     <= 8'b0;        // Initialize chasis speaker
-    end  
+    end
     else
     if(CMD_rdc) begin
       cnt_r_flag <= 1'b1;    // signal next read from 0x60 is control info
@@ -258,10 +253,6 @@ module ps2 (
         cnt_w_flag  <= 1'b0;        // Reset the flag
       end
     end
-    else
-      if(SPK_wr) begin
-        port61h <= dat_i;  // user wrote to chasis speaker register
-      end
 
     if(cmd_w_msnd && MSE_DONE) cmd_w_msnd <= 1'b0;    // Reset the flag
   end  // Synchrounous always

@@ -39,7 +39,7 @@
 //   Ver  :| Author            :| Mod. Date :| Changes Made:
 //   V1.0 :| Joe Yang          :| 05/07/10  :|      Initial Revision
 // --------------------------------------------------------------------
-module audio_i2c_controller (
+module speaker_i2c_controller (
 	CLOCK,
 	I2C_SCLK,//I2C CLOCK
  	I2C_SDAT,//I2C DATA

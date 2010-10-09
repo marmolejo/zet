@@ -49,78 +49,6 @@ set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0/syn/ko
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0-vdu/syn/kotku.dpf"
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-vdu/syn/kotku.dpf"
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.dpf"
-set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_atx.v
-set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_arx.v
-set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial.v
-set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/clk_gen.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu_ram_2k.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu_char_rom.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_nofifo.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_datain.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_cmdout.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb_xtcodes.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2.v
-set_global_assignment -name VERILOG_FILE ../../../cores/sound/rtl/sound_dac8.v
-set_global_assignment -name VERILOG_FILE ../../../cores/sound/rtl/sound.v
-set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch_11.v
-set_global_assignment -name VERILOG_FILE ../rtl/flash.v
-set_global_assignment -name VERILOG_FILE ../rtl/biosrom.v
-set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
-set_global_assignment -name VERILOG_FILE ../rtl/pll.v
-set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
-set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu.v
-set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
-set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/hex_display.v
-set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/seg_7.v
-set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
-set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer_counter.v
-set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrgr.v
-set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg_datamem.v
-set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_sdrio.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_banktimer.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_busif.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_ctlif.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_datactl.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_mgmt.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc.v
-set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
-set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
-set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_wb_master.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/rom_def.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/defines.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_shrot.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_rxr16.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_rxr8.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_regfile.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_othop.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_opcode_deco.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_nstate.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_next_or_not.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_mux8_16.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_mux8_1.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_muldiv.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_micro_rom.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_micro_data.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_memory_regs.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_jmp_cond.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_fulladd16.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_fetch.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_exec.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_div_uu.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_div_su.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_decode.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_core.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_conv.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_bitlog.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_arlog.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_alu.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_addsub.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet.v
-set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/altera/zet_signmul17.v
 
 # Pin & Location Assignments
 # ==========================
@@ -280,9 +208,9 @@ set_location_assignment PIN_U2 -to flash_data_[11]
 set_location_assignment PIN_T4 -to flash_data_[10]
 set_location_assignment PIN_T7 -to flash_data_[9]
 set_location_assignment PIN_T5 -to flash_data_[8]
-set_location_assignment PIN_AA20 -to chasis_spk
-set_location_assignment PIN_AB19 -to speaker_l
-set_location_assignment PIN_AB20 -to speaker_r
+set_location_assignment PIN_AA20 -to chassis_spk_
+set_location_assignment PIN_AB19 -to speaker_l_
+set_location_assignment PIN_AB20 -to speaker_r_
 
 # Classic Timing Assignments
 # ==========================
@@ -337,7 +265,7 @@ set_global_assignment -name ENABLE_ADVANCED_IO_TIMING ON
 	# EDA Netlist Writer Assignments
 	# ==============================
 	set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
-	set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
 
 # end EDA_TOOL_SETTINGS(eda_simulation)
 # -------------------------------------
@@ -402,3 +330,74 @@ set_global_assignment -name ENABLE_ADVANCED_IO_TIMING ON
 
 # end ENTITY(kotku)
 # -----------------
+set_global_assignment -name VERILOG_FILE ../../../cores/speaker/bare/speaker.v
+set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_atx.v
+set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_arx.v
+set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial.v
+set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/clk_gen.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu_ram_2k.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu_char_rom.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_nofifo.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_datain.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_cmdout.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb_xtcodes.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2.v
+set_global_assignment -name VERILOG_FILE ../../../cores/sound/rtl/sound_dac8.v
+set_global_assignment -name VERILOG_FILE ../../../cores/sound/rtl/sound.v
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch_11.v
+set_global_assignment -name VERILOG_FILE ../rtl/flash.v
+set_global_assignment -name VERILOG_FILE ../rtl/biosrom.v
+set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
+set_global_assignment -name VERILOG_FILE ../rtl/pll.v
+set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
+set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu.v
+set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
+set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/hex_display.v
+set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/seg_7.v
+set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
+set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer_counter.v
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrgr.v
+set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg_datamem.v
+set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_sdrio.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_banktimer.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_busif.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_ctlif.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_datactl.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_mgmt.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc.v
+set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
+set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_wb_master.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_shrot.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_rxr16.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_rxr8.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_regfile.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_othop.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_opcode_deco.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_nstate.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_next_or_not.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_mux8_16.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_mux8_1.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_muldiv.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_micro_rom.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_micro_data.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_memory_regs.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_jmp_cond.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_fulladd16.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_fetch.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_exec.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_div_uu.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_div_su.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_decode.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_core.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_conv.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_bitlog.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_arlog.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_alu.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_addsub.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet.v
+set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/altera/zet_signmul17.v

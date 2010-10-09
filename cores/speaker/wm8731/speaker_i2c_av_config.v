@@ -32,7 +32,7 @@
 
 //`define I2C_VIDEO
 
-module audio_i2c_av_config (  //      Host Side
+module speaker_i2c_av_config (  //      Host Side
                                                 clk_i,
                                                 rst_n_i,
                                                 //      I2C Side
@@ -100,7 +100,7 @@ begin
         end
 end
 ////////////////////////////////////////////////////////////////////
-audio_i2c_controller  i2c_controller (       .CLOCK(mI2C_CTRL_CLK),          //      Controller Work Clock
+speaker_i2c_controller  i2c_controller (       .CLOCK(mI2C_CTRL_CLK),          //      Controller Work Clock
                                                 .I2C_SCLK(i2c_sclk),            //      I2C CLOCK
                                                 .I2C_SDAT(i2c_sdat),            //      I2C DATA
                                                 .I2C_DATA(mI2C_DATA),           //      DATA:[SLAVE_ADDR,SUB_ADDR,DATA]

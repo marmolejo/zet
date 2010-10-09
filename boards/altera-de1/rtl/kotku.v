@@ -1,5 +1,5 @@
 /*
- *  Zet SoC
+ *  Zet SoC top level file for Altera DE1 board
  *  Copyright (C) 2009, 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
@@ -590,7 +590,7 @@ module kotku (
     .ps2_mse_dat_ (ps2_mdat_)
   );
 
-  audio audio (
+  speaker speaker (
     .clk (clk),
     .rst (rst),
 
