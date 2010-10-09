@@ -578,8 +578,8 @@ module kotku (
     .wb_ack_o (wb_sb_ack_o),        // Normal bus termination
 
     .dac_clk (clk_50_),             // DAC Clock
-    .audio_L (speaker_l),           // Audio Output Left  Channel
-    .audio_R (speaker_r)            // Audio Output Right Channel
+    .audio_l (speaker_l),           // Audio Output Left  Channel
+    .audio_r (speaker_r)            // Audio Output Right Channel
   );
 
   ps2 ps2 (
@@ -598,10 +598,10 @@ module kotku (
 
     .port61h (port61h),          // Chasis Speaker port
 
-    .ps2_kbd_clk (ps2_kclk_),
-    .ps2_kbd_dat (ps2_kdat_),
-    .ps2_mse_clk (ps2_mclk_),
-    .ps2_mse_dat (ps2_mdat_)
+    .ps2_kbd_clk_ (ps2_kclk_),
+    .ps2_kbd_dat_ (ps2_kdat_),
+    .ps2_mse_clk_ (ps2_mclk_),
+    .ps2_mse_dat_ (ps2_mdat_)
   );
 
   timer timer (
