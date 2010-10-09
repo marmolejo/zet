@@ -18,7 +18,7 @@
 #
 # Quartus II
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 22:04:13  October 09, 2010
+# Date created = 22:39:12  October 09, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -43,6 +43,13 @@ set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
 set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_nofifo.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_datain.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_cmdout.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb_xtcodes.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2.v
 set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/audio_iface.v
 set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/audio_i2c_controller.v
 set_global_assignment -name VERILOG_FILE ../../../cores/audio/rtl/audio_i2c_av_config.v
@@ -96,8 +103,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_bitlog.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_alu.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_addsub.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet.v
-set_global_assignment -name VERILOG_FILE ../../../cores/keyb/rtl/ps2keyb_xtcodes.v
-set_global_assignment -name VERILOG_FILE ../../../cores/keyb/rtl/ps2keyb.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrgr.v
 set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg_datamem.v
 set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg.v
@@ -312,8 +317,10 @@ set_location_assignment PIN_T22 -to key_[2]
 set_location_assignment PIN_T21 -to key_[3]
 set_location_assignment PIN_F14 -to uart_rxd_
 set_location_assignment PIN_G12 -to uart_txd_
-set_location_assignment PIN_H15 -to ps2_clk_
-set_location_assignment PIN_J14 -to ps2_data_
+set_location_assignment PIN_H15 -to ps2_kclk_
+set_location_assignment PIN_J14 -to ps2_kdat_
+set_location_assignment PIN_H17 -to ps2_mclk_
+set_location_assignment PIN_H18 -to ps2_mdat_
 set_location_assignment PIN_AB15 -to flash_ce_n_
 set_location_assignment PIN_W20 -to sd_miso_
 set_location_assignment PIN_Y20 -to sd_mosi_

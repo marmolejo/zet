@@ -68,10 +68,12 @@ module kotku (
     output        uart_txd_,
 
     // PS2 signals
-    inout         ps2_clk_,
-    inout         ps2_data_,
+    inout         ps2_kclk_, // PS2 keyboard Clock
+    inout         ps2_kdat_, // PS2 Keyboard Data
+    inout         ps2_mclk_, // PS2 Mouse Clock
+    inout         ps2_mdat_, // PS2 Mouse Data
 
-    // SD card signals
+     // SD card signals
     output        sd_sclk_,
     input         sd_miso_,
     output        sd_mosi_,
@@ -150,7 +152,7 @@ module kotku (
   wire        uart_ack_o;
 
   // wires to keyboard controller
-  wire [ 7:0] keyb_dat_o;
+  wire [15:0] keyb_dat_o;
   wire [15:0] keyb_dat_i;
   wire        keyb_tga_i;
   wire [19:1] keyb_adr_i;
@@ -566,26 +568,26 @@ module kotku (
     .rs232_rx (uart_rxd_)         // serial input/output
   );
 
-  ps2keyb #(
-    .TIMER_60USEC_VALUE_PP (750),
-    .TIMER_60USEC_BITS_PP  (10),
-    .TIMER_5USEC_VALUE_PP  (60),
-    .TIMER_5USEC_BITS_PP   (6)
-    ) ps2keyb (
-    .wb_clk_i (clk),
-    .wb_rst_i (rst),
-    .wb_adr_i (keyb_adr_i[2:1]),
-    .wb_sel_i (keyb_sel_i),
-    .wb_dat_i (keyb_dat_i),
+  ps2 ps2 (
+    .wb_clk_i (clk),             // Main Clock
+    .wb_rst_i (rst),             // Reset Line
+    .wb_adr_i (keyb_adr_i[2:1]), // Address lines
+    .wb_sel_i (keyb_sel_i),      // Select lines
+    .wb_dat_i (keyb_dat_i),      // Command to send to Ethernet
     .wb_dat_o (keyb_dat_o),
+    .wb_we_i  (keyb_we_i),       // Write enable
     .wb_stb_i (keyb_stb_i),
     .wb_cyc_i (keyb_cyc_i),
-    .wb_we_i  (keyb_we_i),
     .wb_ack_o (keyb_ack_o),
-    .wb_tgc_o (intv[1]),
+    .wb_tgk_o (intv[1]),         // Keyboard Interrupt request
+    .wb_tgm_o (intv[3]),         // Mouse Interrupt request
 
-    .ps2_clk_  (ps2_clk_),
-    .ps2_data_ (ps2_data_)
+    //.port61h (port61h),          // Chasis Speaker port
+
+    .ps2_kbd_clk_ (ps2_kclk_),
+    .ps2_kbd_dat_ (ps2_kdat_),
+    .ps2_mse_clk_ (ps2_mclk_),
+    .ps2_mse_dat_ (ps2_mdat_)
   );
 
   audio audio (
@@ -619,7 +621,7 @@ module kotku (
   assign keyb_cyc_i   = kaud_cyc_i && !aud_sel_cond;
   assign kaud_ack_o   = aud_cyc_i & aud_ack_o | keyb_cyc_i & keyb_ack_o;
   assign kaud_dat_o   = {8{aud_cyc_i}} & aud_dat_o
-                      | {8{keyb_cyc_i}} & keyb_dat_o;
+                      | {8{keyb_cyc_i}} & keyb_dat_o[15:8];
 
   timer timer (
     .wb_clk_i (clk),
@@ -808,7 +810,7 @@ module kotku (
     .s2_ack_i (uart_ack_o),
 
     // Slave 3 interface - keyb
-    .s3_dat_i ({kaud_dat_o,keyb_dat_o}),
+    .s3_dat_i ({kaud_dat_o,keyb_dat_o[7:0]}),
     .s3_dat_o (keyb_dat_i),
     .s3_adr_o ({keyb_tga_i,keyb_adr_i}),
     .s3_sel_o (keyb_sel_i),
