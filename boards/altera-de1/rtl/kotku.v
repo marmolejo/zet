@@ -545,30 +545,22 @@ module kotku (
     .sram_bw_n_ (sram_bw_n_)
   );
 
-  uart_top com1 (
-    // Wishbone slave interface
-    .wb_clk_i (clk),
-    .wb_rst_i (rst),
-    .wb_adr_i ({uart_adr_i[2:1],~uart_sel_i[0]}),
-    .wb_dat_i (uart_dat_i),
+  // RS232 COM1 Port
+  serial com1 (
+    .wb_clk_i (clk),              // Main Clock
+    .wb_rst_i (rst),              // Reset Line
+    .wb_adr_i (uart_adr_i[2:1]),  // Address lines
+    .wb_sel_i (uart_sel_i),       // Select lines
+    .wb_dat_i (uart_dat_i),       // Command to send
     .wb_dat_o (uart_dat_o),
-    .wb_we_i  (uart_we_i),
+    .wb_we_i  (uart_we_i),        // Write enable
     .wb_stb_i (uart_stb_i),
     .wb_cyc_i (uart_cyc_i),
     .wb_ack_o (uart_ack_o),
-    .wb_sel_i (4'b0),
-    .int_o    (intv[4]), // interrupt request
+    .wb_tgc_o (intv[4]),          // Interrupt request
 
-    // UART signals
-    // serial input/output
-    .stx_pad_o  (uart_txd_),
-    .srx_pad_i  (uart_rxd_),
-
-    // modem signals
-    .cts_pad_i  (1'b1),
-    .dsr_pad_i  (1'b1),
-    .ri_pad_i   (1'b0),
-    .dcd_pad_i  (1'b0)
+    .rs232_tx (uart_txd_),        // UART signals
+    .rs232_rx (uart_rxd_)         // serial input/output
   );
 
   ps2keyb #(

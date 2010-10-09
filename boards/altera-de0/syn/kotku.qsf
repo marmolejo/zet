@@ -18,7 +18,7 @@
 #
 # Quartus II
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 19:16:36  October 09, 2010
+# Date created = 19:34:40  October 09, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -49,12 +49,12 @@ set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0/syn/ko
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0-vdu/syn/kotku.dpf"
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-vdu/syn/kotku.dpf"
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_atx.v
+set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_arx.v
+set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial.v
 set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/clk_gen.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu_ram_2k.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu_char_rom.v
-set_global_assignment -name VERILOG_FILE ../../../cores/uart16450/rtl/serial_atx.v
-set_global_assignment -name VERILOG_FILE ../../../cores/uart16450/rtl/serial_arx.v
-set_global_assignment -name VERILOG_FILE ../../../cores/uart16450/rtl/serial.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_nofifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_datain.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_cmdout.v
