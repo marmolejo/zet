@@ -18,7 +18,7 @@
 #
 # Quartus II
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 18:16:39  October 09, 2010
+# Date created = 19:15:07  October 09, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -43,6 +43,7 @@ set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
 set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/clk_gen.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_write_iface.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_text_mode.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_read_iface.v
@@ -58,7 +59,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_config_iface
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_char_rom.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_c4_iface.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga.v
-set_global_assignment -name VERILOG_FILE ../rtl/clk_gen.v
 set_global_assignment -name VERILOG_FILE ../rtl/audio_if.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_arlog.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_shrot.v
@@ -106,8 +106,8 @@ set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch.v
-set_global_assignment -name VERILOG_FILE ../rtl/I2C_Controller.v
-set_global_assignment -name VERILOG_FILE ../rtl/I2C_AV_Config.v
+set_global_assignment -name VERILOG_FILE ../rtl/i2c_controller.v
+set_global_assignment -name VERILOG_FILE ../rtl/i2c_av_config.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_tfifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart/uart_rfifo.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v

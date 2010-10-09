@@ -157,17 +157,10 @@ module ps2keyb (
   assign released = (q[8:1] == `RELEASE_CODE) && rx_shifting_done;
 
   assign wb_ack_o = wb_stb_i & wb_cyc_i;
-  assign wb_dat_o = 
-    wb_adr_i[2] ? 
-      16'h10 
-    : 
-      (wb_sel_i[1] ?
-        { port61h, 8'h0 }
-      :
-        { 8'h0, dat_o });
+  assign wb_dat_o =  wb_adr_i[2] ? 16'h10
+    : (wb_sel_i[1] ? { port61h, 8'h0 } : { 8'h0, dat_o });
 
   // Behaviour
-
   always @(posedge wb_clk_i)
     if (wb_rst_i) port61h <= 8'b0;
     else if (wb_ack_o && (wb_adr_i == 2'b0) && wb_sel_i[1] && wb_we_i)

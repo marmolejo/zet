@@ -18,7 +18,7 @@
 #
 # Quartus II
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 17:48:52  October 09, 2010
+# Date created = 19:16:36  October 09, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -49,6 +49,7 @@ set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0/syn/ko
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0-vdu/syn/kotku.dpf"
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-vdu/syn/kotku.dpf"
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/clk_gen.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu_ram_2k.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu_char_rom.v
 set_global_assignment -name VERILOG_FILE ../../../cores/uart16450/rtl/serial_atx.v
@@ -68,7 +69,6 @@ set_global_assignment -name VERILOG_FILE ../rtl/flash.v
 set_global_assignment -name VERILOG_FILE ../rtl/biosrom.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
 set_global_assignment -name VERILOG_FILE ../rtl/pll.v
-set_global_assignment -name VERILOG_FILE ../rtl/clk_gen.v
 set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vdu/rtl/vdu.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
