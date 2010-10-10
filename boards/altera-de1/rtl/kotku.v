@@ -18,15 +18,18 @@
  */
 
 module kotku (
+    // Clock input
     input        clk_50_,
-    output [9:0] ledr_,
-    output [7:0] ledg_,
+
+    // General purpose IO
     input  [9:0] sw_,
     input  [3:0] key_,
     output [6:0] hex0_,
     output [6:0] hex1_,
     output [6:0] hex2_,
     output [6:0] hex3_,
+    output [9:0] ledr_,
+    output [7:0] ledg_,
 
     // flash signals
     output [21:0] flash_addr_,
@@ -73,17 +76,17 @@ module kotku (
     inout         ps2_mclk_, // PS2 Mouse Clock
     inout         ps2_mdat_, // PS2 Mouse Data
 
-     // SD card signals
+    // SD card signals
     output        sd_sclk_,
     input         sd_miso_,
     output        sd_mosi_,
     output        sd_ss_,
 
-    // I2C
+    // I2C for audio codec
     inout         i2c_sdat_,
     output        i2c_sclk_,
 
-    // AUDIO CODEC
+    // Audio codec signals
     input         aud_adclrck_,
     input         aud_adcdat_,
     input         aud_daclrck_,
@@ -104,7 +107,6 @@ module kotku (
   wire        stb;
   wire        cyc;
   wire        ack;
-
   wire        lock;
 
   // wires to BIOS ROM
@@ -268,13 +270,19 @@ module kotku (
   wire [15:0] fml_do;
 
   // wires to default stb/ack
-  wire def_cyc_i;
-  wire def_stb_i;
-
+  wire        def_cyc_i;
+  wire        def_stb_i;
   wire [15:0] sw_dat_o;
-
   wire        sdram_clk;
   wire        vga_clk;
+
+  wire [ 7:0] intv;
+  wire [ 2:0] iid;
+  wire        intr;
+  wire        inta;
+  wire [19:0] pc;
+  reg  [16:0] rst_debounce;
+
   wire        timer_clk;
   wire        timer2_o;
 
@@ -288,15 +296,6 @@ module kotku (
   wire [ 7:0] kaud_dat_o;
   wire        kaud_cyc_i;
   wire        kaud_ack_o;
-
-  wire [ 7:0] intv;
-  wire [ 2:0] iid;
-  wire        intr;
-  wire        inta;
-
-  wire [19:0] pc;
-
-  reg [16:0] rst_debounce;
 
   // Module instantiations
   pll pll (
@@ -464,7 +463,7 @@ module kotku (
   csrbrg csrbrg (
     .sys_clk (sdram_clk),
     .sys_rst (rst),
-    
+
     // Wishbone slave interface
     .wb_adr_i (csrbrg_adr[3:1]),
     .wb_dat_i (csrbrg_dat_w),
@@ -473,7 +472,7 @@ module kotku (
     .wb_stb_i (csrbrg_stb),
     .wb_we_i  (csrbrg_we),
     .wb_ack_o (csrbrg_ack),
-    
+
     // CSR master interface
     .csr_a  (csr_a),
     .csr_we (csr_we),
@@ -494,7 +493,7 @@ module kotku (
     .csr_we (csr_we),
     .csr_di (csr_dw),
     .csr_do (csr_dr_hpdmc),
-    
+
     // FML slave interface
     .fml_adr (fml_adr),
     .fml_stb (fml_stb),
@@ -503,7 +502,7 @@ module kotku (
     .fml_sel (fml_sel),
     .fml_di  (fml_do),
     .fml_do  (fml_di),
-    
+
     // SDRAM pad signals
     .sdram_cke   (sdram_ce_),
     .sdram_cs_n  (sdram_cs_n_),
@@ -545,12 +544,13 @@ module kotku (
   );
 
   vga vga (
-    // Wishbone slave interface
     .wb_rst_i (rst),
+
+    // Wishbone slave interface
     .wb_clk_i (vga_clk),   // 25MHz VGA clock
     .wb_dat_i (vga_dat_i),
     .wb_dat_o (vga_dat_o),
-    .wb_adr_i (vga_adr_i[16:1]),    // 128K
+    .wb_adr_i (vga_adr_i[16:1]),  // 128K
     .wb_we_i  (vga_we_i),
     .wb_tga_i (vga_tga_i),
     .wb_sel_i (vga_sel_i),
@@ -605,8 +605,6 @@ module kotku (
     .wb_ack_o (keyb_ack_o),
     .wb_tgk_o (intv[1]),         // Keyboard Interrupt request
     .wb_tgm_o (intv[3]),         // Mouse Interrupt request
-
-    //.port61h (port61h),          // Chasis Speaker port
 
     .ps2_kbd_clk_ (ps2_kclk_),
     .ps2_kbd_dat_ (ps2_kdat_),
@@ -699,10 +697,10 @@ module kotku (
 
   sdspi sdspi (
     // Serial pad signal
-    .sclk  (sd_sclk_),
-    .miso  (sd_miso_),
-    .mosi  (sd_mosi_),
-    .ss    (sd_ss_),
+    .sclk (sd_sclk_),
+    .miso (sd_miso_),
+    .mosi (sd_mosi_),
+    .ss   (sd_ss_),
 
     // Wishbone slave interface
     .wb_clk_i (sdram_clk),
@@ -718,9 +716,10 @@ module kotku (
 
   // Switches and leds
   sw_leds sw_leds (
-    // Wishbone slave interface
     .wb_clk_i (clk),
     .wb_rst_i (rst),
+
+    // Wishbone slave interface
     .wb_adr_i (gpio_adr_i),
     .wb_dat_o (gpio_dat_o),
     .wb_dat_i (gpio_dat_i),
@@ -764,7 +763,7 @@ module kotku (
     .wb_tgc_o (inta)
   );
 
-  wb_switch_11 #(
+  wb_switch #(
     .s0_addr_1 (20'b0_1111_1111_1111_0000_000), // bios boot mem 0xfff00 - 0xfffff
     .s0_mask_1 (20'b1_1111_1111_1111_0000_000), // bios boot ROM Memory
 
@@ -937,8 +936,8 @@ module kotku (
   );
 
   // Continuous assignments
-  assign rst_lck         = !sw_[0] & lock;
-  assign sdram_clk_      = sdram_clk;
+  assign rst_lck    = !sw_[0] & lock;
+  assign sdram_clk_ = sdram_clk;
 
   assign dat_i = inta ? { 13'b0000_0000_0000_1, iid }
                : sw_dat_o;

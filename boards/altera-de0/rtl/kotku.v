@@ -18,15 +18,17 @@
  */
 
 module kotku (
+    // Clock input
     input        clk_50_,
-    output [9:0] ledr_,
 
+    // General purpose IO
     input  [9:0] sw_,
     input  [2:0] key_,
     output [6:0] hex0_,
     output [6:0] hex1_,
     output [6:0] hex2_,
     output [6:0] hex3_,
+    output [9:0] ledg_,
 
     // flash signals
     output [21:0] flash_addr_,
@@ -71,6 +73,7 @@ module kotku (
     output        sd_mosi_,
     output        sd_ss_,
 
+    // To expansion header
     output        chassis_spk_,
     output        speaker_l_,   // Speaker output, left channel
     output        speaker_r_    // Speaker output, right channel
@@ -155,17 +158,6 @@ module kotku (
   wire        wb_sb_we_i;         // Sound
   wire        wb_sb_ack_o;        // Sound
   wire        wb_sb_tga_i;        // Sound
-
-  // wires for SPI Flash controller
-  wire [15:0] wb_spi_dat_o;       // Wishbone bus slave interface
-  wire [15:0] wb_spi_dat_i;       // Wishbone bus slave interface
-  wire [ 1:0] wb_spi_sel_i;
-  wire [19:1] wb_spi_adr_i;
-  wire        wb_spi_tga_i;
-  wire        wb_spi_we_i;
-  wire        wb_spi_cyc_i;
-  wire        wb_spi_stb_i;
-  wire        wb_spi_ack_o;
 
   // wires to keyboard controller
   wire [15:0] keyb_dat_o;
@@ -312,8 +304,7 @@ module kotku (
   clk_gen #(
     .res   (21),
     .phase (21'd100091)
-    )
-     timerclk (
+    ) timerclk (
     .clk_i (vga_clk),    // 25 MHz
     .rst_i (rst),
     .clk_o (timer_clk)   // 1.193178 MHz (required 1.193182 MHz)
@@ -328,8 +319,10 @@ module kotku (
   reg rst;
   initial rst <= 1'b1;
   always @(posedge clk) begin
-    if(~rst_lck) rst_debounce <= 17'h1FFFF;   /* reset is active low */
-    else if(rst_debounce != 17'd0) rst_debounce <= rst_debounce - 17'd1;
+    if(~rst_lck) /* reset is active low */
+      rst_debounce <= 17'h1FFFF;
+    else if(rst_debounce != 17'd0)
+      rst_debounce <= rst_debounce - 17'd1;
     rst <= rst_debounce != 17'd0;
   end
 `else
@@ -352,6 +345,7 @@ module kotku (
   );
 
   flash16 flash16 (
+    // Wishbone slave interface
     .wb_clk_i (clk),            // Main Clock
     .wb_rst_i (rst),            // Reset Line
     .wb_adr_i (fl_adr_i[1]),    // Address lines
@@ -363,7 +357,8 @@ module kotku (
     .wb_we_i  (fl_we_i),        // Write enable
     .wb_ack_o (fl_ack_o),       // Normal bus termination
 
-    .flash_addr_  (flash_addr_), // Pad signals
+    // Pad signals
+    .flash_addr_  (flash_addr_),
     .flash_data_  (flash_data_),
     .flash_we_n_  (flash_we_n_),
     .flash_oe_n_  (flash_oe_n_),
@@ -417,18 +412,18 @@ module kotku (
     .wb_we_i  (fmlbrg_we),
     .wb_ack_o (fmlbrg_ack),
 
-     // FML master interface
-    .fml_adr  (fml_adr),
-    .fml_stb  (fml_stb),
-    .fml_we   (fml_we),
-    .fml_ack  (fml_ack),
-    .fml_sel  (fml_sel),
-    .fml_do   (fml_do),
-    .fml_di   (fml_di)
+    // FML master interface
+    .fml_adr (fml_adr),
+    .fml_stb (fml_stb),
+    .fml_we  (fml_we),
+    .fml_ack (fml_ack),
+    .fml_sel (fml_sel),
+    .fml_do  (fml_do),
+    .fml_di  (fml_di)
   );
 
   wb_abrgr wb_csrbrg (
-    .sys_rst  (rst),
+    .sys_rst (rst),
 
     // Wishbone slave interface
     .wbs_clk_i (clk),
@@ -452,8 +447,8 @@ module kotku (
   );
 
   csrbrg csrbrg (
-    .sys_clk  (sdram_clk),
-    .sys_rst  (rst),
+    .sys_clk (sdram_clk),
+    .sys_rst (rst),
 
     // Wishbone slave interface
     .wb_adr_i (csrbrg_adr[3:1]),
@@ -465,10 +460,10 @@ module kotku (
     .wb_ack_o (csrbrg_ack),
 
     // CSR master interface
-    .csr_a    (csr_a),
-    .csr_we   (csr_we),
-    .csr_do   (csr_dw),
-    .csr_di   (csr_dr_hpdmc)
+    .csr_a  (csr_a),
+    .csr_we (csr_we),
+    .csr_do (csr_dw),
+    .csr_di (csr_dr_hpdmc)
   );
 
   hpdmc #(
@@ -476,23 +471,23 @@ module kotku (
     .sdram_depth       (23),
     .sdram_columndepth (8)
     ) hpdmc (
-    .sys_clk    (sdram_clk),
-    .sys_rst    (rst),
+    .sys_clk (sdram_clk),
+    .sys_rst (rst),
 
     // CSR slave interface
-    .csr_a      (csr_a),
-    .csr_we     (csr_we),
-    .csr_di     (csr_dw),
-    .csr_do     (csr_dr_hpdmc),
+    .csr_a  (csr_a),
+    .csr_we (csr_we),
+    .csr_di (csr_dw),
+    .csr_do (csr_dr_hpdmc),
 
     // FML slave interface
-    .fml_adr    (fml_adr),
-    .fml_stb    (fml_stb),
-    .fml_we     (fml_we),
-    .fml_ack    (fml_ack),
-    .fml_sel    (fml_sel),
-    .fml_di     (fml_do),
-    .fml_do     (fml_di),
+    .fml_adr (fml_adr),
+    .fml_stb (fml_stb),
+    .fml_we  (fml_we),
+    .fml_ack (fml_ack),
+    .fml_sel (fml_sel),
+    .fml_di  (fml_do),
+    .fml_do  (fml_di),
 
     // SDRAM pad signals
     .sdram_cke   (sdram_ce_),
@@ -507,7 +502,7 @@ module kotku (
   );
 
   wb_abrg vga_brg (
-    .sys_rst   (rst),
+    .sys_rst (rst),
 
     // Wishbone slave interface
     .wbs_clk_i (clk),
@@ -534,11 +529,11 @@ module kotku (
     .wbm_ack_i (vga_ack_o)
   );
 
-  vdu vga (
+  vdu vdu (
     .wb_rst_i (rst),
 
     // Wishbone slave interface
-    .wb_clk_i (vga_clk),       // 25MHz VGA clock
+    .wb_clk_i (vga_clk),   // 25MHz VGA clock
     .wb_dat_i (vga_dat_i),
     .wb_dat_o (vga_dat_o),
     .wb_adr_i (vga_adr_i),
@@ -556,6 +551,10 @@ module kotku (
     .horiz_sync  (tft_lcd_hsync_),
     .vert_sync   (tft_lcd_vsync_)
   );
+
+  assign tft_lcd_r_[1:0] = tft_lcd_r_[3:2];  // Text only
+  assign tft_lcd_g_[1:0] = tft_lcd_g_[3:2];  // Text only
+  assign tft_lcd_b_[1:0] = tft_lcd_b_[3:2];  // Text only
 
   // RS232 COM1 Port
   serial com1 (
@@ -664,8 +663,10 @@ module kotku (
   );
 
   wb_abrgr sd_brg (
-    .sys_rst   (rst),
-    .wbs_clk_i (clk),        // Wishbone slave interface
+    .sys_rst (rst),
+
+    // Wishbone slave interface
+    .wbs_clk_i (clk),
     .wbs_dat_i (sd_dat_i_s),
     .wbs_dat_o (sd_dat_o_s),
     .wbs_sel_i (sd_sel_i_s),
@@ -673,7 +674,9 @@ module kotku (
     .wbs_cyc_i (sd_cyc_i_s),
     .wbs_we_i  (sd_we_i_s),
     .wbs_ack_o (sd_ack_o_s),
-    .wbm_clk_i (sdram_clk),    // Wishbone master interface
+
+    // Wishbone master interface
+    .wbm_clk_i (sdram_clk),
     .wbm_dat_o (sd_dat_i),
     .wbm_dat_i (sd_dat_o),
     .wbm_sel_o (sd_sel_i),
@@ -684,11 +687,14 @@ module kotku (
   );
 
   sdspi sdspi (
-    .sclk     (sd_sclk_),    // Serial pad signal
-    .miso     (sd_miso_),
-    .mosi     (sd_mosi_),
-    .ss       (sd_ss_),
-    .wb_clk_i (sdram_clk),    // Wishbone slave interface
+    // Serial pad signal
+    .sclk (sd_sclk_),
+    .miso (sd_miso_),
+    .mosi (sd_mosi_),
+    .ss   (sd_ss_),
+
+    // Wishbone slave interface
+    .wb_clk_i (sdram_clk),
     .wb_rst_i (rst),
     .wb_dat_i (sd_dat_i),
     .wb_dat_o (sd_dat_o),
@@ -715,8 +721,17 @@ module kotku (
     .wb_ack_o (gpio_ack_o),
 
     // GPIO inputs/outputs
-    .leds_    (ledr_),
-    .sw_      (sw_)
+    .leds_ (ledg_[9:4]),
+    .sw_   (sw_)
+  );
+
+  hex_display hex16 (
+    .num (pc[19:4]),
+    .en  (1'b1),
+    .hex0 (hex0_),
+    .hex1 (hex1_),
+    .hex2 (hex2_),
+    .hex3 (hex3_)
   );
 
   zet zet (
@@ -738,7 +753,7 @@ module kotku (
     .wb_tgc_o (inta)
   );
 
-  wb_switch_11 #(
+  wb_switch #(
     .s0_addr_1 (20'b0_1111_1111_1111_0000_000), // bios boot mem 0xfff00 - 0xfffff
     .s0_mask_1 (20'b1_1111_1111_1111_0000_000), // bios boot ROM Memory
 
@@ -910,22 +925,13 @@ module kotku (
     .sB_ack_i (def_cyc_i & def_stb_i)
   );
 
-  hex_display hex16 (
-    .num (pc[19:4]),
-    .en  (1'b1),
-    .hex0 (hex0_),
-    .hex1 (hex1_),
-    .hex2 (hex2_),
-    .hex3 (hex3_)
-  );
-
   // Continuous assignments
-  assign rst_lck = key_[0] & lock;
+  assign rst_lck    = !sw_[0] & lock;
   assign sdram_clk_ = sdram_clk;
-  assign dat_i   = inta ? { 13'b0000_0000_0000_1, iid } : sw_dat_o;
 
-  assign tft_lcd_r_[1:0] = tft_lcd_r_[3:2];  // Text only
-  assign tft_lcd_g_[1:0] = tft_lcd_g_[3:2];  // Text only
-  assign tft_lcd_b_[1:0] = tft_lcd_b_[3:2];  // Text only
+  assign dat_i = inta ? { 13'b0000_0000_0000_1, iid }
+               : sw_dat_o;
+
+  assign ledg_[3:0] = pc[3:0];
 
 endmodule

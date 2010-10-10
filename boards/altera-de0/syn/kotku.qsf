@@ -18,7 +18,7 @@
 #
 # Quartus II
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 02:52:12  October 10, 2010
+# Date created = 03:54:33  October 10, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -49,6 +49,7 @@ set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0/syn/ko
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/rtl-de0/boards/de0-vdu/syn/kotku.dpf"
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-vdu/syn/kotku.dpf"
 set_global_assignment -name MISC_FILE "C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch.v
 set_global_assignment -name VERILOG_FILE ../../../cores/flash/bootrom.v
 set_global_assignment -name VERILOG_FILE ../../../cores/flash/flash16.v
 set_global_assignment -name VERILOG_FILE ../../../cores/speaker/bare/speaker.v
@@ -67,7 +68,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb.v
 set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sound/rtl/sound_dac8.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sound/rtl/sound.v
-set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch_11.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
 set_global_assignment -name VERILOG_FILE ../rtl/pll.v
 set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
