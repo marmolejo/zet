@@ -4,7 +4,7 @@
 #  Copyright (C) 2010  Donna Polehn <dpolehn@verizon.net>
 #
 #  This file is part of the Zet processor. This program is free software;
-#  you can redistribute it and/or modify it under the terms of the GNU 
+#  you can redistribute it and/or modify it under the terms of the GNU
 #  General Public License as published by the Free Software Foundation;
 #  either version 3, or (at your option) any later version.
 #
@@ -26,7 +26,7 @@ ff.rom: ff$(E)
 	$(CDIR)ff 8192 >$@
 
 #
-# Compiler flags:
+# Compiler flags for ZET Code:
 #  -0   generate 8086 code
 #  -ms  forces small model
 #  -s   remove runtime stack checks
@@ -40,10 +40,10 @@ AFLAGS  = -0 -wx
 
 #
 # This section compiles and links the ROM BIOS module. The result of this
-# operation will be later fed through the biossums program in order to 
+# operation will be later fed through the biossums program in order to
 # compute the checksum and tag that on the end.
 #
-zetbios.rom: zetbios$(O) entry$(O) biossums$(E)
+zetbios.rom: zetbios_vers$(O) entry$(O) biossums$(E)
 	wlink name $@ system dos &
         OPTION quiet &
         OPTION NOFARCALLS &
@@ -54,24 +54,24 @@ zetbios.rom: zetbios$(O) entry$(O) biossums$(E)
         clname DATA segment _DATA    segaddr=0xf000 offset=0x0000 &
         clname CODE segment _TEXT    segaddr=0xf000 offset=0x1000 &
                     segment _BIOSSEG segaddr=0xf000 offset=0xe000 &
-        FILE { zetbios$(O) entry$(O) } &
+        FILE { zetbios_vers$(O) entry$(O) } &
         LIBRARY clibs.lib &
         disable 1014
 	$(CDIR)biossums $@
 
 
 #
-# This section tells make to compile only if the files have been changed 
+# This section tells make to compile only if the files have been changed
 #
-zetbios$(O): .autodepend
-	wcc $(CFLAGS) zetbios.c
+zetbios_vers$(O): zetbios_vers.c .autodepend
+	wcc $(CFLAGS) zetbios_vers.c
 
 entry$(O): .autodepend
 	wasm $(AFLAGS) entry.asm
 
 #
 # This section compiles and links the VGA BIOS module. The result of this
-# operation will be later fed through the vgasums program in order to 
+# operation will be later fed through the vgasums program in order to
 # compute the checksum and tag that on the end.
 #
 vgabios.rom: vgabios$(O) vga_vers$(O) vgasums$(E)
@@ -90,7 +90,7 @@ vgabios.rom: vgabios$(O) vga_vers$(O) vgasums$(E)
 	$(CDIR)vgasums $@
 
 #
-# This section tells make to compile only if the files have been changed 
+# This section tells make to compile only if the files have been changed
 #
 vgabios$(O): .autodepend
 	wcc $(CFLAGS) vgabios.c

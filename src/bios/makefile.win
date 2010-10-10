@@ -1,0 +1,123 @@
+#
+#  Makefile for building the Zet BIOS in Windows
+#  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
+#  Copyright (C) 2010  Donna Polehn <dpolehn@verizon.net>
+#
+#  This file is part of the Zet processor. This program is free software;
+#  you can redistribute it and/or modify it under the terms of the GNU
+#  General Public License as published by the Free Software Foundation;
+#  either version 3, or (at your option) any later version.
+#
+#  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+#  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+#  License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Zet; see the file COPYING. If not, see
+#  <http://www.gnu.org/licenses/>.
+#
+
+#
+#  ZET BIOS BUILD MAKE - Windows version - 05-24-2010
+#  ----------------------------------------------------------------------------
+#
+#  This is the make file for the Zet Rom BIOS and VGA BIOS Builds.
+#  To build it, you will need the Open Watcom compiler. If you have
+#  it installed on your machine, then you should be able to just type
+#  wmake and watcom should build it. There will be a small number of warning
+#  messages, this is normal.
+#
+
+# File extension in Windows
+O = .obj
+E = .exe
+
+# Current directory (for executing programs)
+CDIR = .\
+
+all: bios.hex zetbios.dat
+
+!include "common.inc"
+
+#
+# This is a simple copy of the vga.asm, as we cannot execute git describe and
+# execute "sed" in Windows. Anyway, this is only important in the release
+#
+vga_vers.asm: vga.asm
+	copy vga.asm vga_vers.asm
+
+zetbios_vers.c: zetbios.c
+	copy zetbios.c zetbios_vers.c
+
+#
+# This section combines all 3 rom sections built below, into one 128K ROM
+# ready to be installed. When everything is done running and if all goes well
+# you should have a file BIOS.ROM of exactly 128K, this is your bios rom to
+# download into your DE1 board.
+#
+bios.rom: vgabios.rom ff.rom zetbios.rom
+	copy /b vgabios.rom+ff.rom+zetbios.rom $@
+
+# HEX ROM MAKE ---------------------------------------------------------------
+# This section converts the bios rom binary file into a hex file that the
+# DE0 loader program can use to program the Flash Ram on the DE0 board.
+# ----------------------------------------------------------------------------
+bios.hex: bios.rom hexer.exe zetbios.dat
+	hexer bios.rom
+
+# DAT SHADOW ROM MAKE --------------------------------------------------------
+# This section converts the last 256 bytes of the bios rom to a dat file (hex)
+# that needs to be included in the Quartus project build. The last 256 bytes
+# of the ROM is the shadow boot rom section.
+# ----------------------------------------------------------------------------
+zetbios.dat: zetbios.rom mifer.exe
+	mifer zetbios.rom
+	copy zetbios.dat ..\..\cores\flash\bootrom.dat
+
+# Make Utilities -------------------------------------------------------------
+# This section compiles the following utilities:
+#  biossums.exe - Computes bios rom checksum value and appends it to the rom
+#  vgasums.exe  - Same thing but for the vga rom
+#  ff.exe       - Fills the space between vga and bios with 0xFF
+#  meow.exe     - Concatenates the vga, ff and bios roms together into 1 file
+#  hexer.exe    - Converts the finished bios rom to hex
+#  mifer.exe    - Makes the Shadow Boot rom
+#
+# The C option flags for this build are standard console build since
+# these utilities will run on your PC not on the ZET
+# ----------------------------------------------------------------------------
+C386OPTS = -w4 -e25 -zq -od -d2 -6r -bt=nt -fo=.obj -mf
+
+ff$(E): ff$(O) .autodepend
+	wlink name ff d all sys nt op m op maxe=25 op q op symf FIL ff.obj
+
+ff$(O): ..\tools\ff.c
+	wcc386 $(C386OPTS) ..\tools\ff.c
+
+biossums$(E): biossums$(O) .autodepend
+	wlink name biossums d all sys nt op m op maxe=25 op q op symf FIL biossums.obj
+
+biossums$(O): ..\tools\biossums.c
+	wcc386 $(C386OPTS) ..\tools\biossums.c
+
+vgasums$(E): vgasums$(O) .autodepend
+	wlink name vgasums d all sys nt op m op maxe=25 op q op symf FIL vgasums.obj
+
+vgasums$(O): ..\tools\vgasums.c
+	wcc386 $(C386OPTS) ..\tools\vgasums.c
+
+hexer$(E): hexer$(O) .autodepend
+    wlink name hexer d all sys nt op m op maxe=25 op q op symf FIL hexer.obj
+
+hexer$(O): ..\tools\hexer.c
+    wcc386 $(C386OPTS) ..\tools\hexer.c
+
+mifer$(E): mifer$(O) .autodepend
+    wlink name mifer d all sys nt op m op maxe=25 op q op symf FIL mifer.obj
+
+mifer$(O): ..\tools\mifer.c
+    wcc386 $(C386OPTS) ..\tools\mifer.c
+
+clean:
+	del  *.dat *.hex *.o *.obj *.sym *.rom *.exe *.err *.map *.flash zetbios_vers.c vga_vers.asm ff biossums vgasums mifer hexer

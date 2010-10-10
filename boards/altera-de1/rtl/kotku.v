@@ -107,6 +107,17 @@ module kotku (
 
   wire        lock;
 
+  // wires to BIOS ROM
+  wire [15:0] rom_dat_o;
+  wire [15:0] rom_dat_i;
+  wire        rom_tga_i;
+  wire [19:1] rom_adr_i;
+  wire [ 1:0] rom_sel_i;
+  wire        rom_we_i;
+  wire        rom_cyc_i;
+  wire        rom_stb_i;
+  wire        rom_ack_o;
+
   // wires to flash controller
   wire [15:0] fl_dat_o;
   wire [15:0] fl_dat_i;
@@ -334,19 +345,32 @@ module kotku (
   assign rst = !rst_lck;
 `endif
 
-  flash flash (
+  bootrom bootrom (
+    .clk (clk),            // Wishbone slave interface
+    .rst (rst),
+    .wb_dat_i (rom_dat_i),
+    .wb_dat_o (rom_dat_o),
+    .wb_adr_i (rom_adr_i),
+    .wb_we_i  (rom_we_i ),
+    .wb_tga_i (rom_tga_i),
+    .wb_stb_i (rom_stb_i),
+    .wb_cyc_i (rom_cyc_i),
+    .wb_sel_i (rom_sel_i),
+    .wb_ack_o (rom_ack_o)
+  );
+
+  flash8 flash8 (
     // Wishbone slave interface
-    .wb_clk_i (clk),
-    .wb_rst_i (rst),
-    .wb_dat_i (fl_dat_i),
-    .wb_dat_o (fl_dat_o),
-    .wb_adr_i (fl_adr_i[16:1]),
-    .wb_we_i  (fl_we_i),
-    .wb_tga_i (fl_tga_i),
-    .wb_stb_i (fl_stb_i),
-    .wb_cyc_i (fl_cyc_i),
-    .wb_sel_i (fl_sel_i),
-    .wb_ack_o (fl_ack_o),
+    .wb_clk_i (clk),            // Main Clock
+    .wb_rst_i (rst),            // Reset Line
+    .wb_adr_i (fl_adr_i[1]),    // Address lines
+    .wb_sel_i (fl_sel_i),       // Select lines
+    .wb_dat_i (fl_dat_i),       // Command to send
+    .wb_dat_o (fl_dat_o),       // Received data
+    .wb_cyc_i (fl_cyc_i),       // Cycle
+    .wb_stb_i (fl_stb_i),       // Strobe
+    .wb_we_i  (fl_we_i),        // Write enable
+    .wb_ack_o (fl_ack_o),       // Normal bus termination
 
     // Pad signals
     .flash_addr_  (flash_addr_),
@@ -740,33 +764,45 @@ module kotku (
     .wb_tgc_o (inta)
   );
 
-  wb_switch #(
-    .s0_addr_1 (20'b0_1111_0000_0000_0000_000), // mem 0xf0000 - 0xfffff
-    .s0_mask_1 (20'b1_1111_0000_0000_0000_000),
-    .s0_addr_2 (20'b0_1100_0000_0000_0000_000), // mem 0xc0000 - 0xcffff
-    .s0_mask_2 (20'b1_1111_0000_0000_0000_000),
-    .s0_addr_3 (20'b1_0000_1110_0000_0000_000), // io 0xe000 - 0xfeff
-    .s0_mask_3 (20'b1_0000_1111_1110_0000_000),
-    .s1_addr_1 (20'b0_1010_0000_0000_0000_000), // mem 0xa0000 - 0xbffff
-    .s1_mask_1 (20'b1_1110_0000_0000_0000_000),
+  wb_switch_11 #(
+    .s0_addr_1 (20'b0_1111_1111_1111_0000_000), // bios boot mem 0xfff00 - 0xfffff
+    .s0_mask_1 (20'b1_1111_1111_1111_0000_000), // bios boot ROM Memory
+
+    .s1_addr_1 (20'b0_1011_1000_0000_0000_000), // mem 0xb8000 - 0xbffff
+    .s1_mask_1 (20'b1_1111_1000_0000_0000_000), // VGA Text Memory
+
     .s1_addr_2 (20'b1_0000_0000_0011_1100_000), // io 0x3c0 - 0x3df
-    .s1_mask_2 (20'b1_0000_1111_1111_1110_000),
+    .s1_mask_2 (20'b1_0000_1111_1111_1110_000), // VGA IO
+
     .s2_addr_1 (20'b1_0000_0000_0011_1111_100), // io 0x3f8 - 0x3ff
-    .s2_mask_1 (20'b1_0000_1111_1111_1111_100),
-    .s3_addr_1 (20'b1_0000_0000_0000_0110_000), // io 0x60-0x61, 0x64-0x65
-    .s3_mask_1 (20'b1_0000_1111_1111_1111_101),
+    .s2_mask_1 (20'b1_0000_1111_1111_1111_100), // RS232 IO
+
+    .s3_addr_1 (20'b1_0000_0000_0000_0110_000), // io 0x60, 0x64
+    .s3_mask_1 (20'b1_0000_1111_1111_1111_101), // Keyboard / Mouse IO
+
     .s4_addr_1 (20'b1_0000_0000_0001_0000_000), // io 0x100 - 0x101
-    .s4_mask_1 (20'b1_0000_1111_1111_1111_111),
+    .s4_mask_1 (20'b1_0000_1111_1111_1111_111), // SD Card IO
+
     .s5_addr_1 (20'b1_0000_1111_0001_0000_000), // io 0xf100 - 0xf103
-    .s5_mask_1 (20'b1_0000_1111_1111_1111_110),
+    .s5_mask_1 (20'b1_0000_1111_1111_1111_110), // GPIO
+
     .s6_addr_1 (20'b1_0000_1111_0010_0000_000), // io 0xf200 - 0xf20f
-    .s6_mask_1 (20'b1_0000_1111_1111_1111_000),
+    .s6_mask_1 (20'b1_0000_1111_1111_1111_000), // CSR Bridge SDRAM Control
+
     .s7_addr_1 (20'b1_0000_0000_0000_0100_000), // io 0x40 - 0x43
-    .s7_mask_1 (20'b1_0000_1111_1111_1111_110),
-    .s8_addr_1 (20'b1_0000_1111_0011_0000_000), // io 0xf300 - 0xf3ff
-    .s8_mask_1 (20'b1_0000_1111_1111_0000_000),
-    .s8_addr_2 (20'b0_0000_0000_0000_0000_000), // mem 0x00000 - 0xfffff
-    .s8_mask_2 (20'b1_0000_0000_0000_0000_000)
+    .s7_mask_1 (20'b1_0000_1111_1111_1111_110), // Timer control port
+
+    .s8_addr_1 (20'b1_0000_0000_0010_0011_100), // io 0x0238 - 0x023b
+    .s8_mask_1 (20'b1_0000_1111_1111_1111_110), // Flash IO port
+
+    .s9_addr_1 (20'b1_0000_0000_0010_0001_000), // io 0x0210 - 0x021F
+    .s9_mask_1 (20'b1_0000_1111_1111_1111_000), // Sound Blaster
+
+    .sA_addr_1 (20'b1_0000_1111_0011_0000_000), // io 0xf300 - 0xf3ff
+    .sA_mask_1 (20'b1_0000_1111_1111_0000_000), // SDRAM Control
+    .sA_addr_2 (20'b0_0000_0000_0000_0000_000), // mem 0x00000 - 0xfffff
+    .sA_mask_2 (20'b1_0000_0000_0000_0000_000)  // Base RAM
+
     ) wbs (
 
     // Master interface
@@ -779,17 +815,17 @@ module kotku (
     .m_stb_i (stb),
     .m_ack_o (ack),
 
-    // Slave 0 interface - flash
-    .s0_dat_i (fl_dat_o),
-    .s0_dat_o (fl_dat_i),
-    .s0_adr_o ({fl_tga_i,fl_adr_i}),
-    .s0_sel_o (fl_sel_i),
-    .s0_we_o  (fl_we_i),
-    .s0_cyc_o (fl_cyc_i),
-    .s0_stb_o (fl_stb_i),
-    .s0_ack_i (fl_ack_o),
+    // Slave 0 interface - bios rom
+    .s0_dat_i (rom_dat_o),
+    .s0_dat_o (rom_dat_i),
+    .s0_adr_o ({rom_tga_i,rom_adr_i}),
+    .s0_sel_o (rom_sel_i),
+    .s0_we_o  (rom_we_i),
+    .s0_cyc_o (rom_cyc_i),
+    .s0_stb_o (rom_stb_i),
+    .s0_ack_i (rom_ack_o),
 
-    // Slave 1 interface - vga
+     // Slave 1 interface - vga
     .s1_dat_i (vga_dat_o_s),
     .s1_dat_o (vga_dat_i_s),
     .s1_adr_o ({vga_tga_i_s,vga_adr_i_s}),
@@ -859,25 +895,45 @@ module kotku (
     .s7_stb_o (timer_stb_i),
     .s7_ack_i (timer_ack_o),
 
-    // Slave 8 interface - sdram
-    .s8_dat_i (fmlbrg_dat_r_s),
-    .s8_dat_o (fmlbrg_dat_w_s),
-    .s8_adr_o ({fmlbrg_tga_s,fmlbrg_adr_s}),
-    .s8_sel_o (fmlbrg_sel_s),
-    .s8_we_o  (fmlbrg_we_s),
-    .s8_cyc_o (fmlbrg_cyc_s),
-    .s8_stb_o (fmlbrg_stb_s),
-    .s8_ack_i (fmlbrg_ack_s),
+    // Slave 7 interface - flash
+    .s8_dat_i (fl_dat_o),
+    .s8_dat_o (fl_dat_i),
+    .s8_adr_o ({fl_tga_i,fl_adr_i}),
+    .s8_sel_o (fl_sel_i),
+    .s8_we_o  (fl_we_i),
+    .s8_cyc_o (fl_cyc_i),
+    .s8_stb_o (fl_stb_i),
+    .s8_ack_i (fl_ack_o),
 
-    // Slave 8 interface - default
-    .s9_dat_i (16'hffff),
+    // Slave 8 interface - not connected
+    .s9_dat_i (),
     .s9_dat_o (),
     .s9_adr_o (),
     .s9_sel_o (),
     .s9_we_o  (),
-    .s9_cyc_o (def_cyc_i),
-    .s9_stb_o (def_stb_i),
-    .s9_ack_i (def_cyc_i & def_stb_i)
+    .s9_cyc_o (),
+    .s9_stb_o (),
+    .s9_ack_i (),
+
+    // Slave 8 interface - sdram
+    .sA_dat_i (fmlbrg_dat_r_s),
+    .sA_dat_o (fmlbrg_dat_w_s),
+    .sA_adr_o ({fmlbrg_tga_s,fmlbrg_adr_s}),
+    .sA_sel_o (fmlbrg_sel_s),
+    .sA_we_o  (fmlbrg_we_s),
+    .sA_cyc_o (fmlbrg_cyc_s),
+    .sA_stb_o (fmlbrg_stb_s),
+    .sA_ack_i (fmlbrg_ack_s),
+
+    // Slave 9 interface - default
+    .sB_dat_i (16'hffff),
+    .sB_dat_o (),
+    .sB_adr_o (),
+    .sB_sel_o (),
+    .sB_we_o  (),
+    .sB_cyc_o (def_cyc_i),
+    .sB_stb_o (def_stb_i),
+    .sB_ack_i (def_cyc_i & def_stb_i)
   );
 
   // Continuous assignments

@@ -337,7 +337,7 @@ module kotku (
   assign rst = !rst_lck;
 `endif
 
-  biosrom bios(
+  bootrom bootrom (
     .clk (clk),            // Wishbone slave interface
     .rst (rst),
     .wb_dat_i (rom_dat_i),
@@ -351,10 +351,10 @@ module kotku (
     .wb_ack_o (rom_ack_o)
   );
 
-  flash flash (
+  flash16 flash16 (
     .wb_clk_i (clk),            // Main Clock
     .wb_rst_i (rst),            // Reset Line
-    .wb_adr_i (fl_adr_i[2:1]),  // Address lines
+    .wb_adr_i (fl_adr_i[1]),    // Address lines
     .wb_sel_i (fl_sel_i),       // Select lines
     .wb_dat_i (fl_dat_i),       // Command to send
     .wb_dat_o (fl_dat_o),       // Received data
@@ -766,8 +766,8 @@ module kotku (
     .s7_addr_1 (20'b1_0000_0000_0000_0100_000), // io 0x40 - 0x43
     .s7_mask_1 (20'b1_0000_1111_1111_1111_110), // Timer control port
 
-    .s8_addr_1 (20'b1_0000_0000_0010_0011_100), // io 0x0238 - 0x023f
-    .s8_mask_1 (20'b1_0000_1111_1111_1111_100), // Flash IO port
+    .s8_addr_1 (20'b1_0000_0000_0010_0011_100), // io 0x0238 - 0x023b
+    .s8_mask_1 (20'b1_0000_1111_1111_1111_110), // Flash IO port
 
     .s9_addr_1 (20'b1_0000_0000_0010_0001_000), // io 0x0210 - 0x021F
     .s9_mask_1 (20'b1_0000_1111_1111_1111_000), // Sound Blaster

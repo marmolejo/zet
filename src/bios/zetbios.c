@@ -1,10 +1,10 @@
 /*
  *  Zet PC system BIOS
  *  Copyright (C) 2009, 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
- *   ported to Open Watcom compiler by Donna Polehn <dpolehn@verizon.net>
+ *  Copyright (C) 2010        Donna Polehn <dpolehn@verizon.net>
  *
  *  This file is part of the Zet processor. This program is free software;
- *  you can redistribute it and/or modify it under the terms of the GNU 
+ *  you can redistribute it and/or modify it under the terms of the GNU
  *  General Public License as published by the Free Software Foundation;
  *  either version 3, or (at your option) any later version.
  *
@@ -116,12 +116,25 @@ static void wrch(Bit8u character)
     }
 }
 //--------------------------------------------------------------------------
+static void wcomport(Bit8u c)
+{
+    Bit8u  ticks;
+    ticks = read_byte(0x0040, 0x006C); // get current tick count
+
+    while(!inb(UART_LS & 0x40)) {     // wait for transmitter buffer to empty
+        if((ticks + 50) < read_byte(0x0040, 0x006C)) break;
+    }
+    while((ticks + 70) < read_byte(0x0040, 0x006C));
+    outb(UART,c);
+}
+//--------------------------------------------------------------------------
 static void send(Bit16u action, Bit8u  c)
 {
     if(action & BIOS_PRINTF_SCREEN) {
         if(c == '\n') wrch('\r');
         wrch(c);
     }
+    if(action & BIOS_PRINTF_COMPORT)  wcomport(c);
 }
 //--------------------------------------------------------------------------
 static void put_int(Bit16u action, short val, short width, bx_bool neg)
@@ -191,7 +204,7 @@ static void bios_printf(Bit16u action, Bit8u *s, ...)
     if((action & BIOS_PRINTF_DEBHALT) == BIOS_PRINTF_DEBHALT)
         bios_printf(BIOS_PRINTF_SCREEN, "FATAL: ");
 
-        while(c = read_byte(get_CS(), (Bit16u)s)) {
+    while(c = read_byte(get_CS(), (Bit16u)s)) {
         if( c == '%' ) {
             in_format = 1;
             format_width = 0;
@@ -262,6 +275,7 @@ static void bios_printf(Bit16u action, Bit8u *s, ...)
         }
         s ++;
     }
+
     if(action & BIOS_PRINTF_HALT) {  // freeze in a busy loop.
         __asm {
                         cli
@@ -277,10 +291,10 @@ static void bios_printf(Bit16u action, Bit8u *s, ...)
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 #define BIOS_COPYRIGHT_STRING   "(c) 2009, 2010 Zeus Gomez Marmolejo and (c) 2002 MandrakeSoft S.A."
-#define BIOS_BANNER             "Zet SoC BIOS - build date: "
-#define BIOS_BUILD_DATE         "31 Aug 2010\n"
-#define BIOS_VERS               "  Version: v1.1.1:15:g8c8e616\n"
-#define BIOS_DATE               "  Release date: 31 Aug 2010\n\n"
+#define BIOS_BANNER             "Zet Test BIOS - build date: "
+#define BIOS_BUILD_DATE         "(build-date)\n"
+#define BIOS_VERS               " Version: (git)\n"
+#define BIOS_DATE               " Version date: (commit-date)\n\n"
 void __cdecl print_bios_banner(void)
 {
     bios_printf(BIOS_PRINTF_SCREEN,BIOS_BANNER);
@@ -714,13 +728,9 @@ void __cdecl int09_function(Bit16u rAX)
     write_byte(0x0040, 0x96, mf2_state);
 }
 
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
 // INT13 Interupt handler function
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
 #define SET_DISK_RET_STATUS(status) write_byte(0x0040, 0x0074, status)
-//--------------------------------------------------------------------------
+
 void __cdecl int13_harddisk(rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS)
 Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 {
@@ -1062,54 +1072,6 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
     }
 }
 
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-//  Transfer Sector drive
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-static void transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset)
-{
-    __asm {
-                push  ax
-                push  bx
-                push  cx
-                push  dx
-                push  di
-                push  ds
-
-                mov  ax, s_segment       // segment
-                mov  ds, ax
-                mov  bx, s_offset        // offset
-                cmp  bx, 0xfe00          // adjust if there will be an overrun
-                jbe  transf_no_adjust
-                        
-                sub   bx, 0x0200         // sub 512 bytes from offset
-                mov   ax, ds
-                add   ax, 0x0020         // add 512 to segment
-                mov   ds, ax
-
-    transf_no_adjust:
-                mov  dx, 0xe000
-                mov  cx, 256
-                xor  di, di
-    one_sect:   in   ax, dx              // read word from flash
-                mov  ds:[bx+di], ax      // write word
-                inc  dx
-                inc  dx
-                inc  di
-                inc  di
-                loop one_sect
-                pop  ds
-                pop  di
-                pop  dx
-                pop  cx
-                pop  bx
-                pop  ax
-    }
-}
-
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
 // The principle of this routine is to copy directly from flash to the ram disk
 // Using the same call that is used to read the flash disk. This routine is
 // called from The assembly section during post. It is commented out here
@@ -1117,8 +1079,7 @@ static void transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset)
 // uncommenting it there and building the old way and it did not work. It does
 // not work here either. I have not been able to debug it. Maybe someone can
 // figure it out. It would be nice to have, but it is not working right now.
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
+
 void MakeRamdisk(void)
 {
 /*    
@@ -1131,11 +1092,8 @@ void MakeRamdisk(void)
     }
 */
 }
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
+
 // The RAM Disk is stored at 0x110000 to 0x277FFF in the SDRAM
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
 static Bit16u GetRamdiskSector(Bit16u Sector)
 {
     Bit16u Page;
@@ -1146,11 +1104,66 @@ static Bit16u GetRamdiskSector(Bit16u Sector)
     return((Sector & 0x001F) << 9); // Return the memory location within the sector
 }
 
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
+//  Transfer Sector drive
+#define FLASH_FLOPPY   0x010000         // Starting address of floppy on flash
+
+static void transf_sect_drive_a(Bit16u Sector, Bit16u s_segment, Bit16u s_offset)
+{
+    Bit32u Flash_Addr;
+    Bit16u  MSB, LSB;
+
+    Flash_Addr = (Bit32u)Sector;
+    Flash_Addr = (Flash_Addr * 256 + FLASH_FLOPPY) & 0x00FFFFFF; // can not be more than 24 bits
+    MSB = (Flash_Addr >> 16) & 0xFFFF;  // Most  siginificant bits of the address
+    LSB = (Flash_Addr      ) & 0xFFFF;  // Least siginificant bits  of the address
+
+    __asm {
+                push  ax                 // Save all the registers we are
+                push  bx                 // about to use onto the stack
+                push  cx
+                push  dx
+                push  di
+                push  ds
+
+                mov   ax, s_segment      // Load the segment address
+                mov   ds, ax             // intot the data segment register
+                mov   bx, s_offset       // load the offset
+                cmp   bx, 0xfe00         // adjust if there will be an overrun
+                jbe   transf_dat         // If no adjustment needed, do the transfer
+
+                sub   bx, 0x0200         // sub 512 bytes from offset
+                mov   ax, ds             // get the old segment
+                add   ax, 0x0020         // add 512 to segment
+                mov   ds, ax             // make this our new segment
+
+    transf_dat: mov   dx, FLASH_PORT+2   // Set DX reg to FLASH IO port for upper address bits
+                mov   ax, MSB            // Load start address MSB
+                out   dx, ax             // Save MSB address word
+                mov   cx, 256            // 512 bytes in 1 sector, done 1 word at a time
+                mov   di, bx             // put offset into data index register
+                mov   bx, LSB            // Flash LSB
+
+   sectloop:    mov   ax, bx             // Put bx into ax
+                mov   dx, FLASH_PORT     // Set DX reg to FLASH IO port for LSB
+                out   dx, ax             // Save LSB address word
+                mov   dx, FLASH_PORT     // Set DX reg to FLASH IO port
+                in    ax, dx             // read byte from flash
+                mov   ds:[di], ax        // write word
+                inc   di                 // Increment to next RAM address
+                inc   di                 // Increment to next RAM address
+                inc   bx                 // Increment to next flash address location
+                loop  sectloop           // Loop 256 times
+
+                pop   ds
+                pop   di
+                pop   dx
+                pop   cx
+                pop   bx                 // Restore all our
+                pop   ax                 // saved registers from the stack
+    }
+}
+
 // INT13 Diskette service function
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
 void __cdecl int13_diskette_function(rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS)
 Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 {
@@ -1192,12 +1205,16 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                 return;
             }
 
+            // a 1.44MB floppy actually has 1,474,560 bytes, 2*80*18= 2880 sectors *512= 1,474,560 (ta da)
+            //   2 sides (2 heads)
+            //  80 tracks per side
+            //  18 sectors per track
+            // 512 bytes per sector
             log_sector  = track * 36 + head * 18 + sector - 1;  // Calculate the first sector we are going to read
-            if(drive == DRIVE_A) {      // This is the Flash Based Drive
+            if(drive == DRIVE_A) {                   // This is the Flash Based Drive
                 for(j = 0; j < num_sectors; j++) {
-                    outw(FLASH_PAGE_REG, log_sector + j);       // We now have the correct page of flash selected 
-                    transf_sect_drive_a(rES, (rBX + (j << 9)));  // now just pass the place to copy it too, j<<9 is the same thing as multiplying by 512
-                }                                                // a good optimizing compiler probably does this for you anyway
+                    transf_sect_drive_a((log_sector + j), rES, (rBX + (j << 9)));   // now just pass the place to copy it too, j<<9 is the same thing as multiplying by 512
+                }                                                                   // a good optimizing compiler probably does this for you anyway
             }
             else {                  // This is the SDRAM based drive
                 base_address = (rES << 4) + rBX;           // Base Address is upper 12 bits of segment + offset
@@ -1560,11 +1577,11 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
     Bit16u mouse_driver_offset;
     Bit16u ebda_seg = read_word(0x0040,0x000E);
 
-//  BX_INT15_DEBUG_PRINTF("INT15 AL= %02x BH= %02x\n", (GET_AL()), (GET_BH()));        // Debugging info 
-   
-    if(GET_AH() != 0xC2) {          // Defensive measute, should always be 0xC2 here due to asm call
+    BX_INT15_DEBUG_PRINTF("INT15 AL= %02x BH= %02x\n", (GET_AL()), (GET_BH()));        // Debugging info
+
+    if(GET_AH() != 0xC2) {          // Defensive measure, should always be 0xC2 here due to asm call
         SET_CF();
-        SET_AH(UNSUPPORTED_FUNCTION);      
+        SET_AH(UNSUPPORTED_FUNCTION);
         BX_INT15_DEBUG_PRINTF("Error int15 mouse AH != 0xC2\n", (unsigned)(GET_AH()));
         return;
     }
@@ -1627,8 +1644,8 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
             
         case 5:                             // Initialize Mouse 
             if((GET_BH()) == 3) {                                       // Must always be a 3
-                write_byte(ebda_seg, 0x0026, 0x00);                     // Set packet size 
-                write_byte(ebda_seg, 0x0027, 0x03);                     // Reset packet count
+                write_byte(ebda_seg, 0x0026, 0x00);                     // Reset packet count
+                write_byte(ebda_seg, 0x0027, 0x03);                     // Set packet size
                 CLEAR_CF();                                             // Sucess flag indication
                 SET_AH(0);                                              // Sucess Code
             }
@@ -1641,8 +1658,8 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
                 
         case 1:                                         // Reset Mouse
             inhibit_mouse_int_and_events();             // disable IRQ12 and packets
-            write_byte(ebda_seg, 0x0026, 0x00);         // Set packet size 
-            write_byte(ebda_seg, 0x0027, 0x03);         // Reset packet count
+            write_byte(ebda_seg, 0x0026, 0x00);         // Reset packet count
+            write_byte(ebda_seg, 0x0027, 0x03);         // Set packet size
             mouse_data3 = send_to_mouse_ctrl(0xFF);     // reset mouse command
             if(mouse_data3 == 0xFA) {                   // Received proper ack
                 mouse_data1 = get_mouse_data();         // Mouse should return AA
@@ -1652,21 +1669,21 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
                 SET_AH(0);                              // Sucess Code
                 SET_BL(mouse_data1);                    // Return mouse codes
                 SET_BH(mouse_data2);                    // Return mouse codes
-            }                        
+            }
             else if(mouse_data3 == 0xFE) {              // Mouse sends this if there is some problem
                 SET_CF();                               // Error Flag
                 SET_AH(3);                              // Interface error return code
-                BX_INT15_DEBUG_PRINTF("Reset Mouse returned %02x\n", (unsigned)mouse_data3); 
-                
+                BX_INT15_DEBUG_PRINTF("Reset Mouse returned %02x\n", (unsigned)mouse_data3);
+
             }
             else {                                      // no valid mouse response received
                 SET_CF();                               // Error Flag
                 SET_AH(3);                              // Interface error return code
-                BX_INT15_DEBUG_PRINTF("Mouse reset returned %02x (should be ack)\n", (unsigned)mouse_data3);                
+                BX_INT15_DEBUG_PRINTF("Mouse reset returned %02x (should be ack)\n", (unsigned)mouse_data3);
             }
             break;
 
-        case 2:                                     // Set Sample Rate   
+        case 2:                                     // Set Sample Rate
             switch(GET_BH()) {
                 case 0:  mouse_data1 =  10; break; //  10 reports/sec
                 case 1:  mouse_data1 =  20; break; //  20 reports/sec
@@ -1680,26 +1697,33 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
             if(mouse_data1 == 0) {
                 SET_CF();                               // Error Flag
                 SET_AH(UNSUPPORTED_FUNCTION);           // Return unsupported function code
-                BX_INT15_DEBUG_PRINTF("Set Sample Rate Invalid parm %02x\n", (unsigned)(GET_BH()));                
+                BX_INT15_DEBUG_PRINTF("Set Sample Rate Invalid parm %02x\n", (unsigned)(GET_BH()));
             }
             else {                                          // User tried to send an unsupported value
+//                mouse_data2 = send_to_mouse_ctrl(0xF3);     // set sample rate command to mouse
+//                mouse_data2 = send_to_mouse_ctrl(mouse_data1); // then send the data
+                CLEAR_CF();                     // Sucess flag indication
+                SET_AH(0);                      // Sucess Code
+            }
+/*
                 mouse_data2 = send_to_mouse_ctrl(0xF3);     // set sample rate command to mouse
                 if(mouse_data2 == 0xFA) {                          // If we received proper ack code
                     mouse_data2 = send_to_mouse_ctrl(mouse_data1); // then send the data
-//                    if(mouse_data2 == 0xFA) {                      // If we received proper ack code
-                        CLEAR_CF();                     // Sucess flag indication 
+                    if(mouse_data2 == 0xFA) {                      // If we received proper ack code
+                        CLEAR_CF();                     // Sucess flag indication
                         SET_AH(0);                      // Sucess Code
-//                    }
+                    }
                 }
                 else {                                  // Mouse did not send the ack code
                     SET_CF();                           // Error Flag
                     SET_AH(UNSUPPORTED_FUNCTION);       // Return unsupported function code
-                    BX_INT15_DEBUG_PRINTF("Set Sample Rate returned %02x (should be ack)\n", (unsigned)mouse_data2); 
+                    BX_INT15_DEBUG_PRINTF("Set Sample Rate returned %02x (should be ack)\n", (unsigned)mouse_data2);
                 }
             }
+*/
             break;
 
-        case 3:             // Set Resolution       
+        case 3:             // Set Resolution
             // BH:
             //      0 =  25 dpi, 1 count  per millimeter
             //      1 =  50 dpi, 2 counts per millimeter
@@ -1711,17 +1735,17 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
                 if(mouse_data1 != 0xFA) {
                     SET_CF();                           // Error Flag
                     SET_AH(UNSUPPORTED_FUNCTION);       // Return unsupported function code
-                    BX_INT15_DEBUG_PRINTF("Set Resolution returned1 %02x (should be ack)\n", (unsigned)mouse_data1);                                    
+                    BX_INT15_DEBUG_PRINTF("Set Resolution returned1 %02x (should be ack)\n", (unsigned)mouse_data1);
                 }
                 else {
                     mouse_data1 = send_to_mouse_ctrl(GET_BH());    // Send value to mouse
                     if(mouse_data1 != 0xFA) {
                         SET_CF();                           // Error Flag
                         SET_AH(3);                          // Interface error return code
-                        BX_INT15_DEBUG_PRINTF("Set Resolution returned2 %02x (should be ack)\n", (unsigned)mouse_data1);                                    
+                        BX_INT15_DEBUG_PRINTF("Set Resolution returned2 %02x (should be ack)\n", (unsigned)mouse_data1);
                     }
-                    else {                                  // If all acks were received properly   
-                        CLEAR_CF();                         // Sucess flag indication 
+                    else {                                  // If all acks were received properly
+                        CLEAR_CF();                         // Sucess flag indication
                         SET_AH(0);                          // Sucess Code
                     }
                 }
@@ -1730,23 +1754,23 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
             else {                                      // User sent an unsupported value to us
                 SET_CF();                               // Error Flag
                 SET_AH(UNSUPPORTED_FUNCTION);           // Return unsupported function code
-                BX_INT15_DEBUG_PRINTF("Set Resolution invalid parm %02x\n", (unsigned)(GET_BH()));                                    
+                BX_INT15_DEBUG_PRINTF("Set Resolution invalid parm %02x\n", (unsigned)(GET_BH()));
             }
             break;
 
-        case 4:                                     // Get Device ID 
+        case 4:                                     // Get Device ID
             inhibit_mouse_int_and_events();         // disable IRQ12 and packets
             mouse_data1 = send_to_mouse_ctrl(0xF2); // get mouse ID command
             if(mouse_data1 == 0xFA) {               // If ack received
                 mouse_data2 = get_mouse_data();     // get device ID
-                CLEAR_CF();                         // Sucess flag indication 
+                CLEAR_CF();                         // Sucess flag indication
                 SET_AH(0);                          // Sucess Code
                 SET_BH(mouse_data2);                // return the paramter
             }
             else {                                  // Mouse did not recognize the 0xF2 command
                 SET_CF();                           // Error Flag
                 SET_AH(UNSUPPORTED_FUNCTION);       // Return unsupported function code
-                BX_INT15_DEBUG_PRINTF("Get Device ID returned %02x (should be ack)\n", (unsigned)mouse_data1);                                    
+                BX_INT15_DEBUG_PRINTF("Get Device ID returned %02x (should be ack)\n", (unsigned)mouse_data1);
             }
             break;
 
@@ -1768,7 +1792,7 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
                     else {
                         SET_CF();                           // Error Flag
                         SET_AH(UNSUPPORTED_FUNCTION);       // Return unsupported function code
-                        BX_INT15_DEBUG_PRINTF("Get Status returned %02x (should be ack)\n", (unsigned)mouse_data1);                                    
+                        BX_INT15_DEBUG_PRINTF("Get Status returned %02x (should be ack)\n", (unsigned)mouse_data1);
                     }
                     set_kbd_command_byte(comm_byte);        // restore IRQ12 and serial enable
                     break;
@@ -1785,7 +1809,7 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
                     else {
                         SET_CF();                           // Error Flag
                         SET_AH(UNSUPPORTED_FUNCTION);
-                        BX_INT15_DEBUG_PRINTF("Set Scaling returned1 %02x (should be ack)\n", (unsigned)mouse_data1);                                    
+                        BX_INT15_DEBUG_PRINTF("Set Scaling returned1 %02x (should be ack)\n", (unsigned)mouse_data1);
                     }
                     set_kbd_command_byte(comm_byte); // restore IRQ12 and serial enable
                     break;
@@ -1795,19 +1819,19 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
             }
             break;
 
-       case 7:         // Set Mouse Handler Address       
+       case 7:         // Set Mouse Handler Address
            mouse_driver_seg    = rES;
            mouse_driver_offset = rBX;
            write_word(ebda_seg, 0x0022, mouse_driver_offset);
            write_word(ebda_seg, 0x0024, mouse_driver_seg);
            mouse_flags_2 = read_byte(ebda_seg, 0x0027);
-           if(mouse_driver_offset == 0 && mouse_driver_seg == 0) {  // remove handler 
+           if(mouse_driver_offset == 0 && mouse_driver_seg == 0) {  // remove handler
                if((mouse_flags_2 & 0x80) != 0 ) {
                    mouse_flags_2 &= ~0x80;
                    inhibit_mouse_int_and_events(); // disable IRQ12 and packets
                }
            }
-           else {      // install handler 
+           else {      // install handler
                mouse_flags_2 |= 0x80;
            }
            write_byte(ebda_seg, 0x0027, mouse_flags_2);
@@ -1815,8 +1839,8 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
            SET_AH(0);
            break;
 
-       default:        
-           BX_INT15_DEBUG_PRINTF("case default\n");
+       default:
+           BX_INT15_DEBUG_PRINTF("case default INT 15h C2 AL=%02x, BH=%02x\n", (unsigned char)(GET_AH()),(unsigned char)(GET_BH()));
            SET_AH(1);                   // invalid function
            SET_CF();
            break;
@@ -1897,7 +1921,7 @@ static Bit8u send_to_mouse_ctrl(Bit8u sendbyte)
 {
 //  if(inb(MOUSE_CNTL) & 0x02) BX_PANIC(panic_msg_keyb_buffer_full,"sendmouse");
     Bit8u try, mouse_data; 
-    try = 3;                                    // Try 3 times before giving up
+    try = 5;                                    // Try 5 times before giving up
     do {
         outb(MOUSE_CNTL, 0xD4);                 // Enable sending to mouse
         outb(MOUSE_PORT, sendbyte);             // Send the byte to mouse
@@ -1932,6 +1956,13 @@ void __cdecl int19_function(void)
     Bit16u bootip;
     Bit16u status;
     ipl_entry_t e;
+
+    #if SHOW_INT15_DEBUG_MSGS
+        outb(UART_LC, 0x83);    // set up uart for 115.2kbps
+        outb(UART_TR, 0x01);    // set up uart for 115.2kbps
+        outb(UART_IE, 0x00);    // set up uart for 115.2kbps
+        outb(UART_LC, 0x03);    // set up uart for 115.2kbps
+    #endif
 
     // Here we assume that BX_ELTORITO_BOOT is defined, so
     //   CMOS regs 0x3D and 0x38 contain the boot sequence:

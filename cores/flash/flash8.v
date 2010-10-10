@@ -1,4 +1,5 @@
 /*
+ *  Wishbone Flash RAM core for Altera DE1 board
  *  Copyright (c) 2009  Zeus Gomez Marmolejo <zeus@opencores.org>
  *
  *  This file is part of the Zet processor. This processor is free
@@ -16,18 +17,17 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module flash (
+module flash8 (
     // Wishbone slave interface
     input         wb_clk_i,
     input         wb_rst_i,
     input  [15:0] wb_dat_i,
     output [15:0] wb_dat_o,
-    input  [16:1] wb_adr_i,
     input         wb_we_i,
-    input         wb_tga_i,
+    input         wb_adr_i,
+    input  [ 1:0] wb_sel_i,
     input         wb_stb_i,
     input         wb_cyc_i,
-    input  [ 1:0] wb_sel_i,
     output        wb_ack_o,
 
     // Pad signals
@@ -41,31 +41,29 @@ module flash (
 
   // Registers and nets
   wire        op;
-  wire        opbase;
+  wire        wr_command;
+  reg  [20:0] address;
+
   wire        word;
   wire        op_word;
   reg         st;
   reg  [ 7:0] lb;
-  reg  [11:0] base;
 
-  // Continuous assignments
+  // Combinatorial logic
   assign op      = wb_stb_i & wb_cyc_i;
-  assign opbase  = op & wb_tga_i & wb_we_i;
   assign word    = wb_sel_i==2'b11;
-  assign op_word = op & word;
+  assign op_word = op & word & !wb_we_i;
 
   assign flash_rst_n_ = 1'b1;
   assign flash_we_n_  = 1'b1;
   assign flash_oe_n_  = !op;
   assign flash_ce_n_  = !op;
 
-  assign flash_addr_[21:1] =
-    wb_tga_i ? { 1'b1, base, wb_adr_i[8:1] }
-             : { 5'h0, wb_adr_i };
+  assign flash_addr_[21:1] = address;
+  assign flash_addr_[0]    = (wb_sel_i==2'b10) | (word & st);
+  assign wr_command        = op & wb_we_i;  // Wishbone write access Signal
 
-  assign flash_addr_[0] = (wb_sel_i==2'b10) | (word & st);
-
-  assign wb_ack_o = op & (word ? st : 1'b1);
+  assign wb_ack_o = op & (op_word ? st : 1'b1);
   assign wb_dat_o = wb_sel_i[1] ? { flash_data_, lb }
                                 : { 8'h0, flash_data_ };
 
@@ -78,8 +76,20 @@ module flash (
   always @(posedge wb_clk_i)
     lb <= wb_rst_i ? 8'h0 : (op_word ? flash_data_ : 8'h0);
 
-  // base
-  always @(posedge wb_clk_i)
-    base <= wb_rst_i ? 12'h0: ((opbase) ? wb_dat_i[11:0] : base);
+  // --------------------------------------------------------------------
+  // Register addresses and defaults
+  // --------------------------------------------------------------------
+  `define FLASH_ALO   1'h0    // Lower 16 bits of address lines
+  `define FLASH_AHI   1'h1    // Upper  6 bits of address lines
+  always @(posedge wb_clk_i)  // Synchrounous
+    if(wb_rst_i)
+      address <= 21'h000000;  // Interupt Enable default
+    else
+      if(wr_command)          // If a write was requested
+        case(wb_adr_i)        // Determine which register was writen to
+            `FLASH_ALO: address[15: 0] <= wb_dat_i;
+            `FLASH_AHI: address[20:16] <= wb_dat_i[4:0];
+            default:    ;     // Default
+        endcase               // End of case
 
 endmodule

@@ -20,7 +20,7 @@
 // The following is to get rid of the warning about not initializing the ROM
 // altera message_off 10030
 
-module biosrom (
+module bootrom (
     input clk,
     input rst,
 
@@ -48,6 +48,6 @@ module biosrom (
   assign wb_ack_o = stb;
   assign wb_dat_o = rom[rom_addr];
 
-  initial $readmemh("biosrom.dat", rom);
+  initial $readmemh("bootrom.dat", rom);
 
 endmodule

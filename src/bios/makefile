@@ -1,5 +1,5 @@
 #
-#  Makefile for building the Zet BIOS in Windows
+#  Makefile for building the Zet BIOS in Linux
 #  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
 #  Copyright (C) 2010  Donna Polehn <dpolehn@verizon.net>
 #
@@ -19,7 +19,7 @@
 #
 
 #
-#  ZET BIOS BUILD MAKE - Windows version - 05-24-2010
+#  ZET BIOS BUILD MAKE - Linux version - 10-10-2010
 #  ----------------------------------------------------------------------------
 #
 #  This is the make file for the Zet Rom BIOS and VGA BIOS Builds.
@@ -29,26 +29,22 @@
 #  messages, this is normal.
 #
 
-# File extension in Windows
-O = .obj
-E = .exe
+# File extension in Linux
+O = .o
+E =
 
 # Current directory (for executing programs)
-CDIR = .\
+CDIR = ./
 
-all: bios.hex zetbios.dat
+all: bios.rom zetbios.dat
 
 !include "common.inc"
 
-#
-# This is a simple copy of the vga.asm, as we cannot execute git describe and
-# execute "sed" in Windows. Anyway, this is only important in the release
-#
 vga_vers.asm: vga.asm
-	copy vga.asm vga_vers.asm
+	bash -c "sed 's/(git)/$$(git describe)/g' vga.asm > vga_vers.asm"
 
 zetbios_vers.c: zetbios.c
-	copy zetbios.c zetbios_vers.c
+	bash -c "sed 's/(git)/$$(git describe)/g' zetbios.c | sed 's/(build-date)/$$(date -R)/g' | sed 's/(commit-date)/$$(git log -1 --pretty=format:%cD)/g' > zetbios_vers.c"
 
 #
 # This section combines all 3 rom sections built below, into one 128K ROM
@@ -57,69 +53,55 @@ zetbios_vers.c: zetbios.c
 # download into your DE1 board.
 #
 bios.rom: vgabios.rom ff.rom zetbios.rom
-	copy /b vgabios.rom+ff.rom+zetbios.rom $@
+	cat vgabios.rom ff.rom zetbios.rom > $@
 
 # HEX ROM MAKE ---------------------------------------------------------------
 # This section converts the bios rom binary file into a hex file that the
 # DE0 loader program can use to program the Flash Ram on the DE0 board.
 # ----------------------------------------------------------------------------
-bios.hex: bios.rom hexer.exe zetbios.dat
-	hexer bios.rom
+bios.hex: bios.rom hexer zetbios.dat
+	$(CDIR)hexer bios.rom
 
 # DAT SHADOW ROM MAKE --------------------------------------------------------
 # This section converts the last 256 bytes of the bios rom to a dat file (hex)
 # that needs to be included in the Quartus project build. The last 256 bytes
 # of the ROM is the shadow boot rom section.
 # ----------------------------------------------------------------------------
-zetbios.dat: zetbios.rom mifer.exe
-	mifer zetbios.rom
-	copy zetbios.dat ..\..\boards\altera-de0\rtl
+zetbios.dat: zetbios.rom mifer
+	$(CDIR)mifer zetbios.rom
+	cp -f zetbios.dat ../../cores/flash/bootrom.dat
 
-# Make Utilities -------------------------------------------------------------
-# This section compiles the following utilities:
-#  biossums.exe - Computes bios rom checksum value and appends it to the rom
-#  vgasums.exe  - Same thing but for the vga rom
-#  ff.exe       - Fills the space between vga and bios with 0xFF
-#  meow.exe     - Concatenates the vga, ff and bios roms together into 1 file
-#  hexer.exe    - Converts the finished bios rom to hex
-#  mifer.exe    - Makes the Shadow Boot rom
+#
+# This section compiles and links the biossums, vgasums and ff utilities.
+# The biossums is used to computer the checksum byte which is then tacked
+# onto the end of zetbios.rom. The vgasums program scans the vgabios.rom
+# file, computes the checksum which is added to the end. It also pads the
+# file out to a full 32k. The ff utility just makes a 32k file of 0xFF which
+# is used to pad it to a full 64k segment. After all that, both rom files will
+# be 64K in length and ready to be programed into the flash.
 #
 # The C option flags for this build are standard console build since
 # these utilities will run on your PC not on the ZET
-# ----------------------------------------------------------------------------
-C386OPTS = -w4 -e25 -zq -od -d2 -6r -bt=nt -fo=.obj -mf
+#
 
-ff$(E): ff$(O) .autodepend
-	wlink name ff d all sys nt op m op maxe=25 op q op symf FIL ff.obj
+ff: ../tools/ff.c
+	gcc ../tools/ff.c -o ff
 
-ff$(O): ..\tools\ff.c
-	wcc386 $(C386OPTS) ..\tools\ff.c
+biossums: ../tools/biossums.c
+	gcc ../tools/biossums.c -o biossums
 
-biossums$(E): biossums$(O) .autodepend
-	wlink name biossums d all sys nt op m op maxe=25 op q op symf FIL biossums.obj
+vgasums: ../tools/vgasums.c
+	gcc ../tools/vgasums.c -o vgasums
 
-biossums$(O): ..\tools\biossums.c
-	wcc386 $(C386OPTS) ..\tools\biossums.c
+hexer: ../tools/hexer.c
+	gcc ../tools/hexer.c -o hexer
 
-vgasums$(E): vgasums$(O) .autodepend
-	wlink name vgasums d all sys nt op m op maxe=25 op q op symf FIL vgasums.obj
-
-vgasums$(O): ..\tools\vgasums.c
-	wcc386 $(C386OPTS) ..\tools\vgasums.c
-
-hexer$(E): hexer$(O) .autodepend
-    wlink name hexer d all sys nt op m op maxe=25 op q op symf FIL hexer.obj
-
-hexer$(O): ..\tools\hexer.c
-    wcc386 $(C386OPTS) ..\tools\hexer.c
-
-mifer$(E): mifer$(O) .autodepend
-    wlink name mifer d all sys nt op m op maxe=25 op q op symf FIL mifer.obj
-
-mifer$(O): ..\tools\mifer.c
-    wcc386 $(C386OPTS) ..\tools\mifer.c
+mifer: ../tools/mifer.c
+	gcc ../tools/mifer.c -o mifer
 
 clean:
-	del  *.dat *.hex *.o *.obj *.sym *.rom *.exe *.err *.map *.flash zetbios_vers.c vga_vers.asm ff biossums vgasums mifer hexer
+	rm -f *.dat *.hex *.o *.obj *.sym *.rom *.exe *.err *.map *.flash zetbios_vers.c vga_vers.asm ff biossums vgasums mifer hexer
 
-
+#
+#  End of make.
+#

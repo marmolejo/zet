@@ -1,10 +1,10 @@
 ;
 ;  Zet PC system BIOS helper functions in 8086 assembly
 ;  Copyright (C) 2009, 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
-;   ported to Open Watcom compiler by Donna Polehn <dpolehn@verizon.net>
+;  Copyright (C) 2010        Donna Polehn <dpolehn@verizon.net>
 ;
 ;  This file is part of the Zet processor. This program is free software;
-;  you can redistribute it and/or modify it under the terms of the GNU 
+;  you can redistribute it and/or modify it under the terms of the GNU
 ;  General Public License as published by the Free Software Foundation;
 ;  either version 3, or (at your option) any later version.
 ;
@@ -133,8 +133,8 @@ startofrom              equ     0e000h
                         .8086           ;; this forces it to use 80186 and lower
 _BIOSSEG                SEGMENT 'CODE'
                         assume  cs:_BIOSSEG
-biosrom:                org     0000h           ;; start of ROM, get placed at 0E000h
-bios_name_string:       db      "zetbios 1.0"   ;; version string, not used by code
+bootrom:                org     0000h           ;; start of ROM, get placed at 0E000h
+bios_name_string:       db      "zetbios 1.1"   ;; version string, not used by code
                         db      0,0,0,0         ;; padding
 
 ;;---------------------------------------------------------------------------
@@ -152,31 +152,8 @@ bios_name_string:       db      "zetbios 1.0"   ;; version string, not used by c
 ;; - calls int19 which boots up the OS
 ;;---------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
-                        org     (0e05bh - startofrom)   
-post:                   xor     ax, ax          ; Clear AX register
-normal_post:            cli                     ; case 0: normal startup
-                        mov     dx, 0f200h      ; CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_BYPASS|HPDMC_SYSTEM_RESET|HPDMC_SYSTEM_CKE;
-                        mov     ax, 7           ; Bring CKE high
-                        out     dx, ax          ; Initialize the SDRAM controller
-                        mov     dx, 0f202h      ; Precharge All
-                        mov     ax, 0400bh      ; CSR_HPDMC_BYPASS = 0x400B;
-                        out     dx, ax          ; Output the word of data to the SDRAM Controller
-                        mov     ax, 0000dh      ; CSR_HPDMC_BYPASS = 0xD;
-                        out     dx, ax          ; Auto refresh
-                        mov     ax, 0000dh      ; CSR_HPDMC_BYPASS = 0xD;
-                        out     dx, ax          ; Auto refresh
-                        mov     ax, 023fh       ; CSR_HPDMC_BYPASS = 0x23F;
-                        out     dx, ax          ; Load Mode Register, Enable DLL
-                        mov     cx, 50          ; Wait about 200 cycles
-a:                      loop    a               ; Loop until 50 goes to zero
-                        mov     dx, 0f200h      ; CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_CKE;
-                        mov     ax, 4           ; Leave Bypass mode and bring up hardware controller
-                        out     dx, ax          ; Output the word of data to the SDRAM Controller
-                        mov     ax, 0fffeh      ; We are done with the controller, we can use the memory now
-                        mov     sp, ax          ; set the stack pointer to fffe (top)
-                        xor     ax, ax          ; clear ax register
-                        mov     ds, ax          ; set data segment to 0
-                        mov     ss, ax          ; set stack segment to 0
+                        org     (0e05bh - startofrom)
+post:                   xor     ax, ax          ; clear ax register
                         mov     es, ax          ; zero out BIOS data area (40:00..40:ff)
                         mov     cx, 0080h       ; 128 words
                         mov     di, 0400h       ; Point index register to bda area
@@ -247,7 +224,7 @@ ebda_post:              mov     ax, EBDA_SEG                          ;; EBDA Se
                         ;           5432109876543210
                     ;;  mov     ax, 0000010001000001B    ; where we setup the equipment list, see INT11 
                         mov     ax, 0000001000100101B    ; where we setup the equipment list, see INT11 
-                        mov     WORD PTR ds:0410h, ax       ; Equipment word bits 9..11 determing # serial ports
+                        mov     WORD PTR ds:0410h, ax    ; Equipment word bits 9..11 determing # serial ports
 
                         SET_INT_VECTOR 01Ah, 0F000h, int1a_handler    ;; CMOS RTC
                         SET_INT_VECTOR 010h, 0F000h, int10_handler    ;; int10_handler - Video Support Service Entry Point
@@ -695,9 +672,9 @@ baud_rates:             dw      0417h               ;  110 baud clock divisor
                         dw      0018h               ; 4800 baud clock divisor
                         dw      000Ch               ; 9600 baud clock divisor
 
-;int14_handler:          sti                         ; Serial com. RS232 services
-;                        cli                         ; enale interrupts
-;                        iret                        ; Baud Rate Generator Table
+;int14_handler:         sti                         ; Serial com. RS232 services
+;                       cli                         ; enale interrupts
+;                       iret                        ; Baud Rate Generator Table
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -1012,6 +989,8 @@ int1a_handler:          push    ds                      ;; Save all registers th
                         push    bp                      ;; Save Base Pointer
                         push    si                      ;; Save segment index
                         push    di                      ;; Save data index
+                        mov     ax, 0f000h              ;; Bios data segment
+                        mov     ds, ax                  ;; set the data seg to the bios
                         push    dx                      ;; for the C program to receive
                         push    cx                      ;; for the C program to receive
                         push    ax                      ;; Pass the user command
@@ -1025,7 +1004,7 @@ int1a_handler:          push    ds                      ;; Save all registers th
                         pop     bx                      ;; routines returns with the Zero Flag
                         pop     ds                      ;; Set correctly
                         iret            ;; IRET Instruction for Dummy Interrupt Handler
-                        
+
 ;;--------------------------------------------------------------------------
 ;; INT 1C Dummy Handler routing
 ;;--------------------------------------------------------------------------
@@ -1073,14 +1052,103 @@ int08_store_ticks:      mov     WORD PTR ds:046ch, ax           ;; store new tic
                         iret
 
 ;;--------------------------------------------------------------------------
+;;---------------------------------------------------------------------------
+;;
+;; S H A D O W      B O O T      S E C T I O N:
+;;
+;; This is the only section of the bios that will reside in the ROM. The rest
+;; of the BIOS is loaded into DRAM by this section of code prior to POST.
 ;;--------------------------------------------------------------------------
+;;---------------------------------------------------------------------------
+
+;; BIOS Strings: These strings are not actually used for anything, they are
+;; placed in the file so that the binary file can be identified later.
+                        org     (0ff00h - startofrom)
+
+BIOS_COPYRIGHT_STRING equ     "Zet Bios 1.1 (C) 2010 Zeus Gomez Marmolejo, Donna Polehn"
+MSG1:                   db      BIOS_COPYRIGHT_STRING
+                        db      0
+
 ;; IRET Instruction for Dummy Interrupt Handler -
-;; Also INT1Ch - User Timer Tick and INT1B
-;;--------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
+;; Also INT1C - User Timer Tick and INT1B
                         org     (0ff53h - startofrom)
-dummy_iret_handler:     
-                        iret            ;; IRET Instruction for Dummy Interrupt Handler
+dummy_iret_handler:     iret            ;; IRET Instruction for Dummy Interrupt Handler
+                        db      0
+
+;;--------------------------------------------------------------------------
+;; First we have to prepare DRAM for use:
+;;--------------------------------------------------------------------------
+SDRAM_POST:             xor     ax, ax          ; Clear AX register
+                        cli                     ; Disable interupt for startup
+                        mov     dx, 0f200h      ; CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_BYPASS|HPDMC_SYSTEM_RESET|HPDMC_SYSTEM_CKE;
+                        mov     ax, 7           ; Bring CKE high
+                        out     dx, ax          ; Initialize the SDRAM controller
+                        mov     dx, 0f202h      ; Precharge All
+                        mov     ax, 0400bh      ; CSR_HPDMC_BYPASS = 0x400B;
+                        out     dx, ax          ; Output the word of data to the SDRAM Controller
+                        mov     ax, 0000dh      ; CSR_HPDMC_BYPASS = 0xD;
+                        out     dx, ax          ; Auto refresh
+                        mov     ax, 0000dh      ; CSR_HPDMC_BYPASS = 0xD;
+                        out     dx, ax          ; Auto refresh
+                        mov     ax, 023fh       ; CSR_HPDMC_BYPASS = 0x23F;
+                        out     dx, ax          ; Load Mode Register, Enable DLL
+                        mov     cx, 50          ; Wait about 200 cycles
+a_delay:                loop    a_delay         ; Loop until 50 goes to zero
+                        mov     dx, 0f200h      ; CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_CKE;
+                        mov     ax, 4           ; Leave Bypass mode and bring up hardware controller
+                        out     dx, ax          ; Output the word of data to the SDRAM Controller
+                        mov     ax, 0fffeh      ; We are done with the controller, we can use the memory now
+                        mov     sp, ax          ; set the stack pointer to fffe (top)
+                        xor     ax, ax          ; clear ax register
+                        mov     ds, ax          ; set data segment to 0
+                        mov     ss, ax          ; set stack segment to 0
+
+;;--------------------------------------------------------------------------
+;; Copy Shadow BIOS from Flash into SDRAM after SDRAM has been initialized
+;;---------------------------------------------------------------------------
+FLASH_PORT              equ     0x0238                  ;; Flash RAM port
+VGABIOSSEGMENT          equ     0xC000                  ;; VGA BIOS Segment
+VGABIOSLENGTH           equ     0x4000                  ;; Length of VGA Bios in Words
+ROMBIOSSEGMENT          equ     0xF000                  ;; ROM BIOS Segment
+ROMBIOSLENGTH           equ     0x7F80                  ;; Copy up to this ROM in Words
+
+;;--------------------------------------------------------------------------
+shadowcopy:             mov     ax, VGABIOSSEGMENT      ;; Load with the segment of the vga bios rom area
+                        mov     es, ax                  ;; BIOS area segment
+                        xor     bp, bp                  ;; Bios starts at offset address 0
+                        mov     cx, VGABIOSLENGTH       ;; VGA Bios is <32K long
+                        mov     dx, FLASH_PORT+2        ;; Set DX reg to FLASH IO port
+                        mov     ax, 0x0000              ;; Load MSB address
+                        out     dx, ax                  ;; Save MSB address word
+                        mov     bx, 0x0000              ;; Bios starts at offset address 0
+                        call    biosloop                ;; Call bios IO loop
+
+;;--------------------------------------------------------------------------
+                        mov     ax, ROMBIOSSEGMENT      ;; Load with the segment of the extra bios rom area
+                        mov     es, ax                  ;; BIOS area segment
+                        xor     bp, bp                  ;; Bios starts at offset address 0
+                        mov     cx, ROMBIOSLENGTH       ;; Bios is 64K long - Showdow rom len
+                        mov     dx, FLASH_PORT+2        ;; Set DX reg to FLASH IO port
+                        mov     ax, 0x0000              ;; Load start address
+                        out     dx, ax                  ;; Save MSB address word
+                        mov     bx, 0x8000              ;; Bios starts at offset address 0x8000
+                        call    biosloop                ;; Call bios IO loop
+
+                        jmp     far ptr post            ;; Continue with regular POST
+
+;;--------------------------------------------------------------------------
+biosloop:               mov     ax, bx                  ;; Put bx into ax
+                        mov     dx, FLASH_PORT          ;; Set DX reg to FLASH IO port
+                        out     dx, ax                  ;; Save LSB address word
+                        mov     dx, FLASH_PORT          ;; Set DX reg to FLASH IO port
+                        in      ax, dx                  ;; Get input word into ax register
+                        mov     word ptr es:[bp], ax    ;; Save that word to next place in RAM
+                        inc     bp                      ;; Increment to next address location
+                        inc     bp                      ;; Increment to next address location
+                        inc     bx                      ;; Increment to next flash address location
+                        loop    biosloop                ;; Loop until bios is loaded up
+                        ret                             ;; Return
+;;--------------------------------------------------------------------------
 
 ;;---------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -1088,33 +1156,16 @@ dummy_iret_handler:
 ;; on Reset - Processor starts at this location. This is the first instruction
 ;; that gets executed on start up. So we just immediately jump to the entry
 ;; Point for the Bios which is the POST (which stands for Power On Self Test).
-;;---------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-                        org     (0fff0h - startofrom)          ;; Power-up Entry Point
-                        jmp     far ptr post
+                        org     (0fff0h - startofrom)   ;; Power-up Entry Point
+                        jmp     far ptr SDRAM_POST      ;; Boot up bios
 
-;;--------------------------------------------------------------------------
-;;---------------------------------------------------------------------------
-;; BIOS Strings:
-;; These strings are not actually used for anything, they are placed in the
-;; file so that the binary file can be identified later.
-;;---------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-BIOS_COPYRIGHT_STRING   equ     "(c) 2009, 2010 Zeus Gomez Marmolejo and (c) 2002 MandrakeSoft S.A."
-BIOS_BUILD_DATE         equ     "04/5/10\n"
-                                org     (0ff00h - startofrom)
-MSG1:                   db      BIOS_COPYRIGHT_STRING
-
-;;---------------------------------------------------------------------------
-                                org     (0fff5h - startofrom)   ;; ASCII Date ROM was built - 8 characters in MM/DD/YY
+                        org     (0fff5h - startofrom)   ;; ASCII Date ROM was built - 8 characters in MM/DD/YY
+BIOS_BUILD_DATE         equ     "09/09/10\n"
 MSG2:                   db      BIOS_BUILD_DATE
-                                org     (0fffeh -startofrom)    ;; Put the 
-;;SYS_MODEL_ID                  equ     0FCh                    ;; System Model ID 
-                                db      SYS_MODEL_ID            ;; here
-                                db      0
 
-;;--------------------------------------------------------------------------
+                        org     (0fffeh -startofrom)    ;; Put the SYS_MODEL_ID
+                        db      SYS_MODEL_ID            ;; here
+                        db      0
+
 _BIOSSEG                ends                    ;; End of code segment
-                        end             biosrom ;; End of this program
-;;---------------------------------------------------------------------------
-
+                        end             bootrom ;; End of this program

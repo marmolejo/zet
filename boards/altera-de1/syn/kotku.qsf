@@ -18,7 +18,7 @@
 #
 # Quartus II
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 23:47:45  October 09, 2010
+# Date created = 03:02:06  October 10, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -43,6 +43,9 @@ set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
 set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch_11.v
+set_global_assignment -name VERILOG_FILE ../../../cores/flash/flash8.v
+set_global_assignment -name VERILOG_FILE ../../../cores/flash/bootrom.v
 set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_iface.v
 set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_i2c_controller.v
 set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_i2c_av_config.v
@@ -116,7 +119,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc.v
 set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
-set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
 set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
@@ -125,7 +127,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/hex_display.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/seg_7.v
 set_global_assignment -name VERILOG_FILE ../rtl/pll.v
-set_global_assignment -name VERILOG_FILE ../rtl/flash.v
 set_global_assignment -name SIGNALTAP_FILE stp1.stp
 
 # Pin & Location Assignments

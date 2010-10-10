@@ -1,7 +1,7 @@
 ;
 ;  Zet PC system VGA BIOS helper functions in 8086 assembly
 ;  Copyright (C) 2009, 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
-;   ported to Open Watcom compiler by Donna Polehn <dpolehn@verizon.net>
+;  Copyright (C) 2010        Donna Polehn <dpolehn@verizon.net>
 ;
 ;  This file is part of the Zet processor. This program is free software;
 ;  you can redistribute it and/or modify it under the terms of the GNU 
