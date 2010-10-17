@@ -518,7 +518,7 @@ module kotku (
     .sdram_dq    (sdram_data_)
   );
 
-  wb_abrg vga_brg (
+  wb_abrgr vga_brg (
     .sys_rst (rst),
 
     // Wishbone slave interface
@@ -546,6 +546,12 @@ module kotku (
     .wbm_ack_i (vga_ack_o)
   );
 
+  wire [17:1] csrm_adr_o;
+  wire [ 1:0] csrm_sel_o;
+  wire        csrm_we_o;
+  wire [15:0] csrm_dat_o;
+  wire [15:0] csrm_dat_i;
+
   vga vga (
     .wb_rst_i (rst),
 
@@ -568,7 +574,25 @@ module kotku (
     .horiz_sync  (tft_lcd_hsync_),
     .vert_sync   (tft_lcd_vsync_),
 
-    // SRAM pad signals
+    // CSR SRAM master interface
+    .csrm_adr_o (csrm_adr_o),
+    .csrm_sel_o (csrm_sel_o),
+    .csrm_we_o  (csrm_we_o),
+    .csrm_dat_o (csrm_dat_o),
+    .csrm_dat_i (csrm_dat_i)
+  );
+
+  csr_sram csr_sram (
+    .sys_clk (vga_clk),
+
+    // CSR slave interface
+    .csr_adr_i (csrm_adr_o),
+    .csr_sel_i (csrm_sel_o),
+    .csr_we_i  (csrm_we_o),
+    .csr_dat_i (csrm_dat_o),
+    .csr_dat_o (csrm_dat_i),
+
+    // Pad signals
     .sram_addr_ (sram_addr_),
     .sram_data_ (sram_data_),
     .sram_we_n_ (sram_we_n_),
@@ -949,10 +973,11 @@ module kotku (
 
   // Continuous assignments
   assign rst_lck    = !sw_[0] & lock;
-  assign sdram_clk_ = sdram_clk;
 
   assign dat_i = inta ? { 13'b0000_0000_0000_1, iid }
                : sw_dat_o;
+
+  assign sdram_clk_ = sdram_clk;
 
   assign ledg_[3:0] = pc[3:0];
 
