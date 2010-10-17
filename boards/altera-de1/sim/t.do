@@ -49,6 +49,8 @@ add wave -label dat_o     -hex kotku/dat_o
 add wave -label dat_i     -hex kotku/dat_i
 add wave -label we        -hex kotku/we
 add wave -label tga       -hex kotku/tga
+add wave -label cs        -hex kotku/zet/wb_master/cs
+add wave -label ns        -hex kotku/zet/wb_master/ns
 
 add wave -divider flash
 add wave -label addr  -hex /flash_addr
@@ -68,5 +70,8 @@ add wave -label addr_d  -hex kotku/zet/core/exec/regfile/addr_d
 add wave -label wr      -hex kotku/zet/core/exec/regfile/wr
 add wave -label exec_st -hex kotku/zet/core/exec_st
 
+add wave -divider GPIO
+add wave -label ledg_   -hex kotku/ledg_
+add wave -label ledr_   -hex kotku/ledr_
 
-run 5us
+run 3us

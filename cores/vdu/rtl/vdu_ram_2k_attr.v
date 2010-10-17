@@ -1,9 +1,6 @@
 /*
- *  Phase accumulator clock generator:
- *   Output Frequency Fo = Fc * N / 2^bits
- *   Output Jitter = 1/Fc
- *
- *  Copyright (c) 2009,2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
+ *  Internal RAM for VGA
+ *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -20,23 +17,29 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module clk_gen #(
-    parameter res    = 20,    // bits - bit resolution
-    parameter phase  =  1     // N - phase value for the counter
-  )(
-    input      clk_i, // Fc - input frequency
-    input      rst_i,
-    output     clk_o  // Fo - output frequency
+module vdu_ram_2k_attr (
+    input         clk,
+    input         rst,
+    input         we,
+    input  [10:0] addr,
+    output [ 7:0] rdata,
+    input  [ 7:0] wdata
   );
 
   // Registers and nets
-  reg [res-1:0] cnt;
+  reg [ 7:0] mem[0:2047];
+  reg [10:0] addr_reg;
 
-  // Continuous assignments
-  assign clk_o = cnt[res-1];
+  always @(posedge clk)
+    begin
+      if (we) mem[addr] <= wdata;
+      addr_reg <= addr;
+    end
 
-  // Behaviour
-  always @(posedge clk_i)
-    cnt <= rst_i ? {res{1'b0}} : (cnt + phase);
+  // Combinatorial logic
+  assign rdata = mem[addr_reg];
+
+  initial $readmemh("attr_rom.dat", mem);
 
 endmodule
+

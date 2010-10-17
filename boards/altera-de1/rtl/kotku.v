@@ -187,7 +187,7 @@ module kotku (
   wire        timer_ack_o;
 
   // wires to sd controller
-  wire [15:0] sd_dat_o;
+  wire [ 7:0] sd_dat_o;
   wire [15:0] sd_dat_i;
   wire [ 1:0] sd_sel_i;
   wire        sd_we_i;
@@ -256,6 +256,9 @@ module kotku (
   wire        csrbrg_we;
   wire        csrbrg_ack;
 
+  wire        sb_cyc_i;
+  wire        sb_stb_i;
+
   wire [ 2:0] csr_a;
   wire        csr_we;
   wire [15:0] csr_dw;
@@ -297,6 +300,26 @@ module kotku (
   wire        kaud_cyc_i;
   wire        kaud_ack_o;
 
+`ifndef SIMULATION
+  /*
+   * Debounce it (counter holds reset for 10.49ms),
+   * and generate power-on reset.
+   */
+  initial rst_debounce <= 17'h1FFFF;
+  reg rst;
+  initial rst <= 1'b1;
+  always @(posedge clk) begin
+    if(~rst_lck) /* reset is active low */
+      rst_debounce <= 17'h1FFFF;
+    else if(rst_debounce != 17'd0)
+      rst_debounce <= rst_debounce - 17'd1;
+    rst <= rst_debounce != 17'd0;
+  end
+`else
+  wire rst;
+  assign rst = !rst_lck;
+`endif
+
   // Module instantiations
   pll pll (
     .inclk0 (clk_50_),
@@ -323,26 +346,6 @@ module kotku (
     .rst_i (rst),
     .clk_o (aud_xck_)     // 11.28960 MHz (required 11.28960 MHz)
   );
-
-`ifndef SIMULATION
-  /*
-   * Debounce it (counter holds reset for 10.49ms),
-   * and generate power-on reset.
-   */
-  initial rst_debounce <= 17'h1FFFF;
-  reg rst;
-  initial rst <= 1'b1;
-  always @(posedge clk) begin
-    if(~rst_lck) /* reset is active low */
-      rst_debounce <= 17'h1FFFF;
-    else if(rst_debounce != 17'd0)
-      rst_debounce <= rst_debounce - 17'd1;
-    rst <= rst_debounce != 17'd0;
-  end
-`else
-  wire rst;
-  assign rst = !rst_lck;
-`endif
 
   bootrom bootrom (
     .clk (clk),            // Wishbone slave interface
@@ -612,6 +615,11 @@ module kotku (
     .ps2_mse_dat_ (ps2_mdat_)
   );
 
+`ifndef SIMULATION
+  /*
+   * Seems that we have a serious bug in Modelsim that prevents
+   * from simulating when this core is present
+   */
   speaker speaker (
     .clk (clk),
     .rst (rst),
@@ -636,6 +644,10 @@ module kotku (
     .aud_dacdat_  (aud_dacdat_),
     .aud_bclk_    (aud_bclk_)
   );
+`else
+  assign aud_dat_o = 16'h0;
+  assign aud_ack_o = keyb_stb_i & aud_cyc_i;
+`endif
 
   // Selection logic between keyboard and audio ports (port 65h: audio)
   assign aud_sel_cond = keyb_adr_i[2:1]==2'b00 && keyb_sel_i[1];
@@ -687,7 +699,7 @@ module kotku (
     // Wishbone master interface
     .wbm_clk_i (sdram_clk),
     .wbm_dat_o (sd_dat_i),
-    .wbm_dat_i (sd_dat_o),
+    .wbm_dat_i ({8'h0,sd_dat_o}),
     .wbm_sel_o (sd_sel_i),
     .wbm_stb_o (sd_stb_i),
     .wbm_cyc_o (sd_cyc_i),
@@ -767,8 +779,8 @@ module kotku (
     .s0_addr_1 (20'b0_1111_1111_1111_0000_000), // bios boot mem 0xfff00 - 0xfffff
     .s0_mask_1 (20'b1_1111_1111_1111_0000_000), // bios boot ROM Memory
 
-    .s1_addr_1 (20'b0_1011_1000_0000_0000_000), // mem 0xb8000 - 0xbffff
-    .s1_mask_1 (20'b1_1111_1000_0000_0000_000), // VGA Text Memory
+    .s1_addr_1 (20'b0_1010_0000_0000_0000_000), // mem 0xa0000 - 0xbffff
+    .s1_mask_1 (20'b1_1110_0000_0000_0000_000), // VGA
 
     .s1_addr_2 (20'b1_0000_0000_0011_1100_000), // io 0x3c0 - 0x3df
     .s1_mask_2 (20'b1_0000_1111_1111_1110_000), // VGA IO
@@ -894,7 +906,7 @@ module kotku (
     .s7_stb_o (timer_stb_i),
     .s7_ack_i (timer_ack_o),
 
-    // Slave 7 interface - flash
+    // Slave 8 interface - flash
     .s8_dat_i (fl_dat_o),
     .s8_dat_o (fl_dat_i),
     .s8_adr_o ({fl_tga_i,fl_adr_i}),
@@ -904,17 +916,17 @@ module kotku (
     .s8_stb_o (fl_stb_i),
     .s8_ack_i (fl_ack_o),
 
-    // Slave 8 interface - not connected
+    // Slave 9 interface - not connected
     .s9_dat_i (),
     .s9_dat_o (),
     .s9_adr_o (),
     .s9_sel_o (),
     .s9_we_o  (),
-    .s9_cyc_o (),
-    .s9_stb_o (),
-    .s9_ack_i (),
+    .s9_cyc_o (sb_cyc_i),
+    .s9_stb_o (sb_stb_i),
+    .s9_ack_i (sb_cyc_i && sb_stb_i),
 
-    // Slave 8 interface - sdram
+    // Slave A interface - sdram
     .sA_dat_i (fmlbrg_dat_r_s),
     .sA_dat_o (fmlbrg_dat_w_s),
     .sA_adr_o ({fmlbrg_tga_s,fmlbrg_adr_s}),
@@ -924,7 +936,7 @@ module kotku (
     .sA_stb_o (fmlbrg_stb_s),
     .sA_ack_i (fmlbrg_ack_s),
 
-    // Slave 9 interface - default
+    // Slave B interface - default
     .sB_dat_i (16'hffff),
     .sB_dat_o (),
     .sB_adr_o (),

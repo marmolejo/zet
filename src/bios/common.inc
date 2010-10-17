@@ -35,7 +35,10 @@ ff.rom: ff$(E)
 #  -ecc force use of __cedecl calls
 #  -wx  set to maximum warning level
 #
-CFLAGS = -0 -wx -zu -s -ot -d0 -ecc -ms
+CF_DBG = -0 -wx -zu -s -ecc -ms -d3 -od
+CF_REL = -0 -wx -zu -s -ecc -ms -d0 -ot
+CFLAGS = $(CF_REL)
+
 AFLAGS  = -0 -wx
 
 #

@@ -145,12 +145,12 @@ vgabios_website:        db      "Available at:",0x0a,0x0d
 ;; Init Entry point
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
-vgabios_init_func:      
+vgabios_init_func:
                         call    init_vga_card               ;; init vga card
                         call    init_bios_area              ;; init basic bios vars
 
            SET_INT_VECTOR 0x10, 0xC000, vgabios_int10_handler ;; set int10 vect
-           
+
                         mov     ax,0x0003                   ;; init video mode and clear the screen
                         int     0x10
                         call    display_info                ;; show info
@@ -280,7 +280,7 @@ init_bios_area:         push    ds
 ;;--------------------------------------------------------------------------
 display_info:           mov     ax, 0xC000
                         mov     ds, ax
-                        mov     si, near ptr vgabios_name 
+                        mov     si, near ptr vgabios_name
                         call    display_string
                         mov     si, near ptr vgabios_version_str
                         call    display_string

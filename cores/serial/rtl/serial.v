@@ -39,13 +39,103 @@ module serial (
   // This section is a simple WB interface
   // --------------------------------------------------------------------
   reg    [7:0] dat_o;
-  wire   [7:0] dat_i      = wb_sel_i[0] ? wb_dat_i[7:0]  : wb_dat_i[15:8]; // 8 to 16 bit WB
-  assign       wb_dat_o   = wb_sel_i[0] ? {8'h00, dat_o} : {dat_o, 8'h00}; // 8 to 16 bit WB
-  wire   [2:0] UART_Addr  = {wb_adr_i, wb_sel_i[1]}; // Computer UART Address
-  wire         wb_ack_i   = wb_stb_i &  wb_cyc_i;    // Immediate ack
-  wire         wr_command = wb_ack_i &  wb_we_i;     // WISHBONE write access, Singal to send
-  wire         rd_command = wb_ack_i & ~wb_we_i;     // WISHBONE write access, Singal to send
-  assign       wb_tgc_o   = ~IPEN;               // If ==0 - new data has been received
+  wire   [7:0] dat_i;
+  wire   [2:0] UART_Addr;
+  wire         wb_ack_i;
+  wire         wr_command;
+  wire         rd_command;
+
+  // --------------------------------------------------------------------
+  // Wires for Interrupt Enable Register (IER)
+  // --------------------------------------------------------------------
+  wire EDAI;
+  wire ETXH;
+  //wire ERLS = ier[2];            // Enable Receive Line Status Interrupt
+  wire EMSI;
+  wire [7:0] INTE;
+
+  // --------------------------------------------------------------------
+  // Wires for Interrupt Identification Register (IIR)
+  // --------------------------------------------------------------------
+  reg          IPEN;             // 0 if intereupt pending
+  reg      IPEND;        // Interupt pending
+  reg  [1:0]   INTID;            // Interrupt ID Bits
+  wire [7:0]   ISTAT;
+
+  // --------------------------------------------------------------------
+  // Wires for Line Status Register (LSR)
+  // --------------------------------------------------------------------
+  wire TSRE;
+  wire PE;
+  wire BI;
+  wire FE;
+  wire OR;
+  reg  rx_rden;                // Receive data enable
+  reg  DR;                             // Data Ready
+  reg  THRE;                           // Transmitter Holding Register Empty
+  wire [7:0] LSTAT;
+
+  // --------------------------------------------------------------------
+  // Wires for Modem Control Register (MCR)
+  // --------------------------------------------------------------------
+  wire DTR;
+  wire RTS;
+  wire OUT1;
+  wire OUT2;
+  wire LOOP;
+  wire [7:0] MCON;
+
+  // --------------------------------------------------------------------
+  // Wires for Modem Status Register (MSR)
+  // --------------------------------------------------------------------
+  wire RLSD;
+  wire RI;
+  wire DSR;
+  wire CTS;
+  wire DRLSD;
+  wire TERI;
+  wire DDSR;
+  wire DCTS;
+  wire [7:0] MSTAT;
+
+  // --------------------------------------------------------------------
+  // Wires for Line Control Register (LCRR)
+  // --------------------------------------------------------------------
+  wire [7:0] LCON;
+  wire dlab;
+
+  // --------------------------------------------------------------------
+  //  8250A Registers
+  // --------------------------------------------------------------------
+  wire [7:0] output_data;        // Wired to receiver
+  reg  [7:0] input_data;         // Transmit register
+  reg  [3:0] ier;                // Interrupt enable register
+  reg  [7:0] lcr;                // Line Control register
+  reg  [7:0] mcr;                // Modem Control register
+  reg  [7:0] dll;                // Data latch register low
+  reg  [7:0] dlh;                // Data latch register high
+
+  // --------------------------------------------------------------------
+  // Instantiate the UART
+  // --------------------------------------------------------------------
+  //reg    rx_read;        // Signal to read next byte in the buffer
+  wire    rx_drdy;                // Indicates new data has come in
+  wire    rx_idle;                // Indicates Receiver is idle
+  wire    rx_over;                // Indicates buffer over run error
+  reg     tx_send;                // Signal to send data
+  wire    to_error;               // Indicates a transmit error occured
+  wire    tx_done;
+  wire    tx_busy;                // Signal transmitter is busy
+
+  // --------------------------------------------------------------------
+  // Baud Clock Generator
+  // --------------------------------------------------------------------
+  wire [18:0] Baudiv;
+  wire     Baud1Tick;
+  wire     Baud8Tick;
+  reg  [18:0] BaudAcc1;
+  reg  [15:0] BaudAcc8;
+  wire [18:0] BaudInc;
 
   always @(posedge wb_clk_i or posedge wb_rst_i) begin    // Synchrounous
     if (wb_rst_i) wb_ack_o <= 1'b0;
@@ -73,23 +163,6 @@ module serial (
   `define UART_IE_DEF  8'h00    // Interupt Enable default
   `define UART_LC_DEF  8'h03    // Line Control default
   `define UART_MC_DEF  8'h00    // Line Control default
-
-  // --------------------------------------------------------------------
-  // Wires for Interrupt Enable Register (IER)
-  // --------------------------------------------------------------------
-  wire EDAI = ier[0];             // Enable Data Available Interrupt
-  wire ETXH = ier[1];            // Enable Tx Holding Register Empty Interrupt
-  //wire ERLS = ier[2];            // Enable Receive Line Status Interrupt
-  wire EMSI = ier[3];            // Enable Modem Status Interrupt
-  wire [7:0] INTE = {4'b0000, ier};
-
-  // --------------------------------------------------------------------
-  // Wires for Interrupt Identification Register (IIR)
-  // --------------------------------------------------------------------
-  reg          IPEN;             // 0 if intereupt pending
-  reg      IPEND;        // Interupt pending
-  reg  [1:0]   INTID;            // Interrupt ID Bits
-  wire [7:0]   ISTAT = { 5'b0000_0,INTID,IPEN};
 
   // --------------------------------------------------------------------
   //  UART Interrupt Behavior
@@ -141,19 +214,6 @@ module serial (
   end    // Synchrounous always
 
   // --------------------------------------------------------------------
-  // Wires for Line Status Register (LSR)
-  // --------------------------------------------------------------------
-  wire TSRE  = tx_done;                      // Tx Shift Register Empty
-  wire PE    = 1'b0;                       // Parity Error
-  wire BI    = 1'b0;                         // Break Interrupt, hard coded off
-  wire FE    = to_error;                     // Framing Error, hard coded off
-  wire OR    = rx_over;                     // Overrun Error, hard coded off
-  reg  rx_rden;                // Receive data enable
-  reg  DR;                             // Data Ready
-  reg  THRE;                           // Transmitter Holding Register Empty
-  wire [7:0] LSTAT = {1'b0,TSRE,THRE,BI,FE,PE,OR,DR};
-
-  // --------------------------------------------------------------------
   //  UART Line Status Behavior
   // --------------------------------------------------------------------
   always @(posedge wb_clk_i or posedge wb_rst_i) begin    // Synchrounous
@@ -186,46 +246,6 @@ module serial (
   end
 
   // --------------------------------------------------------------------
-  // Wires for Modem Control Register (MCR)
-  // --------------------------------------------------------------------
-  wire DTR   = mcr[0];
-  wire RTS   = mcr[1];
-  wire OUT1  = mcr[2];
-  wire OUT2  = mcr[3];
-  wire LOOP  = mcr[4];
-  wire [7:0] MCON  = {3'b000, mcr[4:0]};
-
-  // --------------------------------------------------------------------
-  // Wires for Modem Status Register (MSR)
-  // --------------------------------------------------------------------
-  wire RLSD  = LOOP ? OUT2 : 1'b0;    // Received Line Signal Detect
-  wire RI    = LOOP ? OUT1 : 1'b1;    // Ring Indicator
-  wire DSR   = LOOP ? DTR  : 1'b0;    // Data Set Ready
-  wire CTS   = LOOP ? RTS  : 1'b0;    // Clear To Send
-  wire DRLSD = 1'b0;                  // Delta Rx Line Signal Detect
-  wire TERI  = 1'b0;                  // Trailing Edge Ring Indicator
-  wire DDSR  = 1'b0;                  // Delta Data Set Ready
-  wire DCTS  = 1'b0;                  // Delta Clear to Send
-  wire [7:0] MSTAT = {RLSD,RI,DSR,CTS,DCTS,DDSR,TERI,DRLSD};
-
-  // --------------------------------------------------------------------
-  // Wires for Line Control Register (LCRR)
-  // --------------------------------------------------------------------
-  wire [7:0] LCON = lcr;              // Data Latch Address Bit
-  wire dlab       = lcr[7];           // Data Latch Address Bit
-
-  // --------------------------------------------------------------------
-  //  8250A Registers
-  // --------------------------------------------------------------------
-  wire [7:0] output_data;        // Wired to receiver
-  reg  [7:0] input_data;         // Transmit register
-  reg  [3:0] ier;                // Interrupt enable register
-  reg  [7:0] lcr;                // Line Control register
-  reg  [7:0] mcr;                // Modem Control register
-  reg  [7:0] dll;                // Data latch register low
-  reg  [7:0] dlh;                // Data latch register high
-
-  // --------------------------------------------------------------------
   // UART Register behavior
   // --------------------------------------------------------------------
   always @(posedge wb_clk_i or posedge wb_rst_i) begin    // Synchrounous
@@ -239,7 +259,7 @@ module serial (
               `UART_RG_IE: dat_o <= dlab ? dlh : INTE;
               `UART_RG_II: dat_o <= ISTAT;        // Interupt ID
               `UART_RG_LC: dat_o <= LCON;         // Line control
-              `UART_RG_MC: dat_o <= MCON ;        // Modem Control Register
+              `UART_RG_MC: dat_o <= MCON;        // Modem Control Register
               `UART_RG_LS: dat_o <= LSTAT;        // Line status
               `UART_RG_MS: dat_o <= MSTAT;        // Modem Status
               `UART_RG_SR: dat_o <= 8'h00;        // No Scratch register
@@ -279,18 +299,6 @@ module serial (
       else         tx_send <= (wr_command && (UART_Addr == `UART_RG_TR) && !dlab);
   end  // Synchrounous always
 
-  // --------------------------------------------------------------------
-  // Instantiate the UART
-  // --------------------------------------------------------------------
-  //reg    rx_read;        // Signal to read next byte in the buffer
-  wire    rx_drdy;                // Indicates new data has come in
-  wire    rx_idle;                // Indicates Receiver is idle
-  wire    rx_over;                // Indicates buffer over run error
-  reg     tx_send;                // Signal to send data
-  wire    to_error;               // Indicates a transmit error occured
-  wire    tx_done = ~tx_busy;     // Signal command finished sending
-  wire    tx_busy;                // Signal transmitter is busy
-
   serial_arx arx (
     .clk            (wb_clk_i),
     .baud8tick      (Baud8Tick),
@@ -308,9 +316,6 @@ module serial (
     .txd_data  (input_data),
     .txd_busy  (tx_busy)
   );
-
-  assign rx_over  = 1'b0;
-  assign to_error = 1'b0;
 
   // --------------------------------------------------------------------
   //  1.8432Mhz Baud Clock Generator:
@@ -352,18 +357,56 @@ module serial (
   //
   // --------------------------------------------------------------------
 
-  // --------------------------------------------------------------------
-  // Baud Clock Generator
-  // --------------------------------------------------------------------
-  wire [18:0] Baudiv    = {3'b000,dlh,dll};
-  wire     Baud1Tick = BaudAcc1[18];
-  wire     Baud8Tick = BaudAcc8[15];
-  reg  [18:0] BaudAcc1;
-  reg  [15:0] BaudAcc8;
-  wire [18:0] BaudInc =  19'd2416/Baudiv;
   always @(posedge wb_clk_i)
     BaudAcc1 <= {1'b0, BaudAcc1[17:0]} + BaudInc;
   always @(posedge wb_clk_i)
     BaudAcc8 <= {1'b0, BaudAcc8[14:0]} + BaudInc[15:0];
+
+  // Combinatorial logic
+  assign dat_i = wb_sel_i[0] ? wb_dat_i[7:0]  : wb_dat_i[15:8]; // 8 to 16 bit WB
+  assign wb_dat_o   = wb_sel_i[0] ? {8'h00, dat_o} : {dat_o, 8'h00}; // 8 to 16 bit WB
+  assign UART_Addr = {wb_adr_i, wb_sel_i[1]}; // Computer UART Address
+  assign wb_ack_i = wb_stb_i &  wb_cyc_i;    // Immediate ack
+  assign wr_command = wb_ack_i &  wb_we_i;     // WISHBONE write access, Singal to send
+  assign rd_command = wb_ack_i & ~wb_we_i;     // WISHBONE write access, Singal to send
+  assign wb_tgc_o   = ~IPEN;               // If ==0 - new data has been received
+
+  assign EDAI = ier[0];             // Enable Data Available Interrupt
+  assign ETXH = ier[1];            // Enable Tx Holding Register Empty Interrupt
+  assign EMSI = ier[3];            // Enable Modem Status Interrupt
+  assign INTE = {4'b0000, ier};
+  assign ISTAT = { 5'b0000_0,INTID,IPEN};
+  assign TSRE = tx_done;                      // Tx Shift Register Empty
+  assign PE = 1'b0;                       // Parity Error
+  assign BI = 1'b0;                         // Break Interrupt, hard coded off
+  assign FE = to_error;                     // Framing Error, hard coded off
+  assign OR = rx_over;                     // Overrun Error, hard coded off
+  assign LSTAT = {1'b0,TSRE,THRE,BI,FE,PE,OR,DR};
+
+  assign DTR = mcr[0];
+  assign RTS = mcr[1];
+  assign OUT1 = mcr[2];
+  assign OUT2 = mcr[3];
+  assign LOOP = mcr[4];
+  assign MCON = {3'b000, mcr[4:0]};
+  assign RLSD = LOOP ? OUT2 : 1'b0;    // Received Line Signal Detect
+  assign RI = LOOP ? OUT1 : 1'b1;    // Ring Indicator
+  assign DSR = LOOP ? DTR  : 1'b0;    // Data Set Ready
+  assign CTS = LOOP ? RTS  : 1'b0;    // Clear To Send
+  assign DRLSD = 1'b0;                  // Delta Rx Line Signal Detect
+  assign TERI = 1'b0;                  // Trailing Edge Ring Indicator
+  assign DDSR = 1'b0;                  // Delta Data Set Ready
+  assign DCTS = 1'b0;                  // Delta Clear to Send
+  assign MSTAT = {RLSD,RI,DSR,CTS,DCTS,DDSR,TERI,DRLSD};
+
+  assign LCON = lcr;              // Data Latch Address Bit
+  assign dlab = lcr[7];           // Data Latch Address Bit
+  assign tx_done = ~tx_busy;     // Signal command finished sending
+  assign rx_over  = 1'b0;
+  assign to_error = 1'b0;
+
+  assign Baudiv = {3'b000,dlh,dll};
+  assign Baud1Tick = BaudAcc1[18];
+  assign BaudInc =  19'd2416/Baudiv;
 
 endmodule

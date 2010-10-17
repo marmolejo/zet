@@ -80,7 +80,6 @@ module ps2_keyb (
   // --------------------------------------------------------------------
   // Nets and registers
   // --------------------------------------------------------------------
-  assign       scancode = dat_o;
   wire         rx_output_event;
   //assign     tx_shifting_done;
   wire         timer_60usec_done;
@@ -125,6 +124,8 @@ module ps2_keyb (
   assign ps2_data_ = ps2_data_hi_z ? 1'bZ : 1'b0;
   assign timer_60usec_done = (timer_60usec_count == (TIMER_60USEC_VALUE_PP - 1));
   assign timer_5usec_done = (timer_5usec_count == TIMER_5USEC_VALUE_PP - 1);
+
+  assign       scancode = dat_o;
 
   // --------------------------------------------------------------------
   // Create the signals which indicate special scan codes received.

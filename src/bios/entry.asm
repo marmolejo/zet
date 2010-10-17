@@ -153,6 +153,7 @@ bios_name_string:       db      "zetbios 1.1"   ;; version string, not used by c
 ;;---------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
                         org     (0e05bh - startofrom)
+
 post:                   xor     ax, ax          ; clear ax register
                         mov     es, ax          ; zero out BIOS data area (40:00..40:ff)
                         mov     cx, 0080h       ; 128 words
@@ -1080,6 +1081,7 @@ dummy_iret_handler:     iret            ;; IRET Instruction for Dummy Interrupt 
 ;;--------------------------------------------------------------------------
 SDRAM_POST:             xor     ax, ax          ; Clear AX register
                         cli                     ; Disable interupt for startup
+
                         mov     dx, 0f200h      ; CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_BYPASS|HPDMC_SYSTEM_RESET|HPDMC_SYSTEM_CKE;
                         mov     ax, 7           ; Bring CKE high
                         out     dx, ax          ; Initialize the SDRAM controller
@@ -1097,6 +1099,7 @@ a_delay:                loop    a_delay         ; Loop until 50 goes to zero
                         mov     dx, 0f200h      ; CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_CKE;
                         mov     ax, 4           ; Leave Bypass mode and bring up hardware controller
                         out     dx, ax          ; Output the word of data to the SDRAM Controller
+
                         mov     ax, 0fffeh      ; We are done with the controller, we can use the memory now
                         mov     sp, ax          ; set the stack pointer to fffe (top)
                         xor     ax, ax          ; clear ax register

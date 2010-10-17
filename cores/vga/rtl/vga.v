@@ -38,13 +38,12 @@ module vga (
     output        horiz_sync,
     output        vert_sync,
 
-    // SRAM pad signals
-    output [17:0] sram_addr_,
-    inout  [15:0] sram_data_,
-    output        sram_we_n_,
-    output        sram_oe_n_,
-    output        sram_ce_n_,
-    output [ 1:0] sram_bw_n_
+    // CSR SRAM master interface
+    output [17:1] csrm_adr_o,
+    output [ 1:0] csrm_sel_o,
+    output        csrm_we_o,
+    output [15:0] csrm_dat_o,
+    input  [15:0] csrm_dat_i
   );
 
 
@@ -95,13 +94,6 @@ module vga (
   wire [15:0] wbm_dat_i;
   wire        wbm_stb_o;
   wire        wbm_ack_i;
-
-  // CSR master wires
-  wire [17:1] csrm_adr_o;
-  wire [ 1:0] csrm_sel_o;
-  wire        csrm_we_o;
-  wire [15:0] csrm_dat_o;
-  wire [15:0] csrm_dat_i;
 
   wire        stb;
 
@@ -301,23 +293,6 @@ module vga (
     .csrm_we_o  (csrm_we_o),
     .csrm_dat_o (csrm_dat_o),
     .csrm_dat_i (csrm_dat_i)
-  );
-
-  vga_csr_sram csr_sram (
-    .sys_clk (wb_clk_i),
-
-    .csr_adr_i (csrm_adr_o),
-    .csr_sel_i (csrm_sel_o),
-    .csr_we_i  (csrm_we_o),
-    .csr_dat_i (csrm_dat_o),
-    .csr_dat_o (csrm_dat_i),
-
-    .sram_addr_ (sram_addr_),
-    .sram_data_ (sram_data_),
-    .sram_we_n_ (sram_we_n_),
-    .sram_oe_n_ (sram_oe_n_),
-    .sram_ce_n_ (sram_ce_n_),
-    .sram_bw_n_ (sram_bw_n_)
   );
 
   // Continous assignments

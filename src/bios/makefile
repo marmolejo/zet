@@ -36,7 +36,7 @@ E =
 # Current directory (for executing programs)
 CDIR = ./
 
-all: bios.rom zetbios.dat
+all: bios.rom ../../cores/flash/bios.dat zetbios.dat
 
 !include "common.inc"
 
@@ -54,6 +54,11 @@ zetbios_vers.c: zetbios.c
 #
 bios.rom: vgabios.rom ff.rom zetbios.rom
 	cat vgabios.rom ff.rom zetbios.rom > $@
+
+# BIOS.DAT for Modelsim simulation, we use hexdump to convert it to a row
+# of bytes
+../../cores/flash/bios.dat: bios.rom
+	hexdump -v -e '1/1 "%02X"' -e '"\n"' bios.rom > ../../cores/flash/bios.dat
 
 # HEX ROM MAKE ---------------------------------------------------------------
 # This section converts the bios rom binary file into a hex file that the

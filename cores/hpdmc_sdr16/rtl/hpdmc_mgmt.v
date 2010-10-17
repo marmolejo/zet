@@ -18,7 +18,8 @@
 
 module hpdmc_mgmt #(
 	parameter sdram_depth = 26,
-	parameter sdram_columndepth = 9
+	parameter sdram_columndepth = 9,
+	parameter sdram_addrdepth = sdram_depth-1-1-(sdram_columndepth+2)+1
 ) (
 	input sys_clk,
 	input sdram_rst,
@@ -44,7 +45,7 @@ module hpdmc_mgmt #(
 	output sdram_we_n,
 	output sdram_cas_n,
 	output sdram_ras_n,
-	output [11:0] sdram_adr,
+	output [sdram_addrdepth-1:0] sdram_adr,
 	output [1:0] sdram_ba
 );
 
@@ -56,6 +57,7 @@ module hpdmc_mgmt #(
  */
 
 localparam rowdepth = sdram_depth-1-1-(sdram_columndepth+2)+1;
+localparam sdram_addrdepth_o1024 = sdram_addrdepth-11;
 
 wire [sdram_depth-1-1:0] address16 = address;
 
@@ -110,9 +112,10 @@ reg sdram_adr_loadrow;
 reg sdram_adr_loadcol;
 reg sdram_adr_loadA10;
 assign sdram_adr =
-	 ({12{sdram_adr_loadrow}}	& row_address)
-	|({12{sdram_adr_loadcol}}	& col_address)
-	|({12{sdram_adr_loadA10}}	& 12'd1024);
+	 ({sdram_addrdepth{sdram_adr_loadrow}}	& row_address)
+	|({sdram_addrdepth{sdram_adr_loadcol}}	& col_address)
+	|({sdram_addrdepth{sdram_adr_loadA10}}
+     & { {sdram_addrdepth_o1024{1'b0}} , 11'd1024});
 
 assign sdram_ba = bank_address;
 

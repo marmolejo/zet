@@ -1,5 +1,5 @@
 /*
- *  Zet SoC top level file for Altera DE0 board
+ *  Zet SoC top level file for Altera DE2-115 board
  *  Copyright (C) 2009, 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
  *
  *  This file is part of the Zet processor. This processor is free
@@ -23,23 +23,24 @@ module kotku (
 
     // General purpose IO
     input  [9:0] sw_,
-    input  [2:0] key_,
+    input  [3:0] key_,
     output [6:0] hex0_,
     output [6:0] hex1_,
     output [6:0] hex2_,
     output [6:0] hex3_,
-    output [9:0] ledg_,
+    output [9:0] ledr_,
+    output [7:0] ledg_,
 
     // flash signals
-    output [21:0] flash_addr_,
-    input  [15:0] flash_data_,
+    output [22:0] flash_addr_,
+    input  [ 7:0] flash_data_,
     output        flash_we_n_,
     output        flash_oe_n_,
     output        flash_ce_n_,
     output        flash_rst_n_,
 
     // sdram signals
-    output [11:0] sdram_addr_,
+    output [12:0] sdram_addr_,
     inout  [15:0] sdram_data_,
     output [ 1:0] sdram_ba_,
     output [ 1:0] sdram_dqm_,
@@ -50,12 +51,21 @@ module kotku (
     output        sdram_we_n_,
     output        sdram_cs_n_,
 
+    // sram signals
+    output [19:0] sram_addr_,
+    inout  [15:0] sram_data_,
+    output        sram_we_n_,
+    output        sram_oe_n_,
+    output        sram_ce_n_,
+    output [ 1:0] sram_bw_n_,
+
     // VGA signals
     output [ 3:0] tft_lcd_r_,
     output [ 3:0] tft_lcd_g_,
     output [ 3:0] tft_lcd_b_,
     output        tft_lcd_hsync_,
     output        tft_lcd_vsync_,
+    output        tft_lcd_clk_,
 
     // UART signals
     input         uart_rxd_,
@@ -73,10 +83,17 @@ module kotku (
     output        sd_mosi_,
     output        sd_ss_,
 
-    // To expansion header
-    output        chassis_spk_,
-    output        speaker_l_,   // Speaker output, left channel
-    output        speaker_r_    // Speaker output, right channel
+    // I2C for audio codec
+    inout         i2c_sdat_,
+    output        i2c_sclk_,
+
+    // Audio codec signals
+    input         aud_adclrck_,
+    input         aud_adcdat_,
+    input         aud_daclrck_,
+    output        aud_dacdat_,
+    input         aud_bclk_,
+    output        aud_xck_
   );
 
   // Registers and nets
@@ -148,17 +165,6 @@ module kotku (
   wire        uart_stb_i;
   wire        uart_ack_o;
 
-  // wires for Sound module
-  wire [19:1] wb_sb_adr_i;        // Sound Address
-  wire [15:0] wb_sb_dat_i;        // Sound
-  wire [15:0] wb_sb_dat_o;        // Sound
-  wire [ 1:0] wb_sb_sel_i;        // Sound
-  wire        wb_sb_cyc_i;        // Sound
-  wire        wb_sb_stb_i;        // Sound
-  wire        wb_sb_we_i;         // Sound
-  wire        wb_sb_ack_o;        // Sound
-  wire        wb_sb_tga_i;        // Sound
-
   // wires to keyboard controller
   wire [15:0] keyb_dat_o;
   wire [15:0] keyb_dat_i;
@@ -182,7 +188,7 @@ module kotku (
   wire        timer_ack_o;
 
   // wires to sd controller
-  wire [15:0] sd_dat_o;
+  wire [ 7:0] sd_dat_o;
   wire [15:0] sd_dat_i;
   wire [ 1:0] sd_sel_i;
   wire        sd_we_i;
@@ -251,6 +257,9 @@ module kotku (
   wire        csrbrg_we;
   wire        csrbrg_ack;
 
+  wire        sb_cyc_i;
+  wire        sb_stb_i;
+
   wire [ 2:0] csr_a;
   wire        csr_we;
   wire [15:0] csr_dw;
@@ -316,8 +325,9 @@ module kotku (
   pll pll (
     .inclk0 (clk_50_),
     .c0     (sdram_clk),  // 100 Mhz
-    .c1     (vga_clk),    // 25 Mhz
-    .c2     (clk),        // 12.5 Mhz
+    .c1     (sdram_clk_), // to SDRAM chip
+    .c2     (vga_clk),    // 25 Mhz
+    .c3     (clk),        // 12.5 Mhz
     .locked (lock)
   );
 
@@ -328,6 +338,15 @@ module kotku (
     .clk_i (vga_clk),    // 25 MHz
     .rst_i (rst),
     .clk_o (timer_clk)   // 1.193178 MHz (required 1.193182 MHz)
+  );
+
+  clk_gen #(
+    .res   (18),
+    .phase (18'd29595)
+    ) audioclk (
+    .clk_i (sdram_clk),  // 100 MHz (use highest freq to minimize jitter)
+    .rst_i (rst),
+    .clk_o (aud_xck_)     // 11.28960 MHz (required 11.28960 MHz)
   );
 
   bootrom bootrom (
@@ -344,7 +363,7 @@ module kotku (
     .wb_ack_o (rom_ack_o)
   );
 
-  flash16 flash16 (
+  flash8_r2 flash8_r2 (
     // Wishbone slave interface
     .wb_clk_i (clk),            // Main Clock
     .wb_rst_i (rst),            // Reset Line
@@ -395,14 +414,14 @@ module kotku (
   );
 
   fmlbrg #(
-    .fml_depth   (23),
+    .fml_depth   (26),
     .cache_depth (10)   // 1 Kbyte cache
     ) fmlbrg (
     .sys_clk  (sdram_clk),
     .sys_rst  (rst),
 
     // Wishbone slave interface
-    .wb_adr_i ({3'b000,fmlbrg_adr}),
+    .wb_adr_i ({6'h0,fmlbrg_adr}),
     .wb_dat_i (fmlbrg_dat_w),
     .wb_dat_o (fmlbrg_dat_r),
     .wb_sel_i (fmlbrg_sel),
@@ -468,8 +487,8 @@ module kotku (
 
   hpdmc #(
     .csr_addr          (1'b0),
-    .sdram_depth       (23),
-    .sdram_columndepth (8)
+    .sdram_depth       (26),
+    .sdram_columndepth (10)
     ) hpdmc (
     .sys_clk (sdram_clk),
     .sys_rst (rst),
@@ -501,7 +520,7 @@ module kotku (
     .sdram_dq    (sdram_data_)
   );
 
-  wb_abrg vga_brg (
+  wb_abrgr vga_brg (
     .sys_rst (rst),
 
     // Wishbone slave interface
@@ -529,14 +548,20 @@ module kotku (
     .wbm_ack_i (vga_ack_o)
   );
 
-  vdu vdu (
+  wire [17:1] csrm_adr_o;
+  wire [ 1:0] csrm_sel_o;
+  wire        csrm_we_o;
+  wire [15:0] csrm_dat_o;
+  wire [15:0] csrm_dat_i;
+
+  vga vga (
     .wb_rst_i (rst),
 
     // Wishbone slave interface
     .wb_clk_i (vga_clk),   // 25MHz VGA clock
     .wb_dat_i (vga_dat_i),
     .wb_dat_o (vga_dat_o),
-    .wb_adr_i (vga_adr_i),
+    .wb_adr_i (vga_adr_i[16:1]),  // 128K
     .wb_we_i  (vga_we_i),
     .wb_tga_i (vga_tga_i),
     .wb_sel_i (vga_sel_i),
@@ -545,16 +570,40 @@ module kotku (
     .wb_ack_o (vga_ack_o),
 
     // VGA pad signals
-    .vga_red_o   (tft_lcd_r_[3:2]),
-    .vga_green_o (tft_lcd_g_[3:2]),
-    .vga_blue_o  (tft_lcd_b_[3:2]),
+    .vga_red_o   (tft_lcd_r_),
+    .vga_green_o (tft_lcd_g_),
+    .vga_blue_o  (tft_lcd_b_),
     .horiz_sync  (tft_lcd_hsync_),
-    .vert_sync   (tft_lcd_vsync_)
+    .vert_sync   (tft_lcd_vsync_),
+
+    // CSR SRAM master interface
+    .csrm_adr_o (csrm_adr_o),
+    .csrm_sel_o (csrm_sel_o),
+    .csrm_we_o  (csrm_we_o),
+    .csrm_dat_o (csrm_dat_o),
+    .csrm_dat_i (csrm_dat_i)
   );
 
-  assign tft_lcd_r_[1:0] = tft_lcd_r_[3:2];  // Text only
-  assign tft_lcd_g_[1:0] = tft_lcd_g_[3:2];  // Text only
-  assign tft_lcd_b_[1:0] = tft_lcd_b_[3:2];  // Text only
+  assign tft_lcd_clk_     = vga_clk;
+
+  csr_sram csr_sram (
+    .sys_clk (vga_clk),
+
+    // CSR slave interface
+    .csr_adr_i (csrm_adr_o),
+    .csr_sel_i (csrm_sel_o),
+    .csr_we_i  (csrm_we_o),
+    .csr_dat_i (csrm_dat_o),
+    .csr_dat_o (csrm_dat_i),
+
+    // Pad signals
+    .sram_addr_ (sram_addr_),
+    .sram_data_ (sram_data_),
+    .sram_we_n_ (sram_we_n_),
+    .sram_oe_n_ (sram_oe_n_),
+    .sram_ce_n_ (sram_ce_n_),
+    .sram_bw_n_ (sram_bw_n_)
+  );
 
   // RS232 COM1 Port
   serial com1 (
@@ -572,24 +621,6 @@ module kotku (
 
     .rs232_tx (uart_txd_),        // UART signals
     .rs232_rx (uart_rxd_)         // serial input/output
-  );
-
-  // Sound Module Instantiation
-  sound sound (
-    .wb_clk_i (clk),                // Main Clock
-    .wb_rst_i (rst),                // Reset Line
-    .wb_dat_i (wb_sb_dat_i),        // Command to send
-    .wb_dat_o (wb_sb_dat_o),        // Received data
-    .wb_cyc_i (wb_sb_cyc_i),        // Cycle
-    .wb_stb_i (wb_sb_stb_i),        // Strobe
-    .wb_adr_i (wb_sb_adr_i[3:1]),   // Address lines
-    .wb_sel_i (wb_sb_sel_i),        // Select lines
-    .wb_we_i  (wb_sb_we_i),         // Write enable
-    .wb_ack_o (wb_sb_ack_o),        // Normal bus termination
-
-    .dac_clk (clk_50_),             // DAC Clock
-    .audio_l (speaker_l_),          // Audio Output Left  Channel
-    .audio_r (speaker_r_)           // Audio Output Right Channel
   );
 
   ps2 ps2 (
@@ -612,6 +643,11 @@ module kotku (
     .ps2_mse_dat_ (ps2_mdat_)
   );
 
+`ifndef SIMULATION
+  /*
+   * Seems that we have a serious bug in Modelsim that prevents
+   * from simulating when this core is present
+   */
   speaker speaker (
     .clk (clk),
     .rst (rst),
@@ -623,10 +659,23 @@ module kotku (
     .wb_cyc_i (aud_cyc_i),
     .wb_ack_o (aud_ack_o),
 
+    .clk_100M (sdram_clk),
+    .clk_25M  (vga_clk),
     .timer2   (timer2_o),
 
-    .speaker_ (chassis_spk_)
+    .i2c_sclk_ (i2c_sclk_),
+    .i2c_sdat_ (i2c_sdat_),
+
+    .aud_adclrck_ (aud_adclrck_),
+    .aud_adcdat_  (aud_adcdat_),
+    .aud_daclrck_ (aud_daclrck_),
+    .aud_dacdat_  (aud_dacdat_),
+    .aud_bclk_    (aud_bclk_)
   );
+`else
+  assign aud_dat_o = 16'h0;
+  assign aud_ack_o = keyb_stb_i & aud_cyc_i;
+`endif
 
   // Selection logic between keyboard and audio ports (port 65h: audio)
   assign aud_sel_cond = keyb_adr_i[2:1]==2'b00 && keyb_sel_i[1];
@@ -678,7 +727,7 @@ module kotku (
     // Wishbone master interface
     .wbm_clk_i (sdram_clk),
     .wbm_dat_o (sd_dat_i),
-    .wbm_dat_i (sd_dat_o),
+    .wbm_dat_i ({8'h0,sd_dat_o}),
     .wbm_sel_o (sd_sel_i),
     .wbm_stb_o (sd_stb_i),
     .wbm_cyc_o (sd_cyc_i),
@@ -721,13 +770,14 @@ module kotku (
     .wb_ack_o (gpio_ack_o),
 
     // GPIO inputs/outputs
-    .leds_ (ledg_[9:4]),
+    .leds_ ({ledr_,ledg_[7:4]}),
     .sw_   (sw_)
   );
 
   hex_display hex16 (
     .num (pc[19:4]),
     .en  (1'b1),
+
     .hex0 (hex0_),
     .hex1 (hex1_),
     .hex2 (hex2_),
@@ -757,8 +807,8 @@ module kotku (
     .s0_addr_1 (20'b0_1111_1111_1111_0000_000), // bios boot mem 0xfff00 - 0xfffff
     .s0_mask_1 (20'b1_1111_1111_1111_0000_000), // bios boot ROM Memory
 
-    .s1_addr_1 (20'b0_1011_1000_0000_0000_000), // mem 0xb8000 - 0xbffff
-    .s1_mask_1 (20'b1_1111_1000_0000_0000_000), // VGA Text Memory
+    .s1_addr_1 (20'b0_1010_0000_0000_0000_000), // mem 0xa0000 - 0xbffff
+    .s1_mask_1 (20'b1_1110_0000_0000_0000_000), // VGA
 
     .s1_addr_2 (20'b1_0000_0000_0011_1100_000), // io 0x3c0 - 0x3df
     .s1_mask_2 (20'b1_0000_1111_1111_1110_000), // VGA IO
@@ -894,15 +944,15 @@ module kotku (
     .s8_stb_o (fl_stb_i),
     .s8_ack_i (fl_ack_o),
 
-    // Slave 9 interface - sb16
-    .s9_dat_i (wb_sb_dat_o),
-    .s9_dat_o (wb_sb_dat_i),
-    .s9_adr_o ({wb_sb_tga_i,wb_sb_adr_i}),
-    .s9_sel_o (wb_sb_sel_i),
-    .s9_we_o  (wb_sb_we_i),
-    .s9_cyc_o (wb_sb_cyc_i),
-    .s9_stb_o (wb_sb_stb_i),
-    .s9_ack_i (wb_sb_ack_o),
+    // Slave 9 interface - not connected
+    .s9_dat_i (),
+    .s9_dat_o (),
+    .s9_adr_o (),
+    .s9_sel_o (),
+    .s9_we_o  (),
+    .s9_cyc_o (sb_cyc_i),
+    .s9_stb_o (sb_stb_i),
+    .s9_ack_i (sb_cyc_i && sb_stb_i),
 
     // Slave A interface - sdram
     .sA_dat_i (fmlbrg_dat_r_s),
@@ -927,7 +977,6 @@ module kotku (
 
   // Continuous assignments
   assign rst_lck    = !sw_[0] & lock;
-  assign sdram_clk_ = sdram_clk;
 
   assign dat_i = inta ? { 13'b0000_0000_0000_1, iid }
                : sw_dat_o;

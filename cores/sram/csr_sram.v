@@ -17,7 +17,7 @@
  *  <http://www.gnu.org/licenses/>.
  */
 
-module vga_csr_sram (
+module csr_sram (
     input sys_clk,
 
     // CSR slave interface
@@ -28,7 +28,7 @@ module vga_csr_sram (
     output reg [15:0] csr_dat_o,
 
     // Pad signals
-    output     [17:0] sram_addr_,
+    output     [19:0] sram_addr_,
     inout      [15:0] sram_data_,
     output reg        sram_we_n_,
     output reg        sram_oe_n_,
@@ -43,7 +43,7 @@ module vga_csr_sram (
   // Continuous assingments
   assign sram_data_ = sram_we_n_ ? 16'hzzzz : ww;
   assign sram_ce_n_ = 1'b0;
-  assign sram_addr_ = { 1'b0, sram_addr };
+  assign sram_addr_ = { 3'b0, sram_addr };
 
   // Behaviour
   // ww

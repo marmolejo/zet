@@ -43,15 +43,11 @@ module ps2 (
   // This section is a simple WB interface
   // --------------------------------------------------------------------
   // --------------------------------------------------------------------
-  wire   [7:0] dat_i       =  wb_sel_i[0] ? wb_dat_i[7:0]  : wb_dat_i[15:8]; // 8 to 16 bit WB
-  assign       wb_dat_o    =  wb_sel_i[0] ? {8'h00, dat_o} : {dat_o, 8'h00}; // 8 to 16 bit WB
-  wire   [2:0] wb_ps2_addr = {wb_adr_i,   wb_sel_i[1]};  // Compute Address
-  wire         wb_ack_i    =  wb_stb_i &  wb_cyc_i;    // Immediate ack
-  assign       wb_ack_o    =  wb_ack_i;
-  wire         write_i     =  wb_ack_i &  wb_we_i;    // WISHBONE write access, Singal to send
-  wire         read_i      =  wb_ack_i & ~wb_we_i;    // WISHBONE write access, Singal to send
-  assign       wb_tgm_o    =  MSE_INT & PS_INT2;      // Mouse Receive interupts ocurred
-  assign       wb_tgk_o    =  KBD_INT & PS_INT;      // Keyboard Receive interupts ocurred
+  wire   [7:0] dat_i;
+  wire   [2:0] wb_ps2_addr;
+  wire         wb_ack_i;
+  wire         write_i;
+  wire         read_i;
 
   // --------------------------------------------------------------------
   // --------------------------------------------------------------------
@@ -87,23 +83,70 @@ module ps2 (
   // --------------------------------------------------------------------
   // Status Register and Wires 
   // --------------------------------------------------------------------
-  wire    PS_IBF  = IBF;          // 0: Empty, No unread input at port,  1: Full, New input can be read from port 0x60
-  wire    PS_OBF  = KBD_Txdone;      // 0: Ok to write to port 0x60  1: Full, Don't write to port 0x60
-  wire    PS_SYS  = 1'b1;          // 1: Always 1 cuz this is fpga so will always be initialized
-  wire    PS_A2   = 1'b0;          // 0: A2 = 0 - Port 0x60 was last written to, 1: A2 = 1 - Port 0x64 was last written to
-  wire    PS_INH  = 1'b1;          // 0: Keyboard Clock = 0 - Keyboard is inhibited , 1: Keyboard Clock = 1 - Keyboard is not inhibited
-  wire    PS_MOBF = MSE_DONE;        // 0: Buffer empty - Okay to write to auxillary device's output buffer, 1: Output buffer full - Don't write to port auxillary device's output buffer
-  wire    PS_TO   = MSE_TOER;        // 0: No Error - Keyboard received and responded to last command, 1: Timeout Error - See TxTO and RxTO for more information.
-  wire    RX_PERR = MSE_OVER;        // 0: No Error - Odd parity received and proper command response recieved, 1: Parity Error - Even parity received or 0xFE received as command response.
-
-  wire [7:0]  PS_STAT = {RX_PERR, PS_TO, PS_MOBF, PS_INH, PS_A2, PS_SYS, PS_OBF, PS_IBF};    // Status Register
+  wire    PS_IBF;
+  wire    PS_OBF;
+  wire    PS_SYS;
+  wire    PS_A2;
+  wire    PS_INH;
+  wire    PS_MOBF;
+  wire    PS_TO;
+  wire    RX_PERR;
+  wire [7:0]  PS_STAT;
 
   // --------------------------------------------------------------------
   // Control Register and Wires
   // --------------------------------------------------------------------
   reg  [7:0]  PS_CNTL;        // Control Register
-  wire        PS_INT  = PS_CNTL[0];  // 0: IBF Interrupt Disabled, 1: IBF Interrupt Enabled - Keyboard driver at software int 0x09 handles input.
-  wire        PS_INT2 = PS_CNTL[1];  // 0: Auxillary IBF Interrupt Disabled, 1: Auxillary IBF Interrupt Enabled
+  wire        PS_INT;
+  wire        PS_INT2;
+
+  wire        DAT_SEL;
+  wire        DAT_wr;
+  wire        DAT_rd;
+
+  wire        CMD_SEL;
+  wire        CMD_wr;
+  wire        CMD_rdc;
+  wire        CMD_wrc;
+  wire    CMD_mwr;
+  wire    CMD_tst;
+  wire    CMD_mit;
+
+  wire [7:0]  dat_o;
+  wire [7:0]  d_dat_o;
+  wire [7:0]  r_dat_o;
+  wire [7:0]  t_dat_o;
+  wire [7:0]  i_dat_o;
+  wire [7:0]  p_dat_o;
+  wire [7:0]  ps_tst_o;
+  wire [7:0]  ps_mit_o;
+
+  wire     cmd_msnd;
+
+  wire    IBF;
+
+  reg  cnt_r_flag;              // Read Control lines flag
+  reg  cnt_w_flag;              // Write to Control lines flag
+  reg  cmd_w_msnd;              // Signal to send to mouse flag
+  reg cmd_r_test;              // Signal to send test flag
+  reg cmd_r_mint;              // Signal to send test flag
+
+  reg   MSE_INT;            // Mouse Receive interrupt signal
+  wire  PS_READ;
+
+  wire [7:0]  MSE_dat_o;        // Receive Register
+  wire [7:0]  MSE_dat_i;
+  wire        MSE_RDY;        // Signal data received
+  wire        MSE_DONE;        // Signal command finished sending
+  wire        MSE_TOER;             // Indicates a Transmit error occured
+  wire        MSE_OVER;             // Indicates buffer over run error
+  wire        MSE_SEND;
+
+  wire       KBD_INT;
+  wire [7:0] KBD_dat_o;
+  wire     KBD_Txdone;
+  wire     KBD_Rxdone;
+
 /*
  * We comment this out as they are never read
  *
@@ -174,42 +217,12 @@ module ps2 (
 `define PS2_DAT_REG    3'b000    // 0x60 - RW Transmit / Receive register
 `define PS2_CMD_REG    3'b100    // 0x64 - RW - Status / command register
 
-  wire        DAT_SEL  = (wb_ps2_addr == `PS2_DAT_REG);
-  wire        DAT_wr   = DAT_SEL && write_i;
-  wire        DAT_rd   = DAT_SEL && read_i;
-
-  wire        CMD_SEL  = (wb_ps2_addr == `PS2_CMD_REG);
-  wire        CMD_wr   = CMD_SEL && write_i;
-  wire        CMD_rdc  = CMD_wr  && (dat_i == `PS2_CNT_RD);  // Request to read control info
-  wire        CMD_wrc  = CMD_wr  && (dat_i == `PS2_CNT_WR);  // Request to write control info
-  wire    CMD_mwr  = CMD_wr  && (dat_i == `PS2_CMD_D4);  // Signal to transmit data to mouse
-  wire    CMD_tst  = CMD_wr  && (dat_i == `PS2_CMD_AA);  // User requested self test
-  wire    CMD_mit  = CMD_wr  && (dat_i == `PS2_CMD_A9);  // User mouse interface test
-
   // --------------------------------------------------------------------
   // Command Behavior
   // --------------------------------------------------------------------
-  wire [7:0]  dat_o    = d_dat_o;  // Select register
-  wire [7:0]  d_dat_o  = DAT_SEL    ? r_dat_o   : PS_STAT;  // Select register
-  wire [7:0]  r_dat_o  = cnt_r_flag ? PS_CNTL   : t_dat_o;  // return control or data
-  wire [7:0]  t_dat_o  = cmd_r_test ? ps_tst_o  : i_dat_o;  // return control or data
-  wire [7:0]  i_dat_o  = cmd_r_mint ? ps_mit_o  : p_dat_o;  // return control or data
-  wire [7:0]  p_dat_o  = MSE_INT    ? MSE_dat_o : KBD_dat_o;  // defer to mouse
-  wire [7:0]  ps_tst_o = 8'h55;                // Controller self test
-  wire [7:0]  ps_mit_o = 8'h00;                // Controller self test
-
-  wire     cmd_msnd = cmd_w_msnd && DAT_wr;  // OK to write to mouse
-
-  wire    IBF = MSE_INT || KBD_INT || cnt_r_flag || cmd_r_test || cmd_r_mint;
-
   // --------------------------------------------------------------------
   // Behavior of Control Register
   // --------------------------------------------------------------------
-  reg  cnt_r_flag;              // Read Control lines flag
-  reg  cnt_w_flag;              // Write to Control lines flag
-  reg  cmd_w_msnd;              // Signal to send to mouse flag
-  reg cmd_r_test;              // Signal to send test flag
-  reg cmd_r_mint;              // Signal to send test flag
   always @(posedge wb_clk_i) begin    // Synchrounous
     if(wb_rst_i) begin
     PS_CNTL     <= `default_cntl;   // Set initial default value
@@ -264,9 +277,6 @@ module ps2 (
   // --------------------------------------------------------------------
   // Mouse Receive Interrupt behavior
   // --------------------------------------------------------------------
-  reg   MSE_INT;            // Mouse Receive interrupt signal
-  wire  PS_READ = DAT_rd && !(cnt_r_flag || cmd_r_test || cmd_r_mint);
-
   always @(posedge wb_clk_i or posedge wb_rst_i) begin  // Synchrounous
     if(wb_rst_i) MSE_INT <= 1'b0;                     // Default value
     else begin
@@ -278,14 +288,6 @@ module ps2 (
   // --------------------------------------------------------------------
   // Instantiate the PS2 UART for MOUSE
   // --------------------------------------------------------------------
-  wire [7:0]  MSE_dat_o;        // Receive Register
-  wire [7:0]  MSE_dat_i = dat_i;    // Transmit register
-  wire        MSE_RDY;        // Signal data received
-  wire        MSE_DONE;        // Signal command finished sending
-  wire        MSE_TOER;             // Indicates a Transmit error occured
-  wire        MSE_OVER;             // Indicates buffer over run error
-  wire        MSE_SEND = cmd_msnd;  // Signal to transmit data
-
   ps2_mouse_nofifo mouse_nofifo (
     .clk     (wb_clk_i),
     .reset   (wb_rst_i),
@@ -310,11 +312,6 @@ module ps2 (
   // --------------------------------------------------------------------
   // Instantiate the PS2 UART for KEYBOARD
   // --------------------------------------------------------------------
-  wire       KBD_INT;
-  wire [7:0] KBD_dat_o;
-  wire     KBD_Txdone;
-  wire     KBD_Rxdone;
-
   ps2_keyb #(
     .TIMER_60USEC_VALUE_PP (750),
     .TIMER_60USEC_BITS_PP  (10),
@@ -333,6 +330,55 @@ module ps2 (
     .ps2_clk_  (ps2_kbd_clk_), // PS2 PAD signals
     .ps2_data_ (ps2_kbd_dat_)
   );
+
+  // Combinatorial logic
+  assign dat_i    =  wb_sel_i[0] ? wb_dat_i[7:0]  : wb_dat_i[15:8]; // 8 to 16 bit WB
+  assign wb_dat_o =  wb_sel_i[0] ? {8'h00, dat_o} : {dat_o, 8'h00}; // 8 to 16 bit WB
+  assign wb_ps2_addr = {wb_adr_i,   wb_sel_i[1]};  // Compute Address
+  assign wb_ack_i =  wb_stb_i &  wb_cyc_i;    // Immediate ack
+  assign wb_ack_o    =  wb_ack_i;
+  assign write_i =  wb_ack_i &  wb_we_i;    // WISHBONE write access, Singal to send
+  assign read_i =  wb_ack_i & ~wb_we_i;    // WISHBONE write access, Singal to send
+  assign wb_tgm_o    =  MSE_INT & PS_INT2;      // Mouse Receive interupts ocurred
+  assign wb_tgk_o    =  KBD_INT & PS_INT;      // Keyboard Receive interupts ocurred
+
+  assign PS_IBF = IBF;          // 0: Empty, No unread input at port,  1: Full, New input can be read from port 0x60
+  assign PS_OBF = KBD_Txdone;      // 0: Ok to write to port 0x60  1: Full, Don't write to port 0x60
+  assign PS_SYS = 1'b1;          // 1: Always 1 cuz this is fpga so will always be initialized
+  assign PS_A2 = 1'b0;          // 0: A2 = 0 - Port 0x60 was last written to, 1: A2 = 1 - Port 0x64 was last written to
+  assign PS_INH = 1'b1;          // 0: Keyboard Clock = 0 - Keyboard is inhibited , 1: Keyboard Clock = 1 - Keyboard is not inhibited
+  assign PS_MOBF = MSE_DONE;        // 0: Buffer empty - Okay to write to auxillary device's output buffer, 1: Output buffer full - Don't write to port auxillary device's output buffer
+  assign PS_TO = MSE_TOER;        // 0: No Error - Keyboard received and responded to last command, 1: Timeout Error - See TxTO and RxTO for more information.
+  assign RX_PERR = MSE_OVER;        // 0: No Error - Odd parity received and proper command response recieved, 1: Parity Error - Even parity received or 0xFE received as command response.
+  assign PS_STAT = {RX_PERR, PS_TO, PS_MOBF, PS_INH, PS_A2, PS_SYS, PS_OBF, PS_IBF};    // Status Register
+  assign PS_INT = PS_CNTL[0];  // 0: IBF Interrupt Disabled, 1: IBF Interrupt Enabled - Keyboard driver at software int 0x09 handles input.
+  assign PS_INT2 = PS_CNTL[1];  // 0: Auxillary IBF Interrupt Disabled, 1: Auxillary IBF Interrupt Enabled
+
+  assign DAT_SEL = (wb_ps2_addr == `PS2_DAT_REG);
+  assign DAT_wr = DAT_SEL && write_i;
+  assign DAT_rd = DAT_SEL && read_i;
+
+  assign CMD_SEL = (wb_ps2_addr == `PS2_CMD_REG);
+  assign CMD_wr = CMD_SEL && write_i;
+  assign CMD_rdc = CMD_wr  && (dat_i == `PS2_CNT_RD);  // Request to read control info
+  assign CMD_wrc = CMD_wr  && (dat_i == `PS2_CNT_WR);  // Request to write control info
+  assign CMD_mwr = CMD_wr  && (dat_i == `PS2_CMD_D4);  // Signal to transmit data to mouse
+  assign CMD_tst = CMD_wr  && (dat_i == `PS2_CMD_AA);  // User requested self test
+  assign CMD_mit = CMD_wr  && (dat_i == `PS2_CMD_A9);  // User mouse interface test
+
+  assign dat_o = d_dat_o;  // Select register
+  assign d_dat_o = DAT_SEL    ? r_dat_o   : PS_STAT;  // Select register
+  assign r_dat_o = cnt_r_flag ? PS_CNTL   : t_dat_o;  // return control or data
+  assign t_dat_o = cmd_r_test ? ps_tst_o  : i_dat_o;  // return control or data
+  assign i_dat_o = cmd_r_mint ? ps_mit_o  : p_dat_o;  // return control or data
+  assign p_dat_o = MSE_INT    ? MSE_dat_o : KBD_dat_o;  // defer to mouse
+  assign ps_tst_o = 8'h55;                // Controller self test
+  assign ps_mit_o = 8'h00;                // Controller self test
+  assign cmd_msnd = cmd_w_msnd && DAT_wr;  // OK to write to mouse
+  assign IBF = MSE_INT || KBD_INT || cnt_r_flag || cmd_r_test || cmd_r_mint;
+  assign PS_READ = DAT_rd && !(cnt_r_flag || cmd_r_test || cmd_r_mint);
+  assign      MSE_dat_i = dat_i;    // Transmit register
+  assign MSE_SEND = cmd_msnd;  // Signal to transmit data
 
 endmodule
 

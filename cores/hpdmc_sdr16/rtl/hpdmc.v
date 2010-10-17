@@ -17,19 +17,29 @@
  */
 
 module hpdmc #(
-	parameter csr_addr = 1'b0,
-	/*
-	 * The depth of the SDRAM array, in bytes.
-	 * Capacity (in bytes) is 2^sdram_depth.
-	 */
-	parameter sdram_depth = 23,
-	
-	/*
-	 * The number of column address bits of the SDRAM.
-	 */
-	parameter sdram_columndepth = 8
-) (
-	input sys_clk,
+    parameter csr_addr = 1'b0,
+
+    /*
+     * The depth of the SDRAM array, in bytes.
+     * Capacity (in bytes) is 2^sdram_depth.
+     */
+    parameter sdram_depth = 23,
+
+    /*
+     * The number of column address bits of the SDRAM.
+     */
+    parameter sdram_columndepth = 8,
+
+    /*
+     * Address Mapping :
+     * |    ROW ADDRESS   |    BANK NUMBER    |  COL ADDRESS  | for 16-bit words
+     * |depth-1 coldepth+2|coldepth+1 coldepth|coldepth-1    0|
+     * (depth for 16-bit words, which is sdram_depth-1)
+     */
+    parameter sdram_addrdepth = sdram_depth-1-1-(sdram_columndepth+2)+1
+
+  )(
+    input sys_clk,
 	input sys_rst,
 	
 	/* Control interface */
@@ -58,7 +68,7 @@ module hpdmc #(
 	output reg sdram_we_n,
 	output reg sdram_cas_n,
 	output reg sdram_ras_n,
-	output reg [11:0] sdram_adr,
+	output reg [sdram_addrdepth-1:0] sdram_adr,
 	output reg [1:0] sdram_ba,
 	
 	output [1:0] sdram_dqm,
@@ -71,7 +81,7 @@ wire sdram_cs_n_r;
 wire sdram_we_n_r;
 wire sdram_cas_n_r;
 wire sdram_ras_n_r;
-wire [11:0] sdram_adr_r;
+wire [sdram_addrdepth-1:0] sdram_adr_r;
 wire [1:0] sdram_ba_r;
 
 always @(posedge sys_clk) begin
@@ -93,14 +103,14 @@ wire sdram_cs_n_bypass;
 wire sdram_we_n_bypass;
 wire sdram_cas_n_bypass;
 wire sdram_ras_n_bypass;
-wire [11:0] sdram_adr_bypass;
+wire [sdram_addrdepth-1:0] sdram_adr_bypass;
 wire [1:0] sdram_ba_bypass;
 
 wire sdram_cs_n_mgmt;
 wire sdram_we_n_mgmt;
 wire sdram_cas_n_mgmt;
 wire sdram_ras_n_mgmt;
-wire [11:0] sdram_adr_mgmt;
+wire [sdram_addrdepth-1:0] sdram_adr_mgmt;
 wire [1:0] sdram_ba_mgmt;
 
 assign sdram_cs_n_r = bypass ? sdram_cs_n_bypass : sdram_cs_n_mgmt;
@@ -121,7 +131,8 @@ wire [3:0] tim_rfc;
 wire [1:0] tim_wr;
 
 hpdmc_ctlif #(
-	.csr_addr(csr_addr)
+	.csr_addr        (csr_addr),
+	.sdram_addrdepth (sdram_addrdepth)
 ) ctlif (
 	.sys_clk(sys_clk),
 	.sys_rst(sys_rst),

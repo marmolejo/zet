@@ -17,7 +17,8 @@
  */
 
 module hpdmc_ctlif #(
-	parameter csr_addr = 1'b0
+	parameter csr_addr = 1'b0,
+	parameter sdram_addrdepth = 12
 ) (
 	input sys_clk,
 	input sys_rst,
@@ -35,7 +36,7 @@ module hpdmc_ctlif #(
 	output reg        sdram_we_n,
 	output reg        sdram_cas_n,
 	output reg        sdram_ras_n,
-	output reg [11:0] sdram_adr,
+	output reg [sdram_addrdepth-1:0] sdram_adr,
 	output     [ 1:0] sdram_ba,
 	
 	/* Clocks we must wait following a PRECHARGE command (usually tRP). */
@@ -52,6 +53,9 @@ module hpdmc_ctlif #(
 	output reg [1:0] tim_wr
 );
 
+  localparam low_addr_bits16 = 16 - sdram_addrdepth;
+  localparam low_addr_bits12 = sdram_addrdepth - 12;
+
 wire csr_selected = csr_a[2] == csr_addr;
 
 // We assume sdram_ba will be always zero, so we can truncate the bus to 16 bits
@@ -65,7 +69,7 @@ always @(posedge sys_clk) begin
 		sdram_rst <= 1'b1;
 		
 		sdram_cke <= 1'b0;
-		sdram_adr <= 12'd0;
+		sdram_adr <= {sdram_addrdepth{1'd0}};
 		
 		tim_rp <= 3'd2;
 		tim_rcd <= 3'd2;
@@ -93,7 +97,7 @@ always @(posedge sys_clk) begin
 						sdram_we_n <= ~csr_di[1];
 						sdram_cas_n <= ~csr_di[2];
 						sdram_ras_n <= ~csr_di[3];
-						sdram_adr <= csr_di[15:4];
+						sdram_adr <= { {low_addr_bits12{1'b0}}, csr_di[15:4]};
 					end
 					2'b10: begin
 						tim_rp <= csr_di[2:0];
@@ -109,7 +113,7 @@ always @(posedge sys_clk) begin
 			end
 			case(csr_a[1:0])
 				2'b00: csr_do <= {sdram_cke, sdram_rst, bypass};
-				2'b01: csr_do <= {sdram_adr, 4'h0};
+				2'b01: csr_do <= {sdram_adr, {low_addr_bits16{1'b0}} };
 				2'b10: csr_do <= {tim_wr, tim_rfc, tim_cas, tim_rcd, tim_rp};
         2'b11: csr_do <= {5'd0, tim_refi};
 			endcase

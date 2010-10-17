@@ -116,7 +116,6 @@ module vdu (
   reg         buff0_we;
   reg  [10:0] attr_addr;
   reg         intense;
-  wire        vga_cs;
   wire  [7:0] vga_data_out;
   wire  [7:0] attr_data_out;
   wire [10:0] vga_addr;  // 2K byte character buffer
@@ -136,20 +135,18 @@ module vdu (
     .q    (char_data_out)
   );
 
-  vdu_ram_2k ram_2k_char (
+  vdu_ram_2k_char ram_2k_char (
     .clk   (wb_clk_i),
     .rst   (wb_rst_i),
-    .cs    (vga_cs),
     .we    (buff_we),
     .addr  (buff_addr),
     .wdata (buff_data_in),
     .rdata (vga_data_out)
   );
 
-  vdu_ram_2k ram_2k_attr (
+  vdu_ram_2k_attr ram_2k_attr (
     .clk   (wb_clk_i),
     .rst   (wb_rst_i),
-    .cs    (vga_cs),
     .we    (attr_we),
     .addr  (attr_addr),
     .wdata (attr_data_in),
@@ -163,7 +160,6 @@ module vdu (
   assign vga_addr   = { 4'b0, hor_addr} + { ver_addr, 4'b0 };
   assign out_data   = {attr_data_out, vga_data_out};
 
-  assign vga_cs     = 1'b1;
   assign stb        = wb_stb_i && wb_cyc_i;
 
   assign fg_or_bg    = vga_shift[7] ^ cursor_on;
@@ -182,7 +178,7 @@ module vdu (
   assign v_retrace   = !video_on_v;
   assign vh_retrace  = v_retrace | !video_on_h;
   assign status_reg1 = { 11'b0, v_retrace, 3'b0, vh_retrace };
-  assign wb_ack_o    = wb_tga_i ? stb : vga5_rw;
+  assign wb_ack_o    = stb & (wb_tga_i ? 1'b1 : vga5_rw);
 
   // Behaviour - CPU write interface
   always @(posedge wb_clk_i)
