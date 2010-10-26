@@ -66,6 +66,9 @@ add wave -hex zet/wb_master/*
 add wave -divider nstate
 add wave -hex zet/core/fetch/nstate/*
 
+add wave -divider next_or_not
+add wave -hex zet/core/fetch/next_or_not/*
+
 add wave -divider decode
 add wave -hex zet/core/decode/*
 

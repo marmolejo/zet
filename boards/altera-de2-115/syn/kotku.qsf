@@ -471,7 +471,7 @@ set_global_assignment -name OUTPUT_IO_TIMING_ENDPOINT "NEAR END"
 	# EDA Netlist Writer Assignments
 	# ==============================
 	set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
-	set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
 
 # end EDA_TOOL_SETTINGS(eda_simulation)
 # -------------------------------------
