@@ -123,8 +123,12 @@ module zet_fetch (
             case (state)
               opcod_st:
                 begin // There has been a prefix
-                  pref_l <= repz_pr ? { 1'b1, opcode[0] } : cx_zero ? 2'b0 : pref_l;
-                  sop_l  <= sovr_pr ? { 1'b1, opcode[4:3] } : sop_l;
+                  pref_l <= repz_pr ? { 1'b1, opcode[0] }
+                          // clear prefixes on next instr
+                          : next_in_opco ? 2'b0 : pref_l;
+                  sop_l  <= sovr_pr ? { 1'b1, opcode[4:3] }
+                          // clear prefixes on next instr
+                          : next_in_opco ? 3'b0 : sop_l;
                 end
               default: begin pref_l <= 2'b0; sop_l <= 3'b0; end
             endcase
