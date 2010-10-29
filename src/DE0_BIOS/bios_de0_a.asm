@@ -975,8 +975,6 @@ int1a_handler:          push    ds                      ;; Save all registers th
                         push    bp                      ;; Save Base Pointer
                         push    si                      ;; Save segment index
                         push    di                      ;; Save data index
-                        mov     ax, 0f000h              ;; Bios data segment
-                        mov     ds, ax                  ;; set the data seg to the bios                        
                         push    dx                      ;; for the C program to receive
                         push    cx                      ;; for the C program to receive
                         push    ax                      ;; Pass the user command
@@ -990,7 +988,7 @@ int1a_handler:          push    ds                      ;; Save all registers th
                         pop     bx                      ;; routines returns with the Zero Flag
                         pop     ds                      ;; Set correctly
                         iret            ;; IRET Instruction for Dummy Interrupt Handler
-
+  
 
 ;;--------------------------------------------------------------------------
 ;; INT 1C Dummy Handler routing
