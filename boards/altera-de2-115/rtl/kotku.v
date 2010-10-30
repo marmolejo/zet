@@ -965,7 +965,7 @@ module kotku (
     .sA_ack_i (fmlbrg_ack_s),
 
     // Slave B interface - default
-    .sB_dat_i (16'hffff),
+    .sB_dat_i (16'h0000),
     .sB_dat_o (),
     .sB_adr_o (),
     .sB_sel_o (),
