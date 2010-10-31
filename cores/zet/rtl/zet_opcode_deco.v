@@ -975,7 +975,7 @@ module zet_opcode_deco (
              (b ? `DIVRB : `DIVRW) : (b ? `DIVMB : `DIVMW);
             3'b111: seq_addr <= (mod==2'b11) ?
              (b ? `IDIVRB : `IDIVRW) : (b ? `IDIVMB : `IDIVMW);
-            default: seq_addr <= `NOP;
+            default: seq_addr <= `INVOP;
           endcase
 
           need_modrm <= 1'b1;
@@ -1057,7 +1057,7 @@ module zet_opcode_deco (
           case (regm)
             3'b000: seq_addr <= (mod==2'b11) ? `INCRB : `INCMB;
             3'b001: seq_addr <= (mod==2'b11) ? `DECRB : `DECMB;
-            default: seq_addr <= `NOP;
+            default: seq_addr <= `INVOP;
           endcase
           need_modrm <= 1'b1;
           need_off <= need_off_mod;
@@ -1078,7 +1078,7 @@ module zet_opcode_deco (
             3'b100: seq_addr <= (mod==2'b11) ? `JMPR : `JMPM;
             3'b101: seq_addr <= `LJMPM;
             3'b110: seq_addr <= (mod==2'b11) ? `PUSHR : `PUSHM;
-            default: seq_addr <= `NOP;
+            default: seq_addr <= `INVOP;
           endcase
           need_modrm <= 1'b1;
           need_off <= need_off_mod;
