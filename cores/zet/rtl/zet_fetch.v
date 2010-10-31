@@ -32,6 +32,7 @@ module zet_fetch (
     output           exec_st,
     output           ld_base,
     output reg [2:0] sop_l,
+    output reg       lock_l,
 
     // from decode
     input need_modrm,
@@ -77,7 +78,7 @@ module zet_fetch (
   reg  [2:0] state;
   wire [2:0] next_state;
 
-  wire prefix, repz_pr, sovr_pr;
+  wire prefix, repz_pr, sovr_pr, lock_pr;
   wire next_in_opco, next_in_exec;
 
   reg [7:0] opcode_l, modrm_l;
@@ -101,11 +102,12 @@ module zet_fetch (
   assign imm_f = ((state == offse_st) & off_size
                 | (state == immed_st) & imm_size) ? 16'd2
                : 16'd1;
-  assign wr_ip0 = (state == opcod_st) && !pref_l[1] && !sop_l[2];
+  assign wr_ip0 = (state == opcod_st) && !pref_l[1] && !sop_l[2] && !lock_l;
 
   assign sovr_pr = (opcode[7:5]==3'b001 && opcode[2:0]==3'b110);
   assign repz_pr = (opcode[7:1]==7'b1111_001);
-  assign prefix  = sovr_pr || repz_pr;
+  assign lock_pr = (opcode[7:0]==8'b1111_0000);
+  assign prefix  = sovr_pr || repz_pr || lock_pr;
   assign ld_base = (next_state == execu_st);
   assign rep     = pref_l[1];
 
@@ -129,8 +131,11 @@ module zet_fetch (
                   sop_l  <= sovr_pr ? { 1'b1, opcode[4:3] }
                           // clear prefixes on next instr
                           : next_in_opco ? 3'b0 : sop_l;
+                  lock_l <= lock_pr ? 1'b1
+                          // clear prefixes on next instr
+                          : next_in_opco ? 1'b0 : lock_l;
                 end
-              default: begin pref_l <= 2'b0; sop_l <= 3'b0; end
+              default: begin pref_l <= 2'b0; sop_l <= 3'b0; lock_l <= 1'b0; end
             endcase
             state <= opcod_st;
             off_l <= 16'd0;

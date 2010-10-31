@@ -936,17 +936,6 @@ module zet_opcode_deco (
           dst <= 4'b0;
         end
 
-      8'b1111_0000: // lock prefix
-        begin
-          seq_addr <= `NOP;
-          need_modrm <= 1'b0;
-          need_off <= 1'b0;
-          need_imm <= 1'b0;
-          imm_size <= 1'b0;
-          src <= 4'b0;
-          dst <= 4'b0;
-        end
-
       8'b1111_0100: // hlt
         begin
           seq_addr <= `NOP; // hlt processing is in zet_core.v
