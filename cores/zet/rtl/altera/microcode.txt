@@ -696,6 +696,18 @@ INTerrupt
  INTD   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
  INTD   001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1100_xx  // ld(cs)
  INTD   000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1100_xx  // ld(ip)
+* trace interrupt (not available to programs):
+ ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s
+ INTT   001__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-2
+ INTT   000__x_00_xx_xx_xx__x__x__x__1__x_01__0_101_111__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // f->r
+ INTT   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1101_1100_0100_10  // st(fl)
+ INTT   xxx__x_xx_xx_xx_xx__x__x__x__1__x_01__0_110_111__0_00__0__1_xxxx_xxxx_xxxx_xxxx_xx  // i=0 t=0
+ INTT   010__x_00_xx_xx_00__x__x__0__1__x_01__0_101_001__0_01__0__0_0100_xxxx_xxxx_0100_xx  // sp-4
+ INTT   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_000_111__0_00__1__0_xxxx_1111_1100_0100_10  // st(ip)
+ INTT   xxx__0_xx_00_00_00__0__0__0__0__0_1x__0_001_111__0_00__1__0_xxxx_1001_1100_0100_10  // st(cs)
+ INTT   010__x_00_xx_xx_xx__x__x__0__1__x_01__0_000_000__0_01__0__0_1101_xxxx_xxxx_xxxx_xx  // 4->tmp
+ INTT   001__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1001_xxxx_xxxx_1101_xx  // ld(cs)
+ INTT   000__x_00_xx_xx_00__x__x__0__1__0_10__0_001_001__0_01__0__0_1111_xxxx_xxxx_1101_xx  // ld(ip)
 ==== External interrupt ====
 * External interrupt (new IP):
  ######  vi vo vd vc vb va vs cb ab im mi ma by fun  t  wh wr wm wf ad_d ad_c ad_b ad_a  s

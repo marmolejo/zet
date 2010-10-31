@@ -63,9 +63,12 @@ module zet_fetch (
     output bytefetch,
     input  block,
     input  div_exc,
+    input  tflm,
     output wr_ip0,
     input  intr,
-    input  ifl
+    input  iflm,
+    input  nmir,
+    input  iflss
   );
 
   // Registers, nets and parameters
@@ -89,7 +92,7 @@ module zet_fetch (
                   next_in_exec);
   zet_nstate nstate (state, prefix, need_modrm, need_off, need_imm, end_seq,
              ftype, of, next_in_opco, next_in_exec, block, div_exc,
-             intr, ifl, next_state);
+             tflm, intr, iflm, nmir, iflss, next_state);
 
   // Assignments
   assign pc = (cs << 4) + ip;

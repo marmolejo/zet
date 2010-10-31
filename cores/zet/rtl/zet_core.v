@@ -26,6 +26,8 @@ module zet_core (
     // interrupts
     input  intr,
     output inta,
+    input  nmi,
+    output nmia,
 
     // interface to wishbone
     output [19:0] cpu_adr_o,
@@ -52,6 +54,11 @@ module zet_core (
   wire        of;
   wire        zf;
   wire        ifl;
+  wire        iflm;
+  wire        tfl;
+  wire        tflm;
+  wire        iflss;
+  wire        wr_ss;
   wire        cx_zero;
   wire        div_exc;
 
@@ -104,6 +111,11 @@ module zet_core (
   reg hlt_op_old;
   reg hlt;
 
+  // regs for nmi
+  reg nmir;
+  reg nmi_old;
+  reg nmia_old;
+
   // Module instantiations
   zet_fetch fetch (
     .clk  (clk),
@@ -142,7 +154,9 @@ module zet_core (
     .ip      (ip),
     .of      (of),
     .zf      (zf),
-    .ifl     (ifl),
+    .iflm    (iflm),
+    .tflm    (tflm),
+    .iflss   (iflss),
     .cx_zero (cx_zero),
     .div_exc (div_exc),
 
@@ -151,7 +165,8 @@ module zet_core (
     .pc            (pc),
     .bytefetch     (byte_fetch),
     .block         (block_or_hlt),
-    .intr          (intr)
+    .intr          (intr),
+    .nmir          (nmir)
   );
 
   zet_decode decode (
@@ -166,6 +181,8 @@ module zet_core (
     .div_exc (div_exc),
     .ld_base (ld_base),
     .div     (div),
+    .tfl     (tfl),
+    .tflm    (tflm),
 
     .need_modrm (need_modrm),
     .need_off   (need_off),
@@ -176,8 +193,13 @@ module zet_core (
     .sop_l   (sop_l),
     .intr    (intr),
     .ifl     (ifl),
+    .iflm    (iflm),
     .inta    (inta),
     .ext_int (ext_int),
+    .nmir    (nmir),
+    .nmia    (nmia),
+    .wr_ss   (wr_ss),
+    .iflss   (iflss),
 
     .seq_addr (seq_addr),
     .src      (src),
@@ -226,8 +248,11 @@ module zet_core (
     .of      (of),
     .zf      (zf),
     .ifl     (ifl),
+    .tfl     (tfl),
     .cx_zero (cx_zero),
     .div_exc (div_exc),
+
+    .wr_ss   (wr_ss),
 
     // from wb
     .memout  (iid_dat_i),
@@ -250,7 +275,7 @@ module zet_core (
 
   assign hlt_op = ((opcode == `OP_HLT) && exec_st); 
   assign hlt_in = (hlt_op && !hlt_op_old && !hlt_out);
-  assign hlt_out = intr & ifl;
+  assign hlt_out = (intr & ifl) | nmir;
   assign block_or_hlt = cpu_block | hlt | hlt_in;
 
   // Behaviour
@@ -271,5 +296,22 @@ module zet_core (
         hlt <= 1'b1;
       else if (hlt_out)
         hlt <= 1'b0;
+
+  always @(posedge clk)
+    if (rst)
+    begin
+      nmir <= 1'b0;
+      nmi_old <= 1'b0;
+      nmia_old <= 1'b0;
+    end
+    else
+    begin
+      nmi_old <= nmi;
+      nmia_old <= nmia; 
+      if (nmi & ~nmi_old)
+        nmir <= 1'b1;
+      else if (nmia_old)
+        nmir <= 1'b0;
+    end
 
 endmodule
