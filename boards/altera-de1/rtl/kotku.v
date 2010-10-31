@@ -277,6 +277,7 @@ module kotku (
   wire [ 2:0] iid;
   wire        intr;
   wire        inta;
+  wire        nmi_pb;
 
   wire [19:0] pc;
 
@@ -680,7 +681,10 @@ module kotku (
 
     // GPIO inputs/outputs
     .leds_ ({ledr_,ledg_[7:4]}),
-    .sw_   (sw_)
+    .sw_   (sw_),
+    .pb_   (key_),
+    .tick  (intv[0]),
+    .nmi_pb (nmi_pb) // NMI from pushbutton
   );
 
   zet zet (
