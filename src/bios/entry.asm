@@ -764,13 +764,11 @@ int16_key_found:        mov     bx, 0f000h              ;; Otherwise, just check
 MOUSE_PORT              equ     0x0060                  ;; Bus Mouse port
 
 ;;--------------------------------------------------------------------------
-int0B_handler:          sti                             ;; Disable interupt
-                        int     0x74                    ;; Vector to official mouse interrupt
-                        cli                             ;; Enable interupts
-                        iret                            ;; Return from interrupt
+int0B_handler:          int 0x74                        ;; Vector to official mouse interrupt
+                        iret
+
 ;;--------------------------------------------------------------------------
-int74_handler:          sti                             ;; Disable interupt
-                        PUSHALL                         ;; same as push ax cx dx bx bp si di (or pusha on 286)
+int74_handler:          PUSHALL                         ;; same as push ax cx dx bx bp si di (or pusha on 286)
                         push    ds                      ;; save DS
                         xor     ax, ax                  ;; Get BDA Segment (0x0000)
                         mov     ds, ax                  ;; Set data segment to BDA
@@ -810,7 +808,6 @@ int74_handler:          sti                             ;; Disable interupt
                                                         ;; -End of far call
 int74_done:             pop     ds                      ;; restore DS
                         POPALL                          ;; same as popa on 286
-                        cli                             ;; Enable interupts
                         iret                            ;; Return from interrupt
   
 ;;--------------------------------------------------------------------------
