@@ -44,7 +44,9 @@ module zet_exec (
     output        div_exc,
     input         wrip0,
 
-    output        ifl
+    output        ifl,
+    output        tfl,
+    output        wr_ss
   );
 
   // Net declarations
@@ -110,6 +112,7 @@ module zet_exec (
   assign wr_high = high && !block && !div_exc;
   assign of  = flags[8];
   assign ifl = flags[6];
+  assign tfl = flags[5];
   assign zf  = flags[3];
 
   assign iflags = oflags;
@@ -121,5 +124,7 @@ module zet_exec (
   assign a_byte = (t==3'b011 && func[1]) ? 1'b0 : r_byte;
   assign b_byte = r_byte;
   assign div_exc = dive && wr;
+
+  assign wr_ss = (addr_d == 4'b1010) && wr;
 
 endmodule
