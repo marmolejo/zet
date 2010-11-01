@@ -203,7 +203,7 @@ module vga_config_iface (
   assign pal_we    = wr_attr && flip_flop && !h_pal_addr;
 
   assign acc_dac = dac_addr && wb_sel_i[1];
-  assign rd_dac  = (dac_state==2'b11) && read && acc_dac && !wb_ack_o;
+  assign rd_dac  = (dac_state==2'b11) && read && acc_dac;
   assign wr_dac  = write && acc_dac;
 
   assign dac_we               = write && (wb_adr_i==4'h4) && wb_sel_i[1];
@@ -230,13 +230,13 @@ module vga_config_iface (
   always @(posedge wb_clk_i)
     dac_read_data_register <= wb_rst_i ? 8'h00
       : (pel_adr_rd ? wb_dat_i[15:8]
-        : (rd_dac && (dac_read_data_cycle==2'b10)) ?
+        : (rd_dac && !wb_ack_o && (dac_read_data_cycle==2'b10)) ?
           (dac_read_data_register + 8'h01) : dac_read_data_register);
 
   // dac_read_data_cycle
   always @(posedge wb_clk_i)
     dac_read_data_cycle <= (wb_rst_i | pel_adr_rd) ? 2'b00
-      : (rd_dac ? (dac_read_data_cycle==2'b10 ? 2'b00
+      : (rd_dac && !wb_ack_o ? (dac_read_data_cycle==2'b10 ? 2'b00
         : dac_read_data_cycle + 2'b01) : dac_read_data_cycle);
 
   // dac_state
@@ -283,7 +283,8 @@ module vga_config_iface (
 
   // ack_delay
   always @(posedge wb_clk_i)
-    ack_delay <= wb_stb_i;
+    ack_delay <= wb_rst_i ? 1'b0
+               : ack_delay ? 1'b0 : wb_stb_i;
 
   // wb_dat_o
   always @(*)

@@ -37,9 +37,12 @@ ff.rom: ff$(E)
 #
 CF_DBG = -0 -wx -zu -s -ecc -ms -d3 -od
 CF_REL = -0 -wx -zu -s -ecc -ms -d0 -ot
-CFLAGS = $(CF_REL)
+CFLAGS = $(CF_DBG)
 
-AFLAGS  = -0 -wx
+AF_DBG = -0 -d1 -wx
+AF_REL = -0 -wx
+AFLAGS = $(AF_DBG)
+
 
 #
 # This section compiles and links the ROM BIOS module. The result of this
