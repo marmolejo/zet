@@ -284,6 +284,11 @@ module kotku (
   wire [ 2:0] iid;
   wire        intr;
   wire        inta;
+
+  wire        nmi_pb;
+  wire        nmi;
+  wire        nmia;
+
   wire [19:0] pc;
   reg  [16:0] rst_debounce;
 
@@ -771,7 +776,10 @@ module kotku (
 
     // GPIO inputs/outputs
     .leds_ ({ledr_,ledg_[7:4]}),
-    .sw_   (sw_)
+    .sw_   (sw_),
+    .pb_   (key_),
+    .tick  (intv[0]),
+    .nmi_pb (nmi_pb) // NMI from pushbutton
   );
 
   hex_display hex16 (
@@ -800,7 +808,9 @@ module kotku (
     .wb_cyc_o (cyc),
     .wb_ack_i (ack),
     .wb_tgc_i (intr),
-    .wb_tgc_o (inta)
+    .wb_tgc_o (inta),
+    .nmi      (nmi),
+    .nmia     (nmia)
   );
 
   wb_switch #(
@@ -978,8 +988,10 @@ module kotku (
   // Continuous assignments
   assign rst_lck    = !sw_[0] & lock;
 
-  assign dat_i = inta ? { 13'b0000_0000_0000_1, iid }
-               : sw_dat_o;
+  assign nmi = nmi_pb;
+  assign dat_i = nmia ? 16'h0002 :
+                (inta ? { 13'b0000_0000_0000_1, iid } :
+                        sw_dat_o);
 
   assign ledg_[3:0] = pc[3:0];
 

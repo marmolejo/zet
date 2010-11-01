@@ -985,7 +985,7 @@ module kotku (
   assign rst_lck    = !sw_[0] & lock;
 
   assign nmi = nmi_pb;
-  assign dat_i = nmia ? 16'h0002 : 
+  assign dat_i = nmia ? 16'h0002 :
                 (inta ? { 13'b0000_0000_0000_1, iid } :
                         sw_dat_o);
 
