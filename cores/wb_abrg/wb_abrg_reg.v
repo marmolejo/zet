@@ -21,16 +21,16 @@ module wb_abrg_reg (
     input sys_rst,
 
     // Wishbone slave interface
-    input             wbs_clk_i,
-    input      [19:1] wbs_adr_i,
-    input      [15:0] wbs_dat_i,
-    output reg [15:0] wbs_dat_o,
-    input      [ 1:0] wbs_sel_i,
-    input             wbs_tga_i,
-    input             wbs_stb_i,
-    input             wbs_cyc_i,
-    input             wbs_we_i,
-    output            wbs_ack_o,
+    input         wbs_clk_i,
+    input  [19:1] wbs_adr_i,
+    input  [15:0] wbs_dat_i,
+    output [15:0] wbs_dat_o,
+    input  [ 1:0] wbs_sel_i,
+    input         wbs_tga_i,
+    input         wbs_stb_i,
+    input         wbs_cyc_i,
+    input         wbs_we_i,
+    output        wbs_ack_o,
 
     // Wishbone master interface
     input             wbm_clk_i,
@@ -68,7 +68,7 @@ module wb_abrg_reg (
 
   wire [19:1] wbs_adr_i_reg;
   wire [15:0] wbs_dat_i_reg;
-  wire [15:0] wbs_dat_o_reg;
+  reg  [15:0] wbs_dat_o_reg;
   wire [ 1:0] wbs_sel_i_reg;
   wire        wbs_tga_i_reg;
   wire        wbs_stb_i_reg;

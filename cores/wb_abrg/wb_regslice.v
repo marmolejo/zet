@@ -48,7 +48,7 @@ module wb_regslice (
   wire ack_st;
 
   // Combinational logic
-  assign ack_st = wbm_ack_i & wbs_ack_o;
+  assign ack_st = wbm_ack_i | wbs_ack_o;
 
   // Sequential logic
   always @(posedge clk)

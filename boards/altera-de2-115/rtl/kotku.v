@@ -525,7 +525,7 @@ module kotku (
     .sdram_dq    (sdram_data_)
   );
 
-  wb_abrg_reg vga_brg (
+  wb_abrg vga_brg (
     .sys_rst (rst),
 
     // Wishbone slave interface

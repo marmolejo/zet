@@ -128,7 +128,6 @@ set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/hex_display.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/seg_7.v
 set_global_assignment -name VERILOG_FILE ../rtl/pll.v
-set_global_assignment -name SIGNALTAP_FILE stp1.stp
 
 # Pin & Location Assignments
 # ==========================
@@ -450,7 +449,6 @@ set_global_assignment -name SIMULATION_MODE FUNCTIONAL
 # SignalTap II Assignments
 # ========================
 set_global_assignment -name ENABLE_SIGNALTAP OFF
-set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
 
 # Power Estimation Assignments
 # ============================
@@ -504,11 +502,13 @@ set_global_assignment -name OUTPUT_IO_TIMING_ENDPOINT "NEAR END"
 	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
 	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
 	set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_*
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_*
+	set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sram_*
 
 	# Classic Timing Assignments
 	# ==========================
 	set_instance_assignment -name CLOCK_SETTINGS clk_50_ -to clk_50_
-	set_instance_assignment -name REPORT_DELAY ON -from * -to sdram_addr_[*]
 
 	# start LOGICLOCK_REGION(Root Region)
 	# -----------------------------------
