@@ -36,85 +36,67 @@
 //--------------------------------------------------------------------------
 // Low level assembly functions
 //--------------------------------------------------------------------------
-Bit16u get_CS(void) { __asm { mov  ax, cs } }
-Bit16u get_SS(void) { __asm { mov  ax, ss } }
+#pragma aux get_CS = "mov ax, cs" modify [ax];
+#pragma aux get_SS = "mov ax, ss" modify [ax];
 
-//--------------------------------------------------------------------------
-//  memset of count bytes
-//--------------------------------------------------------------------------
-static void memsetb(Bit16u s_segment, Bit16u s_offset, Bit8u value, Bit16u count)
-{
-    __asm {
-                    push ax
-                    push cx
-                    push es
-                    push di
-                    mov  cx, count        // count 
-                    test cx, cx
-                    je   memsetb_end
-                    mov  ax, s_segment    // segment 
-                    mov  es, ax
-                    mov  ax, s_offset     // offset 
-                    mov  di, ax
-                    mov  al, value        // value 
-                    cld
-                    rep stosb
-     memsetb_end:   pop di
-                    pop es
-                    pop cx
-                    pop ax
-    }
-}
-//--------------------------------------------------------------------------
-//  memcpy of count bytes 
-//--------------------------------------------------------------------------
-static void memcpyb(Bit16u d_segment, Bit16u d_offset, Bit16u s_segment, Bit16u s_offset, Bit16u count)
-{
-    __asm {
-                    push ax
-                    push cx
-                    push es
-                    push di
-                    push ds
-                    push si
-                    mov  cx, count      // count 
-                    test cx, cx
-                    je   memcpyb_end
-                    mov  ax, d_segment  // dest segment 
-                    mov  es, ax
-                    mov  ax, d_offset   // dest offset  
-                    mov  di, ax
-                    mov  ax, s_segment  // ssegment 
-                    mov  ds, ax
-                    mov  ax, s_offset   // soffset  
-                    mov  si, ax
-                    cld
-                    rep  movsb
-      memcpyb_end:  pop si
-                    pop ds
-                    pop di
-                    pop es
-                    pop cx
-                    pop ax
-    }
-}
+#pragma aux read_byte = \
+"       push ds          " \
+"       mov  ds, ax      " \
+"       mov  al, ds:[bx] " \
+"       pop  ds          " \
+parm [ax] [bx] modify [al];
 
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-// Low level print functions
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-static void wrch(Bit8u character)
-{
-    __asm {
-            push    bx
-            mov     ah, 0x0e        // 0x0e command
-            mov     al, character
-            xor     bx, bx
-            int     0x10            // 0x10 intereupt
-            pop     bx
-    }
-}
+#pragma aux read_word = \
+"       push ds          " \
+"       mov  ds, ax      " \
+"       mov  ax, ds:[bx] " \
+"       pop  ds          " \
+parm [ax] [bx] modify [ax];
+
+#pragma aux write_byte = \
+"       push ds          " \
+"       mov  ds, ax      " \
+"       mov  ds:[bx], dl " \
+"       pop  ds          " \
+parm [ax] [bx] [dl];
+
+#pragma aux write_word = \
+"       push ds          " \
+"       mov  ds, ax      " \
+"       mov  ds:[bx], dx " \
+"       pop  ds          " \
+parm [ax] [bx] [dx];
+
+#pragma aux inb  = "in  al, dx" parm [dx] modify [al];
+#pragma aux outb = "out dx, al" parm [dx] [al];
+#pragma aux inw  = "in  ax, dx" parm [dx] modify [ax];
+#pragma aux outw = "out dx, ax" parm [dx] [ax];
+
+#pragma aux memsetb = \
+"       push es          " \
+"       mov  es, bx      " \
+"       cld              " \
+"       rep  stosb       " \
+"       pop  es          " \
+parm [bx] [di] [al] [cx] modify [di cx];
+
+#pragma aux memcpyb = \
+"       push ds          " \
+"       push es          " \
+"       mov  ds, ax      " \
+"       mov  es, bx      " \
+"       cld              " \
+"       rep  movsb       " \
+"       pop  es          " \
+"       pop  ds          " \
+parm [bx] [di] [ax] [si] [cx] modify [di si cx];
+
+#pragma aux wrch = \
+"       xor  bx, bx      " \
+"       mov  ah, 0x0e    " \
+"       int  0x10        " \
+parm [al] modify [ah bx];
+
 //--------------------------------------------------------------------------
 static void wcomport(Bit8u c)
 {
@@ -1572,7 +1554,7 @@ Bit16u rDI, rSI, rBP, rBX, rDX, rCX, rAX;   // REGS pushed via pusha
 Bit16u rES, rDS,  rIP, rCS, rFLAGS;
 {
     Bit8u  comm_byte, mouse_data1, mouse_data2, mouse_data3;
-    Bit8u  mouse_flags_1, mouse_flags_2, try;
+    Bit8u  mouse_flags_2;
     Bit16u mouse_driver_seg;
     Bit16u mouse_driver_offset;
     Bit16u ebda_seg = read_word(0x0040,0x000E);
@@ -1848,7 +1830,7 @@ Bit16u rES, rDS,  rIP, rCS, rFLAGS;
 }
 
 //--------------------------------------------------------------------------
-static char panic_msg_keyb_buffer_full[] = "%s: keyboard input buffer full\n";
+// static char panic_msg_keyb_buffer_full[] = "%s: keyboard input buffer full\n";
 
 //--------------------------------------------------------------------------
 // Wait for data - waits for data to come in by checking control register.

@@ -765,8 +765,7 @@ static Bit8u find_vga_entry(Bit8u mode)
 // Low level assembly functions
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-Bit16u get_CS(void) { __asm { mov  ax, cs } }
-Bit16u get_SS(void) { __asm { mov  ax, ss } }
+#pragma aux get_SS = "mov ax, ss" modify [ax];
 
 //--------------------------------------------------------------------------
 static void memsetw(Bit16u s_segment, Bit16u s_offset, Bit16u value, Bit16u count)
@@ -795,32 +794,6 @@ static void memsetw(Bit16u s_segment, Bit16u s_offset, Bit16u value, Bit16u coun
     }
 }
 
-//--------------------------------------------------------------------------
-//  memset of count bytes
-//--------------------------------------------------------------------------
-static void memsetb(Bit16u s_segment, Bit16u s_offset, Bit8u value, Bit16u count)
-{
-    __asm {
-                    push ax
-                    push cx
-                    push es
-                    push di
-                    mov  cx, count        // count 
-                    test cx, cx
-                    je   memsetb_end
-                    mov  ax, s_segment    // segment 
-                    mov  es, ax
-                    mov  ax, s_offset     // offset 
-                    mov  di, ax
-                    mov  al, value        // value 
-                    cld
-                    rep stosb
-     memsetb_end:   pop di
-                    pop es
-                    pop cx
-                    pop ax
-    }
-}
 //--------------------------------------------------------------------------
 //  memcpy of count bytes 
 //--------------------------------------------------------------------------
@@ -896,127 +869,40 @@ memcpyw_end:
 // Assembly functions to access memory directly
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-Bit8u read_byte(Bit16u s_segment, Bit16u s_offset)
-{
-    __asm {
-        push bx
-        push ds
-        mov  ax, s_segment   // segment 
-        mov  ds, ax
-        mov  bx, s_offset    // offset 
-        mov  al, ds:[bx]     // al = return value (byte) 
-        pop  ds
-        pop  bx
-    }
-}
-//---------------------------------------------------------------------------
-Bit16u read_word(Bit16u s_segment, Bit16u s_offset)
-{
-    __asm {
-        push bx
-        push ds
-        mov  ax, s_segment // segment 
-        mov  ds, ax
-        mov  bx, s_offset  // offset 
-        mov  ax, ds:[bx]   // ax = return value (word) 
-        pop  ds
-        pop  bx
-    }
-}
-//---------------------------------------------------------------------------
-void write_byte(Bit16u s_segment, Bit16u s_offset, Bit8u data)
-{
-    __asm {
-        push ax
-        push bx
-        push ds
-        mov  ax, s_segment  // segment  
-        mov  ds, ax
-        mov  bx, s_offset   // offset 
-        mov  al, data       // data byte 
-        mov  ds:[bx], al    // write data byte 
-        pop  ds
-        pop  bx
-        pop  ax
-    }
-}
-//---------------------------------------------------------------------------
-void write_word(Bit16u s_segment, Bit16u s_offset, Bit16u data)
-{
-    __asm {
-        push ax
-        push bx
-        push ds
-        mov  ax, s_segment   // segment 
-        mov  ds, ax
-        mov  bx, s_offset    //  offset 
-        mov  ax, data        //  data word 
-        mov  ds:[bx], ax     //  write data word 
-        pop  ds
-        pop  bx
-        pop  ax
-    }
-}
 
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-// I/O Utility Functions:
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-Bit8u inb(Bit16u port) {
-    __asm {
-        push dx
-        mov  dx, port
-        in   al, dx
-        pop  dx
-    }
-}
-//---------------------------------------------------------------------------
-void outb(Bit16u port, Bit8u  val)
-{
-    __asm {
-        push ax
-        push dx
-        mov  dx, port
-        mov  al, val
-        out  dx, al
-        pop  dx
-        pop  ax
-    }   
-}
-//---------------------------------------------------------------------------
-Bit16u inw(Bit16u port)
-{
-    __asm {
-        push dx
-        mov  dx, port
-        in   ax, dx
-        pop  dx
-    }
-}
-//---------------------------------------------------------------------------
-void outw(Bit16u port, Bit16u  val)
-{
-    __asm {
-        push ax
-        push dx
-        mov  dx, port
-        mov  ax, val
-        out  dx, ax
-        pop  dx
-        pop  ax
-    }
-}
+#pragma aux read_byte = \
+"       push ds          " \
+"       mov  ds, ax      " \
+"       mov  al, ds:[bx] " \
+"       pop  ds          " \
+parm [ax] [bx] modify [al];
 
-//---------------------------------------------------------------------------
-static void vgabiosend() {
-    __asm {
-        db      'vgabios ends here'
-        db      0x00
-    vgabios_end:
-        db      0xCB          // BLOCK_STRINGS_BEGIN
-    }
-}
+#pragma aux read_word = \
+"       push ds          " \
+"       mov  ds, ax      " \
+"       mov  ax, ds:[bx] " \
+"       pop  ds          " \
+parm [ax] [bx] modify [ax];
+
+#pragma aux write_byte = \
+"       push ds          " \
+"       mov  ds, ax      " \
+"       mov  ds:[bx], dl " \
+"       pop  ds          " \
+parm [ax] [bx] [dl];
+
+#pragma aux write_word = \
+"       push ds          " \
+"       mov  ds, ax      " \
+"       mov  ds:[bx], dx " \
+"       pop  ds          " \
+parm [ax] [bx] [dx];
+
+#pragma aux inb  = "in  al, dx" parm [dx] modify [al];
+#pragma aux outb = "out dx, al" parm [dx] [al];
+#pragma aux inw  = "in  ax, dx" parm [dx] modify [ax];
+#pragma aux outw = "out dx, ax" parm [dx] [ax];
+
 
 //---------------------------------------------------------------------------
 //      END of C

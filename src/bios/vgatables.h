@@ -626,25 +626,6 @@ static Bit8u palette3[256][3]=
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-static Bit8u static_functionality[0x10]=
-{
- /* 0 */ 0xff,  // All modes supported #1
- /* 1 */ 0xe0,  // All modes supported #2
- /* 2 */ 0x0f,  // All modes supported #3
- /* 3 */ 0x00, 0x00, 0x00, 0x00,  // reserved
- /* 7 */ 0x07,  // 200, 350, 400 scan lines
- /* 8 */ 0x02,  // mamimum number of visible charsets in text mode
- /* 9 */ 0x08,  // total number of charset blocks in text mode
- /* a */ 0xe7,  // Change to add new functions
- /* b */ 0x0c,  // Change to add new functions
- /* c */ 0x00,  // reserved
- /* d */ 0x00,  // reserved
- /* e */ 0x00,  // Change to add new functions
- /* f */ 0x00   // reserved
-};
-
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
 Bit16u video_save_pointer_table[] = {
             (Bit16u)video_param_table,
             0xc000,

@@ -301,140 +301,21 @@ static struct {
       { 0x5800, 0x5800,   none,   none, none }  /* F12 */
       };
 
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-// Compatibility Functions:
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-//#ifdef __WATCOMC__
-#if 0                       // These do not work, probably because dx is modified
-
-Bit8u inb(Bit16u port);
-#pragma aux inb = "in al,dx" parm [dx] value [al] modify [] nomemory;
-
-Bit16u inw(Bit16u port);
-#pragma aux inw = "in ax,dx" parm [dx] value [ax] modify [] nomemory;
-
-void outb(Bit16u port, Bit8u val);
-#pragma aux outb = "out dx,al" parm [dx] [al] modify [] nomemory;
-
-void outw(Bit16u port, Bit16u val);
-#pragma aux outw = "out dx,ax" parm [dx] [ax] modify [] nomemory;
-
-#else
-//---------------------------------------------------------------------------
-Bit8u inb(Bit16u port) {
-    __asm {
-        push dx
-        mov  dx, port
-        in   al, dx
-        pop  dx
-    }
-}
-//---------------------------------------------------------------------------
-void outb(Bit16u port, Bit8u  val)
-{
-    __asm {
-        push ax
-        push dx
-        mov  dx, port
-        mov  al, val
-        out  dx, al
-        pop  dx
-        pop  ax
-    }   
-}
-//---------------------------------------------------------------------------
-Bit16u inw(Bit16u port)
-{
-    __asm {
-        push dx
-        mov  dx, port
-        in   ax, dx
-        pop  dx
-    }
-}
-//---------------------------------------------------------------------------
-void outw(Bit16u port, Bit16u  val)
-{
-    __asm {
-        push ax
-        push dx
-        mov  dx, port
-        mov  ax, val
-        out  dx, ax
-        pop  dx
-        pop  ax
-    }
-}
-#endif
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 // Assembly functions to access memory directly
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-Bit8u read_byte(Bit16u s_segment, Bit16u s_offset)
-{
-    __asm {
-        push bx
-        push ds
-        mov  ax, s_segment   // segment 
-        mov  ds, ax
-        mov  bx, s_offset    // offset 
-        mov  al, ds:[bx]     // al = return value (byte) 
-        pop  ds
-        pop  bx
-    }
-}
-//---------------------------------------------------------------------------
-Bit16u read_word(Bit16u s_segment, Bit16u s_offset)
-{
-    __asm {
-        push bx
-        push ds
-        mov  ax, s_segment // segment 
-        mov  ds, ax
-        mov  bx, s_offset  // offset 
-        mov  ax, ds:[bx]   // ax = return value (word) 
-        pop  ds
-        pop  bx
-    }
-}
-//---------------------------------------------------------------------------
-void write_byte(Bit16u s_segment, Bit16u s_offset, Bit8u data)
-{
-    __asm {
-        push ax
-        push bx
-        push ds
-        mov  ax, s_segment  // segment  
-        mov  ds, ax
-        mov  bx, s_offset   // offset 
-        mov  al, data       // data byte 
-        mov  ds:[bx], al    // write data byte 
-        pop  ds
-        pop  bx
-        pop  ax
-    }
-}
-//---------------------------------------------------------------------------
-void write_word(Bit16u s_segment, Bit16u s_offset, Bit16u data)
-{
-    __asm {
-        push ax
-        push bx
-        push ds
-        mov  ax, s_segment   // segment 
-        mov  ds, ax
-        mov  bx, s_offset    //  offset 
-        mov  ax, data        //  data word 
-        mov  ds:[bx], ax     //  write data word 
-        pop  ds
-        pop  bx
-        pop  ax
-    }
-}
+static Bit8u    inb(Bit16u port);
+static Bit16u   inw(Bit16u port);
+static void     outb(Bit16u port, Bit8u  val);
+static void     outw(Bit16u port, Bit16u  val);
+static Bit8u    read_byte(Bit16u s_segment, Bit16u s_offset);
+static Bit16u   read_word(Bit16u s_segment, Bit16u s_offset);
+static void     write_byte(Bit16u s_segment, Bit16u s_offset, Bit8u data);
+static void     write_word(Bit16u s_segment, Bit16u s_offset, Bit16u data);
+
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------

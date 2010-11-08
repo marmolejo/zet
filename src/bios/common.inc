@@ -28,20 +28,25 @@ ff.rom: ff$(E)
 #
 # Compiler flags for ZET Code:
 #  -0   generate 8086 code
-#  -ms  forces small model
-#  -s   remove runtime stack checks
-#  -ot  Optimize for time of execution rather than size
-#  -zu  assume that SS != DS
-#  -ecc force use of __cedecl calls
 #  -wx  set to maximum warning level
+#  -w3  set to warning level 3
+#  -zu  assume that SS != DS
+#  -s   remove runtime stack checks
+#  -ecc force use of __cedecl calls
+#  -ms  forces small model
+#  -d0  no debugging information
+#  -d3  full symbolic debugging with unreferenced type names
+#  -od  disable all optimizations
+#  -ot  Optimize for time of execution rather than size
+#  -q   operate quietly
 #
-CF_DBG = -0 -wx -zu -s -ecc -ms -d3 -od
-CF_REL = -0 -wx -zu -s -ecc -ms -d0 -ot
-CFLAGS = $(CF_DBG)
+CF_DBG = -0 -wx -zu -s -ecc -ms -d3 -od -q
+CF_REL = -0 -wx -zu -s -ecc -ms -d0 -ot -q
+CFLAGS = $(CF_REL)
 
-AF_DBG = -0 -d1 -wx
-AF_REL = -0 -wx
-AFLAGS = $(AF_DBG)
+AF_DBG = -0 -d1 -w3 -q
+AF_REL = -0 -w3 -q
+AFLAGS = $(AF_REL)
 
 
 #
