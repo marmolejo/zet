@@ -40,7 +40,6 @@ module speaker (
     inout  i2c_sdat_,
 
     // Audio codec pad signals
-    input  aud_adclrck_,
     input  aud_adcdat_,
     input  aud_daclrck_,
     output aud_dacdat_,
@@ -65,7 +64,6 @@ module speaker (
     .aud_bclk_i    (aud_bclk_),
     .aud_daclrck_i (aud_daclrck_),
     .aud_dacdat_o  (aud_dacdat_),
-    .aud_adclrck_i (aud_adclrck_),
     .aud_adcdat_i  (aud_adcdat_)
   );
 

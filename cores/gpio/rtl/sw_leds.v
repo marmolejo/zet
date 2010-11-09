@@ -33,7 +33,7 @@ module sw_leds (
     // GPIO inputs/outputs
     output reg [13:0] leds_,
     input      [ 7:0] sw_,
-    input      [ 3:0] pb_,
+    input             pb_,
     input             tick,
     output reg        nmi_pb
   );
@@ -63,7 +63,7 @@ module sw_leds (
   end
 
   always @(posedge wb_clk_i)
-    nmi_pb_pressed <= !pb_[0];
+    nmi_pb_pressed <= !pb_;
 
   always @(posedge wb_clk_i)
   begin

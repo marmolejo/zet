@@ -176,7 +176,7 @@ module timer
   // Module instantiations
 
   timer_counter cnt0 (
-    .cntnum (0),
+    .cntnum (2'd0),
     .cw0    (6'h36),      // 16-bit Mode 3
     .cr0    (16'hFFFF),   // 55 ms
     .clkrw  (wb_clk_i),
@@ -192,7 +192,7 @@ module timer
     );
 
   timer_counter cnt1 (
-    .cntnum (1),
+    .cntnum (2'd1),
     .cw0    (6'h14),      // 8-bit Mode 2
     .cr0    (16'h0012),   // 15 us
     .clkrw  (wb_clk_i),
@@ -208,7 +208,7 @@ module timer
     );
 
   timer_counter cnt2 (
-    .cntnum (2),
+    .cntnum (2'd2),
     .cw0    (6'h36),      // 16-bit Mode 3
     .cr0    (16'h04A9),   // 1 ms
     .clkrw  (wb_clk_i),

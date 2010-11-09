@@ -122,10 +122,10 @@ module vga (
   wire       dac_we;
   wire [1:0] dac_read_data_cycle;
   wire [7:0] dac_read_data_register;
-  wire [7:0] dac_read_data;
+  wire [3:0] dac_read_data;
   wire [1:0] dac_write_data_cycle;
   wire [7:0] dac_write_data_register;
-  wire [7:0] dac_write_data;
+  wire [3:0] dac_write_data;
 
   // Module instances
   //
@@ -134,7 +134,7 @@ module vga (
     .wb_rst_i (wb_rst_i),
     .wb_dat_i (wb_dat_i),
     .wb_dat_o (conf_wb_dat_o),
-    .wb_adr_i (wb_adr_i),
+    .wb_adr_i (wb_adr_i[4:1]),
     .wb_we_i  (wb_we_i),
     .wb_sel_i (wb_sel_i),
     .wb_stb_i (stb & wb_tga_i),

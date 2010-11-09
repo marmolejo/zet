@@ -45,6 +45,9 @@ module serial (
   wire         wr_command;
   wire         rd_command;
 
+  // Unused output
+  wire rxd_endofpacket;
+
   // --------------------------------------------------------------------
   // Wires for Interrupt Enable Register (IER)
   // --------------------------------------------------------------------
@@ -300,12 +303,13 @@ module serial (
   end  // Synchrounous always
 
   serial_arx arx (
-    .clk            (wb_clk_i),
-    .baud8tick      (Baud8Tick),
-    .rxd            (rs232_rx),
-    .rxd_data_ready (rx_drdy),
-    .rxd_data       (output_data),
-    .rxd_idle       (rx_idle)
+    .clk             (wb_clk_i),
+    .baud8tick       (Baud8Tick),
+    .rxd             (rs232_rx),
+    .rxd_data_ready  (rx_drdy),
+    .rxd_data        (output_data),
+    .rxd_endofpacket (rxd_endofpacket),
+    .rxd_idle        (rx_idle)
   );
 
   serial_atx atx (

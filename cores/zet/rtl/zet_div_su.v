@@ -57,7 +57,7 @@
 `timescale 1ns/10ps
 //synopsys translate_on
 
-module zet_div_su (clk, ena, z, d, q, s, div0, ovf);
+module zet_div_su (clk, ena, z, d, q, s, ovf);
 
   //
   // parameters
@@ -75,11 +75,9 @@ module zet_div_su (clk, ena, z, d, q, s, div0, ovf);
   input  [d_width-1:0] d; // divisor
   output [d_width  :0] q; // quotient
   output [d_width  :0] s; // remainder
-  output div0;
   output ovf;
 
   reg [d_width:0] q, s;
-  reg div0;
   reg ovf;
 
   //
@@ -161,7 +159,6 @@ module zet_div_su (clk, ena, z, d, q, s, div0, ovf);
   always @(posedge clk)
     if(ena)
     begin
-        div0 <= idiv0;
         ovf  <= iovf;
     end
 endmodule

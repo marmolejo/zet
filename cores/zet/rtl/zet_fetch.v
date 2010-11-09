@@ -32,7 +32,6 @@ module zet_fetch (
     output           exec_st,
     output           ld_base,
     output reg [2:0] sop_l,
-    output reg       lock_l,
 
     // from decode
     input need_modrm,
@@ -86,6 +85,7 @@ module zet_fetch (
 
   reg [7:0] opcode_l, modrm_l;
   reg [1:0] pref_l;
+  reg       lock_l;
 
   // Module instantiation
   zet_next_or_not next_or_not(pref_l, opcode[7:1], cx_zero, zf, ext_int, next_in_opco,

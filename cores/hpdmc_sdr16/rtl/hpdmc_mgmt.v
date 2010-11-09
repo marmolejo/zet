@@ -83,9 +83,9 @@ reg [3:0] track_open;
 
 always @(posedge sys_clk) begin
 	if(sdram_rst) begin
-		has_openrow = 4'h0;
+		has_openrow <= 4'h0;
 	end else begin
-		has_openrow = (has_openrow | track_open) & ~track_close;
+		has_openrow <= (has_openrow | track_open) & ~track_close;
 		
 		if(track_open[0]) openrows[0] <= row_address;
 		if(track_open[1]) openrows[1] <= row_address;

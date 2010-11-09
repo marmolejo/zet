@@ -39,10 +39,10 @@ module vga_lcd (
     input        dac_we,
     input  [1:0] dac_read_data_cycle,
     input  [7:0] dac_read_data_register,
-    output [7:0] dac_read_data,
+    output [3:0] dac_read_data,
     input  [1:0] dac_write_data_cycle,
     input  [7:0] dac_write_data_register,
-    input  [7:0] dac_write_data,
+    input  [3:0] dac_write_data,
 
     // VGA pad signals
     output reg [3:0] vga_red_o,
@@ -115,9 +115,9 @@ module vga_lcd (
   wire        csr_gm_stb_o;
   wire        csr_stb_o_tmp;
 
-  wire [7:0] red;
-  wire [7:0] green;
-  wire [7:0] blue;
+  wire [3:0] red;
+  wire [3:0] green;
+  wire [3:0] blue;
 
   // Module instances
   vga_text_mode text_mode (
@@ -294,9 +294,9 @@ module vga_lcd (
       end
     else
       begin
-        vga_blue_o  <= video_on ? blue[5:2] : 4'h0;
-        vga_green_o <= video_on ? green[5:2] : 4'h0;
-        vga_red_o   <= video_on ? red[5:2] : 4'h0;
+        vga_blue_o  <= video_on ? blue : 4'h0;
+        vga_green_o <= video_on ? green : 4'h0;
+        vga_red_o   <= video_on ? red : 4'h0;
       end
 
 endmodule

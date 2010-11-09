@@ -48,10 +48,7 @@ module speaker_i2c_controller (
 	END,     //END transfor 
 	W_R,     //W_R
 	ACK,      //ACK
-	RESET,
-	//TEST
-	SD_COUNTER,
-	SDO
+	RESET
 );
 	input  CLOCK;
 	input  [23:0]I2C_DATA;	
@@ -62,10 +59,6 @@ module speaker_i2c_controller (
 	output I2C_SCLK;
 	output END;	
 	output ACK;
-
-//TEST
-	output [5:0] SD_COUNTER;
-	output SDO;
 
 
 reg SDO;

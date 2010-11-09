@@ -22,9 +22,9 @@ module vga_dac_regs (
 
     // VGA read interface
     input      [7:0] index,
-    output reg [7:0] red,
-    output reg [7:0] green,
-    output reg [7:0] blue,
+    output reg [3:0] red,
+    output reg [3:0] green,
+    output reg [3:0] blue,
 
     // CPU interface
     input       write,
@@ -32,18 +32,18 @@ module vga_dac_regs (
     // CPU read interface
     input      [1:0] read_data_cycle,
     input      [7:0] read_data_register,
-    output reg [7:0] read_data,
+    output reg [3:0] read_data,
 
     // CPU write interface
     input [1:0] write_data_cycle,
     input [7:0] write_data_register,
-    input [7:0] write_data
+    input [3:0] write_data
   );
 
   // Registers, nets and parameters
-  reg [7:0] red_dac   [0:255];
-  reg [7:0] green_dac [0:255];
-  reg [7:0] blue_dac  [0:255];
+  reg [3:0] red_dac   [0:255];
+  reg [3:0] green_dac [0:255];
+  reg [3:0] blue_dac  [0:255];
 
   // Behaviour
   // VGA read interface
@@ -60,7 +60,7 @@ module vga_dac_regs (
       2'b00:   read_data <= red_dac[read_data_register];
       2'b01:   read_data <= green_dac[read_data_register];
       2'b10:   read_data <= blue_dac[read_data_register];
-      default: read_data <= 8'h00;
+      default: read_data <= 4'h0;
     endcase
 
   // CPU write interface

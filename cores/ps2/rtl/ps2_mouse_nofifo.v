@@ -25,7 +25,6 @@ module ps2_mouse_nofifo (
     input        write,       // signal to send it
 
     output [7:0] readdata,    // data read
-    input        read,        // request to read from FIFO
     output       irq,         // signal data has arrived
 
     output command_was_sent,
@@ -35,6 +34,10 @@ module ps2_mouse_nofifo (
     inout ps2_clk,
     inout ps2_dat
   );
+
+  // Unused outputs
+  wire start_receiving_data;
+  wire wait_for_incoming_data;
 
   // --------------------------------------------------------------------
   // Internal Modules
@@ -51,6 +54,8 @@ module ps2_mouse_nofifo (
 
     .command_was_sent              (command_was_sent),
     .error_communication_timed_out (error_sending_command),
+    .start_receiving_data          (start_receiving_data),
+    .wait_for_incoming_data        (wait_for_incoming_data),
 
     .ps2_clk (ps2_clk),
     .ps2_dat (ps2_dat)

@@ -147,6 +147,9 @@ module ps2 (
   wire     KBD_Txdone;
   wire     KBD_Rxdone;
 
+  // Unused output
+  wire released;
+
 /*
  * We comment this out as they are never read
  *
@@ -326,6 +329,7 @@ module ps2 (
 
     .scancode         (KBD_dat_o), // scancode
     .rx_output_strobe (KBD_INT),   // Signals a key presseed
+    .released         (released),
 
     .ps2_clk_  (ps2_kbd_clk_), // PS2 PAD signals
     .ps2_data_ (ps2_kbd_dat_)

@@ -77,10 +77,10 @@ module vga_config_iface (
     output           dac_we,
     output reg [1:0] dac_read_data_cycle,
     output reg [7:0] dac_read_data_register,
-    input      [7:0] dac_read_data,
+    input      [3:0] dac_read_data,
     output     [1:0] dac_write_data_cycle,    // word bypass
     output     [7:0] dac_write_data_register, // word bypass
-    output     [7:0] dac_write_data,
+    output     [3:0] dac_write_data,
 
     // CRTC
     output [ 5:0] cur_start,
@@ -208,7 +208,7 @@ module vga_config_iface (
 
   assign dac_we               = write && (wb_adr_i==4'h4) && wb_sel_i[1];
   assign dac_write_data_cycle = wb_sel_i[0] ? 2'b00 : write_data_cycle;
-  assign dac_write_data       = wb_dat_i[15:8];
+  assign dac_write_data       = wb_dat_i[13:10];
   assign dac_write_data_register = wb_sel_i[0] ? wb_dat_i[7:0]
                                  : write_data_register;
 
@@ -292,7 +292,7 @@ module vga_config_iface (
       4'h0: wb_dat_o = { pal_read, 3'b001, h_pal_addr, pal_addr };
       4'h2: wb_dat_o = { seq[seq_idx], 4'h0, seq_idx };
       4'h3: wb_dat_o = { 6'h0, dac_state, 8'hff };
-      4'h4: wb_dat_o = { dac_read_data, write_data_register };
+      4'h4: wb_dat_o = { 2'b00, dac_read_data, 2'b00, write_data_register };
       4'h7: wb_dat_o = { graphics_ctrl[graph_idx], 4'h0, graph_idx };
       4'ha: wb_dat_o = { CRTC[crtc_idx], 3'h0, crtc_idx };
       4'hd: wb_dat_o = { 12'b0, v_retrace, 2'b0, vh_retrace };

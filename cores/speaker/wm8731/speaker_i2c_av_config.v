@@ -107,7 +107,9 @@ speaker_i2c_controller  i2c_controller (       .CLOCK(mI2C_CTRL_CLK),          /
                                                 .GO(mI2C_GO),                           //      GO transfor
                                                 .END(mI2C_END),                         //      END transfor 
                                                 .ACK(mI2C_ACK),                         //      ACK
-                                                .RESET(rst_n_i)  );
+                                                .RESET(rst_n_i),
+                                                .W_R (1'b0)
+                                                );
 ////////////////////////////////////////////////////////////////////
 //////////////////////  Config Control  ////////////////////////////
 always@(posedge mI2C_CTRL_CLK or negedge rst_n_i)

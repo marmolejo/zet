@@ -18,7 +18,7 @@
 #
 # Quartus II 64-Bit
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 19:09:54  November 01, 2010
+# Date created = 05:00:19  November 09, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -325,10 +325,6 @@ set_location_assignment PIN_AA21 -to hex3_[3]
 set_location_assignment PIN_AD24 -to hex3_[4]
 set_location_assignment PIN_AF23 -to hex3_[5]
 set_location_assignment PIN_Y19 -to hex3_[6]
-set_location_assignment PIN_M23 -to key_[0]
-set_location_assignment PIN_M21 -to key_[1]
-set_location_assignment PIN_N21 -to key_[2]
-set_location_assignment PIN_R24 -to key_[3]
 set_location_assignment PIN_G12 -to uart_rxd_
 set_location_assignment PIN_G9 -to uart_txd_
 set_location_assignment PIN_G6 -to ps2_kclk_
@@ -349,6 +345,16 @@ set_location_assignment PIN_E1 -to aud_xck_
 set_location_assignment PIN_B7 -to i2c_sclk_
 set_location_assignment PIN_A8 -to i2c_sdat_
 set_location_assignment PIN_A12 -to tft_lcd_clk_
+set_location_assignment PIN_M23 -to key_
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING VCC" -to flash_we_n_
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING VCC" -to flash_rst_n_
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING GROUND" -to sram_ce_n_
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING GROUND" -to sdram_addr_[12]
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING GROUND" -to sdram_dqm_[1]
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING GROUND" -to sdram_dqm_[0]
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING GROUND" -to sram_addr_[19]
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING GROUND" -to sram_addr_[18]
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING GROUND" -to sram_addr_[17]
 
 # Classic Timing Assignments
 # ==========================
@@ -360,6 +366,7 @@ set_global_assignment -name ENABLE_CLOCK_LATENCY ON
 # ================================
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name TOP_LEVEL_ENTITY kotku
+set_global_assignment -name ADD_PASS_THROUGH_LOGIC_TO_INFERRED_RAMS OFF
 
 # Fitter Assignments
 # ==================
@@ -386,11 +393,11 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to hex2_[5]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to hex2_[6]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to hex3_[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to hex3_[1]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hex3_[2]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hex3_[3]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hex3_[4]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hex3_[5]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hex3_[6]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex3_[2]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex3_[3]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex3_[4]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex3_[5]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex3_[6]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[2]
@@ -509,6 +516,13 @@ set_global_assignment -name OUTPUT_IO_TIMING_ENDPOINT "NEAR END"
 	# Classic Timing Assignments
 	# ==========================
 	set_instance_assignment -name CLOCK_SETTINGS clk_50_ -to clk_50_
+
+	# Fitter Assignments
+	# ==================
+	set_instance_assignment -name SLEW_RATE 2 -to hex*
+	set_instance_assignment -name SLEW_RATE 2 -to led*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to hex*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to led*
 
 	# start LOGICLOCK_REGION(Root Region)
 	# -----------------------------------

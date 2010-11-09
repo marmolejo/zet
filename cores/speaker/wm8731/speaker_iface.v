@@ -54,7 +54,6 @@ module speaker_iface
     input                     aud_bclk_i,
     input                     aud_daclrck_i,
     output reg                aud_dacdat_o,
-    input                     aud_adclrck_i, // not used
     input                     aud_adcdat_i
   );
 
