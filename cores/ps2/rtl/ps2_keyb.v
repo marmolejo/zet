@@ -36,7 +36,7 @@ module ps2_keyb (
     input            clk,                 // Main Clock
     output     [7:0] scancode,            // scancode
     output           rx_output_strobe,    // Signals a key presseed
-    inout            ps2_clk_,            // PS2 PAD signals
+    input            ps2_clk_,            // PS2 PAD signals
     inout            ps2_data_
   );
 
@@ -89,7 +89,7 @@ module ps2_keyb (
   reg    [3:0] bit_count;
   reg    [3:0] m1_state;
   reg    [3:0] m1_next_state;
-  reg          ps2_clk_hi_z;          // Without keyboard, high Z equals 1 due to pullups.
+  //reg          ps2_clk_hi_z;          // Without keyboard, high Z equals 1 due to pullups.
   reg          ps2_data_hi_z;         // Without keyboard, high Z equals 1 due to pullups.
   reg          ps2_clk_s;             // Synchronous version of this input
   reg          ps2_data_s;            // Synchronous version of this input
@@ -120,7 +120,7 @@ module ps2_keyb (
                           && ( (TRAP_SHIFT_KEYS_PP == 0) || ( (q[8:1] != `RIGHT_SHIFT)
                                     &&(q[8:1] != `LEFT_SHIFT) ) ) );
 
-  assign ps2_clk_  = ps2_clk_hi_z  ? 1'bZ : 1'b0;
+  //assign ps2_clk_  = ps2_clk_hi_z  ? 1'bZ : 1'b0;
   assign ps2_data_ = ps2_data_hi_z ? 1'bZ : 1'b0;
   assign timer_60usec_done = (timer_60usec_count == (TIMER_60USEC_VALUE_PP - 1));
   assign timer_5usec_done = (timer_5usec_count == TIMER_5USEC_VALUE_PP - 1);
@@ -178,7 +178,7 @@ module ps2_keyb (
 
     // Output signals default to this value,
     //  unless changed in a state condition.
-    ps2_clk_hi_z  <= 1;
+    //ps2_clk_hi_z  <= 1;
     ps2_data_hi_z <= 1;
     enable_timer_60usec <= 0;
     enable_timer_5usec  <= 0;
@@ -222,7 +222,7 @@ module ps2_keyb (
       m1_tx_force_clk_l :
       begin
         enable_timer_60usec <= 1;
-        ps2_clk_hi_z <= 0;  // Force the ps2_clk line low.
+        //ps2_clk_hi_z <= 0;  // Force the ps2_clk line low.
         if (timer_60usec_done)
           m1_next_state <= m1_tx_first_wait_clk_h;
         else m1_next_state <= m1_tx_force_clk_l;

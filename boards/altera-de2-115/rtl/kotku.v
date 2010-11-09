@@ -67,7 +67,7 @@ module kotku (
     output        uart_txd_,
 
     // PS2 signals
-    inout         ps2_kclk_, // PS2 keyboard Clock
+    input         ps2_kclk_, // PS2 keyboard Clock
     inout         ps2_kdat_, // PS2 Keyboard Data
     inout         ps2_mclk_, // PS2 Mouse Clock
     inout         ps2_mdat_, // PS2 Mouse Data
@@ -338,10 +338,11 @@ module kotku (
   // Module instantiations
   pll pll (
     .inclk0 (clk_50_),
-    .c0     (sdram_clk),  // 100 Mhz
-    .c1     (sdram_clk_), // to SDRAM chip
-    .c2     (vga_clk),    // 25 Mhz
-    .c3     (clk),        // 12.5 Mhz
+    .c0     (sdram_clk),    // 100 Mhz
+    .c1     (sdram_clk_),   // to SDRAM chip
+    .c2     (vga_clk),      // 25 Mhz
+    .c3     (tft_lcd_clk_), // 25 Mhz to VGA chip
+    .c4     (clk),          // 12.5 Mhz
     .locked (lock)
   );
 
@@ -601,8 +602,6 @@ module kotku (
     .csrm_dat_o (csrm_dat_o),
     .csrm_dat_i (csrm_dat_i)
   );
-
-  assign tft_lcd_clk_     = vga_clk;
 
   csr_sram csr_sram (
     .sys_clk (vga_clk),

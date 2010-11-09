@@ -34,13 +34,13 @@
 
 module speaker_i2c_av_config (  //      Host Side
                                                 clk_i,
-                                                rst_n_i,
+                                                rst_i,
                                                 //      I2C Side
                                                 i2c_sclk,
                                                 i2c_sdat        );
 //      Host Side
 input           clk_i;
-input           rst_n_i;
+input           rst_i;
 //      I2C Side
 output          i2c_sclk;
 inout           i2c_sdat;
@@ -81,9 +81,9 @@ parameter       SET_VIDEO       =       10;
 `endif
 
 /////////////////////   I2C Control Clock       ////////////////////////
-always@(posedge clk_i or negedge rst_n_i)
+always@(posedge clk_i)
 begin
-        if(!rst_n_i)
+        if(rst_i)
         begin
                 mI2C_CTRL_CLK   <=      0;
                 mI2C_CLK_DIV    <=      0;
@@ -107,14 +107,14 @@ speaker_i2c_controller  i2c_controller (       .CLOCK(mI2C_CTRL_CLK),          /
                                                 .GO(mI2C_GO),                           //      GO transfor
                                                 .END(mI2C_END),                         //      END transfor 
                                                 .ACK(mI2C_ACK),                         //      ACK
-                                                .RESET(rst_n_i),
+                                                .RESET(rst_i),
                                                 .W_R (1'b0)
                                                 );
 ////////////////////////////////////////////////////////////////////
 //////////////////////  Config Control  ////////////////////////////
-always@(posedge mI2C_CTRL_CLK or negedge rst_n_i)
+always@(posedge mI2C_CTRL_CLK)
 begin
-        if(!rst_n_i)
+        if(rst_i)
         begin
                 LUT_INDEX       <=      0;
                 mSetup_ST       <=      0;

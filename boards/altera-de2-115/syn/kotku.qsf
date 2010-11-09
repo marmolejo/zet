@@ -18,7 +18,7 @@
 #
 # Quartus II 64-Bit
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 05:00:19  November 09, 2010
+# Date created = 21:37:15  November 09, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -43,6 +43,7 @@ set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
 set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
 set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de2-115/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../rtl/pll.v
 set_global_assignment -name SDC_FILE kotku.sdc
 set_global_assignment -name VERILOG_FILE ../../../cores/sram/csr_sram.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_write_iface.v
@@ -127,7 +128,6 @@ set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/hex_display.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/seg_7.v
-set_global_assignment -name VERILOG_FILE ../rtl/pll.v
 
 # Pin & Location Assignments
 # ==========================
@@ -165,7 +165,6 @@ set_location_assignment PIN_AH8 -to flash_data_[0]
 set_location_assignment PIN_AE11 -to flash_rst_n_
 set_location_assignment PIN_AC10 -to flash_we_n_
 set_location_assignment PIN_AG8 -to flash_oe_n_
-set_location_assignment PIN_F17 -to ledg_[8]
 set_location_assignment PIN_G21 -to ledg_[7]
 set_location_assignment PIN_G22 -to ledg_[6]
 set_location_assignment PIN_G20 -to ledg_[5]
@@ -174,14 +173,6 @@ set_location_assignment PIN_E24 -to ledg_[3]
 set_location_assignment PIN_E25 -to ledg_[2]
 set_location_assignment PIN_E22 -to ledg_[1]
 set_location_assignment PIN_E21 -to ledg_[0]
-set_location_assignment PIN_H15 -to ledr_[17]
-set_location_assignment PIN_G16 -to ledr_[16]
-set_location_assignment PIN_G15 -to ledr_[15]
-set_location_assignment PIN_F15 -to ledr_[14]
-set_location_assignment PIN_H17 -to ledr_[13]
-set_location_assignment PIN_J16 -to ledr_[12]
-set_location_assignment PIN_H16 -to ledr_[11]
-set_location_assignment PIN_J15 -to ledr_[10]
 set_location_assignment PIN_H19 -to ledr_[7]
 set_location_assignment PIN_J19 -to ledr_[6]
 set_location_assignment PIN_E18 -to ledr_[5]
@@ -190,8 +181,6 @@ set_location_assignment PIN_F21 -to ledr_[3]
 set_location_assignment PIN_E19 -to ledr_[2]
 set_location_assignment PIN_F19 -to ledr_[1]
 set_location_assignment PIN_G19 -to ledr_[0]
-set_location_assignment PIN_AB25 -to sw_[9]
-set_location_assignment PIN_AC25 -to sw_[8]
 set_location_assignment PIN_AB26 -to sw_[7]
 set_location_assignment PIN_AD26 -to sw_[6]
 set_location_assignment PIN_AC26 -to sw_[5]
@@ -325,7 +314,6 @@ set_location_assignment PIN_AA21 -to hex3_[3]
 set_location_assignment PIN_AD24 -to hex3_[4]
 set_location_assignment PIN_AF23 -to hex3_[5]
 set_location_assignment PIN_Y19 -to hex3_[6]
-set_location_assignment PIN_G12 -to uart_rxd_
 set_location_assignment PIN_G9 -to uart_txd_
 set_location_assignment PIN_G6 -to ps2_kclk_
 set_location_assignment PIN_H5 -to ps2_kdat_
@@ -336,8 +324,6 @@ set_location_assignment PIN_AE14 -to sd_miso_
 set_location_assignment PIN_AD14 -to sd_mosi_
 set_location_assignment PIN_AE13 -to sd_sclk_
 set_location_assignment PIN_AC14 -to sd_ss_
-set_location_assignment PIN_D2 -to aud_adcdat_
-set_location_assignment PIN_C2 -to aud_adclrck_
 set_location_assignment PIN_F2 -to aud_bclk_
 set_location_assignment PIN_D1 -to aud_dacdat_
 set_location_assignment PIN_E3 -to aud_daclrck_
@@ -408,14 +394,6 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[6]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[7]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[8]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[9]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[10]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[11]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[12]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[13]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[14]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[15]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[16]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to ledr_[17]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledg_[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledg_[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledg_[2]
@@ -424,11 +402,8 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to ledg_[4]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledg_[5]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledg_[6]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ledg_[7]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to ledg_[8]
 set_global_assignment -name DEVICE EP4CE115F29C7
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
-set_instance_assignment -name IO_STANDARD LVTTL -to aud_adcdat_
-set_instance_assignment -name IO_STANDARD LVTTL -to aud_adclrck_
 set_instance_assignment -name IO_STANDARD LVTTL -to aud_bclk_
 set_instance_assignment -name IO_STANDARD LVTTL -to aud_dacdat_
 set_instance_assignment -name IO_STANDARD LVTTL -to aud_daclrck_
@@ -506,16 +481,83 @@ set_global_assignment -name OUTPUT_IO_TIMING_ENDPOINT "NEAR END"
 
 	# Pin & Location Assignments
 	# ==========================
-	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
-	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
-	set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
-	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_*
-	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_*
-	set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sram_*
-
-	# Classic Timing Assignments
-	# ==========================
-	set_instance_assignment -name CLOCK_SETTINGS clk_50_ -to clk_50_
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[3]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[4]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[5]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[6]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[7]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[8]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[9]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[10]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[11]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[3]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[4]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[5]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[6]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[7]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[8]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[9]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[10]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[11]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[12]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[13]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[14]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[15]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[16]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[3]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[4]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[5]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[6]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[7]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[8]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[9]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[10]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[11]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[12]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[13]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[14]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[15]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[0]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[1]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[2]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[3]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[4]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[5]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[6]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[7]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[8]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[9]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[10]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[11]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[12]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[13]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[14]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[15]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_we_n_
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_oe_n_
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_bw_n_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_bw_n_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_r_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_r_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_r_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_r_[3]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_g_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_g_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_g_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_g_[3]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_b_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_b_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_b_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_b_[3]
 
 	# Fitter Assignments
 	# ==================
@@ -523,6 +565,15 @@ set_global_assignment -name OUTPUT_IO_TIMING_ENDPOINT "NEAR END"
 	set_instance_assignment -name SLEW_RATE 2 -to led*
 	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to hex*
 	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to led*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to flash*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to sdram*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to sram*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to tft*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to uart*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to i2c*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to aud*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to ps2*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to sd_*
 
 	# start LOGICLOCK_REGION(Root Region)
 	# -----------------------------------

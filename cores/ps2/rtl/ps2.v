@@ -32,7 +32,7 @@ module ps2 (
     output        wb_tgk_o,  // Interrupt request
     output        wb_tgm_o,  // Interrupt request
 
-    inout ps2_kbd_clk_,  // PS2 Keyboard Clock, Bidirectional
+    input ps2_kbd_clk_,  // PS2 Keyboard Clock, Bidirectional
     inout ps2_kbd_dat_,  // PS2 Keyboard Data, Bidirectional
     inout ps2_mse_clk_,  // PS2 Mouse Clock, Bidirectional
     inout ps2_mse_dat_   // PS2 Mouse Data, Bidirectional

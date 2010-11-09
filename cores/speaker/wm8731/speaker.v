@@ -69,8 +69,8 @@ module speaker (
 
   speaker_i2c_av_config i2c_av_config (
     // Host Side
-    .clk_i   (clk_25M),
-    .rst_n_i (!rst),
+    .clk_i (clk_25M),
+    .rst_i (rst),
 
     // I2C Side
     .i2c_sclk (i2c_sclk_),
