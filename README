@@ -1,33 +1,108 @@
-Quick help
-----------
-The most important file is "boards/xilinx-ml403/rtl/kotku.v" for the
-Xilinx ML403 board, or "boards/altera-de1/rtl/kotku.v" for the Altera
-DE1 board, as this is the top level module for the complete SOC system. 
++++ Zet processor System on Chip +++
+====================================
 
-=== Xilinx ML403 ===
-For building the system for the Xilinx ML403 board,
- (Xilinx tools must be installed):
-$ source /opt/Xilinx/10.1/ISE/settings64.sh  # (or equivalent)
-$ cd boards/xilinx-ml403/syn/
-$ make
+This package contains all source code, test benches, bitfiles, ROMs and
+scripts used in Zet processor x86 SoC. As of version 1.2.0, Zet runs on
+3 different FPGA boards: Terasic Altera DE0, DE1 and DE2-115.
 
-As a result, you will have a file named "kotku.bit", which is the conf-
-iguration stream for the FPGA.
+You can find all information in the website of the project:
+http://zet.aluzina.org
 
-=== Altera DE1 ===
-To build the system for the Altera DE1 board, just open the file
-"boards/altera-de1/syn/kotku.qpf" in Quartus II and compile the system.
 
-As a result, you will have a file named "kotku.sof", which is the conf-
-iguration stream for the FPGA.
+++ Explanation of directories
+  boards/    - Different boards supported (implementation dependent files)
+  cores/     - Cores library in Verilog source code
+  cores/zet/ - Zet processor Verilog source code
+  src/       - Software directory, with BIOS and tools
 
-Explanation of directories
---------------------------
-bin/    - Some scripts to prepare ROMs, download microcode, etc...
-doc/    - Documentation stub
-boards/ - Different boards supported (implementation dependent files)
-cores/  - Different cores for the SOC PC system
-cores/zet/ - Zet processor RTL code
-src/    - Source files for some commands used to transform ROMs
-src/bios/ - ROM BIOS and VIDEO BIOS implementation
-tests/  - 8086 test benches (exactly the same as in the web)
+
+++ BUILDING THE SYSTEM
+  To build the system, you can use Microsoft Windows or Linux.
+
+  1) Build the BIOS
+    To build the BIOS you will need the OpenWatcom compiler. This has been
+    tested with the latest version at this moment, 1.9. Get it for free at
+    http://www.openwatcom.org. When you have it installed, you will need
+    to add the binaries to the PATH environment variable and set up the
+    WATCOM variable pointing to the installation directory of the compiler.
+
+    Once installed, open a command prompt and go to src/bios folder.
+      In Windows: type "build"
+      In Linux:   type "wmake"
+
+    When the BIOS has been built, you will have the boot ROM part copied to
+    cores/flash/ and the bios.rom file in the src/bios directory with both
+    the VGA BIOS and the normal BIOS.
+
+  2) Flash the BIOS into the board ROM
+    Microsoft Windows:
+    To flash the board, you will need the Control panel application
+    installed in Microsoft Windows (comes with the board CD-ROM). Open the
+    file src/bios/bios.rom in the board Control Panel and with the board
+    plugged into the USB port, Erase the flash and program it sequentially
+    starting from offset 0.
+
+    In Linux:
+    you will need the Nios II Embedded Design Suite and Quartus II
+    installed. Setup the environment variables $NIOS2EDS and $QUARTUSDIR
+    pointing to the directories of the Nios II EDS and Quartus II
+    repectively. Then run the script boards/altera*/bin/flash_bios.sh
+
+  3) Build the bitfiles
+    To create the bitfiles, you will need the Quartus II software. The
+    latest version tested is 10.0 SP1. You can get it for free at
+    http://www.altera.com. Web Edition will be enough. To build the system,
+    open the file boards/altera*/syn/kotku.qpf (depending on the board)
+    in Quartus II and go to "Processing" menu > "Start compilation". The
+    compilation of the system should start. After a while, it should end
+    with 0 errors and 0 warnings.
+
+    The result will be two files in the boards/altera*/syn/ directory, named
+    kotku.sof and kotku.pof. The first is the volatile version of the system
+    and the second is the permanent one.
+
+  4) Flash the bitfiles
+    To flash the bitfiles, open the Quartus II programmer by opening
+    Quartus II and click in "Tools" > "Programmer". Then select the "active
+    serial" operation and add the kotku.pof file. With the board plugged,
+    switch the RUN/PROG switch on the board to PROG position. Then click on
+    start.
+
+  In this moment, the board should boot by itself. Just power it by
+  switching it to RUN mode. You will need an SD card containing a FAT16
+  file system with MS-DOS or FreeDOS in order to use the system.
+
+
+++ SIMULATING THE SYSTEM
+  You can choose to simulate only the processor or the full system. For
+  Zet processor development it is much faster and easier to simulate only
+  the processor. To do the simulations, you will need Modelsim simulator.
+  You can get it for free from http://www.altera.com website.
+
+  Zet processor simulation:
+  You will need GNU make and the bcc compiler in order to make the tests
+  that are in the cores/zet/tests folder. Type for example:
+  "make 01_mov.rtlrom" and the corresponding test will be built and copied
+  to the sim/ folder ready to be simulated.
+
+  Open Modelsim and go to directory "cd cores/zet/sim" then type "do t.do",
+  the system will compile and start a 10us simulation. You will be able to
+  see all processor contents and signals.
+
+  Full system simulation:
+  It's a similar procedure, but the Altera DE1 board is being simulated.
+  Instead, change to "cd boards/altera-de1/sim" folder and then run
+  "do t.do". You will need some contents in the simulated flash. To do that,
+  you can run the script bios.sh present in that folder to transform the
+  compiled version of the BIOS to contents to the flash stub for simulation.
+
+
+++ Credits
+  Most of the work is (C) Copyright 2008, 2009, 2010 Zeus Gomez Marmolejo.
+  All hardware and software source files are released under the GNU GPLv3
+  license. Read the LICENSE file included.
+
+  Special thanks to people that helped significantly to this project:
+   - Sebastien Bourdeauducq to his DRAM memory controller
+   - Donna Polehn for adding mouse and shadow BIOS support
+   - Yury Savchuk for improving the timer and improving the processor
