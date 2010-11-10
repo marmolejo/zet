@@ -3,7 +3,7 @@ quit -sim
 echo "Compiling verilog modules..."
 make
 
-vsim -L altera_mf_ver -t ps zet.test_kotku
+vsim -suppress 3009 -L altera_mf_ver -t ps zet.test_kotku
 
 add wave -label clk -hex kotku/clk
 add wave -label rst -hex kotku/rst

@@ -55,6 +55,7 @@ ZET_MODS    = zet_addsub \
               zet_wb_master \
               zet_signmul17 \
               zet_core
+CSR_SRAM    = csr_sram
 FLASH_MODS  = bootrom \
               flash8
 HPDMC_MODS  = hpdmc_banktimer \
@@ -74,7 +75,6 @@ WBABRG_MODS = wb_abrgr \
               wb_abrg
 WBSW_MODS   = wb_switch
 VGA_MODS    = vga \
-              vga_csr_sram \
               vga_config_iface \
               vga_lcd \
               vga_text_mode \
@@ -115,6 +115,7 @@ SPKR_MODS   = speaker \
 SYS_MODS    = $(BOARD_MODS) \
               $(FLASH_MODS) \
               $(ZET_MODS) \
+              $(CSR_SRAM) \
               $(HPDMC_MODS) \
               $(FMLBRG_MODS) \
               $(CSRBRG_MODS) \
@@ -137,6 +138,7 @@ SYS_LIBS    = $(addprefix $(LIB)/, $(SYS_MODS) )
 vpath %.v ../rtl
 vpath %.v ../../../cores/zet/rtl
 vpath %.v ../../../cores/zet/rtl/altera
+vpath %.v ../../../cores/sram
 vpath %.v ../../../cores/flash
 vpath %.v ../../../cores/hpdmc_sdr16/rtl
 vpath %.v ../../../cores/hpdmc_sdr16/test

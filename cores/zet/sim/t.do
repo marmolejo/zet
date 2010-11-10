@@ -3,7 +3,9 @@ quit -sim
 echo "Compiling verilog modules..."
 make
 
-vsim -t ns zet.test_zet
+# Supresses message 3009 about timescale directives
+# and message 7 about not finding appropiate ROMs for init
+vsim -t ns -suppress 3009,7 zet.test_zet
 
 add wave -label clk        -hex clk
 add wave -label rst        -hex rst

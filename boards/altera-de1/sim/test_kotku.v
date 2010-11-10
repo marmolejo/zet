@@ -24,7 +24,7 @@ module test_kotku;
   reg        clk_50;
   wire [9:0] ledr;
   wire [7:0] ledg;
-  reg  [9:0] sw;
+  reg  [7:0] sw;
   integer    i;
 
   wire [21:0] flash_addr;
@@ -45,7 +45,7 @@ module test_kotku;
   wire        sdram_we_n;
   wire        sdram_cs_n;
 
-  wire [17:0] sram_addr_;
+  wire [16:0] sram_addr_;
   wire [15:0] sram_data_;
   wire        sram_we_n_;
   wire        sram_oe_n_;
@@ -62,15 +62,12 @@ module test_kotku;
     // flash signals
     .flash_addr_  (flash_addr),
     .flash_data_  (flash_data),
-    .flash_we_n_  (flash_we_n),
     .flash_oe_n_  (flash_oe_n),
-    .flash_rst_n_ (flash_rst_n),
 
     // sdram signals
     .sdram_addr_  (sdram_addr),
     .sdram_data_  (sdram_data),
     .sdram_ba_    (sdram_ba),
-    .sdram_dqm_   (sdram_dqm),
     .sdram_ras_n_ (sdram_ras_n),
     .sdram_cas_n_ (sdram_cas_n),
     .sdram_ce_    (sdram_ce),
@@ -83,7 +80,6 @@ module test_kotku;
     .sram_data_ (sram_data_),
     .sram_we_n_ (sram_we_n_),
     .sram_oe_n_ (sram_oe_n_),
-    .sram_ce_n_ (sram_ce_n_),
     .sram_bw_n_ (sram_bw_n_)
   );
 
@@ -122,8 +118,8 @@ module test_kotku;
 
     .CENeg    (1'b0),
     .OENeg    (flash_oe_n),
-    .WENeg    (flash_we_n),
-    .RESETNeg (flash_rst_n),
+    .WENeg    (1'b1),
+    .RESETNeg (1'b1),
     .ACC      (1'b1),
     .RY       (flash_ry)
   );
@@ -138,13 +134,13 @@ module test_kotku;
     .Ras_n (sdram_ras_n),
     .Cas_n (sdram_cas_n),
     .We_n  (sdram_we_n),
-    .Dqm   (sdram_dqm)
+    .Dqm   (2'b00)
   );
 
   is61lv25616 sram (
-    .A   (sram_addr_),
+    .A   ({1'b0,sram_addr_}),
     .IO  (sram_data_),
-    .CE_ (sram_ce_n_),
+    .CE_ (1'b0),
     .OE_ (sram_oe_n_),
     .WE_ (sram_we_n_),
     .LB_ (sram_bw_n_[0]),
@@ -159,7 +155,7 @@ module test_kotku;
     begin
       $readmemh("../../../cores/flash/bios.dat",flash.Mem);
       $readmemb("../../../cores/zet/rtl/micro_rom.dat",
-        kotku.zet.core.fetch.decode.micro_data.micro_rom.rom);
+        kotku.zet.core.micro_data.micro_rom.rom);
       $readmemh("../../../cores/vga/rtl/char_rom.dat",
         kotku.vga.lcd.text_mode.char_rom.rom);
 //      $readmemh("../../../cores/ps2/rtl/xt_codes.dat",
@@ -168,8 +164,8 @@ module test_kotku;
         kotku.bootrom.rom);
 
       clk_50 <= 1'b0;
-      sw <= 10'h1;
-      #300 sw <= 10'h0;
+      sw <= 8'h1;
+      #300 sw <= 8'h0;
     end
 
 endmodule
