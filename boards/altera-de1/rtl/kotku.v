@@ -22,8 +22,8 @@ module kotku (
     input        clk_50_,
 
     // General purpose IO
-    input  [9:0] sw_,
-    input  [3:0] key_,
+    input  [7:0] sw_,
+    input        key_,
     output [6:0] hex0_,
     output [6:0] hex1_,
     output [6:0] hex2_,
@@ -34,16 +34,13 @@ module kotku (
     // flash signals
     output [21:0] flash_addr_,
     input  [ 7:0] flash_data_,
-    output        flash_we_n_,
     output        flash_oe_n_,
     output        flash_ce_n_,
-    output        flash_rst_n_,
 
     // sdram signals
     output [11:0] sdram_addr_,
     inout  [15:0] sdram_data_,
     output [ 1:0] sdram_ba_,
-    output [ 1:0] sdram_dqm_,
     output        sdram_ras_n_,
     output        sdram_cas_n_,
     output        sdram_ce_,
@@ -52,11 +49,10 @@ module kotku (
     output        sdram_cs_n_,
 
     // sram signals
-    output [17:0] sram_addr_,
+    output [16:0] sram_addr_,
     inout  [15:0] sram_data_,
     output        sram_we_n_,
     output        sram_oe_n_,
-    output        sram_ce_n_,
     output [ 1:0] sram_bw_n_,
 
     // VGA signals
@@ -67,11 +63,10 @@ module kotku (
     output        tft_lcd_vsync_,
 
     // UART signals
-    input         uart_rxd_,
     output        uart_txd_,
 
     // PS2 signals
-    inout         ps2_kclk_, // PS2 keyboard Clock
+    input         ps2_kclk_, // PS2 keyboard Clock
     inout         ps2_kdat_, // PS2 Keyboard Data
     inout         ps2_mclk_, // PS2 Mouse Clock
     inout         ps2_mdat_, // PS2 Mouse Data
@@ -87,8 +82,6 @@ module kotku (
     output        i2c_sclk_,
 
     // Audio codec signals
-    input         aud_adclrck_,
-    input         aud_adcdat_,
     input         aud_daclrck_,
     output        aud_dacdat_,
     input         aud_bclk_,
@@ -130,6 +123,17 @@ module kotku (
   wire        fl_cyc_i;
   wire        fl_stb_i;
   wire        fl_ack_o;
+
+  // Unused outputs
+  wire       flash_we_n_;
+  wire       flash_rst_n_;
+  wire       sram_ce_n_;
+  wire [1:0] sdram_dqm_;
+  wire [2:0] s19_17;
+
+  // Unused inputs
+  wire uart_rxd_;
+  wire aud_adcdat_;
 
   // wires to vga controller
   wire [15:0] vga_dat_o;
@@ -187,8 +191,10 @@ module kotku (
   wire        timer_ack_o;
 
   // wires to sd controller
+  wire [19:1] sd_adr_i;
   wire [ 7:0] sd_dat_o;
   wire [15:0] sd_dat_i;
+  wire        sd_tga_i;
   wire [ 1:0] sd_sel_i;
   wire        sd_we_i;
   wire        sd_cyc_i;
@@ -251,6 +257,8 @@ module kotku (
   wire [19:1] csrbrg_adr;
   wire [15:0] csrbrg_dat_w;
   wire [15:0] csrbrg_dat_r;
+  wire [ 1:0] csrbrg_sel;
+  wire        csrbrg_tga;
   wire        csrbrg_cyc;
   wire        csrbrg_stb;
   wire        csrbrg_we;
@@ -452,6 +460,8 @@ module kotku (
     .wbs_adr_i (csrbrg_adr_s),
     .wbs_dat_i (csrbrg_dat_w_s),
     .wbs_dat_o (csrbrg_dat_r_s),
+    .wbs_sel_i (csrbrg_sel_s),
+    .wbs_tga_i (csrbrg_tga_s),
     .wbs_stb_i (csrbrg_stb_s),
     .wbs_cyc_i (csrbrg_cyc_s),
     .wbs_we_i  (csrbrg_we_s),
@@ -462,6 +472,8 @@ module kotku (
     .wbm_adr_o (csrbrg_adr),
     .wbm_dat_o (csrbrg_dat_w),
     .wbm_dat_i (csrbrg_dat_r),
+    .wbm_sel_o (csrbrg_sel),
+    .wbm_tga_o (csrbrg_tga),
     .wbm_stb_o (csrbrg_stb),
     .wbm_cyc_o (csrbrg_cyc),
     .wbm_we_o  (csrbrg_we),
@@ -598,7 +610,7 @@ module kotku (
     .csr_dat_o (csrm_dat_i),
 
     // Pad signals
-    .sram_addr_ (sram_addr_),
+    .sram_addr_ ({s19_17,sram_addr_}),
     .sram_data_ (sram_data_),
     .sram_we_n_ (sram_we_n_),
     .sram_oe_n_ (sram_oe_n_),
@@ -667,7 +679,6 @@ module kotku (
     .i2c_sclk_ (i2c_sclk_),
     .i2c_sdat_ (i2c_sdat_),
 
-    .aud_adclrck_ (aud_adclrck_),
     .aud_adcdat_  (aud_adcdat_),
     .aud_daclrck_ (aud_daclrck_),
     .aud_dacdat_  (aud_dacdat_),
@@ -717,9 +728,11 @@ module kotku (
 
     // Wishbone slave interface
     .wbs_clk_i (clk),
+    .wbs_adr_i (sd_adr_i_s),
     .wbs_dat_i (sd_dat_i_s),
     .wbs_dat_o (sd_dat_o_s),
     .wbs_sel_i (sd_sel_i_s),
+    .wbs_tga_i (sd_tga_i_s),
     .wbs_stb_i (sd_stb_i_s),
     .wbs_cyc_i (sd_cyc_i_s),
     .wbs_we_i  (sd_we_i_s),
@@ -727,8 +740,10 @@ module kotku (
 
     // Wishbone master interface
     .wbm_clk_i (sdram_clk),
+    .wbm_adr_o (sd_adr_i),
     .wbm_dat_o (sd_dat_i),
     .wbm_dat_i ({8'h0,sd_dat_o}),
+    .wbm_tga_o (sd_tga_i),
     .wbm_sel_o (sd_sel_i),
     .wbm_stb_o (sd_stb_i),
     .wbm_cyc_o (sd_cyc_i),
@@ -746,7 +761,7 @@ module kotku (
     // Wishbone slave interface
     .wb_clk_i (sdram_clk),
     .wb_rst_i (rst),
-    .wb_dat_i (sd_dat_i),
+    .wb_dat_i (sd_dat_i[8:0]),
     .wb_dat_o (sd_dat_o),
     .wb_we_i  (sd_we_i),
     .wb_sel_i (sd_sel_i),
@@ -761,7 +776,7 @@ module kotku (
     .wb_rst_i (rst),
 
     // Wishbone slave interface
-    .wb_adr_i (gpio_adr_i),
+    .wb_adr_i (gpio_adr_i[1]),
     .wb_dat_o (gpio_dat_o),
     .wb_dat_i (gpio_dat_i),
     .wb_sel_i (gpio_sel_i),
@@ -971,7 +986,7 @@ module kotku (
     .sA_ack_i (fmlbrg_ack_s),
 
     // Slave B interface - default
-    .sB_dat_i (16'hffff),
+    .sB_dat_i (16'h0000),
     .sB_dat_o (),
     .sB_adr_o (),
     .sB_sel_o (),

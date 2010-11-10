@@ -18,7 +18,7 @@
 #
 # Quartus II 64-Bit
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 20:08:02  October 17, 2010
+# Date created = 00:58:48  November 10, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -42,27 +42,9 @@
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
 set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
-set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
+set_global_assignment -name VERILOG_FILE ../rtl/pll.v
 set_global_assignment -name SDC_FILE kotku.sdc
 set_global_assignment -name VERILOG_FILE ../../../cores/sram/csr_sram.v
-set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch.v
-set_global_assignment -name VERILOG_FILE ../../../cores/flash/flash8.v
-set_global_assignment -name VERILOG_FILE ../../../cores/flash/bootrom.v
-set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_iface.v
-set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_i2c_controller.v
-set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_i2c_av_config.v
-set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_nofifo.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_datain.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_cmdout.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb_xtcodes.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb.v
-set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2.v
-set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_atx.v
-set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_arx.v
-set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial.v
-set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/clk_gen.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_write_iface.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_text_mode.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_read_iface.v
@@ -77,6 +59,39 @@ set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_config_iface
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_char_rom.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_c4_iface.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_sdrio.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_mgmt.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_datactl.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_ctlif.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_busif.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_banktimer.v
+set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc.v
+set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg_datamem.v
+set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg.v
+set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrgr.v
+set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer_counter.v
+set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
+set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
+set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker.v
+set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_i2c_av_config.v
+set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_i2c_controller.v
+set_global_assignment -name VERILOG_FILE ../../../cores/speaker/wm8731/speaker_iface.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_keyb_xtcodes.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_cmdout.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_datain.v
+set_global_assignment -name VERILOG_FILE ../../../cores/ps2/rtl/ps2_mouse_nofifo.v
+set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_atx.v
+set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial_arx.v
+set_global_assignment -name VERILOG_FILE ../../../cores/serial/rtl/serial.v
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_switch/wb_switch.v
+set_global_assignment -name VERILOG_FILE ../../../cores/flash/flash8.v
+set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
+set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/clk_gen.v
+set_global_assignment -name VERILOG_FILE ../../../cores/flash/bootrom.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_arlog.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_shrot.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_core.v
@@ -107,28 +122,12 @@ set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_bitlog.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_alu.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet_addsub.v
 set_global_assignment -name VERILOG_FILE ../../../cores/zet/rtl/zet.v
-set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrgr.v
-set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg_datamem.v
-set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_sdrio.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_banktimer.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_busif.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_ctlif.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_datactl.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_mgmt.v
-set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc.v
-set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
-set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/sw_leds.v
 set_global_assignment -name VERILOG_FILE ../../../cores/sdspi/rtl/sdspi.v
 set_global_assignment -name VERILOG_FILE ../rtl/kotku.v
-set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer.v
-set_global_assignment -name VERILOG_FILE ../../../cores/timer/rtl/timer_counter.v
-set_global_assignment -name VERILOG_FILE ../../../cores/pic/rtl/simple_pic.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/hex_display.v
 set_global_assignment -name VERILOG_FILE ../../../cores/gpio/rtl/seg_7.v
-set_global_assignment -name VERILOG_FILE ../rtl/pll.v
-set_global_assignment -name SIGNALTAP_FILE stp1.stp
+set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de1/syn/kotku.dpf"
 
 # Pin & Location Assignments
 # ==========================
@@ -181,8 +180,6 @@ set_location_assignment PIN_Y19 -to ledr_[3]
 set_location_assignment PIN_U19 -to ledr_[2]
 set_location_assignment PIN_R19 -to ledr_[1]
 set_location_assignment PIN_R20 -to ledr_[0]
-set_location_assignment PIN_L2 -to sw_[9]
-set_location_assignment PIN_M1 -to sw_[8]
 set_location_assignment PIN_M2 -to sw_[7]
 set_location_assignment PIN_U11 -to sw_[6]
 set_location_assignment PIN_U12 -to sw_[5]
@@ -313,11 +310,7 @@ set_location_assignment PIN_J4 -to hex3_[3]
 set_location_assignment PIN_L8 -to hex3_[4]
 set_location_assignment PIN_F3 -to hex3_[5]
 set_location_assignment PIN_D4 -to hex3_[6]
-set_location_assignment PIN_R22 -to key_[0]
-set_location_assignment PIN_R21 -to key_[1]
-set_location_assignment PIN_T22 -to key_[2]
-set_location_assignment PIN_T21 -to key_[3]
-set_location_assignment PIN_F14 -to uart_rxd_
+set_location_assignment PIN_R22 -to key_
 set_location_assignment PIN_G12 -to uart_txd_
 set_location_assignment PIN_H15 -to ps2_kclk_
 set_location_assignment PIN_J14 -to ps2_kdat_
@@ -328,14 +321,18 @@ set_location_assignment PIN_W20 -to sd_miso_
 set_location_assignment PIN_Y20 -to sd_mosi_
 set_location_assignment PIN_V20 -to sd_sclk_
 set_location_assignment PIN_U20 -to sd_ss_
-set_location_assignment PIN_B6 -to aud_adcdat_
-set_location_assignment PIN_A6 -to aud_adclrck_
 set_location_assignment PIN_A4 -to aud_bclk_
 set_location_assignment PIN_B5 -to aud_dacdat_
 set_location_assignment PIN_A5 -to aud_daclrck_
 set_location_assignment PIN_B4 -to aud_xck_
 set_location_assignment PIN_A3 -to i2c_sclk_
 set_location_assignment PIN_B3 -to i2c_sdat_
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING VCC" -to flash_we_n_
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING VCC" -to flash_rst_n_
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING GROUND" -to sram_ce_n_
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING GROUND" -to sdram_dqm_[1]
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING GROUND" -to sdram_dqm_[0]
+set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING GROUND" -to sram_addr_[17]
 
 # Classic Timing Assignments
 # ==========================
@@ -347,6 +344,7 @@ set_global_assignment -name USE_TIMEQUEST_TIMING_ANALYZER ON
 # Analysis & Synthesis Assignments
 # ================================
 set_global_assignment -name FAMILY "Cyclone II"
+set_global_assignment -name ADD_PASS_THROUGH_LOGIC_TO_INFERRED_RAMS OFF
 set_global_assignment -name TOP_LEVEL_ENTITY kotku
 
 # Fitter Assignments
@@ -354,8 +352,6 @@ set_global_assignment -name TOP_LEVEL_ENTITY kotku
 set_global_assignment -name DEVICE EP2C20F484C7
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS OUTPUT DRIVING GROUND"
-set_instance_assignment -name IO_STANDARD LVTTL -to aud_adcdat_
-set_instance_assignment -name IO_STANDARD LVTTL -to aud_adclrck_
 set_instance_assignment -name IO_STANDARD LVTTL -to aud_bclk_
 set_instance_assignment -name IO_STANDARD LVTTL -to aud_dacdat_
 set_instance_assignment -name IO_STANDARD LVTTL -to aud_daclrck_
@@ -364,6 +360,7 @@ set_instance_assignment -name IO_STANDARD LVTTL -to i2c_sclk_
 set_instance_assignment -name IO_STANDARD LVTTL -to i2c_sdat_
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_WEAK_PULLUP "AS INPUT TRI-STATED WITH WEAK PULL-UP"
 
 # EDA Netlist Writer Assignments
 # ==============================
@@ -380,7 +377,6 @@ set_global_assignment -name SIMULATION_MODE FUNCTIONAL
 # SignalTap II Assignments
 # ========================
 set_global_assignment -name ENABLE_SIGNALTAP OFF
-set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
 
 # Power Estimation Assignments
 # ============================
@@ -390,6 +386,10 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 # Incremental Compilation Assignments
 # ===================================
 set_global_assignment -name INCREMENTAL_COMPILATION OFF
+
+# Advanced I/O Timing Assignments
+# ===============================
+set_global_assignment -name OUTPUT_IO_TIMING_ENDPOINT "NEAR END"
 
 # start EDA_TOOL_SETTINGS(eda_simulation)
 # ---------------------------------------
@@ -427,14 +427,293 @@ set_global_assignment -name INCREMENTAL_COMPILATION OFF
 
 	# Pin & Location Assignments
 	# ==========================
-	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sdram_*
-	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_*
-	set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to sdram_*
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[3]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[4]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[5]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[6]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[7]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[8]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[9]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[10]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sdram_addr_[11]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[3]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[4]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[5]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[6]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[7]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[8]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[9]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[10]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[11]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[12]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[13]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[14]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[15]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_addr_[16]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[3]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[4]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[5]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[6]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[7]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[8]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[9]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[10]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[11]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[12]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[13]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[14]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_data_[15]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[0]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[1]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[2]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[3]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[4]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[5]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[6]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[7]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[8]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[9]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[10]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[11]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[12]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[13]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[14]
+	set_instance_assignment -name FAST_INPUT_REGISTER ON -to sram_data_[15]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_we_n_
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_oe_n_
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_bw_n_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to sram_bw_n_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_r_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_r_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_r_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_r_[3]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_g_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_g_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_g_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_g_[3]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_b_[0]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_b_[1]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_b_[2]
+	set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to tft_lcd_b_[3]
 
-	# Classic Timing Assignments
-	# ==========================
-	set_instance_assignment -name CLOCK_SETTINGS clk_50_ -to clk_50_
-	set_instance_assignment -name REPORT_DELAY ON -from * -to sdram_addr_[*]
+	# Fitter Assignments
+	# ==================
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to hex*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to led*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to flash*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to sdram*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to sram*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to tft*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to uart*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to i2c*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to aud*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to ps2*
+	set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to sd_*
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[21]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[20]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[19]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[18]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[17]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[16]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[15]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[14]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[13]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[12]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[11]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[10]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[9]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[8]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[7]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_addr_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_data_[7]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_data_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_data_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_data_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_data_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_data_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_data_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_data_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_rst_n_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_we_n_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_oe_n_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledg_[7]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledg_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledg_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledg_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledg_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledg_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledg_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledg_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledr_[7]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledr_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledr_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledr_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledr_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledr_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledr_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledr_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sw_[7]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sw_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sw_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sw_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sw_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sw_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sw_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sw_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledr_[9]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ledr_[8]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[11]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[10]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[9]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[8]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[7]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_addr_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[7]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[8]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[9]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[10]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[11]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[12]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[13]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[14]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_data_[15]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_ba_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_ba_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_dqm_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_dqm_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_ras_n_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_cas_n_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_cs_n_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_clk_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_ce_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sdram_we_n_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to clk_50_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[17]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[16]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[15]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[14]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[13]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[12]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[11]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[10]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[9]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[8]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[7]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_addr_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[15]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[14]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[13]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[12]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[11]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[10]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[9]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[8]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[7]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_data_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_we_n_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_oe_n_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_ce_n_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_bw_n_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sram_bw_n_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_b_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_b_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_b_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_b_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_g_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_g_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_g_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_g_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_hsync_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_r_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_r_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_r_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_r_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to tft_lcd_vsync_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex0_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex0_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex0_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex0_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex0_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex0_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex0_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex1_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex1_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex1_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex1_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex1_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex1_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex1_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex2_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex2_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex2_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex2_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex2_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex2_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex2_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex3_[0]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex3_[1]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex3_[2]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex3_[3]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex3_[4]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex3_[5]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to hex3_[6]
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to key_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to uart_txd_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ps2_kclk_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ps2_kdat_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ps2_mclk_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to ps2_mdat_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to flash_ce_n_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sd_miso_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sd_mosi_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sd_sclk_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to sd_ss_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to aud_bclk_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to aud_dacdat_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to aud_daclrck_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to aud_xck_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to i2c_sclk_
+	set_instance_assignment -name OUTPUT_PIN_LOAD 0 -to i2c_sdat_
 
 	# start LOGICLOCK_REGION(Root Region)
 	# -----------------------------------

@@ -475,9 +475,9 @@ module kotku (
     .wbm_clk_i (sdram_clk),
     .wbm_adr_o (csrbrg_adr),
     .wbm_dat_o (csrbrg_dat_w),
+    .wbm_dat_i (csrbrg_dat_r),
     .wbm_sel_o (csrbrg_sel),
     .wbm_tga_o (csrbrg_tga),
-    .wbm_dat_i (csrbrg_dat_r),
     .wbm_stb_o (csrbrg_stb),
     .wbm_cyc_o (csrbrg_cyc),
     .wbm_we_o  (csrbrg_we),
@@ -790,10 +790,10 @@ module kotku (
     .wb_ack_o (gpio_ack_o),
 
     // GPIO inputs/outputs
-    .leds_ ({ledr_,ledg_[7:4]}),
-    .sw_   (sw_),
-    .pb_   (key_),
-    .tick  (intv[0]),
+    .leds_  ({ledr_,ledg_[7:4]}),
+    .sw_    (sw_),
+    .pb_    (key_),
+    .tick   (intv[0]),
     .nmi_pb (nmi_pb) // NMI from pushbutton
   );
 

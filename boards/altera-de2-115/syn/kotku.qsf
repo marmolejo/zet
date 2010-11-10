@@ -18,7 +18,7 @@
 #
 # Quartus II 64-Bit
 # Version 10.0 Build 262 08/18/2010 Service Pack 1 SJ Full Version
-# Date created = 21:37:15  November 09, 2010
+# Date created = 01:04:15  November 10, 2010
 #
 # -------------------------------------------------------------------------- #
 #
@@ -42,7 +42,6 @@
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
 set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
-set_global_assignment -name MISC_FILE "/home/zeus/zet/boards/altera-de2-115/syn/kotku.dpf"
 set_global_assignment -name VERILOG_FILE ../rtl/pll.v
 set_global_assignment -name SDC_FILE kotku.sdc
 set_global_assignment -name VERILOG_FILE ../../../cores/sram/csr_sram.v
@@ -351,8 +350,8 @@ set_global_assignment -name ENABLE_CLOCK_LATENCY ON
 # Analysis & Synthesis Assignments
 # ================================
 set_global_assignment -name FAMILY "Cyclone IV E"
-set_global_assignment -name TOP_LEVEL_ENTITY kotku
 set_global_assignment -name ADD_PASS_THROUGH_LOGIC_TO_INFERRED_RAMS OFF
+set_global_assignment -name TOP_LEVEL_ENTITY kotku
 
 # Fitter Assignments
 # ==================

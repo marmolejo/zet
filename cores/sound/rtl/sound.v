@@ -50,7 +50,6 @@ module sound (
     input         wb_we_i,
     output reg    wb_ack_o,
 
-    input  dac_clk,
     output audio_l,
     output audio_r
   );
@@ -104,7 +103,7 @@ module sound (
   reg [15:0]  time_inc;    // DAC output time increment
   wire [7:0]  TMR_STATUS = {timeout, 7'h00};
 
-  always @(posedge wb_clk_i or posedge wb_rst_i) begin    // Synchrounous Logic
+  always @(posedge wb_clk_i) begin    // Synchrounous Logic
     if(wb_rst_i) begin
       sb_dat_o  <=  8'h00;                 // Default value
     end
@@ -120,7 +119,7 @@ module sound (
     end                          // End of Reset if
   end                            // End Synchrounous always
 
-  always @(posedge wb_clk_i or posedge wb_rst_i) begin    // Synchrounous Logic
+  always @(posedge wb_clk_i) begin    // Synchrounous Logic
 
     if(wb_rst_i) begin
       dsp_audio_l <=  8'h80;               // default is equivalent to 1/2
@@ -165,7 +164,7 @@ module sound (
   // X = 671
   // --------------------------------------------------------------------
   wire timed_out = timer[19];
-  always @(posedge dac_clk) begin
+  always @(posedge wb_clk_i) begin
     if(wb_rst_i) begin
       timer <= 20'd0;
     end
@@ -189,9 +188,8 @@ module sound (
   // 7 = 256
   // 8 = 512  24,414Hz
   // --------------------------------------------------------------------
-    wire       pwm_clk = clkdiv[2];
-    reg  [8:0] clkdiv;
-    always @(posedge dac_clk) clkdiv <= clkdiv + 9'd1;
+  wire pwm_clk;
+  assign pwm_clk = wb_clk_i;   // Because it's already at 12.5 Mhz
 
   // --------------------------------------------------------------------
   // Audio Generation Section

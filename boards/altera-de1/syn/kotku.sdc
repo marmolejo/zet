@@ -7,13 +7,13 @@
 # Create Clock
 #**************************************************************
 create_clock -period 20 [get_ports clk_50_]
+create_clock -period 50000 speaker:speaker|speaker_i2c_av_config:i2c_av_config|mI2C_CTRL_CLK
 
 
 #**************************************************************
 # Create Generated Clock
 #**************************************************************
 derive_pll_clocks
-
 
 
 #**************************************************************
@@ -25,7 +25,6 @@ derive_pll_clocks
 #**************************************************************
 # Set Clock Uncertainty
 #**************************************************************
-derive_clock_uncertainty
 
 
 
@@ -50,7 +49,7 @@ derive_clock_uncertainty
 #**************************************************************
 # Set False Path
 #**************************************************************
-
+set_false_path -from {rst} -hold -rise_to {speaker:speaker|speaker_i2c_av_config:i2c_av_config|mI2C_CTRL_CLK}
 
 
 #**************************************************************
