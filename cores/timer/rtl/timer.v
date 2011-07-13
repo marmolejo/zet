@@ -37,8 +37,8 @@ module timer
     // Wishbone slave interface
     input             wb_clk_i,
     input             wb_rst_i,
-    input             wb_adr_i,
-    input      [1:0]  wb_sel_i,
+    input      [19:1] wb_adr_i,
+    input      [ 1:0] wb_sel_i,
     input      [15:0] wb_dat_i,
     output reg [15:0] wb_dat_o,
     input             wb_stb_i,
@@ -141,21 +141,21 @@ module timer
   assign rdd1 = rd_cyc1 & (datasel == 2'b01);
   assign rdd2 = rd_cyc1 & (datasel == 2'b10);
 
-  `ifdef WB_UNBUFFERED_8254
+`ifdef WB_UNBUFFERED_8254
   // 1 clock write, 1 clock read
 
   assign wb_ack_o = wb_stb_i & wb_cyc_i;
 
   assign wr_cyc1 = wb_ack_o & wb_we_i;
   assign rd_cyc1 = wb_ack_o & ~wb_we_i;
-  assign datasel = {wb_adr_i,wb_sel_i[1]};
+  assign datasel = {wb_adr_i[1], wb_sel_i[1]};
 
   //assign wb_dat_o = data_ob;
   always @(data_ob)
     wb_dat_o = data_ob;
   assign data_ib = wb_dat_i;
 
-  `else
+`else
   // 2 clocks write, 3 clocks read
 
   assign wb_ack_o = wr_cyc1 | rd_cyc2;
@@ -165,13 +165,13 @@ module timer
     wr_cyc1 <= (wr_cyc1) ? 1'b0 : wb_stb_i & wb_cyc_i & wb_we_i;            // single clock write pulse
     rd_cyc1 <= (rd_cyc1 | rd_cyc2) ? 1'b0 : wb_stb_i & wb_cyc_i & ~wb_we_i; // single clock read pulse
     rd_cyc2 <= rd_cyc1;                                                     // delayed single clock read pulse
-    datasel <= {wb_adr_i,wb_sel_i[1]};
+    datasel <= {wb_adr_i[1], wb_sel_i[1]};
 
     wb_dat_o <= data_ob;
     data_ib <= wb_dat_i;
   end
 
-  `endif //def WB_UNBUFFERED_8254
+`endif //def WB_UNBUFFERED_8254
 
   // Module instantiations
 

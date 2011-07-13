@@ -20,7 +20,7 @@ module csrbrg(
 	input sys_rst,
 	
 	/* WB */
-	input [3:1] wb_adr_i,
+	input [19:1] wb_adr_i,
 	input [15:0] wb_dat_i,
 	output reg [15:0] wb_dat_o,
 	input wb_cyc_i,

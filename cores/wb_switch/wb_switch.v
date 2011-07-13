@@ -20,33 +20,43 @@
  */
 
 module wb_switch #(
-    parameter s0_addr_1 = 20'h00000,  // Default Values
-    parameter s0_mask_1 = 20'h00000,
-    parameter s1_addr_1 = 20'h00000,
-    parameter s1_mask_1 = 20'h00000,
-    parameter s1_addr_2 = 20'h00000,
-    parameter s1_mask_2 = 20'h00000,
-    parameter s2_addr_1 = 20'h00000,
-    parameter s2_mask_1 = 20'h00000,
-    parameter s3_addr_1 = 20'h00000,
-    parameter s3_mask_1 = 20'h00000,
-    parameter s4_addr_1 = 20'h00000,
-    parameter s4_mask_1 = 20'h00000,
-    parameter s5_addr_1 = 20'h00000,
-    parameter s5_mask_1 = 20'h00000,
-    parameter s6_addr_1 = 20'h00000,
-    parameter s6_mask_1 = 20'h00000,
-    parameter s7_addr_1 = 20'h00000,
-    parameter s7_mask_1 = 20'h00000,
-    parameter s8_addr_1 = 20'h00000,
-    parameter s8_mask_1 = 20'h00000,
-    parameter s9_addr_1 = 20'h00000,
-    parameter s9_mask_1 = 20'h00000,
-    parameter sA_addr_1 = 20'h00000,
-    parameter sA_mask_1 = 20'h00000,
-    parameter sA_addr_2 = 20'h00000,
-    parameter sA_mask_2 = 20'h00000
-  )(
+    parameter s0_addr_1 = 21'h00000,  // Default Values
+    parameter s0_mask_1 = 21'h00000,
+    parameter s1_addr_1 = 21'h00000,
+    parameter s1_mask_1 = 21'h00000,
+    parameter s1_addr_2 = 21'h00000,
+    parameter s1_mask_2 = 21'h00000,
+    parameter s2_addr_1 = 21'h00000,
+    parameter s2_mask_1 = 21'h00000,
+    parameter s3_addr_1 = 21'h00000,
+    parameter s3_mask_1 = 21'h00000,
+    parameter s4_addr_1 = 21'h00000,
+    parameter s4_mask_1 = 21'h00000,
+    parameter s5_addr_1 = 21'h00000,
+    parameter s5_mask_1 = 21'h00000,
+    parameter s6_addr_1 = 21'h00000,
+    parameter s6_mask_1 = 21'h00000,
+    parameter s7_addr_1 = 21'h00000,
+    parameter s7_mask_1 = 21'h00000,
+    parameter s8_addr_1 = 21'h00000,
+    parameter s8_mask_1 = 21'h00000,
+    parameter s9_addr_1 = 21'h00000,
+    parameter s9_mask_1 = 21'h00000,
+    parameter sA_addr_1 = 21'h00000,
+    parameter sA_mask_1 = 21'h00000,
+    parameter sA_addr_2 = 21'h00000,
+    parameter sA_mask_2 = 21'h00000,
+    parameter sB_addr_1 = 21'h00000,
+    parameter sB_mask_1 = 21'h00000,
+    parameter sC_addr_1 = 21'h00000,
+    parameter sC_mask_1 = 21'h00000,
+    parameter sD_addr_1 = 21'h00000,
+    parameter sD_mask_1 = 21'h00000,
+    parameter sE_addr_1 = 21'h00000,
+    parameter sE_mask_1 = 21'h00000,
+    parameter sF_addr_1 = 21'h00000,
+    parameter sF_mask_1 = 21'h00000
+	 )(
     // Master interface
     input  [15:0] m_dat_i,
     output [15:0] m_dat_o,
@@ -56,6 +66,9 @@ module wb_switch #(
     input         m_cyc_i,
     input         m_stb_i,
     output        m_ack_o,
+
+    output [ 1:0] m_tgc_o,
+    input  [ 1:0] m_tgc_i,
 
     // Slave 0 interface
     input  [15:0] s0_dat_i,
@@ -157,7 +170,7 @@ module wb_switch #(
     output        s9_stb_o,
     input         s9_ack_i,
 
-    // Slave A interface - masked default
+    // Slave A interface
     input  [15:0] sA_dat_i,
     output [15:0] sA_dat_o,
     output [20:1] sA_adr_o,
@@ -167,7 +180,7 @@ module wb_switch #(
     output        sA_stb_o,
     input         sA_ack_i,
 
-    // Slave B interface - default
+    // Slave B interface
     input  [15:0] sB_dat_i,
     output [15:0] sB_dat_o,
     output [20:1] sB_adr_o,
@@ -175,26 +188,81 @@ module wb_switch #(
     output        sB_we_o,
     output        sB_cyc_o,
     output        sB_stb_o,
-    input         sB_ack_i
+    input         sB_ack_i,
 
-  );
+    // Slave C interface
+    input  [15:0] sC_dat_i,
+    output [15:0] sC_dat_o,
+    output [20:1] sC_adr_o,
+    output [ 1:0] sC_sel_o,
+    output        sC_we_o,
+    output        sC_cyc_o,
+    output        sC_stb_o,
+    input         sC_ack_i,
+
+    // Slave D interface
+    input  [15:0] sD_dat_i,
+    output [15:0] sD_dat_o,
+    output [20:1] sD_adr_o,
+    output [ 1:0] sD_sel_o,
+    output        sD_we_o,
+    output        sD_cyc_o,
+    output        sD_stb_o,
+    input         sD_ack_i,
+
+    // Slave E interface - Pic Slave
+    input  [15:0] sE_dat_i,
+    output [15:0] sE_dat_o,
+    output [20:1] sE_adr_o,
+    output [ 1:0] sE_sel_o,
+    output        sE_we_o,
+    output        sE_cyc_o,
+    output        sE_stb_o,
+    input         sE_ack_i,
+
+    output [ 1:0] sE_tgc_o,		// inta, nmia
+    input  [ 1:0] sE_tgc_i,
+
+	// Slave F interface - Pic Master
+    input  [15:0] sF_dat_i,
+    output [15:0] sF_dat_o,
+    output [20:1] sF_adr_o,
+    output [ 1:0] sF_sel_o,
+    output        sF_we_o,
+    output        sF_cyc_o,
+    output        sF_stb_o,
+    input         sF_ack_i,
+
+    output [ 1:0] sF_tgc_o,		// inta, nmia
+    input  [ 1:0] sF_tgc_i		// intr, nmi
+	 );
 
 `define mbusw_ls  20 + 2 + 16 + 1 + 1 + 1  // address + byte select + data + cyc + we + stb
 
-wire [11:0] slave_sel;
+wire [15:0] slave_sel;
+wire [20:0] m_adr;
 wire [15:0] i_dat_s;   // internal shared bus, slave data to master
+wire        def_ack_i; // default ack (we don't want to stall the bus)
 wire        i_bus_ack; // internal shared bus, ack signal
 
 wire [`mbusw_ls -1:0] i_bus_m;    // internal shared bus, master data and control to slave
 
-assign m_dat_o = i_dat_s;
+assign m_tgc_o = sF_tgc_i;        // intr, nmi
+assign sE_tgc_o = m_tgc_i;        // inta, nmia
+assign sF_tgc_o = m_tgc_i;        // inta, nmia
+
+assign m_dat_o = (m_tgc_i[0] | m_tgc_i[1]) ? (sF_dat_i | sE_dat_i) : i_dat_s; // int vector or slave data
+//assign m_dat_o = i_dat_s;
 assign m_ack_o = i_bus_ack;
 
 // Bus Acknowlegement
-assign i_bus_ack =   s0_ack_i | s1_ack_i | s2_ack_i | s3_ack_i | s4_ack_i | s5_ack_i | s6_ack_i |
-          s7_ack_i | s8_ack_i | s9_ack_i | sA_ack_i | sB_ack_i;
-
-assign i_dat_s =   ({16{slave_sel[ 0]}} & s0_dat_i)
+assign i_bus_ack =   s0_ack_i | s1_ack_i | s2_ack_i | s3_ack_i | s4_ack_i | s5_ack_i | s6_ack_i | s7_ack_i |
+                     s8_ack_i | s9_ack_i | sA_ack_i | sB_ack_i | sC_ack_i | sD_ack_i | sE_ack_i | sF_ack_i | 
+							def_ack_i;
+							
+assign i_dat_s =
+//assign m_dat_o = // or'ed bus should be enough.... slaves should never drive bus when not selected.... only active interrupt controllers though
+           ({16{slave_sel[ 0]}} & s0_dat_i) // slave read data
           |({16{slave_sel[ 1]}} & s1_dat_i)
           |({16{slave_sel[ 2]}} & s2_dat_i)
           |({16{slave_sel[ 3]}} & s3_dat_i)
@@ -206,21 +274,34 @@ assign i_dat_s =   ({16{slave_sel[ 0]}} & s0_dat_i)
           |({16{slave_sel[ 9]}} & s9_dat_i)
           |({16{slave_sel[10]}} & sA_dat_i)
           |({16{slave_sel[11]}} & sB_dat_i)
-        ;
+          |({16{slave_sel[12]}} & sC_dat_i)
+          |({16{slave_sel[13]}} & sD_dat_i)
+          |({16{slave_sel[14]}} & sE_dat_i)
+          |({16{slave_sel[15]}} & sF_dat_i);
+
+// add odd/even selection		  
+assign m_adr = {m_adr_i, m_sel_i[1]};
 
 // Bus Selection logic
-assign slave_sel[ 0] =  ((m_adr_i & s0_mask_1) == s0_addr_1);
-assign slave_sel[ 1] =  ((m_adr_i & s1_mask_1) == s1_addr_1) | ((m_adr_i & s1_mask_2) == s1_addr_2);
-assign slave_sel[ 2] =  ((m_adr_i & s2_mask_1) == s2_addr_1);
-assign slave_sel[ 3] =  ((m_adr_i & s3_mask_1) == s3_addr_1);
-assign slave_sel[ 4] =  ((m_adr_i & s4_mask_1) == s4_addr_1);
-assign slave_sel[ 5] =  ((m_adr_i & s5_mask_1) == s5_addr_1);
-assign slave_sel[ 6] =  ((m_adr_i & s6_mask_1) == s6_addr_1);
-assign slave_sel[ 7] =  ((m_adr_i & s7_mask_1) == s7_addr_1);
-assign slave_sel[ 8] =  ((m_adr_i & s8_mask_1) == s8_addr_1);
-assign slave_sel[ 9] =  ((m_adr_i & s9_mask_1) == s9_addr_1);
-assign slave_sel[10] = (((m_adr_i & sA_mask_1) == sA_addr_1) | (( m_adr_i & sA_mask_2)== sA_addr_2)) & ~(|slave_sel[9:0]);
-assign slave_sel[11] = ~(|slave_sel[10:0]);
+assign slave_sel[ 0] =  ((m_adr & s0_mask_1) == s0_addr_1);
+assign slave_sel[ 1] =  ((m_adr & s1_mask_1) == s1_addr_1) | ((m_adr & s1_mask_2) == s1_addr_2);
+assign slave_sel[ 2] =  ((m_adr & s2_mask_1) == s2_addr_1);
+assign slave_sel[ 3] =  ((m_adr & s3_mask_1) == s3_addr_1);
+assign slave_sel[ 4] =  ((m_adr & s4_mask_1) == s4_addr_1);
+assign slave_sel[ 5] =  ((m_adr & s5_mask_1) == s5_addr_1);
+assign slave_sel[ 6] =  ((m_adr & s6_mask_1) == s6_addr_1);
+assign slave_sel[ 7] =  ((m_adr & s7_mask_1) == s7_addr_1);
+assign slave_sel[ 8] =  ((m_adr & s8_mask_1) == s8_addr_1);
+assign slave_sel[ 9] =  ((m_adr & s9_mask_1) == s9_addr_1);
+assign slave_sel[10] = (((m_adr & sA_mask_1) == sA_addr_1) | (( m_adr & sA_mask_2)== sA_addr_2)) & ~(|slave_sel[9:0]);
+assign slave_sel[11] =  ((m_adr & sB_mask_1) == sB_addr_1);
+assign slave_sel[12] =  ((m_adr & sC_mask_1) == sC_addr_1);
+assign slave_sel[13] =  ((m_adr & sD_mask_1) == sD_addr_1);
+assign slave_sel[14] =  ((m_adr & sE_mask_1) == sE_addr_1);
+assign slave_sel[15] =  ((m_adr & sF_mask_1) == sF_addr_1);
+
+// not implemented devices..
+assign def_ack_i = m_stb_i & m_cyc_i & ~(|slave_sel[15:0]);
 
 assign i_bus_m = {m_adr_i, m_sel_i, m_dat_i, m_we_i, m_cyc_i, m_stb_i};
 
@@ -259,5 +340,17 @@ assign  sA_stb_o = i_bus_m[1] & i_bus_m[0] & slave_sel[10];
 
 assign {sB_adr_o, sB_sel_o, sB_dat_o, sB_we_o, sB_cyc_o} = i_bus_m[`mbusw_ls -1:1];    // slave B
 assign  sB_stb_o = i_bus_m[1] & i_bus_m[0] & slave_sel[11];
+
+assign {sC_adr_o, sC_sel_o, sC_dat_o, sC_we_o, sC_cyc_o} = i_bus_m[`mbusw_ls -1:1];    // slave C
+assign  sC_stb_o = i_bus_m[1] & i_bus_m[0] & slave_sel[12];
+
+assign {sD_adr_o, sD_sel_o, sD_dat_o, sD_we_o, sD_cyc_o} = i_bus_m[`mbusw_ls -1:1];    // slave D
+assign  sD_stb_o = i_bus_m[1] & i_bus_m[0] & slave_sel[13];
+
+assign {sE_adr_o, sE_sel_o, sE_dat_o, sE_we_o, sE_cyc_o} = i_bus_m[`mbusw_ls -1:1];    // slave E
+assign  sE_stb_o = i_bus_m[1] & i_bus_m[0] & slave_sel[14];
+
+assign {sF_adr_o, sF_sel_o, sF_dat_o, sF_we_o, sF_cyc_o} = i_bus_m[`mbusw_ls -1:1];    // slave F
+assign  sF_stb_o = i_bus_m[1] & i_bus_m[0] & slave_sel[15];
 
 endmodule

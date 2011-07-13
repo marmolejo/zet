@@ -25,7 +25,7 @@ module ps2 (
     output [15:0] wb_dat_o,  // Received data
     input         wb_cyc_i,  // Cycle
     input         wb_stb_i,  // Strobe
-    input  [ 2:1] wb_adr_i,  // Wishbone address lines
+    input  [19:1] wb_adr_i,  // Wishbone address lines
     input  [ 1:0] wb_sel_i,  // Wishbone Select lines
     input         wb_we_i,   // Write enable
     output        wb_ack_o,  // Normal bus termination
@@ -338,7 +338,7 @@ module ps2 (
   // Combinatorial logic
   assign dat_i    =  wb_sel_i[0] ? wb_dat_i[7:0]  : wb_dat_i[15:8]; // 8 to 16 bit WB
   assign wb_dat_o =  wb_sel_i[0] ? {8'h00, dat_o} : {dat_o, 8'h00}; // 8 to 16 bit WB
-  assign wb_ps2_addr = {wb_adr_i,   wb_sel_i[1]};  // Compute Address
+  assign wb_ps2_addr = {wb_adr_i[2:1],   wb_sel_i[1]};  // Compute Address
   assign wb_ack_i =  wb_stb_i &  wb_cyc_i;    // Immediate ack
   assign wb_ack_o    =  wb_ack_i;
   assign write_i =  wb_ack_i &  wb_we_i;    // WISHBONE write access, Singal to send

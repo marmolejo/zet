@@ -23,7 +23,7 @@ module vga (
     input         wb_rst_i,
     input  [15:0] wb_dat_i,
     output [15:0] wb_dat_o,
-    input  [16:1] wb_adr_i,
+    input  [19:1] wb_adr_i,
     input         wb_we_i,
     input         wb_tga_i,
     input  [ 1:0] wb_sel_i,
@@ -242,7 +242,7 @@ module vga (
     .wb_clk_i (wb_clk_i),
     .wb_rst_i (wb_rst_i),
 
-    .wbs_adr_i (wb_adr_i),
+    .wbs_adr_i (wb_adr_i[16:1]),
     .wbs_sel_i (wb_sel_i),
     .wbs_we_i  (wb_we_i),
     .wbs_dat_i (wb_dat_i),

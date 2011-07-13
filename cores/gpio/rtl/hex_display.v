@@ -17,13 +17,14 @@
  */
 
 module hex_display (
-    input  [15:0] num,
+    input  [19:0] num,
     input         en,
 
     output [6:0] hex0,
     output [6:0] hex1,
     output [6:0] hex2,
-    output [6:0] hex3
+    output [6:0] hex3,
+	 output [6:0] hex4
   );
 
   // Module instantiations
@@ -51,4 +52,9 @@ module hex_display (
     .seg (hex3)
   );
 
+  seg_7 hex_group4 (
+    .num (num[19:16]),
+    .en  (en),
+    .seg (hex4)
+  );
 endmodule

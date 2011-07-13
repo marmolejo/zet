@@ -26,8 +26,8 @@ module sdspi (
     // Wishbone slave interface
     input            wb_clk_i,
     input            wb_rst_i,
-    input      [8:0] wb_dat_i,
-    output reg [7:0] wb_dat_o,
+    input      [15:0] wb_dat_i,
+    output reg [15:0] wb_dat_o,
     input            wb_we_i,
     input      [1:0] wb_sel_i,
     input            wb_stb_i,
@@ -77,9 +77,7 @@ module sdspi (
 
   // wb_dat_o
   always @(posedge wb_clk_i)
-    wb_dat_o <= wb_rst_i ? 8'h0
-      : ((op && clk_div==2'b0) ?
-        { wb_dat_o[6:0], miso } : wb_dat_o);
+    wb_dat_o <= wb_rst_i ? 16'h0 : ((op && clk_div==2'b0) ? { 8'h0, wb_dat_o[6:0], miso } : { wb_dat_o });
 
   // sclk
   always @(posedge wb_clk_i)

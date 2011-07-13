@@ -24,7 +24,7 @@ module flash8_r2 (
     input      [15:0] wb_dat_i,
     output reg [15:0] wb_dat_o,
     input             wb_we_i,
-    input             wb_adr_i,
+    input      [19:1] wb_adr_i,
     input      [ 1:0] wb_sel_i,
     input             wb_stb_i,
     input             wb_cyc_i,
@@ -106,7 +106,7 @@ module flash8_r2 (
       address <= 22'h000000;  // Interupt Enable default
     else
       if(wr_command)          // If a write was requested
-        case(wb_adr_i)        // Determine which register was writen to
+        case(wb_adr_i[1])     // Determine which register was writen to
             `FLASH_ALO: address[15: 0] <= wb_dat_i;
             `FLASH_AHI: address[21:16] <= wb_dat_i[5:0];
             default:    ;     // Default

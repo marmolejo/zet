@@ -19,16 +19,18 @@
 
 module speaker (
     // Clocks
-    input clk,
-    input rst,
+    input wb_clk_i,
+    input wb_rst_i,
 
     // Wishbone slave interface
-    input      [7:0] wb_dat_i,
-    output reg [7:0] wb_dat_o,
-    input            wb_we_i,
-    input            wb_stb_i,
-    input            wb_cyc_i,
-    output           wb_ack_o,
+    input      [15:0] wb_dat_i,
+    output reg [15:0] wb_dat_o,
+    input             wb_cyc_i,
+    input             wb_stb_i,
+	 input      [19:1] wb_adr_i,
+	 input      [ 1:0] wb_sel_i,
+    input             wb_we_i,
+    output            wb_ack_o,
 
     // Clocks
     input clk_100M,
@@ -55,7 +57,7 @@ module speaker (
   // Module instances
   speaker_iface iface (
     .clk_i         (clk_100M),
-    .rst_i         (rst),
+    .rst_i         (wb_rst_i),
     .datal_i       (audio_l),
     .datar_i       (audio_r),
     .datal_o       (),
@@ -70,7 +72,7 @@ module speaker (
   speaker_i2c_av_config i2c_av_config (
     // Host Side
     .clk_i (clk_25M),
-    .rst_i (rst),
+    .rst_i (wb_rst_i),
 
     // I2C Side
     .i2c_sclk (i2c_sclk_),
@@ -79,7 +81,7 @@ module speaker (
 
   // Combinatorial logic
   // System speaker
-  assign spk = timer2 & wb_dat_o[1];
+  assign spk = timer2 & wb_dat_o[9];
 
   // System speaker audio output
   assign audio_l = {spk, 15'h4000};
@@ -90,7 +92,7 @@ module speaker (
   assign write    = wb_stb_i && wb_cyc_i && wb_we_i;
 
   // Sequential logic
-  always @(posedge clk)
-    wb_dat_o <= rst ? 8'h0 : (write ? wb_dat_i : wb_dat_o);
+  always @(posedge wb_clk_i)
+    wb_dat_o <= wb_rst_i ? 16'h0 : (write ? {wb_dat_i[15:8], 8'h0} : {wb_dat_o[15:8], 8'h0});
 
 endmodule

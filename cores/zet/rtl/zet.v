@@ -34,10 +34,8 @@ module zet (
     output        wb_stb_o,
     output        wb_cyc_o,
     input         wb_ack_i,
-    input         wb_tgc_i,  // intr
-    output        wb_tgc_o,  // inta
-    input         nmi,
-    output        nmia,
+    input  [ 1:0] wb_tgc_i,  // intr, nmi
+    output [ 1:0] wb_tgc_o,  // inta, nmia
 
     output [19:0] pc  // for debugging purposes
   );
@@ -52,17 +50,27 @@ module zet (
   wire        cpu_m_io;
   wire [15:0] cpu_dat_i;
   wire        cpu_we_o;
+  wire        cpu_nmia;
+  wire        cpu_nmi;
+  wire        cpu_inta;
+  wire        cpu_intr;
   wire [15:0] iid_dat_i;
 
+  //assign      wb_adr_o[0] = wb_sel_o[1];
+  assign      cpu_nmi = wb_tgc_i[0];
+  assign      cpu_intr = wb_tgc_i[1];
+  assign      wb_tgc_o[0] = cpu_nmia;
+  assign      wb_tgc_o[1] = cpu_inta;
+  
   // Module instantiations
   zet_core core (
     .clk (wb_clk_i),
     .rst (wb_rst_i),
 
-    .intr (wb_tgc_i),
-    .inta (wb_tgc_o),
-    .nmi  (nmi),
-    .nmia (nmia),
+    .intr (cpu_intr),
+    .inta (cpu_inta),
+    .nmi  (cpu_nmi),
+    .nmia (cpu_nmia),
 
     .cpu_adr_o  (cpu_adr_o),
     .iid_dat_i  (iid_dat_i),
@@ -101,6 +109,6 @@ module zet (
   );
 
   // Assignments
-  assign iid_dat_i  = (wb_tgc_o | nmia) ? wb_dat_i : cpu_dat_i;
+  assign iid_dat_i  = (cpu_inta | cpu_nmia) ? wb_dat_i : cpu_dat_i;
 
 endmodule
