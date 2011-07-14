@@ -29,8 +29,11 @@ module kotku (
     output [6:0] hex2_,
     output [6:0] hex3_,
     output [6:0] hex4_,
-	//output [6:0] hex5_,   // bios post code (to do) ?
-	//output [6:0] hex6_,   // 
+	  output [6:0] hex5_,
+    
+	  output [6:0] hex6_,   // bios post code ?
+    output [6:0] hex7_,
+    
     output [17:0] ledr_,  // red leds
     output [7:0] ledg_,   // green leds
 
@@ -253,6 +256,20 @@ module kotku (
   wire        gpio_stb_i;
   wire        gpio_ack_o;
 
+  // wires to postcode port
+  wire        post_stb_i;
+  wire        post_cyc_i;
+  wire        post_tga_i;
+  wire [19:0] post_adr_i;
+  wire        post_we_i;
+  wire [ 1:0] post_sel_i;
+  wire [15:0] post_dat_i;
+  wire [15:0] post_dat_o;
+  wire        post_ack_o;
+  
+  wire [ 7:0] postcode;
+
+	
   // wires to SDRAM controller
   wire [19:1] fmlbrg_adr_s;
   wire [15:0] fmlbrg_dat_w_s;
@@ -930,6 +947,24 @@ module kotku (
     .wb_ack_o (sd_ack_o)
   );
 
+  
+post post (
+    .wb_clk_i (cpu_clk),
+    .wb_rst_i (sys_rst),
+
+	.wb_stb_i (post_stb_i),
+    .wb_cyc_i (post_cyc_i),
+    .wb_adr_i (post_adr_i),
+    .wb_we_i  (post_we_i),
+    .wb_sel_i (post_sel_i),
+    .wb_dat_i (post_dat_i),
+    .wb_dat_o (post_dat_o),
+    .wb_ack_o (post_ack_o),
+  
+    .postcode (postcode)
+  );  
+
+  
   // Switches and leds
   sw_leds sw_leds (
     .wb_clk_i (cpu_clk),
@@ -958,14 +993,17 @@ module kotku (
   
   
   hex_display hex16 (
-    .num (cpu_pc[19:0]),
+    .num ({postcode, 4'b0, cpu_pc[19:0]}),
     .en  (1'b1),
 
     .hex0 (hex0_),
     .hex1 (hex1_),
     .hex2 (hex2_),
     .hex3 (hex3_),
-	.hex4 (hex4_)
+	  .hex4 (hex4_),
+	  .hex5 (hex5_),
+	  .hex6 (hex6_),
+	  .hex7 (hex7_)
   );
 
   zet zet (
@@ -1033,8 +1071,8 @@ module kotku (
     .sC_addr_1 (21'h1_00000), // 
     .sC_mask_1 (21'h1_FFFFF), // not used
 
-    .sD_addr_1 (21'h1_00000), // 
-    .sD_mask_1 (21'h1_FFFFF), // not used
+    .sD_addr_1 (21'h1_00080), // io 0x0080
+    .sD_mask_1 (21'h1_FFFFF), // postcode register
 
     .sE_addr_1 (21'h1_000A0), // io 0x00A0 - 0x00A1
     .sE_mask_1 (21'h1_0FFFE), // 8259A Slave Interrupt Controller
@@ -1184,14 +1222,14 @@ module kotku (
     .sC_stb_o (),
     .sC_ack_i (1'b0),
 
-    .sD_dat_i (16'h0000),
-    .sD_dat_o (),
-    .sD_adr_o (),		// tga_s, adr_s
-    .sD_sel_o (),
-    .sD_we_o  (),
-    .sD_cyc_o (),
-    .sD_stb_o (),
-    .sD_ack_i (1'b0),
+    .sD_dat_i (post_dat_o),
+    .sD_dat_o (post_dat_i),
+    .sD_adr_o ({post_tga_i, post_adr_i}),		// tga_s, adr_s
+    .sD_sel_o (post_sel_i),
+    .sD_we_o  (post_we_i),
+    .sD_cyc_o (post_cyc_i),
+    .sD_stb_o (post_stb_i),
+    .sD_ack_i (post_ack_o),
 
 	// slave E interface - PIC slave
     .sE_dat_i (pics_dat_o),

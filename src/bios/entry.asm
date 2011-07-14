@@ -55,6 +55,7 @@ PICM					equ		020h
 PICS					equ		0A0h
 NSEOI					equ		020h
 
+IO_POST					equ		080h
 
 ;;--------------------------------------------------------------------------
 ;; ROM Utilities Externals
@@ -93,6 +94,11 @@ NSEOI					equ		020h
 ;; INT 75 - IRQ13 - MATH COPROCESSOR EXCEPTION (AT and up)
 ;; INT 76 - IRQ14 - HARD DISK CONTROLLER (AT and later)
 ;; INT 77 - IRQ15 - RESERVED (AT,PS); POWER CONSERVATION (Compaq)
+;;--------------------------------------------------------------------------
+POSTCODE MACRO parm1
+						mov		al, parm1
+						out		IO_POST, al
+ENDM
 ;;--------------------------------------------------------------------------
 SET_INT_VECTOR MACRO parm1, parm2, parm3
                         mov     ax, parm3
@@ -159,25 +165,28 @@ bios_name_string:       db      "zetbios 1.1"   ;; version string, not used by c
 ;;---------------------------------------------------------------------------
                         org     (0e05bh - startofrom)
 
-post:                   xor     ax, ax          ; clear ax register
-                        mov     es, ax          ; zero out BIOS data area (40:00..40:ff)
-                        mov     cx, 0080h       ; 128 words
-                        mov     di, 0400h       ; Point index register to bda area
+post:                   POSTCODE 010h								; PostCode = 10
+						xor     ax, ax          					; clear ax register
+                        mov     es, ax          					; zero out BIOS data area (40:00..40:ff)
+                        mov     cx, 0080h       					; 128 words
+                        mov     di, 0400h       					; Point index register to bda area
                         cld
-                        rep     stosw           ; repeat cx times
-                        xor     bx, bx          ; set all interrupts to default handleroffset index
-                        mov     cx, 0100h                   ;; counter (256 interrupts)
-                        mov     ax, dummy_iret_handler      ;; handle ignored vectors
-                        mov     dx, 0F000h                  ;; load the Bios Data Segment
+                        rep     stosw           					; repeat cx times
+                        xor     bx, bx          					; set all interrupts to default handleroffset index
+                        mov     cx, 0100h                  			;; counter (256 interrupts)
+                        mov     ax, dummy_iret_handler      		;; handle ignored vectors
+                        mov     dx, 0F000h                  		;; load the Bios Data Segment
 
-post_default_ints:      mov     [bx], ax             ; Store dummy return handler offset
-                        add      bx,  2              ; Go to next word
-                        mov     [bx], dx             ; Store Bios Segment word
-                        add      bx,  2              ; Go to next word
-                        loop    post_default_ints    ; do cx times
+post_default_ints:      mov     [bx], ax             				; Store dummy return handler offset
+                        add      bx,  2              				; Go to next word
+                        mov     [bx], dx            				; Store Bios Segment word
+                        add      bx,  2              				; Go to next word
+                        loop    post_default_ints    				; do cx times
+						
+						POSTCODE 011h								; PostCode = 11
 
-                        SET_INT_VECTOR 079h, 0, 0     ;; set vector 0x79 to zero this is used by 'gardian angel' protection system
-                        mov     ax, BASE_MEM_IN_K     ;; base memory in K 40:13 (word)
+                        SET_INT_VECTOR 079h, 0, 0     				;; set vector 0x79 to zero this is used by 'gardian angel' protection system
+                        mov     ax, BASE_MEM_IN_K     				;; base memory in K 40:13 (word)
                         mov     ds:00413h, ax
 
                         SET_INT_VECTOR 018h, 0F000h, int18_handler    ;; Bootstrap failure vector
@@ -186,7 +195,8 @@ post_default_ints:      mov     [bx], ax             ; Store dummy return handle
                         SET_INT_VECTOR 011h, 0F000h, int11_handler    ;; Equipment Configuration Check vector
                         SET_INT_VECTOR 012h, 0F000h, int12_handler    ;; Memory Size Check vector
 
-ebda_post:              mov     ax, EBDA_SEG                          ;; EBDA Segment
+ebda_post:              POSTCODE 012h								; PostCode = 12
+						mov     ax, EBDA_SEG                          ;; EBDA Segment
                         mov     ds, ax                                ;; Set data segment to it
                         mov     byte ptr ds:0x0000, EBDA_SIZE         ;; Load the size in to 1st byte
                         mov     byte ptr ds:0x0027, 0x00              ;; Clear flags
@@ -234,8 +244,9 @@ ebda_post:              mov     ax, EBDA_SEG                          ;; EBDA Se
 
                         SET_INT_VECTOR 01Ah, 0F000h, int1a_handler    ;; CMOS RTC
                         SET_INT_VECTOR 010h, 0F000h, int10_handler    ;; int10_handler - Video Support Service Entry Point
-						
+
 						; Initialize Pic Master
+						POSTCODE 013h								; PostCode = 13
 						mov		al, 011h
 						out		PICM, al				;; Send ICW1
 						mov		al, 008h				;; Vector start = 0x08
@@ -261,19 +272,26 @@ ebda_post:              mov     ax, EBDA_SEG                          ;; EBDA Se
 						mov		al, 0EFh				;; Enable IRQ 12 (Mouse)
 						out		PICS+1, al				;; OCW1
 
+						POSTCODE 020h								; PostCode = 20
                         mov     cx, 0c000h             ;; init vga bios
                         mov     ax, 0c780h
                         call    rom_scan               ;; Scan ROM  
+						POSTCODE 021h								; PostCode = 21
                         call    _print_bios_banner     ;; Print the openning banner
 
+						POSTCODE 030h								; PostCode = 30
                         call    _MakeRamdisk           ;; Ram Drive setup
+						POSTCODE 040h								; PostCode = 40
                         call    hard_drive_post        ;; Hard Drive setup
+						POSTCODE 050h								; PostCode = 50
                         call    _init_boot_vectors     ;; Initialize the boot vectors
 
+						POSTCODE 060h								; PostCode = 60
                         mov     cx, 0c800h             ;; Initialize option roms
                         mov     ax, 0e000h             ;; Initialize option roms
                         call    rom_scan               ;; Call the rom scan again
 
+						POSTCODE 0FFh								; PostCode = FF
                         sti                            ;; enable interrupts
                         int     019h                   ;; Now load dos boot sector and jump to it
 
@@ -1118,7 +1136,9 @@ dummy_iret_handler:     iret            ;; IRET Instruction for Dummy Interrupt 
 ;;--------------------------------------------------------------------------
 SDRAM_POST:             xor     ax, ax          ; Clear AX register
                         cli                     ; Disable interupt for startup
-
+						
+						POSTCODE 000h			; PostCode = 00
+						
                         mov     dx, 0f200h      ; CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_BYPASS|HPDMC_SYSTEM_RESET|HPDMC_SYSTEM_CKE;
                         mov     ax, 7           ; Bring CKE high
                         out     dx, ax          ; Initialize the SDRAM controller
@@ -1153,7 +1173,8 @@ ROMBIOSSEGMENT          equ     0xF000                  ;; ROM BIOS Segment
 ROMBIOSLENGTH           equ     0x7F80                  ;; Copy up to this ROM in Words
 
 ;;--------------------------------------------------------------------------
-shadowcopy:             mov     ax, VGABIOSSEGMENT      ;; Load with the segment of the vga bios rom area
+shadowcopy:				POSTCODE 001h					; PostCode = 01
+						mov     ax, VGABIOSSEGMENT      ;; Load with the segment of the vga bios rom area
                         mov     es, ax                  ;; BIOS area segment
                         xor     bp, bp                  ;; Bios starts at offset address 0
                         mov     cx, VGABIOSLENGTH       ;; VGA Bios is <32K long
@@ -1164,6 +1185,7 @@ shadowcopy:             mov     ax, VGABIOSSEGMENT      ;; Load with the segment
                         call    biosloop                ;; Call bios IO loop
 
 ;;--------------------------------------------------------------------------
+						POSTCODE 002h					; PostCode = 02
                         mov     ax, ROMBIOSSEGMENT      ;; Load with the segment of the extra bios rom area
                         mov     es, ax                  ;; BIOS area segment
                         xor     bp, bp                  ;; Bios starts at offset address 0
@@ -1174,6 +1196,7 @@ shadowcopy:             mov     ax, VGABIOSSEGMENT      ;; Load with the segment
                         mov     bx, 0x8000              ;; Bios starts at offset address 0x8000
                         call    biosloop                ;; Call bios IO loop
 
+						POSTCODE 003h					; PostCode = 03
                         jmp     far ptr post            ;; Continue with regular POST
 
 ;;--------------------------------------------------------------------------
