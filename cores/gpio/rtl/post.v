@@ -1,9 +1,8 @@
 /*
- *  Wishbone Intel 8259 Prgrammable Interrupt Controller
+ *  Wishbone PostCode Register
  *  Copyright (C) 2011  Geert Jan Laanstra <g.j.laanstraATutwente.nl>
  *
- *  Fixed (not rotating) priority for now..
- *  Pipelined Wihbone Support 
+ *  Used for debugging bios startup sequence (see IBM AT technical reference)
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
