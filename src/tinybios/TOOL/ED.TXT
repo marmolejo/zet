@@ -1,0 +1,231 @@
+Calling the editor
+------------------
+
+Call ED.COM using
+
+        ED [-m=macfile] [file]
+
+File is the (optional) name of the file to be edited. If this file is invalid
+or doesn't exist yet, "Disk error" is indicated. If the -m=macfile option is
+specified (macfile is the name of the keyboard macro file), the macro file is
+read on startup.
+
+On errors the editor expects you to hit the space bar as an acknowledgement.
+
+Some control characters can modify video attributes (if the editor is installed
+properly for your screen). Insert the chars using the ^P command:
+
+^B	Boldface on
+^U	Underline on
+^N	Normal (bold and underline off)
+
+Hard tabs are expanded. As usual, tab positions are at column 9, 17, 25 etc.
+The end of the file is displayed by a gray area.
+
+Editor commands
+---------------
+
+For many commands function keys can also be used.
+
+^A      word left
+^C      page down
+^D      character right
+^E      line up
+^F      word right
+^G      delete char right
+^H      backspace, delete left
+^I      tabulator (insert a hard tab)
+^J      jump to symbol = search
+        Enter word to be searched. The search is case-sensitive.
+        Cursor jumps to first instance in text (search next: ^L)
+^K      prefix for block, file and assembler commands
+^L      repeat previous search (& replace)
+^N      insert line break
+^O      prefix for macro commands
+^P      prefix for entering control chars
+        (to enter ^_ type ^_^P^_<Enter>)
+^Q      prefix for jump commands
+^R      page up
+^S      character left
+^T      delete word right
+^U      cursor line -> middle of the screen
+^V      toggle insert / overwrite
+^W      scroll up
+^X      line down
+^Y      delete line
+^Z      scroll down
+ESC     exit editor - also see file management.
+
+Block operations
+----------------
+
+All block operations are line-oriented, i.e. they always treat entire lines.
+
+^KA     block = all (entire text)
+^KB     mark block beg
+^KC     copy block
+^KE     mark block end
+^KJ	append (join) block to file (ignores ^Z)
+^KK     mark block end
+^KN     block = nothing
+^KR     read block
+^KV     move block
+^KW     write block
+^KY     delete block
+
+Quick jump commands
+-------------------
+
+^QA     Search and replace. Asks for options. Valid options are:
+
+	  g = global (start from beginning)
+	  n = don't prompt for replacement
+	  u = don't distinguish upper and lower case
+	  w = search whole words only
+
+	Valid answers to the prompt are:
+
+	  y   = ok, do replace
+	  n   = don't replace this one
+	  *   = go ahead, don't ask me any more
+	  Esc = stop it
+		
+^QB     jump to block beg
+^QC     jump to text end
+^QD     jump to line end
+^QE     jump to block end
+^QF	search (same options as ^QA)
+^QI     toggle auto-indent option
+^QK     jump to block end
+^QL     undo changes in current line
+^QR     jump to text beg
+^QS     jump to line beg
+^QY     delete to end of line
+^QZ	delete to beg of line
+
+File management
+---------------
+
+When calling ED from DOS a main file may be specified on the command line which
+is then read into the text buffer.
+
+Files are written back without query (there is a special command to throw away
+changes made to the file). ED does not make .BAK files (the MS-DOS file system
+is too damn slow).
+
+The editor can quickly switch between two files: main and include. Both files
+must fit into the text buffer (about 64 K) together.
+
+Esc     Exit ED
+        - from main: save main, return to DOS
+        - from incl: save incl, return to main
+
+^KI     Back to the previous include file (name displayed in status line)
+
+^KL     Load/change include file
+        - from main: load new include file
+        - from incl: save incl, load new include file
+
+^KM     Load/change main file
+        - from main: save main, load new main file
+        - from incl: save incl, back to main
+
+^KQ     Throw away changes (query)
+        - from main: don't save main, return to DOS
+        - from incl: don't save incl, return to main
+
+^KS     Save current file (manual save)
+
+Should it be impossible to save a file the usual way (disk full etc.), mark the
+text with ^KA, write it with ^KW to another disk and exit ED with ^KQ. If you
+are prompted for a save filename, but want to throw away the file, enter 'nul'
+as filename. DOS will dutifully write the file to the null device.
+
+Function keys
+-------------
+
+Function keys can be used for some commands:
+
+up      cursor up
+down    cursor down
+left    cursor left             ^left   word left
+right   cursor right            ^right  word right
+PgUp    page up                 ^PgUp   mark block beg
+PgDn    page down               ^PgDn   mark block end
+Home    jump to line beg        ^Home   jump to text beg
+End     jump to line end        ^End    jump to text end
+
+Ins     toggle insert/overwrite mode
+Del     delete char right
+^BS     delete to end of line
+
+ScrLock Lock cursor line. The cursor will always remain in the same line of the
+        screen (as far as possible). This is nice for bulk revisions. The
+	cursor line can be moved with ^W, ^Z and ^U.
+
+Keyboard Macros
+---------------
+
+The following keys can be programmed with macros of (nearly) any length (all
+together up to 868 bytes, where each keystroke takes 1..2 bytes). Which keys
+can be used may also depend on your keyboard driver.
+
+                F1..F10
+        Shift   F1..F10
+        Ctrl    F1..F10
+        Alt     F1..F10
+        Alt     A..Z
+        Alt     1..9,0,-,= (all keys in the number row)
+
+^OL     Record keyboard macro
+
+        Hit the destination key, then enter the command sequence (which is
+        executed as usual, so you have visual feedback). Terminate the sequence
+        with ^Break. Mistakes will also be recorded faithfully and cannot be
+        edited except by recording the macro again.
+
+        Macros can also be used during recording. Nesting is limited to
+	15 levels, everything beyond is ignored. A macro that calls itself
+        once will repeat 16 times, if it calls itself twice it will repeat
+        2^16 times... Macros may be interrupted by ^Break.
+
+^_      This suspends macro execution and lets the user enter data (no macros)
+        terminated by <Enter>; macro execution will then resume. The user's
+	<Enter> is ignored: The macro may edit or extend the entry (e.g. add a
+	default extension to a filename).
+
+^OW     Write macros to file
+
+^OR     Read macros from file. This automatically executes the Alt-0 macro,
+        making it possible to "chain" macros.
+
+^OV     Update the display. Normally, the display is not updated during macro
+	execution (resulting in fast execution of macros). This command can be
+	used to show intermediate results.
+
+Status line
+-----------
+
+The editor status is displayed in the top line of the screen:
+
+        ^K  no   3  main + include filename
+
+^K      Command prefix. Displayed while entering commands such as ^KB.
+
+n       Indicates automatic indentation switched off. Toggle with ^QI.
+
+o       Indicates overwrite mode. Toggle with ^V or INS.
+
+3       Indicates cursor position in line.
+
+Editing in the status line is similar to normal editing, but:
+
+-       Trailing spaces are not cut off.
+-       ^A jumps to beg of line
+-       ^F jumps to end of line
+-       Esc breaks the command.
+-	When a default is given, if the first key pressed is a char,
+	the default is cleared and the char is entered. If the first
+	key is an editor command, the default can be edited. To insert
+	something at the beginning of the default, first hit the
+	cursor left key.

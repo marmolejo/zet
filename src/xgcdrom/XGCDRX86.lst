@@ -1,0 +1,2493 @@
+     1                                  ;
+     2                                  ; XCDROM.ASM    Written 8-Feb-2006 by Jack R. Ellis.
+     3                                  ;
+     4                                  ; XCDROM is free software.  You can redistribute and/or modify it under
+     5                                  ; the terms of the GNU General Public License (hereafter called GPL) as
+     6                                  ; published by the Free Software Foundation, either version 2 of GPL or
+     7                                  ; any later versions at your option.  XCDROM is distributed in the hope
+     8                                  ; that it will be useful, but WITHOUT ANY WARRANTY and without even the
+     9                                  ; implied warranties of MERCHANTABILITY nor of FITNESS FOR A PARTICULAR
+    10                                  ; PURPOSE!   See the GPL for details.   You should have received a copy
+    11                                  ; of the GPL with your XCDROM files.  If not write to the Free Software
+    12                                  ; Foundation Inc., 59 Temple Place Ste. 330, Boston, MA 02111-1307 USA.
+    13                                  ; http://www.gnu.org/licenses/
+    14                                  ;
+    15                                  ; This is a DOS driver for 1 to 3 CD-ROM drives on PC mainboards having
+    16                                  ; a VIA VT8235 or similar chipset.   On loading, XCDROM checks both IDE
+    17                                  ; channels for CD-ROM drives and runs all the drives it finds.   It has
+    18                                  ; switch options (see below) to indicate a desired "driver name" and to
+    19                                  ; override its "IDE order" search and check for specific CD-ROM drives.
+    20                                  ; XCDROM accepts requests from a "CD-ROM redirector" (SHCDX33A, MSCDEX,
+    21                                  ; etc.) for the CD-ROM drive.   If the XDMA disk driver (V3.1 or later)
+    22                                  ; is also present and is using output overlap, XCDROM shall synchronize
+    23                                  ; all I-O activity on its drive with XDMA I-O.    This lets XDMA output
+    24                                  ; overlap be used even where an UltraDMA hard-disk and the CD-ROM drive
+    25                                  ; are sharing the same IDE channel!    Also, if V3.1+ XDMA with overlap
+    26                                  ; or any V3.0+ XDMA/XDMAJR driver is present, a CD-ROM drive capable of
+    27                                  ; UltraDMA will be enabled for it.   XCDROM can be run with older XDMA/
+    28                                  ; UDMA2/UDMA drivers or "stand-alone", in which case it will scan for a
+    29                                  ; mainboard UltraDMA controller by itself.    If one is found, a CD-ROM
+    30                                  ; drive capable of UltraDMA will also be enabled for it.   Other XCDROM
+    31                                  ; features are the same as for any DOS CD-ROM driver.   XCDROM does not
+    32                                  ; use interrupts and is only for "legacy" IDE channels at I-O addresses
+    33                                  ; 01F0h (primary) and 0170h (secondary).
+    34                                  ;
+    35                                  ; XCDROM switch options are as follows:
+    36                                  ;
+    37                                  ;    /AX   Excludes ALL audio functions.   This makes the driver report
+    38                                  ;	     on a Device-Status request that it reads DATA tracks only!
+    39                                  ;	     /AX reduces the resident driver by 448 bytes.    UltraDMA,
+    40                                  ;	     multi-drives, and other driver features are NOT affected!
+    41                                  ;
+    42                                  ;    /D:   Specifies the desired "device name" which SHCDX33A or MSCDEX
+    43                                  ;	     will use during their initialization to address the CD-ROM
+    44                                  ;	     drives.   Examples are:  /D:CDROM1  /D:MYCDROM  etc.   The
+    45                                  ;	     device name must be from 1 to 8 bytes valid for use in DOS
+    46                                  ;	     filenames.   If /D: is omitted, or the "device name" after
+    47                                  ;	     a /D: is missing or invalid, "XCDROM" will be the default.
+    48                                  ;
+    49                                  ;    /L    Limits UltraDMA to "low memory" below 640K.   /L is REQUIRED
+    50                                  ;	     to use UMBPCI or a similar driver whose upper-memory areas
+    51                                  ;	     cannot do UltraDMA.   If /L is given, the driver must load
+    52                                  ;	     in LOW memory so its DMA command-lists can fetch preperly,
+    53                                  ;	     or driver loading will ABORT!   /L causes any I-O requests
+    54                                  ;	     above 640K to use "PIO mode" input.   Note that /L will be
+    55                                  ;	     IGNORED if /UX is also given.
+    56                                  ;
+    57                                  ;    /Mn   Specifies the MAXIMUM UltraDMA "mode" to be set for a CD-ROM
+    58                                  ;	     drive, where  n  is a number between 0 and 6, as follows:
+    59                                  ;		 0 = ATA-16, 16 MB/sec.    4 = ATA-66,   66 MB/sec.
+    60                                  ;		 1 = ATA-25, 25 MB/sec.    5 = ATA-100, 100 MB/sec.
+    61                                  ;		 2 = ATA-33, 33 MB/sec.    6 = ATA-133, 133 MB/sec.
+    62                                  ;		 3 = ATA-44, 44 MB/sec.
+    63                                  ;	     A CD-ROM drive designed to use "modes" LESS than the given
+    64                                  ;	     value will be limited to its own highest "mode".   /M will
+    65                                  ;	     be IGNORED for CD-ROM drives which cannot do UltraDMA, and
+    66                                  ;	     it will be ignored for ALL drives if /UX is also given.
+    67                                  ;
+    68                                  ;    /PM   Requests the driver to check the IDE primary-master unit for
+    69                                  ;	     a CD-ROM drive during driver init.    If a CD-ROM drive is
+    70                                  ;	     NOT found as primary-master, driver loading will ABORT!
+    71                                  ;
+    72                                  ;    /PS   Same as /PM but tests the primary-slave unit only.
+    73                                  ;
+    74                                  ;    /SM   Same as /PM but tests the secondary-master unit only.
+    75                                  ;
+    76                                  ;    /SS   Same as /PM but tests the secondary-slave unit only.
+    77                                  ;
+    78                                  ;	     --- NOTE ---
+    79                                  ;	     Using multiple drives, multiple  /PM /PS /SM /SS  switches
+    80                                  ;	     can be given.    The first-specified drive is addressed as
+    81                                  ;	     "unit 0", the second as "unit 1", etc.   If fewer switches
+    82                                  ;	     than drives are given, the unreferenced drives will NOT be
+    83                                  ;	     used.    If NO such switches are given, the driver "scans"
+    84                                  ;	     for CD-ROM drives, from primary-master to secondary-slave.
+    85                                  ;	     The first drive found will be "unit 0", the second will be
+    86                                  ;	     "unit 1", etc.
+    87                                  ;
+    88                                  ;    /UF   Enables "Fast UltraDMA".   Data input requests that cross an
+    89                                  ;	     UltraDMA "64K boundary" are executed using a 2-element DMA
+    90                                  ;	     command list, one for data up to the boundary, and one for
+    91                                  ;	     data beyond it.   CD-ROM speed is increased significantly.
+    92                                  ;	     "PIO mode" input is still needed for user buffers that are
+    93                                  ;	     misaligned (not at an even 4-byte address).    /UF will be
+    94                                  ;	     IGNORED for CD-ROM drives which cannot do UltraDMA.
+    95                                  ;
+    96                                  ;	     --- NOTE ---
+    97                                  ;	     Despite any UltraDMA specs, NOT ALL chipsets or mainboards
+    98                                  ;	     can run multi-element DMA commands properly!   Although it
+    99                                  ;	     is valuable, /UF must be TESTED on every system, and "Fast
+   100                                  ;	     UltraDMA" should be enabled with CARE!!
+   101                                  ;
+   102                                  ;    /UX   Disables ALL UltraDMA, even for CD-ROM drives capable of it.
+   103                                  ;	     The driver then uses "PIO mode" for all data input.    /UX
+   104                                  ;	     should be needed only for tests and diagnostic work.
+   105                                  ;
+   106                                  ; For each switch, a dash may replace the slash, and lower-case letters
+   107                                  ; may be used.
+   108                                  ;
+   109                                  ;
+   110                                  ; Revision History:
+   111                                  ; ----------------
+   112                                  ;  V2.4x 08-Aug-11  Port to 8086 code, for Zet
+   113                                  ;  V2.4  08-Jun-07          Rebuilt pci scan. Now SATA and PATA works together.
+   114                                  ;  V2.3  		      GCDROM released.
+   115                                  ;  V2.2   8-Feb-06  JRE  Corrected DVD handling and "regular" UltraDMA.
+   116                                  ;  V2.1  31-Jan-06  JRE  Deleted init "Set Mode" commands (BIOS will do
+   117                                  ;			   them anyway) to avoid conflicts.
+   118                                  ;  V2.0  27-Jan-06  JRE  Startup and seek timeouts increased.  Added up
+   119                                  ;			   to ATA-133 support.  Minor size reductions.
+   120                                  ;  V1.9  20-Jan-06  JRE  Fixed errors in Multi-Session and I-O logic.
+   121                                  ;  V1.8  17-Jan-06  JRE  Fixed Multi-Session "TOC input" to support ALL
+   122                                  ;			   drives, added a drive "reset" on I-O errors.
+   123                                  ;  V1.7  14-Jan-06  JRE  Updated XCDROM to read a "Multi Session" disk.
+   124                                  ;  V1.6  10-Jan-06  JRE  XCDROM now has stand-alone UltraDMA capability
+   125                                  ;			   and no longer requires XDMA/XDMAJR!   "Audio
+   126                                  ;			   Busy" status is now updated on ALL requests.
+   127                                  ;  V1.5   5-Jan-06  JRE  Fixed "Audio Status" & /AX device-status flags
+   128                                  ;			   and added support for up to 3 CD-ROM drives.
+   129                                  ;  V1.4   2-Jan-06  JRE  Initial release, added /AX and dual drives.
+   130                                  ;  V1.3  30-Dec-05  JRE  4th "Beta" issue, uses V3.1+ XDMA "OCheck".
+   131                                  ;  V1.2  23-Dec-05  JRE  3rd "Beta" issue, new /UF and /UX switches.
+   132                                  ;  V1.1  15-Dec-05  JRE  2nd "Beta" issue, improved XDMA linkage.
+   133                                  ;  V1.0  14-Dec-05  JRE  Original "Beta" XCDROM issue.
+   134                                  ;
+   135                                  cpu 8086
+   136                                  ;
+   137                                  ; General Program Equations.
+   138                                  ;
+   139                                  %define		VER 'V2.4b, 8086 only, 08 Aug 2011'		;Driver version number and date.
+   140                                  BSTACK		equ	330							;"Basic" driver local-stack size.
+   141                                  STACK		equ	332							;Regular driver local-stack size.
+   142                                  XDDMAAD		equ	00008h						;XDMA "DMAAd" offset,  CANNOT CHANGE!
+   143                                  XDFLAGS		equ	00012h						;XDMA "Flags" offset,  CANNOT CHANGE!
+   144                                  XDCHECK		equ	00314h						;XDMA "OCheck" offset, CANNOT CHANGE!
+   145                                  PCHADDR		equ	001F0h						;"Legacy" IDE primary base address.
+   146                                  SCHADDR		equ	00170h						;"Legacy" IDE secondary base address.
+   147                                  MSELECT		equ	0A0h						;"Master" device-select bits.
+   148                                  SSELECT		equ	0B0h						;"Slave"  device-select bits.
+   149                                  RMAXLBAlsb	equ	0DD39h						;Redbook (audio) maximum LBA value.
+   150                                  RMAXLBAmsb	equ	00006h						;Redbook (audio) maximum LBA value.
+   151                                  COOKSL		equ	2048						;CD-ROM "cooked" sector length.
+   152                                  RAWSL		equ	2352						;CD-ROM "raw" sector length.
+   153                                  CMDTO		equ	00Ah						;500-msec minimum command timeout.
+   154                                  SEEKTO		equ	037h						;3-second minimum "seek"  timeout.
+   155                                  STARTTO		equ	07Fh						;7-second minimum startup timeout.
+   156                                  BIOSTMR 	equ	0046Ch						;BIOS "tick" timer address.
+   157                                  HDI_OFS		equ	0048Eh-BIOSTMR				;BIOS hard-disk int. flag "offset".
+   158                                  VDSFLAG 	equ	0047Bh						;BIOS "Virtual DMA" flag address.
+   159                                  IXM			equ	2048						;IOCTL transfer-length multiplier.
+   160                                  CR			equ	00Dh						;ASCII carriage-return.
+   161                                  LF			equ	00Ah						;ASCII line-feed.
+   162                                  TAB			equ	009h						;ASCII "tab".
+   163                                  ;
+   164                                  ; IDE Controller Register Definitions.
+   165                                  ;
+   166                                  CDATA		equ	001F0h						;Data port.
+   167                                  ;CDATA		equ	00080h						;Data port.
+   168                                  ;;CDATA		equ	9000h						;Data port.
+   169                                  ;CSECCT		equ	CDATA+2						;I-O sector count.
+   170                                  ;CDSEL		equ	CDATA+6						;Drive-select and upper LBA.
+   171                                  ;CCMD		equ	CDATA+7						;Command register.
+   172                                  ;CSTAT		equ	CDATA+7						;Primary status register.
+   173                                  ;CSTAT2		equ	CDATA+206h					;Alternate status register.
+   174                                  ;
+   175                                  ; Controller Status and Command Definitions.
+   176                                  ;
+   177                                  BSY			equ	080h						;IDE controller is busy.
+   178                                  DRQ			equ	008h						;IDE data request.
+   179                                  ERR			equ	001h						;IDE general error flag.
+   180                                  DMI			equ	004h						;DMA interrupt occured.
+   181                                  DME			equ	002h						;DMA error occurred.
+   182                                  LBABITS 	equ	0E0h						;Fixed LBA command bits.
+   183                                  ;
+   184                                  ; DOS "Request Packet" Layout.
+   185                                  ;
+   186                                  struc	RP
+   187 00000000 <res 00000001>          RPHLen		resb	1						;Header byte count.
+   188 00000001 <res 00000001>          RPSubU		resb	1						;Subunit number.
+   189 00000002 <res 00000001>          RPOp		resb	1						;Command code.
+   190 00000003 <res 00000002>          RPStat		resw	1						;Status field.
+   191 00000005 <res 00000008>          			resb	8						;(Unused by us).
+   192 0000000D <res 00000001>          RPUnit		resb	1						;Number of units found.
+   193 0000000E <res 00000004>          RPSize		resd	1						;Resident driver size.
+   194 00000012 <res 00000004>          RPCL		resd	1						;Command-line data pointer.
+   195                                  endstruc
+   196                                  
+   197                                  RPERR		equ	08003h						;Packet "error" flags.
+   198                                  RPDON		equ	00100h						;Packet "done" flag.
+   199                                  RPBUSY		equ	00200h						;Packet "busy" flag.
+   200                                  ;	
+   201                                  ; IOCTL "Request Packet" Layout.
+   202                                  ;
+   203                                  struc	IOC
+   204 00000000 <res 0000000D>          			resb	13						;Request "header" (unused by us).
+   205 0000000D <res 00000001>          			resb	1						;Media descriptor byte (Unused by us).
+   206 0000000E <res 00000004>          IOCAdr		resd	1 						;Data-transfer address.
+   207 00000012 <res 00000002>          IOCLen		resw	1						;Data-transfer length.
+   208 00000014 <res 00000002>          			resw	1						;Starting sector (unused by us).
+   209 00000016 <res 00000004>          			resd	1						;Volume I.D. pointer (unused by us).
+   210                                  endstruc
+   211                                  ;
+   212                                  ; Read Long "Request Packet" Layout.
+   213                                  ;
+   214                                  struc	RL
+   215 00000000 <res 0000000D>          			resb	13						;Request "header" (unused by us).
+   216 0000000D <res 00000001>          RLAM		resb	1						;Addressing mode.
+   217 0000000E <res 00000004>          RLAddr		resd	1						;Data-transfer address.
+   218 00000012 <res 00000002>          RLSC		resw	1						;Data-transfer sector count.
+   219 00000014 <res 00000004>          RLSec		resd	1						;Starting sector number.
+   220 00000018 <res 00000001>          RLDM		resb	1						;Data-transfer mode.
+   221 00000019 <res 00000001>          RLIntlv		resb	1						;Interleave size.
+   222 0000001A <res 00000001>          RLISkip		resb	1						;Interleave skip factor.
+   223                                  endstruc
+   224                                  ;
+   225                                  ; DOS CD-ROM Driver Device Header.
+   226                                  ;
+   227 00000000 FFFFFFFF                @			dd	0FFFFFFFFh					;Link to next header block.
+   228 00000004 00C8                    			dw	0C800h						;Driver "device attributes".
+   229 00000006 [1A01]                  			dw	Strat						;"Strategy" routine offset.
+   230 00000008 [2207]                  			dw	DevIntJ						;"Device-Interrupt" routine offset.
+   231 0000000A 58474344524F4D20        DvrName		db	'XGCDROM '					;DOS "device name" (XCDROM default).
+   232 00000012 0000                    			dw	0							;(Reserved).
+   233 00000014 00                      			db	0							;First assigned drive letter.
+   234 00000015 00                      Units		db	0							;Number of CD-ROM drives (1 or 2).
+   235                                  ;
+   236                                  ; Main I-O Variables (here to align the VDS and DMA variables below).
+   237                                  ;
+   238 00000016 0000                    XFRLn		dw	0							;I-O data transfer length.
+   239 00000018 00000000                XFRAd		dd	0							;I-O data transfer address.
+   240 0000001C 00000000                RqPkt		dd	0		;					DOS request-packet address.
+   241                                  ;
+   242                                  ; VDS and DMA Variables.
+   243                                  ;
+   244 00000020 [30000000]              PRDAd		dd	IOAdr						;PRD 32-bit command addr. (Init set).
+   245 00000024 [040B0000]              VDSLn		dd	ResEnd						;VDS buffer length.
+   246 00000028 00000000                VDSOf		dd	0							;VDS 32-bit offset.
+   247 0000002C 00000000                VDSSg		dd	0							;VDS 16-bit segment (hi-order zero).
+   248 00000030 00000000                IOAdr		dd	0							;VDS and DMA 32-bit address.
+   249 00000034 00000000                IOLen		dd	0							;1st DMA byte count.
+   250 00000038 00000000                IOAdr2		dd	0							;2nd DMA 32-bit address & byte count
+   251 0000003C 00000080                IOLen2		dd	080000000h					;  for input "across" a 64K boundary!
+   252                                  ;
+   253                                  ; ATAPI "Packet" Area (always 12 bytes for a CD-ROM).
+   254                                  ;
+   255 00000040 00                      Packet		db	0							;Opcode.
+   256 00000041 00                      			db	0							;Unused (LUN and reserved).
+   257 00000042 00000000                PktLBA		dd	0							;CD-ROM logical block address.
+   258 00000046 00                      PktLH		db	0							;"Transfer length" (sector count).
+   259 00000047 0000                    PktLn		dw	0							;Middle- and low-order sector count.
+   260 00000049 00                      PktRM		db	0							;Read mode ("Raw" Read Long only).
+   261 0000004A 0000                    			dw	0							;Unused ATAPI "pad" bytes (required).
+   262                                  ;
+   263                                  ; Miscellaneous Driver Variables.
+   264                                  ;
+   265 0000004C 1403                    XOCheck		dw	XDCHECK						;XDMA's "OCheck" subroutine pointer.
+   266 0000004E 0000                    XDSeg		dw	0							;XDMA's segment address (set by Init).
+   267 00000050 [B409]                  EntryP		dw	I_Init						;DOS entry routine ptr. (set by Init).
+   268 00000052 0000                    AudAP		dw	0							;Current audio-start address pointer.
+   269 00000054 FFFF                    DMAAd		dw	0FFFFh						;Current DMA cmd. addr. (set by Init).
+   270 00000056 0000                    IDEAd		dw	0							;Current IDE data-register address.
+   271 00000058 00                      IDESl		db	0							;Current device-select command byte.
+   272 00000059 00                      SyncF		db	0							;Current XDMA synchronization flag.
+   273 0000005A 00                      BusyF		db	0							;"Sync busy" flag (in sync with XDMA).
+   274 0000005B 00                      VLF			db	0							;VDS "lock" flag (001h = buffer lock).
+   275 0000005C 00                      DMAFl		db	0							;DMA input flag (001h if so).
+   276 0000005D 00                      Try			db	0							;I-O retry counter.
+   277 0000005E 0000                    			db	0,0							;(Unused alignment "filler").
+   278                                  ;
+   279                                  ; Audio Function Buffer (16 bytes) for most CD-ROM "audio" requests.
+   280                                  ;   The variables below are used only during driver initialization.
+   281                                  ;
+   282                                  InBuf		equ	$
+   283                                  
+   284 00000060 [B409]                  ClrStak		dw	ResEnd-STACK-4				;Beginning stack addr. (set by Init).
+   285 00000062 [7200]                  UTblP		dw	UnitTbl						;Initialization unit table pointer.
+   286 00000064 FFFF                    PrDMA		dw	0FFFFh						;Primary DMA address   (set by Init).
+   287 00000066 0000                    IEMsg		dw	0							;Init error-message pointer.
+   288 00000068 F1                      UFXSw		db	0F1h						;UltraDMA "F/X" switch (set by Init).
+   289 00000069 FF                      MaxUM		db	0FFh						;UltraDMA "mode" limit (set by Init).
+   290 0000006A 00                      UFlag		db	0							;UltraDMA "mode" flags (set by Init).
+   291 0000006B 00                      UMode		db	0							;UltraDMA "mode" value (set by Init).
+   292 0000006C 00                      			db	0							;(Unused alignment "filler").
+   293 0000006D FF                      SyncX		db	0FFh						;"No XDMA synchronization" flag.
+   294 0000006E [890E]                  ScanX		dw	ScanP						;Scan table index (0FFFFh = no scan).
+   295                                  
+   296 00000070 00                      ChipN		db	00h							;channel number (set by Init).
+   297 00000071 00                      			db	00h
+   298                                  
+   299                                  ;
+   300                                  ; Unit Parameter Tables.   If you want a 4th drive, simply add 1 more
+   301                                  ;   parameter table -- NO extra code and NO other changes are needed!
+   302                                  ;
+   303 00000072 FFFF                    UnitTbl		dw	0FFFFh						;Unit 0 DMA address   (set by Init).
+   304 00000074 FFFF                    			dw	0FFFFh						;	IDE address   (set by Init).
+   305 00000076 FF                      			db	0FFh						;	Device-select (set by Init).
+   306 00000077 FF                      			db	0FFh						;	XDMA sync bit (set by Init).
+   307 00000078 00                      			db	0							;	(Unused alignment "filler").
+   308 00000079 FF                      			db	0FFh						;	Media-change flag.
+   309 0000007A FFFFFFFF                			dd	0FFFFFFFFh					;	Current audio-start address.
+   310 0000007E FFFFFFFF                			dd	0FFFFFFFFh					;	Current audio-end   address.
+   311 00000082 FFFFFFFF                			dd	0FFFFFFFFh					;	Last-session starting LBA.
+   312 00000086 FFFFFFFF                			dd	0FFFFFFFFh					;Unit 1 Parameters  (same as above).
+   313 0000008A FFFF00FF                			dd	0FF00FFFFh
+   314 0000008E FFFFFFFF                			dd	0FFFFFFFFh
+   315 00000092 FFFFFFFF                			dd	0FFFFFFFFh
+   316 00000096 FFFFFFFF                			dd	0FFFFFFFFh
+   317 0000009A FFFFFFFF                			dd	0FFFFFFFFh					;Unit 2 Parameters  (same as above).
+   318 0000009E FFFF00FF                			dd	0FF00FFFFh
+   319 000000A2 FFFFFFFF                			dd	0FFFFFFFFh
+   320 000000A6 FFFFFFFF                			dd	0FFFFFFFFh
+   321 000000AA FFFFFFFF                			dd	0FFFFFFFFh
+   322                                  			
+   323                                  UTblEnd		equ	$							;(End of all unit tables).
+   324                                  ;
+   325                                  ; Dispatch Table for DOS CD-ROM request codes 0 through 14.
+   326                                  ;
+   327 000000AE 0F00                    DspTbl1		dw	DspLmt1						;Number of valid request codes.
+   328 000000B0 [DF01]                  			dw	Try2ndD						;Invalid-request handler address.
+   329 000000B2 [7602]                  DspTblA		dw	UnSupp						;00 -- Initialization  (special).
+   330 000000B4 [7602]                  			dw	UnSupp						;01 -- Media Check	(unused).
+   331 000000B6 [7602]                  			dw	UnSupp						;02 -- Build BPB	(unused).
+   332 000000B8 [F001]                  			dw	Try3rdD						;03 -- IOCTL Input.
+   333 000000BA [7602]                  			dw	UnSupp						;04 -- Input		(unused).
+   334 000000BC [7602]                  			dw	UnSupp						;05 -- Input no-wait	(unused).
+   335 000000BE [7602]                  			dw	UnSupp						;06 -- Input Status	(unused).
+   336 000000C0 [7602]                  			dw	UnSupp						;07 -- Input flush	(unused).
+   337 000000C2 [7602]                  			dw	UnSupp						;08 -- Output		(unused).
+   338 000000C4 [7602]                  			dw	UnSupp						;09 -- Output & verify	(unused).
+   339 000000C6 [7602]                  			dw	UnSupp						;10 -- Output status	(unused).
+   340 000000C8 [7602]                  			dw	UnSupp						;11 -- Output flush	(unused).
+   341 000000CA [FF01]                  			dw	Try4thD						;12 -- IOCTL Output.
+   342 000000CC [8502]                  			dw	Ignored						;13 -- Device Open     (ignored).
+   343 000000CE [8502]                  			dw	Ignored						;14 -- Device Close    (ignored).
+   344                                  DspLmt1		equ	($-DspTblA)/2				;Request-code limit for this table.
+   345                                  ;
+   346                                  ; Dispatch Table for DOS CD-ROM request codes 128 through 136.
+   347                                  ;
+   348 000000D0 0900                    DspTbl2		dw	DspLmt2						;Number of valid request codes.
+   349 000000D2 [7602]                  			dw	UnSupp						;Invalid-request handler address.
+   350 000000D4 [B902]                  DspTblB		dw	ReqRL						;128 -- Read Long.
+   351 000000D6 [7602]                  			dw	UnSupp						;129 -- Reserved	(unused).
+   352 000000D8 [3307]                  @RqPref		dw	ReqSeek						;130 -- Read Long Prefetch.
+   353 000000DA [3307]                  @RqSeek		dw	ReqSeek						;131 -- Seek.
+   354 000000DC [7A07]                  @RqPlay		dw	ReqPlay						;132 -- Play Audio.
+   355 000000DE [D007]                  @RqStop		dw	ReqStop						;133 -- Stop Audio.
+   356 000000E0 [7602]                  			dw	UnSupp						;134 -- Write Long	(unused).
+   357 000000E2 [7602]                  			dw	UnSupp						;135 -- Wr. Long Verify	(unused).
+   358 000000E4 [E107]                  @RqRsum		dw	ReqRsum						;136 -- Resume Audio.
+   359                                  
+   360                                  DspLmt2		equ	($-DspTblB)/2				;Request-code limit for this table.
+   361                                  ;
+   362                                  ; Dispatch table for IOCTL Input requests.
+   363                                  ;
+   364 000000E6 1000                    DspTbl3		dw	DspLmt3						;Number of valid request codes.
+   365 000000E8 [7602]                  			dw	UnSupp						;Invalid-request handler address.
+   366 000000EA [862A]                  DspTblC		dw	ReqDHA +5*IXM				;00 -- Device-header address.
+   367 000000EC [F337]                  @RqCHL		dw	ReqCHL +6*IXM				;01 -- Current head location.
+   368 000000EE [7602]                  			dw	UnSupp						;02 -- Reserved		(unused).
+   369 000000F0 [7602]                  			dw	UnSupp						;03 -- Error Statistics	(unused).
+   370 000000F2 [7602]                  			dw	UnSupp						;04 -- Audio chan. info (unused).
+   371 000000F4 [7602]                  			dw	UnSupp						;05 -- Read drive bytes	(unused).
+   372 000000F6 [EB2B]                  			dw	ReqDS  +5*IXM				;06 -- Device status.
+   373 000000F8 [9B22]                  			dw	ReqSS  +4*IXM				;07 -- Sector size.
+   374 000000FA [1F30]                  @RqVS		dw	ReqVS  +5*IXM				;08 -- Volume size.
+   375 000000FC [2C14]                  			dw	ReqMCS +2*IXM				;09 -- Media-change status.
+   376 000000FE [4640]                  @RqADI		dw	ReqADI +7*IXM				;10 -- Audio disk info.
+   377 00000100 [6B40]                  @RqATI		dw	ReqATI +7*IXM				;11 -- Audio track info.
+   378 00000102 [9860]                  @RqAQI		dw	ReqAQI +11*IXM				;12 -- Audio Q-channel info.
+   379 00000104 [7602]                  			dw	UnSupp						;13 -- Subchannel info	(unused).
+   380 00000106 [7602]                  			dw	UnSupp						;14 -- Read UPC code	(unused).
+   381 00000108 [DD60]                  @RqASI		dw	ReqASI +11*IXM				;15 -- Audio status info.
+   382                                  
+   383                                  DspLmt3		equ	($-DspTblC)/2				;Request-code limit for this table.
+   384                                  ;
+   385                                  ; Dispatch table for IOCTL Output requests.
+   386                                  ;
+   387 0000010A 0600                    DspTbl4		dw	DspLmt4						;Number of valid request codes.
+   388 0000010C [7602]                  			dw	UnSupp						;Invalid-request handler address.
+   389 0000010E [440C]                  DspTblD		dw	ReqEjct +1*IXM				;00 -- Eject Disk.
+   390 00000110 [4F14]                  			dw	ReqDoor +2*IXM				;01 -- Lock/Unlock Door.
+   391 00000112 [670C]                  			dw	ReqRS   +1*IXM				;02 -- Reset drive.
+   392 00000114 [7602]                  			dw	UnSupp						;03 -- Audio control	(unused).
+   393 00000116 [7602]                  			dw	UnSupp						;04 -- Write ctl. bytes	(unused).
+   394 00000118 [770C]                  			dw	ReqTray +1*IXM				;05 -- Close tray.
+   395                                  			
+   396                                  DspLmt4		equ	($-DspTblD)/2				;Request-code limit for this table.
+   397                                  ;
+   398                                  ; "Strategy" routine -- At entry, ES:BX points to the DOS init request
+   399                                  ;   packet, whose address is saved for processing below.
+   400                                  ;
+   401                                  Strat:
+   402 0000011A 2E891E[1C00]            	mov	[cs:RqPkt],bx					;Save DOS request-packet address.
+   403 0000011F 2E8C06[1E00]            	mov	[cs:RqPkt+2],es
+   404 00000124 CB                      	retf								;Exit & await DOS "device interrupt".
+   405 00000125 00                      	db	0								;(Unused alignment "filler").
+   406                                  ;
+   407                                  ; Subroutines to do all initialization "external" calls.
+   408                                  ;
+   409                                  I_Dsply:
+   410 00000126 53                      	push	bx							;Message -- save our BX-register.
+   411 00000127 B409                    	mov	ah,009h							;Have DOS display desired message.
+   412 00000129 CD21                    	int	021h
+   413 0000012B 5B                      	pop	bx								;Reload our BX-register.
+   414 0000012C FB                      	sti									;RESTORE all critical driver settings!
+   415 0000012D FC                      	cld									;(Never-NEVER "trust" external code!).
+   416 0000012E 0E                      	push	cs
+   417 0000012F 1F                      	pop	ds
+   418 00000130 C3                      	ret									;Exit.
+   419                                  ;
+   420                                  ; Subroutine to convert a 4-digit hex number to ASCII for messages.
+   421                                  ;   At entry, the number is in the AX-reg., and the message pointer
+   422                                  ;   is in the SI-reg.   At exit, the SI-reg. is updated and the CX-
+   423                                  ;   reg. is zero.
+   424                                  ;
+   425                                  I_Hex:
+   426 00000131 B90400                  	mov	cx,4							;Set 4-digit count.
+   427                                  I_HexA:
+   428 00000134 D1C0                    	rol	ax,1							;Get next hex digit in low-order.
+   429 00000136 D1C0                    	rol	ax,1
+   430 00000138 D1C0                    	rol	ax,1
+   431 0000013A D1C0                    	rol	ax,1
+   432 0000013C 50                      	push	ax							;Save remaining digits.
+   433 0000013D 240F                    	and	al,00Fh							;Mask off next hex digit.
+   434 0000013F 3C09                    	cmp	al,009h							;Is digit 0-9?
+   435 00000141 7602                    	jbe	I_HexB							;Yes, convert to ASCII.
+   436 00000143 0407                    	add	al,007h							;Add A-F offset.
+   437 00000145 0430                    I_HexB	add	al,030h						;Convert digit to ASCII.
+   438 00000147 8804                    	mov	[si],al							;Store next digit in message.
+   439 00000149 46                      	inc	si								;Bump message pointer.
+   440 0000014A 58                      	pop	ax								;Reload remaining digits.
+   441 0000014B E2E7                    	loop	I_HexA						;If more digits to go, loop back.
+   442 0000014D C3                      	ret									;Exit.
+   443                                  ;
+   444 0000014E 787878783A              Debug_Adr_Msb	db	'xxxx:'
+   445 00000153 787878780D0A24          Debug_Adr_Lsb	db	'xxxx',CR,LF,'$'
+   446 0000015A 0000000000000000        				db  0,0,0,0,0,0,0,0
+   447                                  ;
+   448                                  ; "Device-Interrupt" routine -- This routine processes DOS requests.
+   449                                  ;
+   450                                  DevInt:
+   451 00000162 9C                      	pushf								;Entry -- save current CPU flags.
+   452 00000163 FA                      	cli									;Disable CPU interrupts.
+   453 00000164 2E8926[000B]            	mov	[cs:CStack],sp					;Save caller's stack pointer.
+   454                                  @CStak1	equ	$-2
+   455 00000169 2E8C16[020B]            	mov	[cs:CStack+2],ss
+   456                                  @CStak2	equ	$-2
+   457 0000016E 0E                      	push	cs							;Switch to this driver's stack.
+   458 0000016F 17                      	pop	ss
+   459 00000170 BC[000B]                	mov	sp,CStack
+   460                                  @Stack	equ	$-2							;(Driver stack pointer, set by Init).
+   461 00000173 FB                      	sti									;Re-enable CPU interrupts.
+   462 00000174 FC                      	cld									;Ensure FORWARD "string" commands!
+   463 00000175 50                      	push	ax							;Save only the CPU registers we need.
+   464 00000176 52                      	push	dx							;(Only EAX/EDX are used for 32-bit
+   465 00000177 53                      	push	bx							;   math, and BP is not used here).
+   466 00000178 51                      	push	cx
+   467 00000179 56                      	push	si
+   468 0000017A 57                      	push	di
+   469 0000017B 1E                      	push	ds							;Save CPU segment registers.
+   470 0000017C 06                      	push	es
+   471 0000017D 0E                      	push	cs							;Set this driver's DS-register.
+   472 0000017E 1F                      	pop	ds
+   473 0000017F 31DB                    	xor	bx,bx							;Zero BX-reg. for relative commands.
+   474 00000181 E80E05                  	call	ZPacket						;Clear our ATAPI packet area.
+   475 00000184 C4771C                  	les	si,[bx+RqPkt-@]					;Point to DOS request packet.
+   476 00000187 26C744030001            	mov	word [es:si+RPStat],RPDON 		;Init status to "done".
+   477 0000018D 268A4401                	mov	al,[es:si+RPSubU]	   			;Get unit-table offset.
+   478 00000191 B414                    	mov	ah,20
+   479 00000193 F6E4                    	mul	ah
+   480 00000195 BF[7A00]                	mov	di,UnitTbl+8					;Set unit's audio-start address ptr.
+   481 00000198 01C7                    	add	di,ax
+   482 0000019A 897F52                  	mov	[bx+AudAP-@],di
+   483 0000019D 8B45F8                  	mov	ax,[di+0-8]						;Set drive DMA and IDE addresses.
+   484 000001A0 894754                  	mov	[bx+DMAAd+0-@],ax
+   485 000001A3 8B45FA                  	mov	ax,[di+2-8]
+   486 000001A6 894756                  	mov	[bx+DMAAd+2-@],ax
+   487 000001A9 8B45FC                  	mov	ax,[di-4]						;Set device-select & XDMA "sync" flag.
+   488 000001AC 894758                  	mov	[bx+IDESl-@],ax
+   489 000001AF 268A4402                	mov	al,[es:si+RPOp]					;Get packet request code.	
+   490 000001B3 BF[AE00]                	mov	di,DspTbl1						;Point to 1st DOS dispatch table.
+   491 000001B6 E85D00                  	call	Dspatch						;Dispatch to desired request handler.
+   492 000001B9 31C9                    	xor	cx,cx							;Load and reset our "sync busy" flag.
+   493 000001BB 864F5A                  	xchg	cl,[bx+BusyF-@]
+   494 000001BE FA                      	cli									;Disable CPU interrupts.
+   495 000001BF E30A                    	jcxz	DevInt1						;Are we synchronized with XDMA?
+   496 000001C1 8E474E                  	mov	es,[bx+XDSeg-@]					;Yes, point to XDMA driver data.
+   497 000001C4 F6D1                    	not	cl								;Reset XDMA channel "busy" flag.
+   498 000001C6 26200E1200              	and	[es:XDFLAGS],cl
+   499                                  DevInt1:
+   500 000001CB 07                      	pop	es								;Reload the CPU registers we used.
+   501 000001CC 1F                      	pop	ds
+   502 000001CD 5F                      	pop	di
+   503 000001CE 5E                      	pop	si
+   504 000001CF 59                      	pop	cx
+   505 000001D0 5B                      	pop	bx
+   506 000001D1 5A                      	pop	dx
+   507 000001D2 58                      	pop	ax
+   508 000001D3 2E8B26[000B]            	mov	sp,[cs:CStack]  				;Reload caller's stack pointer.
+   509                                  @CStak3	equ	$-2
+   510 000001D8 2E8E16[020B]            	mov	ss,[cs:CStack+2]
+   511                                  @CStak4	equ	$-2
+   512 000001DD 9D                      	popf								;Reload CPU flags saved on entry.
+   513 000001DE CB                      	retf								;Exit.
+   514                                  ;
+   515                                  ; Function-Code "Dispatch" Routines.
+   516                                  ;
+   517                                  Try2ndD:
+   518                                  	;
+   519 000001DF 52                      	push dx
+   520 000001E0 50                      	push ax
+   521 000001E1 BA8000                  	mov dx, 00080h
+   522 000001E4 B01F                    	mov al, 1Fh
+   523 000001E6 EE                      	out dx, al
+   524 000001E7 58                      	pop ax
+   525 000001E8 5A                      	pop dx
+   526                                  	;
+   527 000001E9 2C80                    	sub	al,080h							;Not request code 0-15:  subtract 128.
+   528 000001EB BF[D000]                	mov	di,DspTbl2						;Point to 2nd DOS dispatch table.
+   529 000001EE EB26                    	jmp	short Dspatch					;Go try request-dispatch again.
+   530                                  Try3rdD:
+   531                                  	;
+   532 000001F0 52                      	push dx
+   533 000001F1 50                      	push ax
+   534 000001F2 BA8000                  	mov dx, 00080h
+   535 000001F5 B013                    	mov al, 13h
+   536 000001F7 EE                      	out dx, al
+   537 000001F8 58                      	pop ax
+   538 000001F9 5A                      	pop dx
+   539                                  	;
+   540 000001FA BF[E600]                	mov	di,DspTbl3						;Point to IOCTL Input dispatch table.
+   541 000001FD EB0D                    	jmp	short TryIOC
+   542                                  Try4thD:
+   543                                  	;
+   544 000001FF 52                      	push dx
+   545 00000200 50                      	push ax
+   546 00000201 BA8000                  	mov dx, 00080h
+   547 00000204 B01C                    	mov al, 1Ch
+   548 00000206 EE                      	out dx, al
+   549 00000207 58                      	pop ax
+   550 00000208 5A                      	pop dx
+   551                                  	;
+   552 00000209 BF[0A01]                	mov	di,DspTbl4						;Point to IOCTL Output dispatch table.
+   553                                  TryIOC:
+   554 0000020C 26C4740E                	les	si,[es:si+IOCAdr]  				;Get actual IOCTL request code.
+   555 00000210 268A04                  	mov	al,[es:si]
+   556 00000213 C4771C                  	les	si,[bx+RqPkt-@]					;Reload DOS request-packet address.
+   557                                  Dspatch:
+   558 00000216 3A05                    	cmp	al,[di]							;Is request code out-of-bounds?
+   559 00000218 47                      	inc	di								;(Skip past table-limit value).
+   560 00000219 47                      	inc	di
+   561 0000021A 7308                    	jae	Dsptch1							;Yes?  Dispatch to error handler!
+   562 0000021C 47                      	inc	di								;Skip past error-handler address.
+   563 0000021D 47                      	inc	di
+   564 0000021E 30E4                    	xor	ah,ah							;Point to request-handler address.
+   565 00000220 D1E0                    	shl	ax,1
+   566 00000222 01C7                    	add	di,ax
+   567                                  Dsptch1:
+   568 00000224 8B15                    	mov	dx,[di]							;Get handler address from table.
+   569 00000226 BFFF07                  	mov	di,007FFh
+   570 00000229 21D7                    	and	di,dx
+   571 0000022B 31FA                    	xor	dx,di							;IOCTL request (xfr length > 0)?
+   572 0000022D 740C                    	jz	Dsptch2							;No, see if request needs XDMA sync.
+   573 0000022F B10B                    	mov cl,11
+   574 00000231 D3EA                    	shr	dx,cl		   					;Ensure correct IOCTL transfer
+   575 00000233 26895412                	mov	[es:si+IOCLen],dx  				;  length is set in DOS packet.
+   576 00000237 26C4740E                	les	si,[es:si+IOCAdr]  				;Get IOCTL data-transfer address.
+   577                                  Dsptch2:
+   578 0000023B 81FF[B902]              	cmp	di,SyncReq	   					;Does request require XDMA sync?
+   579 0000023F 7233                    	jb	DspGo		   					;No, dispatch to desired handler.
+   580 00000241 385F59                  	cmp	[bx+SyncF-@],bl					;Are we synchronizing with XDMA?
+   581 00000244 742E                    	jz	DspGo							;No, dispatch to desired handler.
+   582 00000246 50                      	push	ax							;Save AX- and ES-registers.
+   583 00000247 06                      	push	es
+   584 00000248 8E474E                  	mov	es,[bx+XDSeg-@]					;Point to XDMA driver in memory.
+   585 0000024B 8A4759                  	mov	al,[bx+SyncF-@]					;Get our XDMA "busy" flags.
+   586 0000024E 88C4                    	mov	ah,al							;Get XDMA flags for our IDE channel.
+   587 00000250 FA                      	cli									;Disable CPU interrupts.
+   588 00000251 2622261200              	and	ah,[es:XDFLAGS]					;Another driver using our channel?
+   589 00000256 740F                    	jz	Dsptch4							;No, post our channel "busy" flag.
+   590 00000258 F6C460                  	test	ah,060h						;Is our channel busy doing overlap?
+   591 0000025B 7407                    	jz	Dsptch3							;Yes, have XDMA await overlap end.
+   592 0000025D FB                      	sti									;Sync ERROR!  Re-enable interrupts.
+   593 0000025E 07                      	pop	es								;Reload ES- and AX-registers.
+   594 0000025F 58                      	pop	ax
+   595                                  GenFail:
+   596 00000260 B00C                    	mov	al,12							;General failure!  Get error code.
+   597 00000262 EB18                    	jmp	short ReqErr					;Go post packet error code & exit.
+   598                                  Dsptch3:
+   599 00000264 FF5F4C                  	call	far [bx+XOCheck-@]  		;Have XDMA await overlap end.
+   600                                  Dsptch4:
+   601 00000267 2460                    	and	al,060h							;Post "busy" flag for our channel.
+   602 00000269 2608061200              	or	[es:XDFLAGS],al
+   603 0000026E FB                      	sti									;Re-enable CPU interrupts.
+   604 0000026F 88475A                  	mov	[bx+BusyF-@],al					;Post "sync busy" flag for exit above.
+   605 00000272 07                      	pop	es								;Reload ES- and AX-registers.
+   606 00000273 58                      	pop	ax
+   607                                  DspGo:
+   608 00000274 57                      	push	di							;Dispatch to desired request handler.
+   609 00000275 C3                      	ret
+   610                                  	;
+   611                                  UnSupp:
+   612 00000276 B003                    	mov	al,3							;Unsupported request!  Get error code.
+   613 00000278 EB02                    	jmp	short ReqErr					;Go post packet error code & exit.
+   614                                  SectNF:
+   615 0000027A B008                    	mov	al,8							;Sector not found!  Get error code.
+   616                                  ReqErr:
+   617 0000027C C4771C                  	les	si,[bx+RqPkt-@]					;Reload DOS request-packet address.
+   618 0000027F B481                    	mov	ah,081h							;Post error flags & code in packet.
+   619 00000281 26894403                	mov	[es:si+RPStat],ax
+   620 00000285 C3                      Ignored	ret								;Exit ("ignored" request handler).
+   621                                  ;
+   622                                  ; IOCTL Input "Device Header Address" handler, placed here to AVOID
+   623                                  ;   the need for XDMA I-O synchronization in our "dispatch" logic.
+   624                                  ;
+   625                                  ReqDHA:
+   626                                  	;
+   627 00000286 52                      	push dx
+   628 00000287 50                      	push ax
+   629 00000288 BA8000                  	mov dx, 00080h
+   630 0000028B B030                    	mov al, 30h
+   631 0000028D EE                      	out dx, al
+   632 0000028E 58                      	pop ax
+   633 0000028F 5A                      	pop dx
+   634                                  	;
+   635 00000290 0E                      	push	cs							;Return our base driver address.
+   636 00000291 53                      	push	bx
+   637 00000292 268F4401                	pop	word [es:si+1]
+   638 00000296 268F4403                	pop	word [es:si+3]
+   639 0000029A C3                      	ret			;Exit.
+   640                                  ;
+   641                                  ; IOCTL Input "Sector Size" handler, placed here to AVOID the need
+   642                                  ;   for XDMA I-O synchronization in our "dispatch" logic.
+   643                                  ;
+   644                                  ReqSS:
+   645                                  	;
+   646 0000029B 52                      	push dx
+   647 0000029C 50                      	push ax
+   648 0000029D BA8000                  	mov dx, 00080h
+   649 000002A0 B037                    	mov al, 37h
+   650 000002A2 EE                      	out dx, al
+   651 000002A3 58                      	pop ax
+   652 000002A4 5A                      	pop dx
+   653                                  	;
+   654 000002A5 26807C0101              	cmp	byte [es:si+1],1  				;Is read mode "cooked" or "raw"
+   655 000002AA 77B4                    	ja	GenFail							;No?  Post "general failure" & exit.
+   656 000002AC B83009                  	mov	ax,RAWSL						;Get "raw" sector length.
+   657 000002AF 7403                    	je	RqSS1							;If "raw" mode, set sector length.
+   658 000002B1 B80008                  	mov	ax,COOKSL						;Get "cooked" sector length.
+   659 000002B4 26894402                RqSS1	mov	[es:si+2],ax				;Post sector length in IOCTL packet.
+   660 000002B8 C3                      RqSSX	ret								;Exit.
+   661                                  SyncReq	equ	$							;Handlers beyond here need I-O sync!
+   662                                  ;
+   663                                  ; DOS "Read Long" handler.
+   664                                  ;
+   665                                  ReqRL:
+   666                                  	;
+   667 000002B9 52                      	push dx
+   668 000002BA 50                      	push ax
+   669 000002BB BA8000                  	mov dx, 00080h
+   670 000002BE B020                    	mov al, 20h
+   671 000002C0 EE                      	out dx, al
+   672 000002C1 58                      	pop ax
+   673 000002C2 5A                      	pop dx
+   674                                  	;
+   675 000002C3 E8DC03                  	call	ValSN						;Validate starting sector number.
+   676 000002C6 E8B501                  	call	MultiS						;Handle Multi-Session disk if needed.
+   677 000002C9 72B1                    	jc	ReqErr							;If error, post return code & exit.
+   678 000002CB 268B4C12                	mov	cx,[es:si+RLSC]					;Get request sector count.
+   679 000002CF E3E7                    	jcxz	RqSSX						;If zero, simply exit.
+   680 000002D1 86CD                    	xchg	cl,ch						;Save swapped sector count.
+   681 000002D3 894F47                  	mov	[bx+PktLn-@],cx
+   682 000002D6 26807C1801              	cmp	byte [es:si+RLDM],1 			;"Cooked" or "raw" read mode?
+   683 000002DB 779D                    	ja	SectNF		    				;No?  Return "sector not found"!
+   684 000002DD B228                    	mov	dl,028h		    				;Get "cooked" input values.
+   685 000002DF B80008                  	mov	ax,COOKSL
+   686 000002E2 7209                    	jb	RqRL1		    				;If "cooked" input, set values.
+   687 000002E4 B2BE                    	mov	dl,0BEh		    				;Get "raw" input values.
+   688 000002E6 B83009                  	mov	ax,RAWSL
+   689 000002E9 C64749F8                	mov	byte [bx+PktRM-@],0F8h 			;Set "raw" input flags.
+   690                                  RqRL1:
+   691 000002ED 885740                  	mov	[byte bx+Packet-@],dl  			;Set "packet" opcode.
+   692 000002F0 26F76412                	mul	word [es:si+RLSC]   			;Get desired input byte count.
+   693 000002F4 85D2                    	test	dx,dx		    			;More than 64K bytes desired?
+   694 000002F6 7582                    	jnz	SectNF		    				;Yes?  Return sector not found!
+   695 000002F8 894724                  	mov	[bx+VDSLn-@],ax	    			;Set VDS and DMA byte counts.
+   696 000002FB 894734                  	mov	[bx+IOLen-@],ax
+   697 000002FE 268B440E                	mov	ax,[es:si+RLAddr]   			;Set user input-buffer address.
+   698 00000302 894728                  	mov	[bx+VDSOf-@],ax
+   699 00000305 268B4410                	mov	ax,[es:si+RLAddr+2] 			;Set user input-buffer segment.
+   700 00000309 89472C                  	mov	[bx+VDSSg-@],ax
+   701 0000030C 89471A                  	mov	[bx+XFRAd+2-@],ax
+   702                                  	;
+   703 0000030F F6475407                	test	byte [bx+DMAAd-@],007h		;Is drive using UltraDMA?
+   704 00000313 7403E98900              	jnz	RqRL5			   				;No, do "PIO mode" input.
+   705                                  	;
+   706 00000318 52                      	push dx
+   707 00000319 50                      	push ax
+   708 0000031A BA8000                  	mov dx, 00080h
+   709 0000031D B0E8                    	mov al, 0E8h
+   710 0000031F EE                      	out dx, al
+   711 00000320 58                      	pop ax
+   712 00000321 5A                      	pop dx
+   713                                  	;
+   714                                  RqRL1lock:
+   715 00000322 EBFE                    	jmp RqRL1lock
+   716                                  	;
+   717 00000324 834F30FF                	or	word [bx+IOAdr+0-@],byte -1		;Invalidate VDS address.
+   718 00000328 834F32FF                	or	word [bx+IOAdr+2-@],byte -1
+   719 0000032C B80381                  	mov	ax,08103h		   				;VDS "lock" user buffer.
+   720 0000032F BA0C00                  	mov	dx,0000Ch
+   721 00000332 E88D00                  	call	RqRL8
+   722 00000335 726A                    	jc	RqRL5			   				;Error -- use PIO input.
+   723 00000337 8B4730                  	mov	ax,[bx+IOAdr-@]		   			;Get lower VDS address.
+   724 0000033A 837F30FF                	cmp	word [bx+IOAdr+0-@],byte -1 	;Is VDS address valid?
+   725 0000033E 7506                    	jne RqRL1a
+   726 00000340 837F32FF                	cmp	word [bx+IOAdr+2-@],byte -1
+   727 00000344 7411                    	je	RqRL2			  				;Yes, set VDS "lock" flag.
+   728                                  RqRL1a:	
+   729 00000346 B81000                  	mov	ax,16		    				;No VDS -- get 20-bit segment.
+   730 00000349 F7672C                  	mul	word [bx+VDSSg-@]
+   731 0000034C 034728                  	add	ax,[bx+VDSOf-@]	   	 			;Add in buffer offset value.
+   732 0000034F 11DA                    	adc	dx,bx
+   733 00000351 894730                  	mov	[bx+IOAdr-@],ax	    			;Set 20-bit user buffer address.
+   734 00000354 895732                  	mov	[bx+IOAdr+2-@],dx	
+   735                                  RqRL2:
+   736 00000357 105F5B                  	adc	[bx+VLF-@],bl	    			;Set VDS "lock" flag from carry.
+   737 0000035A A803                    	test	al,003h		    			;Is user buffer 32-bit aligned?
+   738 0000035C 7540                    	jnz	RqRL4		    				;No, "unlock" buffer and use PIO.
+   739 0000035E 837F32FF                	cmp	word [bx+IOAdr+2-@],byte -1 	;Is DMA beyond our limit?
+   740                                  @DMALmt	equ	$-1			     			;(009h for a 640K limit).
+   741 00000362 773A                    	ja	RqRL4			     			;Yes, "unlock" & use PIO.
+   742 00000364 C6473780                	mov	byte [bx+IOLen+3-@],080h     	;Set DMA list "end" flag.
+   743 00000368 8B4F34                  	mov	cx,[bx+IOLen-@]	    			;Get lower ending DMA address.
+   744 0000036B 49                      	dec	cx		    					;(IOLen - 1 + IOAdr).
+   745 0000036C 01C8                    	add	ax,cx		    				;Would input cross a 64K boundary?
+   746 0000036E 7329                    	jnc	RqRL3		    				;No, set DMA flag & do transfer.
+   747                                  @NoFast:
+   748 00000370 40                      	inc	ax		    					;Get bytes above 64K boundary.
+   749 00000371 83F840                  	cmp	ax,64		    				;Is this at least 64 bytes?
+   750 00000374 7228                    	jb	RqRL4		    				;No, "unlock" buffer and use PIO.
+   751 00000376 41                      	inc	cx		    					;Get bytes below 64K boundary.
+   752 00000377 29C1                    	sub	cx,ax
+   753 00000379 83F940                  	cmp	cx,64		    				;Is this at least 64 bytes?
+   754 0000037C 7220                    	jb	RqRL4		    				;No, "unlock" buffer and use PIO.
+   755 0000037E 89473C                  	mov	[bx+IOLen2-@],ax    			;Set 2nd command-list byte count.
+   756 00000381 89C8                    	mov	ax,cx		    				;Set 1st command-list byte count.
+   757 00000383 52                      	push dx
+   758 00000384 31D2                    	xor dx,dx
+   759 00000386 894734                  	mov	[bx+IOLen+0-@],ax
+   760 00000389 895736                  	mov	[bx+IOLen+2-@],dx
+   761 0000038C 034730                  	add	ax,[bx+IOAdr+0-@]    			;Set 2nd command-list address.
+   762 0000038F 135732                  	adc dx,[bx+IOAdr+2-@]
+   763 00000392 894738                  	mov	[bx+IOAdr2+0-@],ax
+   764 00000395 89573A                  	mov	[bx+IOAdr2+2-@],dx
+   765 00000398 5A                      	pop dx
+   766 00000399 FE475C                  RqRL3	inc	byte [bx+DMAFl-@]   		;Set UltraDMA input flag.
+   767 0000039C EB03                    	jmp	short RqRL5	    				;Go execute read request.
+   768                                  	;
+   769 0000039E E80B00                  RqRL4	call	RqRL7					;No UltraDMA -- "unlock" user buffer.
+   770                                  	;
+   771                                  RqRL5:
+   772 000003A1 E84B01                  	call	DoIO						;Execute desired read request.
+   773 000003A4 7303                    	jnc	RqRL6							;If no errors, go exit below.
+   774 000003A6 E8D3FE                  	call	ReqErr						;Post desired error code.
+   775                                  RqRL6:
+   776 000003A9 885F5C                  	mov	[bx+DMAFl-@],bl					;Reset UltraDMA input flag.
+   777                                  RqRL7:
+   778 000003AC D06F5B                  	shr	byte [bx+VLF-@],1  				;Is user buffer "locked" by VDS?
+   779 000003AF 7324                    	jnc	RqRLX							;No, just exit below.
+   780                                  	;
+   781 000003B1 52                      	push dx
+   782 000003B2 50                      	push ax
+   783 000003B3 BA8000                  	mov dx, 00080h
+   784 000003B6 B0E8                    	mov al, 0E8h
+   785 000003B8 EE                      	out dx, al
+   786 000003B9 58                      	pop ax
+   787 000003BA 5A                      	pop dx
+   788                                  	;
+   789                                  RqRL7lock:
+   790 000003BB EBFE                    	jmp RqRL7lock
+   791                                  	;
+   792 000003BD B80481                  	mov	ax,08104h						;Get VDS "unlock" parameters.
+   793 000003C0 31D2                    	xor	dx,dx
+   794 000003C2 53                      RqRL8	push	bx						;Save all our "global" registers.
+   795 000003C3 56                      	push	si
+   796 000003C4 57                      	push	di
+   797 000003C5 06                      	push	es
+   798 000003C6 BF[2400]                	mov	di,VDSLn						;Point to VDS parameter block.
+   799 000003C9 0E                      	push	cs
+   800 000003CA 07                      	pop	es
+   801 000003CB CD4B                    	int	04Bh							;Execute VDS "lock" or "unlock".
+   802 000003CD FB                      	sti									;RESTORE all critical driver settings!
+   803 000003CE FC                      	cld									;(Never-NEVER "trust" external code!).
+   804 000003CF 0E                      	push	cs
+   805 000003D0 1F                      	pop	ds
+   806 000003D1 07                      	pop	es								;Reload all our "global" registers.
+   807 000003D2 5F                      	pop	di
+   808 000003D3 5E                      	pop	si
+   809 000003D4 5B                      	pop	bx
+   810 000003D5 C3                      RqRLX	ret								;Exit.
+   811                                  ;
+   812                                  ; DOS "Seek" handler.
+   813                                  ;
+   814                                  DOSSeek:
+   815 000003D6 E8C902                  	call	ValSN						;Validate desired seek address.
+   816 000003D9 E8A200                  	call	MultiS						;Handle Multi-Session disk if needed.
+   817 000003DC 7207                    	jc	DOSSkE							;If error, post return code & exit.
+   818 000003DE C647402B                	mov	byte [bx+Packet-@],02Bh  		;Set "seek" command code.
+   819                                  DOSSk1:
+   820 000003E2 E80701                  	call	DoIOCmd						;Issue desired command to drive.
+   821                                  DOSSkE:
+   822 000003E5 7303E992FE              	jc	ReqErr							;If error, post return code & exit.
+   823 000003EA C3                      	ret									;Exit.
+   824                                  ;
+   825                                  ; IOCTL Input "Device Status" handler.
+   826                                  ;
+   827                                  ReqDS:
+   828                                  	;
+   829 000003EB 52                      	push dx
+   830 000003EC 50                      	push ax
+   831 000003ED BA8000                  	mov dx, 00080h
+   832 000003F0 B036                    	mov al, 36h
+   833 000003F2 EE                      	out dx, al
+   834 000003F3 58                      	pop ax
+   835 000003F4 5A                      	pop dx
+   836                                  	;
+   837 000003F5 C747405A00              	mov	word [bx+Packet+0-@],0005Ah  	;Set up mode-sense.
+   838 000003FA C747422A00              	mov	word [bx+Packet+2-@],0002Ah
+   839 000003FF B010                    	mov	al,16							;Use input byte count of 16.
+   840 00000401 E8D600                  	call	DoBufIO						;Issue mode-sense for hardware data.
+   841 00000404 72DF                    	jc	DOSSkE							;If error, post return code & exit.
+   842 00000406 31C0                    	xor ax,ax							; clear msb part in status flag
+   843 00000408 26894403                	mov	[es:si+3],ax
+   844 0000040C B81402                  	mov	ax,00214h						;Get our basic driver status flags.
+   845                                  @Status	equ	$-2		 					;(Set by Init to 00204h for /AX).
+   846 0000040F 807D0271                	cmp	byte [di+2],071h  				;"Unknown CD", i.e. door open?
+   847 00000413 7502                    	jne	ReqDS1		 					;No, check "locked" status.
+   848 00000415 0C01                    	or	al,001h		  					;Post "door open" status flag.
+   849                                  ReqDS1:
+   850 00000417 F6450E02                	test	byte [di+14],002h	 		;Drive pushbutton "locked out"?
+   851 0000041B 7502                    	jnz	ReqDS2		 					;No, set flags in IOCTL.
+   852 0000041D 0C02                    	or	al,002h							;Set "door locked" status flag.
+   853                                  ReqDS2:
+   854 0000041F 26894401                	mov	[es:si+1],ax					;Set status flags in IOCTL buffer.
+   855 00000423 31C0                    	xor ax,ax
+   856 00000425 26894403                	mov [es:si+3],ax					;Set status flags in IOCTL buffer.
+   857 00000429 E93C05                  @RqDSX	jmp	ReadAST						;Go post "busy" status and exit.
+   858                                  ;
+   859                                  ; IOCTL Input "Media-Change Status" handler.
+   860                                  ;
+   861                                  ReqMCS:
+   862                                  	;
+   863 0000042C 52                      	push dx
+   864 0000042D 50                      	push ax
+   865 0000042E BA8000                  	mov dx, 00080h
+   866 00000431 B039                    	mov al, 39h
+   867 00000433 EE                      	out dx, al
+   868 00000434 58                      	pop ax
+   869 00000435 5A                      	pop dx
+   870                                  	;
+   871 00000436 E8B300                  	call	DoIOCmd						;Issue "Test Unit Ready" command.
+   872 00000439 8B7F52                  	mov	di,[bx+AudAP-@]					;Get media-change flag from table.
+   873 0000043C 8A45FF                  	mov	al,[di-1]
+   874 0000043F 26884401                	mov	[es:si+1],al					;Return media-change flag to user.
+   875 00000443 C3                      	ret									;Exit.
+   876                                  ;
+   877                                  ; IOCTL Output "Eject Disk" handler.
+   878                                  ;
+   879                                  ReqEjct:
+   880 00000444 C747401B01              	mov	word [bx+Packet-@],0011Bh		;Set "eject" commands.
+   881 00000449 C6474402                	mov	byte [bx+PktLBA+2-@],002h  		;Set "eject" function.
+   882 0000044D EB93                    	jmp	short DOSSk1		   			;Go do "eject" & exit.
+   883                                  ;
+   884                                  ; IOCTL Output "Lock/Unlock Door" handler.
+   885                                  ;
+   886                                  ReqDoor:
+   887 0000044F 268A4401                	mov	al,[es:si+1]					;Get "lock" or "unlock" function.
+   888 00000453 3C01                    	cmp	al,001h							;Is function byte too big?
+   889 00000455 771A                    	ja	RqRS1							;Yes, post "General Failure" & exit.
+   890 00000457 B91E00                  	mov	cx,0001Eh						;Get "lock" & "unlock" commands.
+   891                                  RqDoor1:
+   892 0000045A 894F40                  	mov	[bx+Packet-@],cx   				;Set "packet" command bytes.
+   893 0000045D 884744                  	mov	[bx+PktLBA+2-@],al  			;Set "packet" function byte.
+   894 00000460 E88900                  	call	DoIOCmd						;Issue desired command to drive.
+   895 00000463 7280                    	jc	DOSSkE							;If error, post return code & exit.
+   896 00000465 EBC2                    	jmp	short @RqDSX					;Go post "busy" status and exit.
+   897                                  ;
+   898                                  ; IOCTL Output "Reset Drive" handler.
+   899                                  ;
+   900                                  ReqRS:
+   901 00000467 E89E02                  	call	StopDMA						;Stop previous DMA & select drive.
+   902 0000046A 42                      	inc	dx								;Point to IDE command register.
+   903 0000046B B008                    	mov	al,008h							;Do an ATAPI "soft reset" command.
+   904 0000046D EE                      	out	dx,al
+   905 0000046E E85802                  	call	TestTO						;Await controller-ready.
+   906                                  RqRS1:
+   907 00000471 7303E9EAFD              	jc	GenFail							;Timeout!  Return "General Failure".
+   908 00000476 C3                      	ret									;Exit.
+   909                                  ;
+   910                                  ; IOCTL Output "Close Tray" handler.
+   911                                  ;
+   912                                  ReqTray:
+   913 00000477 B003                    	mov	al,003h							;Get "close tray" function byte.
+   914 00000479 B91B01                  	mov	cx,0011Bh						;Get "eject" & "close" commands.
+   915 0000047C EBDC                    	jmp	short RqDoor1					;Go do "close tray" command above.
+   916                                  ;
+   917                                  ; Subroutine to handle a Multi-Session disk for DOS reads and seeks.
+   918                                  ;   Multi-Session disks require (A) saving the last-session starting
+   919                                  ;   LBA for a new disk after any media-change and (B) "offsetting" a
+   920                                  ;   read of the VTOC or initial directory block, sector 16 or 17, to
+   921                                  ;   access the VTOC/directory of the disk's last session.
+   922                                  ;
+   923                                  MultiS:
+   924 0000047E 8B7F52                  	mov	di,[bx+AudAP-@]					;Point to drive variables.
+   925 00000481 807D0BFF                	cmp	byte [di+11],0FFh				;Is last-session LBA valid?
+   926 00000485 7526                    	jne	MultiS1							;Yes, proceed with request.
+   927 00000487 C6474043                	mov	byte [bx+Packet-@],043h			;Set "Read TOC" command.
+   928 0000048B FE4742                  	inc	byte [bx+PktLBA-@]				;Set "format 1" request.
+   929 0000048E E84700                  	call	DoTOCIO						;Read first & last session.
+   930 00000491 7241                    	jc	MultiSX							;If any error, exit below.
+   931 00000493 885F42                  	mov	[bx+PktLBA-@],bl				;Reset "format 1" request.
+   932 00000496 8A4503                  	mov	al,[di+3]						;Get last-session number.
+   933 00000499 E83900                  	call	DoTOCSN						;Read disk info for last session.
+   934 0000049C 7236                    	jc	MultiSX							;If error, exit with carry set.
+   935 0000049E E88602                  	call	SwapLBA						;"Swap" & save last-session LBA addr.
+   936 000004A1 8B7F52                  	mov	di,[bx+AudAP-@]
+   937 000004A4 894508                  	mov	[di+8],ax
+   938 000004A7 89550A                  	mov	[di+10],dx
+   939 000004AA E8E501                  	call	ZPacket		   				;Reset our ATAPI packet area.
+   940                                  MultiS1:
+   941 000004AD 268B4414                	mov	ax,[es:si+RLSec+0] 				;Get starting sector number.
+   942 000004B1 268B5416                	mov	dx,[es:si+RLSec+2]
+   943 000004B5 83FA00                  	cmp dx, byte 0
+   944 000004B8 7510                    	jne MultiS2
+   945 000004BA 83F810                  	cmp ax, byte 16						;Sector 16 (VTOC)
+   946 000004BD 750B                    	jne MultiS2
+   947 000004BF 83F811                  	cmp	ax, byte 17						;Sector 17 (directory)?
+   948 000004C2 7506                    	jne	MultiS2							;No, set sector in packet.
+   949 000004C4 034508                  	add	ax,[di+8]						;Offset sector to last-session start.
+   950 000004C7 13550A                  	adc dx,[di+10]
+   951                                  MultiS2:
+   952 000004CA E86002                  	call	Swap32						;"Swap" sector into packet as LBA.
+   953 000004CD 894742                  	mov	[bx+PktLBA+0-@],ax
+   954 000004D0 895744                  	mov	[bx+PktLBA+2-@],dx
+   955 000004D3 F8                      	clc									;Clear carry flag (no errors).
+   956                                  MultiSX:
+   957 000004D4 C3                      	ret									;Exit.
+   958                                  ;
+   959                                  ; Ye Olde I-O Subroutine.   ALL of our CD-ROM I-O is executed here!
+   960                                  ;
+   961                                  DoTOCSN:
+   962 000004D5 884746                  	mov	[bx+PktLH-@],al					;"TOC" -- set session no. in packet.
+   963                                  DoTOCIO:
+   964 000004D8 B00C                    	mov	al,12							;Use 12-byte "TOC" allocation count.
+   965                                  DoBufIO:
+   966 000004DA 884748                  	mov	[bx+PktLn+1-@],al  				;Buffered -- set packet count.
+   967                                  DoBufIn:
+   968 000004DD 30E4                    	xor	ah,ah		   					;Save data-transfer length.
+   969 000004DF 894724                  	mov	[bx+VDSLn-@],ax
+   970 000004E2 C74728[6000]            	mov	word [bx+VDSOf-@],InBuf  		;Use our buffer for I-O.
+   971 000004E7 8C4F1A                  	mov	[bx+XFRAd+2-@],cs
+   972 000004EA EB03                    	jmp	short DoIO						;Go start I-O below.
+   973                                  DoIOCmd:
+   974 000004EC 895F24                  	mov	[bx+VDSLn-@],bx					;Command only -- reset xfr length.
+   975                                  DoIO:
+   976 000004EF 56                      	push	si							;Save SI- and ES-registers.
+   977 000004F0 06                      	push	es
+   978 000004F1 C6475D04                	mov	byte [bx+Try-@],4  				;Set request retry count of 4.
+   979                                  DoIO1:
+   980                                  	;
+   981 000004F5 E81002                  	call	StopDMA						;Stop previous DMA & select drive.
+   982 000004F8 E8CE01                  	call	TestTO						;Await controller-ready.
+   983 000004FB 7257                    	jc	DoIO3							;Timeout!  Handle as a "hard error".
+   984 000004FD 8B4728                  	mov	ax,[bx+VDSOf-@]					;Reset data-transfer buffer address.
+   985 00000500 894718                  	mov	[bx+XFRAd-@],ax
+   986 00000503 8B4724                  	mov	ax,[bx+VDSLn-@]					;Reset data-transfer byte count.
+   987 00000506 894716                  	mov	[bx+XFRLn-@],ax
+   988 00000509 385F5C                  	cmp	[bx+DMAFl-@],bl					;UltraDMA input request?
+   989 0000050C 7429                    	je	DoIO2							;No, output our ATAPI "packet".
+   990                                  	;
+   991 0000050E 52                      	push dx
+   992 0000050F 50                      	push ax
+   993 00000510 BA8000                  	mov dx, 00080h
+   994 00000513 B0E4                    	mov al, 0E4h
+   995 00000515 EE                      	out dx, al
+   996 00000516 58                      	pop ax
+   997 00000517 5A                      	pop dx
+   998                                  	;
+   999                                  DoIO1lock:
+  1000 00000518 EBFE                    	jmp DoIO1lock
+  1001                                  	;
+  1002 0000051A 8B5754                  	mov	dx,[bx+DMAAd-@]					;Point to DMA command register.
+  1003 0000051D B008                    	mov	al,008h							;Reset DMA commands & set read mode.
+  1004 0000051F EE                      	out	dx,al
+  1005 00000520 42                      	inc	dx								;Point to DMA status register.
+  1006 00000521 42                      	inc	dx
+  1007 00000522 EC                      	in	al,dx							;Reset DMA status register.
+  1008 00000523 0C06                    	or	al,006h							;(Done this way so we do NOT alter
+  1009 00000525 EE                      	out	dx,al							;  the "DMA capable" status flags!).
+  1010 00000526 42                      	inc	dx								;Set PRD pointer to our DMA address.
+  1011 00000527 42                      	inc	dx
+  1012 00000528 BE[2000]                	mov	si,PRDAd
+  1013                                  	;outsd								;																80386
+  1014 0000052B 3E8B04                  	mov ax, [ds:si]
+  1015 0000052E EF                      	out dx, ax
+  1016 0000052F 46                      	inc si
+  1017 00000530 46                      	inc si
+  1018 00000531 3E8B04                  	mov ax, [ds:si]
+  1019 00000534 EF                      	out dx, ax
+  1020 00000535 46                      	inc si
+  1021 00000536 46                      	inc si
+  1022                                  DoIO2:
+  1023 00000537 8B5756                  	mov	dx,[bx+IDEAd-@]					;Point to IDE "features" register.
+  1024 0000053A 42                      	inc	dx
+  1025 0000053B 8A475C                  	mov	al,[bx+DMAFl-@]					;If UltraDMA input, set "DMA" flag.
+  1026 0000053E EE                      	out	dx,al
+  1027 0000053F 83C203                  	add	dx,byte 3						;Point to byte count registers.
+  1028 00000542 8B4716                  	mov	ax,[bx+XFRLn-@]					;Output data-transfer length.
+  1029 00000545 EE                      	out	dx,al
+  1030 00000546 42                      	inc	dx
+  1031 00000547 88E0                    	mov	al,ah
+  1032 00000549 EE                      	out	dx,al
+  1033 0000054A 42                      	inc	dx								;Point to command register.
+  1034 0000054B 42                      	inc	dx
+  1035 0000054C B0A0                    	mov	al,0A0h							;Issue "Packet" command.
+  1036 0000054E EE                      	out	dx,al
+  1037 0000054F B108                    	mov	cl,DRQ							;Await controller- and data-ready.
+  1038 00000551 E87701                  	call	TestTO1
+  1039                                  DoIO3:
+  1040 00000554 7263                    	jc	DoIO6							;Timeout!  Handle as a "hard error".
+  1041 00000556 96                      	xchg	ax,si						;Save BIOS timer address.
+  1042 00000557 8B5756                  	mov	dx,[bx+IDEAd-@]					;Point to IDE data register.
+  1043 0000055A B90600                  	mov	cx,6							;Output all 12 "Packet" bytes.
+  1044 0000055D BE[4000]                	mov	si,Packet
+  1045                                  	; rep	outsw						;																80386
+  1046 00000560 50                      	push ax
+  1047                                  DoIO3L:	
+  1048 00000561 3E8B04                  	mov ax, [ds:si]
+  1049 00000564 EF                      	out dx, ax
+  1050 00000565 46                      	inc si
+  1051 00000566 46                      	inc si
+  1052 00000567 E2F8                    	loop DoIO3L
+  1053 00000569 58                      	pop ax
+  1054                                  	;
+  1055 0000056A 96                      	xchg	ax,si						;Reload BIOS timer address.
+  1056 0000056B B47F                    	mov	ah,STARTTO						;Allow 7 seconds for drive startup.
+  1057 0000056D 385F5C                  	cmp	[bx+DMAFl-@],bl					;UltraDMA input request?
+  1058 00000570 744D                    	je	DoIO8							;No, do "PIO mode" transfer below.
+  1059                                  	;
+  1060 00000572 52                      	push dx
+  1061 00000573 50                      	push ax
+  1062 00000574 BA8000                  	mov dx, 00080h
+  1063 00000577 B0E5                    	mov al, 0E5h
+  1064 00000579 EE                      	out dx, al
+  1065 0000057A 58                      	pop ax
+  1066 0000057B 5A                      	pop dx
+  1067                                  	;
+  1068                                  DoIO3lock:
+  1069 0000057C EBFE                    	jmp DoIO3lock
+  1070                                  	;
+  1071 0000057E 895F16                  	mov	[bx+XFRLn-@],bx					;Reset transfer length (DMA does it).
+  1072 00000581 260224                  	add	ah,[es:si]						;Set 4-second timeout in AH-reg.
+  1073 00000584 26885C22                	mov	[es:si+HDI_OFS],bl  			;Reset BIOS disk-interrupt flag.
+  1074 00000588 8B5754                  	mov	dx,[bx+DMAAd-@]					;Point to DMA command register.
+  1075 0000058B EC                      	in	al,dx							;Set DMA Start/Stop bit (starts DMA).
+  1076 0000058C 0C01                    	or	al,1
+  1077 0000058E EE                      	out	dx,al
+  1078                                  DoIO4:
+  1079 0000058F 42                      	inc	dx								;Point to DMA status register.
+  1080 00000590 42                      	inc	dx
+  1081 00000591 EC                      	in	al,dx							;Read DMA controller status.
+  1082 00000592 4A                      	dec	dx								;Point back to DMA command register.
+  1083 00000593 4A                      	dec	dx
+  1084 00000594 2406                    	and	al,DMI+DME						;DMA interrupt or DMA error?
+  1085 00000596 750D                    	jnz	DoIO5							;Yes, halt DMA and check results.
+  1086 00000598 263A24                  	cmp	ah,[es:si]						;Has our DMA transfer timed out?
+  1087 0000059B 7408                    	jz	DoIO5
+  1088 0000059D 26385C22                	cmp	[es:si+HDI_OFS],bl  			;Did BIOS get a disk interrupt?
+  1089 000005A1 74EC                    	je	DoIO4							;No, loop back and check again.
+  1090 000005A3 B004                    	mov	al,DMI
+  1091                                  DoIO5:
+  1092 000005A5 96                      	xchg	ax,si						;Save ending DMA status.
+  1093 000005A6 EC                      	in	al,dx							;Reset DMA Start/Stop bit.
+  1094 000005A7 24FE                    	and	al,0FEh
+  1095 000005A9 EE                      	out	dx,al
+  1096 000005AA 96                      	xchg	ax,si						;Reload ending DMA status.
+  1097 000005AB 3C04                    	cmp	al,DMI							;Did DMA end with only an interrupt?
+  1098 000005AD 7574                    	jne	DoIO13							;No?  Handle as a "hard error"!
+  1099 000005AF 42                      	inc	dx								;Reread DMA controller status.
+  1100 000005B0 42                      	inc	dx
+  1101 000005B1 EC                      	in	al,dx
+  1102 000005B2 A802                    	test	al,DME						;Any "late" DMA error after DMA end?
+  1103 000005B4 756D                    	jnz	DoIO13							;Yes?  Handle as a "hard error"!
+  1104 000005B6 E81001                  	call	TestTO						;Await final controller-ready.
+  1105                                  DoIO6:
+  1106 000005B9 7268                    	jc	DoIO13							;Timeout!  Handle as a "hard error"!
+  1107 000005BB EB47                    	jmp	short DoIO12					;Go check for other input errors.
+  1108                                  	;
+  1109                                  DoIO7:
+  1110 000005BD B437                    	mov	ah,SEEKTO						;"PIO mode" -- get "seek" timeout.
+  1111                                  DoIO8:
+  1112 000005BF 30C9                    	xor	cl,cl							;Await controller-ready.
+  1113 000005C1 E80901                  	call	TestTO2
+  1114 000005C4 725D                    	jc	DoIO13							;Timeout!  Handle as a "hard error".
+  1115 000005C6 A808                    	test	al,DRQ						;Did we also get a data-request?
+  1116 000005C8 743A                    	jz	DoIO12							;No, go check for any input errors.
+  1117 000005CA 4A                      	dec	dx								;Get controller-buffer byte count.
+  1118 000005CB 4A                      	dec	dx
+  1119 000005CC EC                      	in	al,dx
+  1120 000005CD 88C4                    	mov	ah,al
+  1121 000005CF 4A                      	dec	dx
+  1122 000005D0 EC                      	in	al,dx
+  1123 000005D1 8B5756                  	mov	dx,[bx+IDEAd-@]					;Point to IDE data register.
+  1124 000005D4 8B7716                  	mov	si,[bx+XFRLn-@]					;Get our data-transfer length.
+  1125 000005D7 09F6                    	or	si,si							;Any remaining bytes to input?
+  1126 000005D9 7421                    	jz	DoIO10							;No, "eat" all residual data.
+  1127 000005DB 39C6                    	cmp	si,ax							;Remaining bytes > buffer count?
+  1128 000005DD 7602                    	jbe	DoIO9							;No, input all remaining bytes.
+  1129 000005DF 89C6                    	mov	si,ax							;Use buffer count as input count.
+  1130                                  DoIO9:
+  1131 000005E1 C47F18                  	les	di,[bx+XFRAd-@]					;Get input data-transfer address.
+  1132 000005E4 89F1                    	mov	cx,si							;Input all 16-bit data words.
+  1133 000005E6 D1E9                    	shr	cx,1
+  1134                                  	;rep	insw
+  1135 000005E8 50                      	push ax
+  1136                                  DoIO9L:	
+  1137 000005E9 ED                      	in ax,dx
+  1138 000005EA 268905                  	mov [es:di],ax
+  1139 000005ED 47                      	inc di
+  1140 000005EE 47                      	inc di
+  1141 000005EF E2F8                    	loop DoIO9L
+  1142 000005F1 58                      	pop ax
+  1143                                  	;
+  1144 000005F2 017718                  	add	[bx+XFRAd-@],si					;Increment data-transfer address.
+  1145 000005F5 297716                  	sub	[bx+XFRLn-@],si					;Decrement data-transfer length.
+  1146 000005F8 29F0                    	sub	ax,si							;Any data left in controller buffer?
+  1147 000005FA 74C1                    	jz	DoIO7							;No, await next controller-ready.
+  1148                                  DoIO10:
+  1149 000005FC 91                      	xchg	ax,cx						;"Eat" all residual input data.
+  1150 000005FD D1E9                    	shr	cx,1							;(Should be NO residual data as we
+  1151                                  DoIO11:
+  1152 000005FF ED                      	in	ax,dx							;  always set an exact byte count.
+  1153 00000600 E2FD                    	loop	DoIO11						;  This logic is only to be SAFE!).
+  1154 00000602 EBB9                    	jmp	short DoIO7						;Go await next controller-ready.
+  1155                                  DoIO12:
+  1156 00000604 8B7752                  	mov	si,[bx+AudAP-@]					;Get drive media-change flag pointer.
+  1157 00000607 4E                      	dec	si
+  1158 00000608 83E001                  	and	ax,00001h						;Did controller detect any errors?
+  1159 0000060B 7429                    	jz	DoIO15							;No, see if all data was transferred.
+  1160 0000060D 83EA06                  	sub	dx,byte 6						;Get controller's sense key value.
+  1161 00000610 EC                      	in	al,dx
+  1162 00000611 D0E8                    	shr	al,1
+  1163 00000613 D0E8                    	shr	al,1
+  1164 00000615 D0E8                    	shr	al,1
+  1165 00000617 D0E8                    	shr	al,1
+  1166 00000619 3C06                    	cmp	al,006h							;Is sense key "Unit Attention"?
+  1167 0000061B 7424                    	je	DoIO16							;Yes, check for prior media-change.
+  1168 0000061D B4FF                    	mov	ah,0FFh							;Get 0FFh M.C. flag for "Not Ready".
+  1169 0000061F 3C02                    	cmp	al,002h							;Is sense key "Drive Not Ready"?
+  1170 00000621 7424                    	je	DoIO17							;Yes, go set our media-change flag.
+  1171                                  DoIO13:
+  1172 00000623 8B5756                  	mov	dx,[bx+IDEAd-@]					;Hard error!  Point to command reg.
+  1173 00000626 83C207                  	add	dx,byte 7
+  1174 00000629 B008                    	mov	al,008h							;Issue ATAPI "soft reset" to drive.
+  1175 0000062B EE                      	out	dx,al
+  1176 0000062C B00B                    	mov	al,11							;Get "hard error" return code.
+  1177                                  DoIO14:
+  1178 0000062E FE4F5D                  	dec	byte [bx+Try-@]					;Do we have more I-O retries left?
+  1179 00000631 7420                    	jz	DoIO18							;No, set carry & return error code.
+  1180 00000633 E9BFFE                  	jmp	DoIO1							;Try re-executing this I-O request.
+  1181                                  DoIO15:
+  1182 00000636 395F16                  	cmp	[bx+XFRLn-@],bx					;Was all desired data input?
+  1183 00000639 75E8                    	jne	DoIO13							;No?  Handle as a hard error.
+  1184 0000063B C60401                  	mov	byte [si],001h					;Set "no media change" flag.
+  1185 0000063E F8                      	clc									;Reset carry flag (no error).
+  1186 0000063F EB13                    	jmp	short DoIO19					;Go reload regs. and exit below.
+  1187                                  DoIO16:
+  1188 00000641 B002                    	mov	al,002h							;"Attention":  Get "Not Ready" code.
+  1189 00000643 381C                    	cmp	[si],bl							;Is media-change flag already set?
+  1190 00000645 7EE7                    	jle	DoIO14							;Yes, retry & see if it goes away!
+  1191                                  DoIO17:
+  1192 00000647 8624                    	xchg	ah,[si]						;Load & set our media-change flag.
+  1193 00000649 C6440CFF                	mov	byte [si+12],0FFh  				;Make last-session LBA invalid.
+  1194 0000064D FECC                    	dec	ah								;Is media-change flag already set?
+  1195 0000064F 7502                    	jnz	DoIO18							;Yes, set carry flag and exit.
+  1196 00000651 B00F                    	mov	al,15							;Return "Invalid Media Change".
+  1197                                  DoIO18:
+  1198 00000653 F9                      	stc									;Set carry flag (error!).
+  1199                                  DoIO19:
+  1200 00000654 07                      	pop	es								;Reload ES- and SI-registers.
+  1201 00000655 5E                      	pop	si
+  1202 00000656 BF[6000]                	mov	di,InBuf						;For audio, point to our buffer.
+  1203 00000659 C3                      	ret									;Exit.
+  1204                                  ;
+  1205                                  ; Subroutine to convert "RedBook" MSF values to an LBA sector number.
+  1206                                  ;
+  1207                                  ConvLBA:
+  1208 0000065A 83FA63                  	cmp	dx,byte 99						;Is "minute" value too large?
+  1209 0000065D 772C                    	ja	CnvLBAE							;Yes, return -1 error value.
+  1210 0000065F 80FC3C                  	cmp	ah,60							;Is "second" value too large?
+  1211 00000662 7727                    	ja	CnvLBAE							;Yes, return -1 error value.
+  1212 00000664 3C4B                    	cmp	al,75							;Is "frame" value too large?
+  1213 00000666 7723                    	ja	CnvLBAE							;Yes, return -1 error value.
+  1214                                  	;
+  1215 00000668 89C1                    	mov  cx, ax							; Backup Seconds and Frames
+  1216 0000066A 89D0                    	mov  ax, dx     					; Get minutes
+  1217                                  	;
+  1218                                  	; ax =   MM
+  1219                                  	; cx = SSFF
+  1220                                  	;
+  1221 0000066C BA3C00                  	mov  dx, 60
+  1222 0000066F F7E2                    	mul  dx								; Multiply by 60	
+  1223                                  	;
+  1224                                  	; ax = (60*MM)
+  1225                                  	; cx = SSFF
+  1226                                  	;
+  1227 00000671 31D2                    	xor dx, dx
+  1228 00000673 88EA                    	mov dl, ch							; get seconds
+  1229 00000675 01D0                    	add ax, dx							; add seconds
+  1230                                  	;
+  1231                                  	; ax = ((60*MM) + SS)
+  1232                                  	; cx = SSFF
+  1233                                  	;
+  1234 00000677 BA4B00                  	mov dx, 75
+  1235 0000067A F7E2                    	mul dx								; Multiply by 75
+  1236                                  	;
+  1237                                  	; ax = (((60*MM) + SS)*75)
+  1238                                  	; cx = SSFF
+  1239                                  	;
+  1240 0000067C 30ED                    	xor ch, ch
+  1241 0000067E 01C8                    	add ax, cx
+  1242 00000680 83D200                  	adc dx, byte 0						; add frames
+  1243                                  	;
+  1244                                  	; dx:ax = (((60*MM) + SS)*75) + FF
+  1245                                  	; cx = 00FF
+  1246                                  	;
+  1247 00000683 B196                    	mov cl, byte 150
+  1248 00000685 29C8                    	sub ax, cx
+  1249 00000687 83DA00                  	sbb dx, byte 0
+  1250                                  	;
+  1251                                  	; dx:ax = (((60*MM) + SS)*75) + FF - 150
+  1252                                  	;
+  1253                                  	;
+  1254 0000068A C3                      	ret									;Exit.
+  1255                                  CnvLBAE:
+  1256 0000068B 83C8FF                  	or	ax,byte -1						;Too large!  Set -1 error value.
+  1257 0000068E 83CAFF                  	or	dx,byte -1
+  1258 00000691 C3                      	ret									;Exit.
+  1259                                  ;
+  1260                                  ; Subroutine to clear our ATAPI "packet" area.
+  1261                                  ;
+  1262                                  ZPacket:
+  1263 00000692 895F40                  	mov	[bx+Packet+0-@],bx   			;Zero 1st 10 ATAPI packet bytes.
+  1264 00000695 895F42                  	mov	[bx+Packet+2-@],bx 				;(Last 2 are unused "pad" bytes).
+  1265 00000698 895F44                  	mov	[bx+Packet+4-@],bx
+  1266 0000069B 895F46                  	mov	[bx+Packet+6-@],bx
+  1267 0000069E 895F48                  	mov	[bx+Packet+8-@],bx
+  1268 000006A1 C3                      	ret			   						;Exit.
+  1269                                  ;
+  1270                                  ; Subroutine to validate the starting RedBook disk sector number.
+  1271                                  ;
+  1272                                  ValSN:
+  1273 000006A2 268B4414                	mov	ax,[es:si+RLSec+0] 				;Get starting sector number.
+  1274 000006A6 268B5416                	mov	dx,[es:si+RLSec+2]
+  1275                                  ValSN1:
+  1276 000006AA 268A4C0D                	mov	cl,[es:si+RLAM]					;Get desired addressing mode.
+  1277 000006AE 80F901                  	cmp	cl,001h							;HSG or RedBook addressing?
+  1278 000006B1 7712                    	ja	ValSNE							;No?  Return "sector not found".
+  1279 000006B3 7401                    	je	ValSN3							;RedBook -- get starting sector.
+  1280                                  ValSN2:
+  1281 000006B5 C3                      	ret									;HSG -- exit (accept any DVD value).
+  1282                                  	;
+  1283                                  ValSN3:
+  1284 000006B6 E8A1FF                  	call	ConvLBA						;RedBook -- get starting sector.
+  1285 000006B9 83FA06                  	cmp dx, RMAXLBAmsb
+  1286 000006BC 72F7                    	jb ValSN2
+  1287 000006BE 7705                    	ja ValSNE
+  1288 000006C0 3D39DD                  	cmp	ax, RMAXLBAlsb					;					Is starting sector too big?
+  1289 000006C3 76F0                    	jbe	ValSN2							;No, all is well -- go exit above.
+  1290                                  ValSNE:
+  1291 000006C5 58                      	pop	ax								;Error!  Discard our exit address.
+  1292 000006C6 E9B1FB                  	jmp	SectNF							;Post "sector not found" and exit.
+  1293                                  ;
+  1294                                  ; Subroutine to test for I-O timeouts.   At entry, the CL-reg. is
+  1295                                  ;   008h to test for a data-request, also.   At exit, the DX-reg.
+  1296                                  ;   points to the IDE primary-status register.   The AH-, SI- and
+  1297                                  ;   ES-regs. will be lost.
+  1298                                  ;
+  1299                                  TestTO:
+  1300 000006C9 30C9                    	xor	cl,cl							;Check for only controller-ready.
+  1301                                  TestTO1:
+  1302 000006CB B40A                    	mov	ah,CMDTO						;Use 500-msec command timeout.
+  1303                                  TestTO2:
+  1304 000006CD 8EC3                    	mov	es,bx							;Point to low-memory BIOS timer.
+  1305 000006CF BE6C04                  	mov	si,BIOSTMR
+  1306 000006D2 260224                  	add	ah,[es:si]						;Set timeout limit in AH-reg.
+  1307                                  TestTO3:
+  1308 000006D5 263A24                  	cmp	ah,[es:si]						;Has our I-O timed out?
+  1309 000006D8 F9                      	stc									;(If so, set carry flag).
+  1310 000006D9 7413                    	je	TestTOX							;Yes?  Exit with carry flag on.
+  1311 000006DB 8B5756                  	mov	dx,[bx+IDEAd-@]					;Read IDE primary status.
+  1312 000006DE 83C207                  	add	dx,byte 7
+  1313 000006E1 EC                      	in	al,dx
+  1314 000006E2 A880                    	test	al,BSY						;Is our controller still busy?
+  1315 000006E4 75EF                    	jnz	TestTO3							;Yes, loop back and test again.
+  1316 000006E6 08C9                    	or	cl,cl							;Are we also awaiting I-O data?
+  1317 000006E8 7404                    	jz	TestTOX							;No, just exit.
+  1318 000006EA 84C8                    	test	al,cl						;Is data-request (DRQ) also set?
+  1319 000006EC 74E7                    	jz	TestTO3							;No, loop back and test again.
+  1320                                  TestTOX:
+  1321 000006EE C3                      	ret									;Exit -- carry indicates timeout.
+  1322                                  ;
+  1323                                  ; Detect Atapi Drives
+  1324                                  ;
+  1325                                  DetAtapi:
+  1326 000006EF 8B5756                  	mov dx, [bx+IDEAd+0-@]				; Get Ide Base Address
+  1327 000006F2 8A6758                  	mov ah, [bx+IDEAd+2-@]				; Get Select
+  1328                                  	;
+  1329 000006F5 83C207                  	add dx, byte 7
+  1330 000006F8 EC                      	in al, dx							; Get Status register
+  1331                                  	;
+  1332 000006F9 4A                      	dec dx
+  1333 000006FA EC                      	in al, dx							; Get Drive Select Register
+  1334                                  	;
+  1335 000006FB 38C4                    	cmp ah, al							; Check if drive is selected
+  1336 000006FD 7508                    	jne DetAtapiX						; No just skip...
+  1337                                  	;
+  1338 000006FF 4A                      	dec dx
+  1339 00000700 EC                      	in al, dx							; Get Reg 5
+  1340                                  	;
+  1341 00000701 4A                      	dec dx
+  1342 00000702 EC                      	in al, dx							; Get Reg 4
+  1343                                  	;
+  1344 00000703 83C203                  	add dx, byte 3
+  1345 00000706 EC                      	in al, dx							; Read Status again
+  1346                                  DetAtapiX:
+  1347 00000707 C3                      	ret
+  1348                                  ;
+  1349                                  ; Subroutine to ensure UltraDMA is stopped and then select our CD-ROM
+  1350                                  ;   drive.   For some older chipsets, if UltraDMA is running, reading
+  1351                                  ;   an IDE register causes the chipset to "HANG"!!
+  1352                                  ;
+  1353                                  StopDMA:
+  1354 00000708 8B5754                  	mov	dx,[bx+DMAAd-@]					;Get drive UltraDMA command address.
+  1355 0000070B F6C206                  	test	dl,006h						;Is any UltraDMA controller present?
+  1356 0000070E 7507                    	jnz	StopDM1							;No, select "master" or "slave" unit.
+  1357 00000710 80E2FE                  	and	dl,0FEh							;Mask out "DMA disabled" flag.
+  1358 00000713 EC                      	in	al,dx							;Ensure any previous DMA is stopped!
+  1359 00000714 24FE                    	and	al,0FEh
+  1360 00000716 EE                      	out	dx,al
+  1361                                  StopDM1:
+  1362 00000717 8B5756                  	mov	dx,[bx+IDEAd-@]					;Point to IDE device-select register.
+  1363 0000071A 83C206                  	add	dx,byte 6
+  1364 0000071D 8A4758                  	mov	al,[bx+IDESl-@]					;Select IDE "master" or "slave" unit.
+  1365 00000720 EE                      	out	dx,al
+  1366 00000721 C3                      	ret									;Exit.
+  1367                                  ;
+  1368                                  ; Device-Interrupt "Entry" Jump.   "EntryP" causes a jump to our init
+  1369                                  ;   routines on the first driver entry, after which "EntryP" causes a
+  1370                                  ;   jump to the Device Interrupt routine above.   To avoid trouble on
+  1371                                  ;   new CPUs with a big "code cache", this jump must appear AFTER any
+  1372                                  ;   instructions that are MODIFIED at run-time!
+  1373                                  ;
+  1374 00000722 2EFF26[5000]            DevIntJ	jmp	[cs:EntryP]	;On first entry, initialize driver.
+  1375                                  ;
+  1376                                  ; Subroutine to "swap" the 4 bytes of a a 32-bit value.
+  1377                                  ;
+  1378                                  SwapLBA:
+  1379 00000727 8B4508                  	mov	ax,[di+8]						;Get audio-end or buffer LBA value (Swap).
+  1380 0000072A 8B550A                  	mov	dx,[di+10]
+  1381                                  Swap32:
+  1382 0000072D 86C4                    	xchg	al,ah						;"Swap" original low-order bytes.
+  1383 0000072F 92                      	xchg	ax,dx
+  1384 00000730 86C4                    	xchg	al,ah						;"Swap" ending low-order bytes.
+  1385                                  Swap32X:
+  1386 00000732 C3                      	ret			;Exit.
+  1387                                  BaseEnd	equ	$+BSTACK+4	;End of resident "basic" driver.
+  1388                                  ;
+  1389                                  ; DOS "Audio Seek" handler.   All DOS and IOCTL routines beyond this
+  1390                                  ;   point are DISMISSED by driver-init when the /AX switch is given.
+  1391                                  ;
+  1392                                  ReqSeek:
+  1393                                  	;
+  1394 00000733 52                      	push dx
+  1395 00000734 50                      	push ax
+  1396 00000735 BA8000                  	mov dx, 00080h
+  1397 00000738 B022                    	mov al, 22h
+  1398 0000073A EE                      	out dx, al
+  1399 0000073B 58                      	pop ax
+  1400 0000073C 5A                      	pop dx
+  1401                                  	;
+  1402 0000073D E82B02                  	call	RdAST1						;Read current "audio" status.
+  1403 00000740 E84FFF                  	call	ZPacket						;Reset our ATAPI packet area.
+  1404 00000743 720B                    	jc	RqSK1							;If status error, do DOS seek.
+  1405 00000745 8A4501                  	mov	al,[di+1]						;Get "audio" status flag.
+  1406 00000748 3C11                    	cmp	al,011h							;Is drive in "play audio" mode?
+  1407 0000074A 7407                    	je	RqSK2							;Yes, validate seek address.
+  1408 0000074C 3C12                    	cmp	al,012h							;Is drive in "pause" mode?
+  1409 0000074E 7403                    	je	RqSK2							;Yes, validate seek address.
+  1410                                  RqSK1:
+  1411 00000750 E983FC                  	jmp	DOSSeek							;Use DOS seek routine above.
+  1412                                  RqSK2:
+  1413 00000753 E84CFF                  	call	ValSN						;Validate desired seek address.
+  1414 00000756 8B7F52                  	mov	di,[bx+AudAP-@]					;Point to audio-start address.
+  1415 00000759 3B5506                  	cmp	dx,[di+6]						;Is address past "play" area?
+  1416 0000075C 77F2                    	ja	RqSK1							;Yes, do DOS seek above.
+  1417 0000075E 7205                    	jb  RqSK2a
+  1418 00000760 3B4504                  	cmp	ax,[di+4]						;Is address past "play" area?
+  1419 00000763 77EB                    	ja	RqSK1							;Yes, do DOS seek above.
+  1420                                  RqSK2a:
+  1421 00000765 8905                    	mov	[di+0],ax						;Update audio-start address.
+  1422 00000767 895502                  	mov	[di+2],dx						;Update audio-start address.
+  1423 0000076A E8D701                  	call	PlayAud						;Issue "Play Audio" command.
+  1424 0000076D 7259                    	jc	RqPLE							;If error, post code & exit.
+  1425 0000076F 807D0111                	cmp	byte [di+1],011h  				;Were we playing audio before?
+  1426 00000773 7458                    	je	RqPLX							;Yes, post "busy" status and exit.
+  1427 00000775 E81AFF                  	call	ZPacket						;Reset our ATAPI packet area.
+  1428 00000778 EB56                    	jmp	short ReqStop					;Go put drive back in "pause" mode.
+  1429                                  ;
+  1430                                  ; DOS "Play Audio" handler.
+  1431                                  ;
+  1432                                  ReqPlay:
+  1433                                  	;
+  1434 0000077A 52                      	push dx
+  1435 0000077B 50                      	push ax
+  1436 0000077C BA8000                  	mov dx, 00080h
+  1437 0000077F B024                    	mov al, 24h
+  1438 00000781 EE                      	out dx, al
+  1439 00000782 58                      	pop ax
+  1440 00000783 5A                      	pop dx
+  1441                                  	;
+  1442 00000784 26837C1200              	cmp	word [es:si+RLSC+0],byte 0  	;Is sector count zero?
+  1443 00000789 7507                    	jne	ReqPlayA
+  1444 0000078B 26837C1400              	cmp	word [es:si+RLSC+2],byte 0 		;Is sector count zero?
+  1445 00000790 74A0                    	je	Swap32X			  				;Yes, just exit above.
+  1446                                  ReqPlayA:	
+  1447 00000792 268B440E                	mov	ax,[es:si+RLAddr+0]  			;Validate audio-start address.
+  1448 00000796 268B5410                	mov dx,[es:si+RLAddr+2]
+  1449 0000079A E80DFF                  	call	ValSN1
+  1450 0000079D 8B7F52                  	mov	di,[bx+AudAP-@]					;Save drive's audio-start address.
+  1451 000007A0 8905                    	mov	[di+0],ax
+  1452 000007A2 895502                  	mov	[di+2],dx
+  1453 000007A5 26034412                	add	ax,[es:si+18]					;Calculate audio-end address.
+  1454 000007A9 26135414                	adc	dx,[es:si+20]
+  1455 000007AD 83FA06                  	cmp dx, RMAXLBAmsb
+  1456 000007B0 720D                    	jb ReqPL2
+  1457 000007B2 7705                    	ja ReqPL1							;If "end" WAY too big, use max.
+  1458 000007B4 3D39DD                  	cmp	ax, RMAXLBAlsb					
+  1459 000007B7 7606                    	jbe	ReqPL2							;No, use "end" address as-is.
+  1460                                  ReqPL1:
+  1461 000007B9 B839DD                  	mov	ax, RMAXLBAlsb					;Set "end" address to maximum.
+  1462 000007BC BA0600                  	mov dx, RMAXLBAmsb
+  1463                                  ReqPL2:
+  1464 000007BF 894504                  	mov	[di+4],ax						;Save drive's audio-end address.
+  1465 000007C2 895506                  	mov	[di+6],dx
+  1466 000007C5 E87C01                  	call	PlayAud						;Issue "Play Audio" command.
+  1467                                  RqPLE:
+  1468 000007C8 7303E9AFFA              	jc	ReqErr							;Error!  Post return code & exit.
+  1469                                  RqPLX:
+  1470 000007CD E9B601                  	jmp	RdAST4							;Go post "busy" status and exit.
+  1471                                  ;
+  1472                                  ; DOS "Stop Audio" handler.
+  1473                                  ;
+  1474                                  ReqStop:
+  1475                                  	;
+  1476 000007D0 52                      	push dx
+  1477 000007D1 50                      	push ax
+  1478 000007D2 BA8000                  	mov dx, 00080h
+  1479 000007D5 B025                    	mov al, 25h
+  1480 000007D7 EE                      	out dx, al
+  1481 000007D8 58                      	pop ax
+  1482 000007D9 5A                      	pop dx
+  1483                                  	;
+  1484 000007DA C647404B                	mov	byte [bx+Packet-@],04Bh  ;Set "Pause/Resume" cmd.
+  1485 000007DE E90BFD                  	jmp	DoIOCmd		;Go pause "audio", then exit.
+  1486                                  ;
+  1487                                  ; DOS "Resume Audio" handler.
+  1488                                  ;
+  1489                                  ReqRsum:
+  1490                                  	;
+  1491 000007E1 52                      	push dx
+  1492 000007E2 50                      	push ax
+  1493 000007E3 BA8000                  	mov dx, 00080h
+  1494 000007E6 B028                    	mov al, 28h
+  1495 000007E8 EE                      	out dx, al
+  1496 000007E9 58                      	pop ax
+  1497 000007EA 5A                      	pop dx
+  1498                                  	;
+  1499 000007EB FE4748                  	inc	byte [bx+PktLn+1-@]  ;Set "Resume" flag for above.
+  1500 000007EE E8DFFF                  	call	ReqStop		;Issue "Pause/Resume" command.
+  1501 000007F1 EBD5                    	jmp	short RqPLE	;Go exit through "ReqPlay" above.
+  1502                                  ;
+  1503                                  ; IOCTL Input "Current Head Location" handler.
+  1504                                  ;
+  1505                                  ReqCHL:
+  1506                                  	;
+  1507 000007F3 52                      	push dx
+  1508 000007F4 50                      	push ax
+  1509 000007F5 BA8000                  	mov dx, 00080h
+  1510 000007F8 B031                    	mov al, 31h
+  1511 000007FA EE                      	out dx, al
+  1512 000007FB 58                      	pop ax
+  1513 000007FC 5A                      	pop dx
+  1514                                  	;
+  1515 000007FD C747404200              	mov	word [bx+Packet+0-@],00042h   ;Set command bytes.
+  1516 00000802 C747424001              	mov	word [bx+Packet+2-@],00140h   ;Set command bytes.
+  1517 00000807 B010                    	mov	al,16		;Set input byte count of 16.
+  1518 00000809 E86F01                  	call	RdAST3		;Issue "Read Subchannel" request.
+  1519 0000080C 72BA                    	jc	RqPLE		;If error, post return code & exit.
+  1520 0000080E 26885C01                	mov	[es:si+1],bl	;Return "HSG" addressing mode.
+  1521 00000812 E812FF                  	call	SwapLBA		;Return "swapped" head location.
+  1522 00000815 26894402                	mov	[es:si+2],ax
+  1523 00000819 26895404                	mov	[es:si+4],dx
+  1524 0000081D EB76                    	jmp	short RqATIX	;Go post "busy" status and exit.
+  1525                                  ;
+  1526                                  ; IOCTL Input "Volume Size" handler.
+  1527                                  ;
+  1528                                  ReqVS:
+  1529                                  	;
+  1530 0000081F 52                      	push dx
+  1531 00000820 50                      	push ax
+  1532 00000821 BA8000                  	mov dx, 00080h
+  1533 00000824 B038                    	mov al, 38h
+  1534 00000826 EE                      	out dx, al
+  1535 00000827 58                      	pop ax
+  1536 00000828 5A                      	pop dx
+  1537                                  	;
+  1538 00000829 C6474025                	mov	byte [bx+Packet-@],025h  		;Set "Read Capacity" code.
+  1539 0000082D B008                    	mov	al,008h							;Get 8 byte data-transfer length.
+  1540 0000082F E8ABFC                  	call	DoBufIn						;Issue "Read Capacity" command.
+  1541 00000832 7294                    	jc	RqPLE							;If error, post return code & exit.
+  1542 00000834 8B05                    	mov	ax,[di+0]						;Set "swapped" size in IOCTL packet.
+  1543 00000836 8B5502                  	mov	dx,[di+2]
+  1544 00000839 E8F1FE                  	call	Swap32
+  1545 0000083C 26894401                	mov	[es:si+1],ax
+  1546 00000840 26895403                	mov	[es:si+3],dx
+  1547 00000844 EB4F                    	jmp	short RqATIX					;Go post "busy" status and exit.
+  1548                                  ;
+  1549                                  ; IOCTL Input "Audio Disk Info" handler.
+  1550                                  ;
+  1551                                  ReqADI:
+  1552                                  	;
+  1553 00000846 52                      	push dx
+  1554 00000847 50                      	push ax
+  1555 00000848 BA8000                  	mov dx, 00080h
+  1556 0000084B B039                    	mov al, 39h
+  1557 0000084D EE                      	out dx, al
+  1558 0000084E 58                      	pop ax
+  1559 0000084F 5A                      	pop dx
+  1560                                  	;
+  1561 00000850 B0AA                    	mov	al,0AAh							;Specify "lead-out" session number.
+  1562 00000852 E83F01                  	call	ReadTOC						;Read disk table-of-contents (TOC).
+  1563 00000855 7303E99300              	jc	RqASIE							;If error, post return code & exit.
+  1564 0000085A 26894403                	mov	[es:si+3],ax					;Set "lead out" LBA addr. in IOCTL.
+  1565 0000085E 26895405                	mov	[es:si+5],dx					;Set "lead out" LBA addr. in IOCTL.
+  1566 00000862 8B4502                  	mov	ax,[di+2]						;Set first & last tracks in IOCTL.
+  1567 00000865 26894401                	mov	[es:si+1],ax
+  1568 00000869 EB2A                    	jmp	short RqATIX					;Go post "busy" status and exit.
+  1569                                  ;
+  1570                                  ; IOCTL Input "Audio Track Info" handler.
+  1571                                  ;
+  1572                                  ReqATI:
+  1573                                  	;
+  1574 0000086B 52                      	push dx
+  1575 0000086C 50                      	push ax
+  1576 0000086D BA8000                  	mov dx, 00080h
+  1577 00000870 B03A                    	mov al, 3Ah
+  1578 00000872 EE                      	out dx, al
+  1579 00000873 58                      	pop ax
+  1580 00000874 5A                      	pop dx
+  1581                                  	;
+  1582 00000875 268A4401                	mov	al,[es:si+1]					;Specify desired session (track) no.
+  1583 00000879 E81801                  	call	ReadTOC						;Read disk table-of-contents (TOC).
+  1584 0000087C 726F                    	jc	RqASIE							;If error, post return code & exit.
+  1585 0000087E 26894402                	mov	[es:si+2],ax					;Set track LBA address in IOCTL.
+  1586 00000882 26895404                	mov	[es:si+4],dx
+  1587 00000886 8A4505                  	mov	al,[di+5]
+  1588 00000889 D0E0                    	shl	al,1
+  1589 0000088B D0E0                    	shl	al,1
+  1590 0000088D D0E0                    	shl	al,1
+  1591 0000088F D0E0                    	shl	al,1
+  1592 00000891 26884406                	mov	[es:si+6],al
+  1593 00000895 E9D000                  RqATIX	jmp	ReadAST						;Go post "busy" status and exit.
+  1594                                  ;
+  1595                                  ; IOCTL Input "Audio Q-Channel Info" handler.
+  1596                                  ;
+  1597                                  ReqAQI:
+  1598                                  	;
+  1599 00000898 52                      	push dx
+  1600 00000899 50                      	push ax
+  1601 0000089A BA8000                  	mov dx, 00080h
+  1602 0000089D B03B                    	mov al, 3Bh
+  1603 0000089F EE                      	out dx, al
+  1604 000008A0 58                      	pop ax
+  1605 000008A1 5A                      	pop dx
+  1606                                  	;
+  1607 000008A2 B81040                  	mov	ax,04010h						;Set "data in", use 16-byte count.
+  1608 000008A5 E8C600                  	call	RdAST2						;Read current "audio" status.
+  1609 000008A8 7243                    	jc	RqASIE							;If error, post return code & exit.
+  1610                                  	;
+  1611 000008AA 8B4505                  	mov	ax,[di+5]						;Set ctrl/track/index in IOCTL.
+  1612 000008AD 8B5507                  	mov	dx,[di+7]
+  1613 000008B0 26894401                	mov	[es:si+1],ax
+  1614 000008B4 26895403                	mov	[es:si+3],dx
+  1615                                  	;
+  1616 000008B8 8B450D                  	mov	ax,[di+13]						;Set time-on-track in IOCTL.
+  1617 000008BB 8B550F                  	mov	dx,[di+15]
+  1618 000008BE 26894404                	mov	[es:si+4],ax
+  1619 000008C2 26895406                	mov	[es:si+6],dx
+  1620                                  	;
+  1621 000008C6 8B4504                  	mov	ax,[di+4]						;Get current audio "end" address.
+  1622 000008C9 8B550B                  	mov dx,[di+11]
+  1623                                  	;shl	edx,8						;  order time-on-track in IOCTL.
+  1624 000008CC 88D6                    	mov dh,dl
+  1625 000008CE 88E2                    	mov dl,ah
+  1626 000008D0 88C4                    	mov ah,al
+  1627 000008D2 30C0                    	xor al,al
+  1628 000008D4 26894407                	mov	[es:si+7],ax					;Set audio "end" address in IOCTL.
+  1629 000008D8 26895409                	mov	[es:si+9],dx
+  1630 000008DC C3                      	ret									;Exit.
+  1631                                  ;
+  1632                                  ; IOCTL Input "Audio Status Info" handler.
+  1633                                  ;
+  1634                                  ReqASI:
+  1635                                  	;
+  1636 000008DD 52                      	push dx
+  1637 000008DE 50                      	push ax
+  1638 000008DF BA8000                  	mov dx, 00080h
+  1639 000008E2 B03F                    	mov al, 3Fh
+  1640 000008E4 EE                      	out dx, al
+  1641 000008E5 58                      	pop ax
+  1642 000008E6 5A                      	pop dx
+  1643                                  	;
+  1644 000008E7 B81040                  	mov	ax,04010h						;Set "data in", use 16-byte count.
+  1645 000008EA E88100                  	call	RdAST2						;Read current "audio" status.
+  1646                                  RqASIE:
+  1647 000008ED 7303E98AF9              	jc	ReqErr							;If error, post return code & exit.
+  1648 000008F2 26895C01                	mov	[es:si+1],bx					;Reset audio "paused" flag.
+  1649 000008F6 31D2                    	xor	dx,dx		  					;Reset ending audio address.
+  1650 000008F8 31C0                    	xor	ax,ax							;Reset starting audio address.
+  1651 000008FA 26894403                	mov	[es:si+3],ax					
+  1652 000008FE 26895405                	mov	[es:si+5],dx					
+  1653 00000902 26894407                	mov	[es:si+7],ax					
+  1654 00000906 26895409                	mov	[es:si+9],dx					
+  1655 0000090A 807D0111                	cmp	byte [di+1],011h  				;Is drive now "playing" audio?
+  1656 0000090E 750A                    	jne	RqASI1		  					;No, check for audio "pause".
+  1657 00000910 8B7F52                  	mov	di,[bx+AudAP-@]	  				;Point to drive's audio data.
+  1658 00000913 8B05                    	mov	ax,[di+0]	  					;Get current audio "start" addr.
+  1659 00000915 8B5502                  	mov	dx,[di+2]
+  1660 00000918 EB13                    	jmp	short RqASI2	  				;Go get current audio "end" addr.
+  1661 0000091A 807D0112                RqASI1	cmp	byte [di+1],012h  			;Is drive now in audio "pause"?
+  1662 0000091E 7523                    	jne	RqASI3		  					;No, return "null" addresses.
+  1663 00000920 26FE4401                	inc	byte [es:si+1]					;Set audio "paused" flag.
+  1664 00000924 E800FE                  	call	SwapLBA						;Convert time-on-disk to LBA addr.
+  1665 00000927 E830FD                  	call	ConvLBA
+  1666 0000092A 8B7F52                  	mov	di,[bx+AudAP-@]					;Point to drive's audio data.
+  1667                                  RqASI2:
+  1668 0000092D 26894403                	mov	[es:si+3],ax					;Set audio "start" addr. in IOCTL.
+  1669 00000931 26895405                	mov	[es:si+5],dx
+  1670 00000935 8B4504                  	mov	ax,[di+4]						;Get current audio "end" address.
+  1671 00000938 8B5506                  	mov	dx,[di+6]
+  1672 0000093B 26894407                	mov	[es:si+7],ax					;Set audio "end" address in IOCTL.
+  1673 0000093F 26895409                	mov	[es:si+9],dx
+  1674                                  RqASI3:
+  1675 00000943 C3                      	ret			;Exit.
+  1676                                  ;
+  1677                                  ; Subroutine to issue a "Play Audio" command.   At entry, the
+  1678                                  ;   DI-reg. points to the audio-start address for this drive.
+  1679                                  ;
+  1680                                  PlayAud:
+  1681 00000944 8B05                    	mov	ax,[di+0]						;Set "packet" audio-start address.
+  1682 00000946 8B5502                  	mov	dx,[di+2]
+  1683 00000949 E85700                  	call	ConvMSF
+  1684 0000094C 894743                  	mov	[bx+PktLBA+1-@],ax
+  1685 0000094F 895745                  	mov	[bx+PktLBA+3-@],dx
+  1686 00000952 8B4504                  	mov	ax,[di+4]						;Set "packet" audio-end address.
+  1687 00000955 8B5506                  	mov	dx,[di+6]
+  1688 00000958 E84800                  	call	ConvMSF
+  1689 0000095B 894746                  	mov	[bx+PktLH+0-@],ax
+  1690 0000095E 895748                  	mov	[bx+PktLH+2-@],dx
+  1691 00000961 C6474047                	mov	byte [bx+Packet-@],047h			;Set "Play Audio" command.
+  1692 00000965 E984FB                  	jmp	DoIOCmd							;Start drive playing audio & exit.
+  1693                                  ;
+  1694                                  ; Subroutine to read the current "audio" status and disk address.
+  1695                                  ;
+  1696                                  ReadAST:
+  1697 00000968 E827FD                  	call	ZPacket		  				;Status only -- reset ATAPI packet.
+  1698                                  RdAST1:
+  1699 0000096B B80400                  	mov	ax,00004h	  					;Clear "data in", use 4-byte count.
+  1700                                  RdAST2:
+  1701 0000096E C747404202              	mov	word [bx+Packet+0-@],00242h		;Set command bytes.
+  1702 00000973 C747420001              	mov	word [bx+Packet+2-@],00100h
+  1703 00000978 886742                  	mov	[bx+PktLBA-@],ah 				;Set "data in" flag (RdAST2 only).
+  1704                                  RdAST3:
+  1705 0000097B E85CFB                  	call	DoBufIO		  				;Issue "Read Subchannel" command.
+  1706 0000097E 7213                    	jc	RdASTX		  					;If error, exit immediately.
+  1707 00000980 807D0111                	cmp	byte [di+1],011h  				;Is a "play audio" in progress?
+  1708 00000984 751B                    	jne	RdTOC1		  					;No, clear carry flag and exit.
+  1709                                  RdAST4:
+  1710 00000986 56                      	push	si		  					;Save SI- and ES-regs.
+  1711 00000987 06                      	push	es
+  1712 00000988 C4771C                  	les	si,[bx+RqPkt-@]	  				;Reload DOS request-packet addr.
+  1713 0000098B 26814C030002            	or	word [es:si+RPStat],RPBUSY  	;Set "busy" status bit.
+  1714 00000991 07                      	pop	es		  						;Reload ES- and SI-regs.
+  1715 00000992 5E                      	pop	si
+  1716                                  RdASTX:
+  1717 00000993 C3                      	ret			  						;Exit.
+  1718                                  ;
+  1719                                  ; Subroutine to read disk "Table of Contents" (TOC) values.
+  1720                                  ;
+  1721                                  ReadTOC:
+  1722 00000994 C747404302              	mov	word [bx+Packet-@],00243h		;Set TOC and MSF bytes.
+  1723 00000999 E839FB                  	call	DoTOCSN						;Issue "Read Table of Contents" cmd.
+  1724 0000099C 7204                    	jc	RdTOCX							;If error, exit immediately.
+  1725 0000099E E886FD                  	call	SwapLBA						;Return "swapped" starting address.
+  1726                                  RdTOC1:
+  1727 000009A1 F8                      	clc									;Clear carry flag (no error).
+  1728                                  RdTOCX:
+  1729 000009A2 C3                      	ret									;Exit.
+  1730                                  ;
+  1731                                  ;cpu 386
+  1732                                  ;
+  1733                                  ; Subroutine to convert an LBA sector number to "RedBook" MSF format.
+  1734                                  ;
+  1735                                  ConvMSF:
+  1736                                  	; dx:ax = LBA Sector number
+  1737 000009A3 059600                  	add ax, 150							; Add Offset of 150
+  1738 000009A6 83D200                  	adc dx, 0
+  1739                                  	;
+  1740                                  	; dx:ax = number of frames
+  1741                                  	;
+  1742                                  	;
+  1743 000009A9 B94B00                  	mov cx, 75
+  1744 000009AC F7F1                    	div cx								; devide by 75 frames/second
+  1745                                  	;
+  1746                                  	; dx = remainder frames
+  1747                                  	; ax = number of seconds
+  1748                                  	;
+  1749 000009AE B13C                    	mov cl, 60
+  1750 000009B0 F6F1                    	div cl								; devide by 60 seconds/minute
+  1751                                  	;
+  1752                                  	; dx = remainder frames
+  1753                                  	; ah = remainder seconds
+  1754                                  	; al = number of minutes
+  1755                                  	;
+  1756                                  	; ---------------------------------------------------
+  1757                                  	;
+  1758                                  	;add	eax,150							;Add in offset.
+  1759                                  	;push	eax							;Get address in DX:AX-regs.
+  1760                                  	;pop	ax
+  1761                                  	;pop	dx
+  1762                                  	;
+  1763                                  	; dx:ax = number of frames
+  1764                                  	;
+  1765                                  	;mov	cx,75							;Divide by 75 "frames"/second.
+  1766                                  	;div	cx
+  1767                                  	;
+  1768                                  	; dx = remainder frames
+  1769                                  	; ax = number of seconds
+  1770                                  	;
+  1771                                  	;shl	eax,16							;Set "frames" remainder in upper EAX.
+  1772                                  	;mov	al,dl
+  1773                                  	;
+  1774                                  	; eax = ssss00ff
+  1775                                  	;
+  1776                                  	;ror	eax,16
+  1777                                  	;
+  1778                                  	; eax = 00ffssss
+  1779                                  	;
+  1780                                  	;mov	cl,60							;Divide quotient by 60 seconds/min.
+  1781                                  	;div	cl
+  1782                                  	;
+  1783                                  	; eax = 00ffssmm
+  1784                                  	;
+  1785                                  	;
+  1786 000009B2 C3                      	ret									;Exit -- DX:AX-reg. contains 00MMSSFF value.
+  1787 000009B3 00                      	db	0								;(Unused alignment "filler").
+  1788                                  CStack	equ	$+STACK		;Caller's saved stack pointer.
+  1789                                  ResEnd	equ	CStack+4	;End of resident driver.
+  1790                                  ;
+  1791                                  ;cpu	8086
+  1792                                  ;
+  1793                                  ; Driver Initialization Routine.   Note that this routine runs on
+  1794                                  ;   the DOS stack.   All logic past this point becomes our local-
+  1795                                  ;   stack or is DISMISSED, after initialization is completed.
+  1796                                  ;
+  1797                                  I_Init:
+  1798 000009B4 9C                      	pushf								;Entry -- save CPU flags.
+  1799 000009B5 1E                      	push	ds							;Save CPU segment registers.
+  1800 000009B6 06                      	push	es
+  1801 000009B7 50                      	push	ax							;Save needed 16-bit CPU registers.
+  1802 000009B8 53                      	push	bx
+  1803 000009B9 52                      	push	dx
+  1804                                  	;
+  1805 000009BA 0E                      	push	cs							;Set our DS-register.
+  1806 000009BB 1F                      	pop	ds
+  1807 000009BC 31DB                    	xor	bx,bx							;Zero BX-reg. for relative commands.
+  1808 000009BE FC                      	cld									;Ensure FORWARD "string" commands!
+  1809 000009BF B8[6201]                	mov	ax,DevInt						;Prevent entry to this logic again!
+  1810 000009C2 894750                  	mov	[bx+EntryP-@],ax
+  1811 000009C5 C4771C                  	les	si,[bx+RqPkt-@]					;Point to DOS request packet.
+  1812 000009C8 26807C0200              	cmp	byte [es:si+RPOp],0 			;Is this an "Init" packet?
+  1813 000009CD 7403                    	je	I_386							;Yes, lets get installed
+  1814 000009CF E9A303                  	jmp	I_BadP							;Go post errors and exit quick!
+  1815                                  	;
+  1816                                  I_386:
+  1817 000009D2 50                      	push ax
+  1818 000009D3 51                      	push cx
+  1819 000009D4 52                      	push dx
+  1820 000009D5 53                      	push bx
+  1821 000009D6 54                      	push sp
+  1822 000009D7 55                      	push bp
+  1823 000009D8 56                      	push si
+  1824 000009D9 57                      	push di
+  1825                                  	;
+  1826 000009DA BA[990E]                	mov	dx,XCMsg						;Display driver "title" message.
+  1827 000009DD E846F7                  	call	I_Dsply
+  1828                                  	;
+  1829 000009E0 C4771C                  	les	si,[bx+RqPkt-@]					;Reload DOS request-packet pointer.
+  1830 000009E3 26C47412                	les	si,[es:si+RPCL]					;Point to command line that loaded us.
+  1831                                  I_NxtC:
+  1832 000009E7 268A04                  	mov	al,[es:si]						;Get next command-line byte.
+  1833 000009EA 46                      	inc	si								;Bump pointer past this byte.
+  1834 000009EB 3C00                    	cmp	al,0							;Is byte the command-line terminator?
+  1835 000009ED 7406                    	je	I_TermJ							;Yes, go test for UltraDMA controller.
+  1836 000009EF 3C0A                    	cmp	al,LF							;Is byte an ASCII line-feed?
+  1837 000009F1 7402                    	je	I_TermJ							;Yes, go test for UltraDMA controller.
+  1838 000009F3 3C0D                    	cmp	al,CR							;Is byte an ASCII carriage-return?
+  1839                                  I_TermJ:
+  1840 000009F5 7503E98501              	je	I_Term							;Yes, go test for UltraDMA controller.
+  1841                                  	;
+  1842                                  	; Check start of option
+  1843                                  	;
+  1844 000009FA 3C2D                    	cmp	al,'-'							;Is byte a dash?
+  1845 000009FC 7404                    	je	I_NxtS							;Yes, see what next "switch" byte is.
+  1846 000009FE 3C2F                    	cmp	al,'/'							;Is byte a slash?
+  1847 00000A00 75E5                    	jne	I_NxtC							;No, check next command-line byte.
+  1848                                  	;
+  1849                                  	; Check UX or UF option
+  1850                                  	;
+  1851                                  I_NxtS:
+  1852 00000A02 268B04                  	mov	ax,[es:si]						;Get next 2 command-line bytes.
+  1853 00000A05 24DF                    	and	al,0DFh							;Mask out 1st lower-case bit (020h).
+  1854 00000A07 3C55                    	cmp	al,'U'							;Is switch byte a "U" or "u"?
+  1855 00000A09 7516                    	jne	I_ChkA							;No, go see if byte is "A" or "a".
+  1856 00000A0B 46                      	inc	si								;Bump pointer past "UltraDMA" switch.
+  1857 00000A0C 80E4DF                  	and	ah,0DFh							;Mask out 2nd lower-case bit (020h).
+  1858 00000A0F B1F0                    	mov	cl,0F0h							;Get "UX" switch value.
+  1859 00000A11 80FC58                  	cmp	ah,'X'							;Is following byte an "X" or "x"?
+  1860 00000A14 7407                    	je	I_SetUX							;Yes, update "UFX" switch.
+  1861 00000A16 B1F2                    	mov	cl,0F2h							;Get "UF" switch value.
+  1862 00000A18 80FC46                  	cmp	ah,'F'							;Is following byte an "F" or "f"?
+  1863 00000A1B 75CA                    	jne	I_NxtC							;No, see if byte is a terminator.
+  1864                                  I_SetUX:
+  1865 00000A1D 884F68                  	mov	[bx+UFXSw-@],cl					;Update "UFX" switch for below.
+  1866 00000A20 46                      	inc	si								;Bump pointer past "F" or "X".
+  1867                                  	;
+  1868                                  	; Check AX option
+  1869                                  	;
+  1870                                  I_ChkA:
+  1871 00000A21 3C41                    	cmp	al,'A'							;Is switch byte an "A" or "a"?
+  1872 00000A23 7557                    	jne	I_ChkL							;No, go see if byte is "L" or "l".
+  1873 00000A25 46                      	inc	si								;Bump pointer past "Audio" switch.
+  1874 00000A26 80E4DF                  	and	ah,0DFh							;Mask out 2nd lower-case bit (020h).
+  1875 00000A29 80FC58                  	cmp	ah,'X'							;Is following byte an "X" or "x"?
+  1876 00000A2C 75B9                    	jne	I_NxtC							;No, see if byte is a terminator.
+  1877                                  	;
+  1878 00000A2E B8[8108]                	mov	ax,BaseEnd						;Reduce size of this driver.
+  1879 00000A31 894724                  	mov	[bx+VDSLn-@],ax
+  1880 00000A34 48                      	dec	ax								;Adjust all "CStack" pointers.
+  1881 00000A35 48                      	dec	ax
+  1882 00000A36 A3[6C01]                	mov	[@CStak2],ax
+  1883 00000A39 A3[DB01]                	mov [@CStak4],ax
+  1884 00000A3C 48                      	dec	ax
+  1885 00000A3D 48                      	dec	ax
+  1886 00000A3E A3[6701]                	mov	[@CStak1],ax
+  1887 00000A41 A3[D601]                	mov	[@CStak3],ax
+  1888 00000A44 A3[7101]                	mov	[@Stack],ax						;Adjust driver stack pointers.
+  1889 00000A47 B8[3307]                	mov	ax,(BaseEnd-BSTACK-4)
+  1890 00000A4A A3[6000]                	mov	[ClrStak],ax
+  1891 00000A4D B8[7602]                	mov	ax,UnSupp						;Disable all unwanted dispatches.
+  1892 00000A50 A3[DC00]                	mov	[@RqPlay],ax
+  1893 00000A53 A3[DE00]                	mov	[@RqStop],ax
+  1894 00000A56 A3[E400]                	mov	[@RqRsum],ax
+  1895 00000A59 A3[EC00]                	mov	[@RqCHL],ax
+  1896 00000A5C A3[FE00]                	mov	[@RqADI],ax
+  1897 00000A5F A3[0001]                	mov	[@RqATI],ax
+  1898 00000A62 A3[0201]                	mov	[@RqAQI],ax
+  1899 00000A65 A3[0801]                	mov	[@RqASI],ax
+  1900 00000A68 B8[D603]                	mov	ax,DOSSeek						;Do only LBA-address DOS seeks.
+  1901 00000A6B A3[D800]                	mov	[@RqPref],ax
+  1902 00000A6E A3[DA00]                	mov	[@RqSeek],ax
+  1903 00000A71 B004                    	mov	al,004h							; Have "Device Status" declare
+  1904 00000A73 A2[0D04]                	mov	[@Status],al					; we handle DATA reads only,
+  1905                                  	;db	0B0h							; and have it NOT update the
+  1906                                  	;ret								; IOCTL "busy" flag & return
+  1907 00000A76 B0C3                    	mov al, 0c3h						; Ret instruction
+  1908 00000A78 A2[2904]                	mov	[@RqDSX],al						; Replace Jump to "ReadAST" with Ret instruction
+  1909 00000A7B 46                      	inc	si								;Bump pointer past "X" or "x".
+  1910                                  	;
+  1911                                  	; Check L option, 640K DMA Limit
+  1912                                  	;
+  1913                                  I_ChkL:
+  1914 00000A7C 3C4C                    	cmp	al,'L'							;Is switch byte an "L" or "l"?
+  1915 00000A7E 7506                    	jne	I_ChkM							;No, go see if byte is "M" or "m".
+  1916 00000A80 C606[6103]09            	mov	byte [@DMALmt],009h  			;Set 640K "DMA limit" above.
+  1917 00000A85 46                      	inc	si								;Bump pointer past "limit" switch.
+  1918                                  	;
+  1919                                  	; Check M option, Max Dma mode 
+  1920                                  I_ChkM:
+  1921 00000A86 3C4D                    	cmp	al,'M'							;Is this byte an "M" or "m"?
+  1922 00000A88 750F                    	jne	I_ChkC							;No, go see if byte is "C" or "c".
+  1923 00000A8A 46                      	inc	si								;Bump pointer past "mode" switch.
+  1924 00000A8B 80FC36                  	cmp	ah,'6'							;Is following byte above a six?
+  1925 00000A8E 7766                    	ja	I_NxtCJ							;Yes, see if byte is a terminator.
+  1926 00000A90 80EC30                  	sub	ah,'0'							;Is following byte below a zero?
+  1927 00000A93 7261                    	jb	I_NxtCJ							;Yes, see if byte is a terminator.
+  1928 00000A95 886769                  	mov	[bx+MaxUM-@],ah					;Set maximum UltraDMA "mode" above.
+  1929 00000A98 46                      	inc	si								;Bump pointer past "mode" value.
+  1930                                  	;
+  1931                                  	; Check C option, Chip Ordinal
+  1932                                  	;
+  1933                                  I_ChkC:
+  1934 00000A99 3C43                    	cmp	al,'C'							;Is this byte an "C" or "c"?
+  1935 00000A9B 750F                    	jne	I_ChkP							;No, go see if byte is "P" or "p".
+  1936 00000A9D 46                      	inc	si								;Bump pointer past "mode" switch.
+  1937 00000A9E 80FC39                  	cmp	ah,'9'							;Is following byte above a nine?
+  1938 00000AA1 7753                    	ja	I_NxtCJ							;Yes, see if byte is a terminator.
+  1939 00000AA3 80EC30                  	sub	ah,'0'							;Is following byte below a zero?
+  1940 00000AA6 724E                    	jb	I_NxtCJ							;Yes, see if byte is a terminator.
+  1941 00000AA8 886770                  	mov	[bx+ChipN-@],ah					;Set Chip ordinal.
+  1942 00000AAB 46                      	inc	si								;Bump pointer past "mode" value.
+  1943                                  	;
+  1944                                  	; Check P(M/S) or S(M/S) option, Primary/Secondairy Channel, Master/Slave Device
+  1945                                  	;
+  1946                                  I_ChkP:
+  1947 00000AAC 3C50                    	cmp	al,'P'							;Is switch byte a "P" or "p"?
+  1948 00000AAE 7505                    	jne	I_ChkS							;No, go see if byte is "S" or "s".
+  1949 00000AB0 BF[890E]                	mov	di,ScanP						;Point to primary-channel values.
+  1950 00000AB3 EB07                    	jmp	short I_ChkMS					;Go check for "M" or "S" next.
+  1951                                  I_ChkS:
+  1952 00000AB5 3C53                    	cmp	al,'S'							;Is switch byte an "S" or "s"?
+  1953 00000AB7 7544                    	jne	I_ChkD							;No, check for "D" or "d".
+  1954 00000AB9 BF[910E]                	mov	di,ScanS						;Point to secondary-channel values.
+  1955                                  I_ChkMS:
+  1956 00000ABC 46                      	inc	si								;Bump pointer past "channel" switch.
+  1957 00000ABD 80E4DF                  	and	ah,0DFh							;Mask out 2nd lower-case bit (020h).
+  1958 00000AC0 80FC4D                  	cmp	ah,'M'							;Is following byte an "M" or "m"?
+  1959 00000AC3 7408                    	je	I_SetHW							;Yes, set desired hardware values.
+  1960 00000AC5 80FC53                  	cmp	ah,'S'							;Is following byte an "S" or "s"?
+  1961 00000AC8 752C                    	jne	I_NxtCJ							;No, see if byte is a terminator.
+  1962 00000ACA 83C704                  	add	di,byte 4						;Point to channel "slave" values.
+  1963                                  I_SetHW:
+  1964 00000ACD 46                      	inc	si								;Bump pointer past master/slave byte.
+  1965 00000ACE 834F6EFF                	or	word [bx+ScanX-@],byte -1  		;Set "no scan" flag.
+  1966 00000AD2 31C0                    	xor ax, ax
+  1967 00000AD4 31D2                    	xor dx, dx
+  1968 00000AD6 8705                    	xchg ax, [di+0]
+  1969 00000AD8 875502                  	xchg dx, [di+2]
+  1970 00000ADB 09C0                    	or ax, ax
+  1971 00000ADD 7504                    	jnz I_SetHW2
+  1972 00000ADF 09D2                    	or dx, dx
+  1973 00000AE1 7413                    	jz I_NxtCJ
+  1974                                  I_SetHW2:	
+  1975 00000AE3 8B7F62                  	mov	di,[bx+UTblP-@]					;Get current unit-table pointer.
+  1976 00000AE6 81FF[AE00]              	cmp	di,UTblEnd						;Have we already set up all units?
+  1977 00000AEA 740A                    	je	I_NxtCJ							;Yes, IGNORE any more switches!
+  1978 00000AEC 894502                  	mov	[di+2],ax						;Set parameters in unit table.
+  1979 00000AEF 895504                  	mov	[di+4],dx						;Set parameters in unit table.
+  1980 00000AF2 83476214                	add	word [bx+UTblP-@],byte 20 		;Bump to next unit table.
+  1981                                  I_NxtCJ:
+  1982 00000AF6 E9EEFE                  	jmp	I_NxtC							;Go check next command byte.
+  1983                                  
+  1984 00000AF9 00                      index   	db	00h	
+  1985 00000AFA 00                      LastBusNo	db	0
+  1986 00000AFB 00                      class		db	0
+  1987 00000AFC 00                      subclass	db	0
+  1988                                  	;
+  1989                                  	; Check Driver Name
+  1990                                  	;
+  1991                                  I_ChkD:
+  1992 00000AFD 3C44                    	cmp	al,'D'							;Is switch byte a "D" or "d"?
+  1993 00000AFF 75F5                    	jne	I_NxtCJ							;No, see if byte is a terminator.
+  1994 00000B01 46                      	inc	si								;Bump pointer past "device" switch.
+  1995 00000B02 80FC3A                  	cmp	ah,':'							;Is following byte a colon?
+  1996 00000B05 75EF                    	jne	I_NxtCJ							;No, see if byte is a terminator.
+  1997 00000B07 46                      	inc	si								;Bump pointer past colon.
+  1998 00000B08 BF[0A00]                	mov	di,DvrName						;Blank out device name.
+  1999 00000B0B B82020                  	mov	ax,"  "
+  2000 00000B0E 8905                    	mov	[di+0],ax
+  2001 00000B10 894502                  	mov	[di+2],ax
+  2002 00000B13 894504                  	mov	[di+4],ax
+  2003 00000B16 894506                  	mov	[di+6],ax
+  2004                                  I_NameB:
+  2005 00000B19 268A04                  	mov	al,[es:si]						;Get next device-name byte.
+  2006 00000B1C 3C09                    	cmp	al,TAB							;Is byte a "tab"?
+  2007 00000B1E 74D6                    	je	I_NxtCJ							;Yes, handle above, "name" has ended!
+  2008 00000B20 3C20                    	cmp	al,' '							;Is byte a space?
+  2009 00000B22 74D2                    	je	I_NxtCJ							;Yes, handle above, "name" has ended!
+  2010 00000B24 3C2F                    	cmp	al,'/'							;Is byte a slash?
+  2011 00000B26 74CE                    	je	I_NxtCJ							;Yes, handle above, "name" has ended!
+  2012 00000B28 3C00                    	cmp	al,0							;Is byte the command-line terminator?
+  2013 00000B2A 7453                    	je	I_Term							;Yes, go test for UltraDMA controller.
+  2014 00000B2C 3C0A                    	cmp	al,LF							;Is byte an ASCII line-feed?
+  2015 00000B2E 744F                    	je	I_Term							;Yes, go test for UltraDMA controller.
+  2016 00000B30 3C0D                    	cmp	al,CR							;Is byte an ASCII carriage-return?
+  2017 00000B32 744B                    	je	I_Term							;Yes, go test for UltraDMA controller.
+  2018 00000B34 3C61                    	cmp	al,'a'							;Ensure letters are upper-case.
+  2019 00000B36 7206                    	jc	I_Name2
+  2020 00000B38 3C7A                    	cmp	al,'z'
+  2021 00000B3A 7702                    	ja	I_Name2
+  2022 00000B3C 24DF                    	and	al,0DFh
+  2023                                  I_Name2:
+  2024 00000B3E 3C21                    	cmp	al,'!'							;Is this byte an exclamation point?
+  2025 00000B40 7428                    	jz	I_Name3							;Yes, store it in device name.
+  2026 00000B42 3C23                    	cmp	al,'#'							;Is byte below a pound-sign?
+  2027 00000B44 7230                    	jb	I_Name4							;Yes, Invalid!  Blank first byte.
+  2028 00000B46 3C29                    	cmp	al,')'							;Is byte a right-parenthesis or less?
+  2029 00000B48 7620                    	jbe	I_Name3							;Yes, store it in device name.
+  2030 00000B4A 3C2D                    	cmp	al,'-'							;Is byte a dash?
+  2031 00000B4C 741C                    	jz	I_Name3							;Yes, store it in device name.
+  2032 00000B4E 3C30                    	cmp	al,'0'							;Is byte below a zero?
+  2033 00000B50 7224                    	jb	I_Name4							;Yes, invalid!  Blank first byte.
+  2034 00000B52 3C39                    	cmp	al,'9'							;Is byte a nine or less?
+  2035 00000B54 7614                    	jbe	I_Name3							;Yes, store it in device name.
+  2036 00000B56 3C40                    	cmp	al,'@'							;Is byte below an "at sign"?
+  2037 00000B58 721C                    	jb	I_Name4							;Yes, invalid!  Blank first byte.
+  2038 00000B5A 3C5A                    	cmp	al,'Z'							;Is byte a "Z" or less?
+  2039 00000B5C 760C                    	jbe	I_Name3							;Yes, store it in device name.
+  2040 00000B5E 3C5E                    	cmp	al,'^'							;Is byte below a carat?
+  2041 00000B60 7214                    	jb	I_Name4							;Yes, invalid!  Blank first byte.
+  2042 00000B62 3C7E                    	cmp	al,'~'							;Is byte above a tilde?
+  2043 00000B64 7710                    	ja	I_Name4							;Yes, invalid!  Blank first byte.
+  2044 00000B66 3C7C                    	cmp	al,'|'							;Is byte an "or" symbol?
+  2045 00000B68 740C                    	je	I_Name4							;Yes, invalid!  Blank first byte.
+  2046                                  I_Name3:
+  2047 00000B6A 8805                    	mov	[di],al							;Store next byte in device name.
+  2048 00000B6C 46                      	inc	si								;Bump command-line pointer.
+  2049 00000B6D 47                      	inc	di								;Bump device-name pointer.
+  2050 00000B6E 81FF[1200]              	cmp	di,DvrName+8					;Have we stored 8 device-name bytes?
+  2051 00000B72 72A5                    	jb	I_NameB							;No, go get next byte.
+  2052 00000B74 EB06                    	jmp	short I_Name5					;Go get next byte & check terminator.
+  2053                                  I_Name4:
+  2054 00000B76 B020                    	mov	al,' '							;Invalid!  Blank first "name" byte,
+  2055 00000B78 C6470A20                	mov	byte [bx+DvrName-@],' '			;Invalid!  Blank first byte.
+  2056                                  I_Name5:
+  2057 00000B7C E968FE                  	jmp	I_NxtC							;Go get next command byte.
+  2058                                  	;
+  2059                                  I_Term:
+  2060 00000B7F 31DB                    	xor	bx,bx							;Zero BX-reg. for relative commands.
+  2061 00000B81 807F0A20                	cmp	byte [bx+DvrName-@],' '			;Is driver "name" valid?
+  2062 00000B85 7514                    	jne	I_SetNm							;Yes, display driver name.
+  2063 00000B87 C7470A5847              	mov	word [bx+DvrName+0-@],"XG"  	;Set our default "name".
+  2064 00000B8C C7470C4344              	mov	word [bx+DvrName+2-@],"CD"  	;Set our default "name".
+  2065 00000B91 C7470E524F              	mov	word [bx+DvrName+4-@],"RO"
+  2066 00000B96 C747104D20              	mov	word [bx+DvrName+6-@],"M "
+  2067                                  I_SetNm:
+  2068 00000B9B BE[DB0E]                	mov	si,DvrMsg1+8					;Set driver "name" in message below.
+  2069 00000B9E 8B470A                  	mov	ax,[bx+DvrName+0-@]
+  2070 00000BA1 8944F8                  	mov	[si-8],ax
+  2071 00000BA4 8B470C                  	mov	ax,[bx+DvrName+2-@]
+  2072 00000BA7 8944FA                  	mov	[si-6],ax
+  2073 00000BAA 8B470E                  	mov	ax,[bx+DvrName+4-@]
+  2074 00000BAD 8944FC                  	mov	[si-4],ax
+  2075 00000BB0 8B4710                  	mov	ax,[bx+DvrName+6-@]
+  2076 00000BB3 8944FE                  	mov	[si-2],ax
+  2077                                  I_ScanN:
+  2078 00000BB6 C7042224                	mov	word [si],'"$'					;Set "name" terminators in msg.
+  2079 00000BBA 4E                      	dec	si								;Decrement driver "name" pointer.
+  2080 00000BBB 803C20                  	cmp	byte [si],' '					;Is this "name" byte a space?
+  2081 00000BBE 74F6                    	je	I_ScanN							;Yes, keep scanning for a non-space.
+  2082 00000BC0 BA[C30E]                	mov	dx,DvrMsg						;Display our driver "name".
+  2083 00000BC3 E860F5                  	call	I_Dsply
+  2084 00000BC6 807F68F2                	cmp	byte [bx+UFXSw-@],0F2h			;Did user enable "fast DMA"?
+  2085 00000BCA 7407                    	je	I_VDSCh							;Yes, see if we need a VDS "lock".
+  2086                                  	;
+  2087                                  	;db	0B8h							;Disable 2-element DMA command lists.
+  2088                                  	;jmp	$+RqRL4-@NoFast
+  2089                                  	;
+  2090 00000BCC B0EB                    	mov al, 0EBh						; create jmp instruction B8 EB 24
+  2091 00000BCE B42C                    	mov ah, (RqRL4-@NoFast-2)
+  2092 00000BD0 A3[7003]                	mov	[@NoFast],ax
+  2093                                  I_VDSCh:
+  2094 00000BD3 31C0                    	xor	ax,ax							;Zero EAX-reg. for 20-bit addressing.
+  2095 00000BD5 8EC0                    	mov	es,ax							;Point ES-reg. to low memory.
+  2096 00000BD7 8CC8                    	mov	ax,cs							;Set our code segment in VDS block.
+  2097 00000BD9 89472C                  	mov	[bx+VDSSg-@],ax
+  2098 00000BDC 89C2                        mov dx,ax
+  2099 00000BDE B104                    	mov cl,4
+  2100 00000BE0 D3E0                    	shl	ax,cl							;Set 20-bit driver virtual address.
+  2101 00000BE2 B10C                    	mov cl,12
+  2102 00000BE4 D3EA                    	shr dx,cl
+  2103 00000BE6 894730                  	mov	[bx+IOAdr+0-@],ax
+  2104 00000BE9 895732                  	mov	[bx+IOAdr+2-@],dx
+  2105 00000BEC 014720                  	add	[bx+PRDAd+0-@],ax 			  	;Set relocated 32-bit PRD address.
+  2106 00000BEF 115722                  	adc	[bx+PRDAd+2-@],dx
+  2107 00000BF2 807F68F0                	cmp	byte [bx+UFXSw-@],0F0h  		;Did user disable UltraDMA?
+  2108 00000BF6 7413                    	je	I_LinkX		   					;Yes, go try "linking" with XDMA.
+  2109 00000BF8 803E[6103]FF            	cmp	byte [@DMALmt],-1  				;Is UltraDMA limited to < 640K?
+  2110 00000BFD 740C                    	je	I_LinkX		   					;No, go try "linking" with XDMA.
+  2111 00000BFF BA[530F]                	mov	dx,LEMsg	   					;Point to "/L Invalid" message.
+  2112 00000C02 837F3209                	cmp	word [bx+IOAdr+2-@],byte 009h	;Are we loaded high?
+  2113 00000C06 7603E95901              	ja	I_InitE	   						;Yes?  Display message and exit!
+  2114                                  I_LinkX:	
+  2115 00000C0B 31C0                    	xor	ax,ax		   					;Point ES:DI-regs. to low memory.
+  2116 00000C0D 8EC0                    	mov	es,ax
+  2117 00000C0F 89C7                    	mov	di,ax
+  2118 00000C11 268E454E                	mov	es,[es:di+04Eh]					;Get Int 13h vector segment.
+  2119 00000C15 26817D0A5844            	cmp	word [es:di+10],"XD"			;Is an XDMA driver present?
+  2120 00000C1B 754B                    	jne I_OurUC							;No, test for UltraDMA ctlr.
+  2121 00000C1D 26817D0C4D41            	cmp	word [es:di+12],"MA"			;Is an XDMA driver present?
+  2122 00000C23 7543                    	jne	I_OurUC							;No, test for UltraDMA ctlr.
+  2123 00000C25 26817D0E3124            	cmp	word [es:di+14],"1$"			;Is it a V3.1+ overlap XDMA?
+  2124 00000C2B 753B                    	jne	I_OurUC							;No, test for UltraDMA ctlr.
+  2125 00000C2D 268B4508                	mov	ax,[es:di+XDDMAAD]				;Get XDMA primary DMA addr.
+  2126 00000C31 24F0                    	and	al,0F0h
+  2127 00000C33 3B4764                  	cmp	ax,[bx+PrDMA-@]					;Did XDMA find our same controller?
+  2128 00000C36 7530                    	jne	I_OurUC							;No??  Go see if WE found anything!
+  2129 00000C38 8C474E                  	mov	[bx+XDSeg-@],es					;Save XDMA driver segment address.
+  2130 00000C3B 885F6D                  	mov	[bx+SyncX-@],bl					;Reset "No synchronization" flag.
+  2131                                  I_Sync1:
+  2132 00000C3E FA                      	cli									;Disable CPU interrupts.
+  2133 00000C3F 26A01200                	mov	al,[es:XDFLAGS]					;Get XDMA "busy" and "overlap" flags.
+  2134 00000C43 A878                    	test	al,078h						;Any current IDE channel activity?
+  2135 00000C45 740D                    	jz	I_Sync2							;No, "grab" both IDE channels now!
+  2136 00000C47 FB                      	sti									;Re-enable CPU interrupts.
+  2137 00000C48 50                      	push	ax							;"Delay" for 3 CPU cycles, so XDMA's
+  2138 00000C49 58                      	pop	ax								;  overlap timer logic can be called.
+  2139 00000C4A A860                    	test	al,060h						;Is either IDE channel "busy"?
+  2140 00000C4C 74F0                    	jz	I_Sync1							;No, must be "overlap" -- await end.
+  2141 00000C4E BA[610F]                	mov	dx,SyEMsg						;Sync ERROR!  Very BAAAD NEWS!
+  2142 00000C51 E91001                  	jmp	I_InitE							;Go display error message and exit!
+  2143                                  I_Sync2:
+  2144 00000C54 B060                    	mov	al,060h							;Set both XDMA channel "busy" flags.
+  2145 00000C56 2608061200              	or	[es:XDFLAGS],al					;(We may need to check both below!).
+  2146 00000C5B FB                      	sti									;Re-enable CPU interrupts.
+  2147 00000C5C BA[4210]                	mov	dx,ComMsg						;Display a comma after driver "name".
+  2148 00000C5F E8C4F4                  	call	I_Dsply
+  2149 00000C62 BA[6A0F]                	mov	dx,SyMsg						;Display "Synchronizing" message.
+  2150 00000C65 E8BEF4                  	call	I_Dsply
+  2151                                  I_OurUC:
+  2152 00000C68 BA[5A10]                	mov	dx,CRMsg						;Display ending CR/LF message.
+  2153 00000C6B E8B8F4                  	call	I_Dsply
+  2154                                  I_Spcfy:
+  2155 00000C6E B8[7200]                	mov	ax,UnitTbl						;Reset our unit-table pointer.
+  2156 00000C71 894762                  	mov	[bx+UTblP-@],ax
+  2157                                  I_ScanU:
+  2158 00000C74 8B4764                  	mov	ax,[bx+PrDMA-@]					;Set current UltraDMA command addr.
+  2159 00000C77 894754                  	mov	[bx+DMAAd-@],ax
+  2160 00000C7A 8B7762                  	mov	si,[bx+UTblP-@]					;Get current unit-table pointer.
+  2161 00000C7D 8B7F6E                  	mov	di,[bx+ScanX-@]					;Get current parameters index.
+  2162 00000C80 83FFFF                  	cmp	di,byte -1						;Are we "scanning" for drives?
+  2163 00000C83 740F                    	je	I_GetPV							;No, get unit-table parameters.
+  2164 00000C85 81FF[990E]              	cmp	di,ScanE						;Any more IDE units to check?
+  2165 00000C89 7412                    	je	I_ChkCD							;No, check for any drives to use.
+  2166 00000C8B 8D75FE                  	lea	si,[di-2]						;Point to IDE unit parameters.
+  2167 00000C8E 83C704                  	add	di,byte 4						;Update parameter-table index.
+  2168 00000C91 897F6E                  	mov	[bx+ScanX-@],di
+  2169                                  I_GetPV:
+  2170 00000C94 8B4402                  	mov	ax,[si+2]						;Get unit's IDE address, etc.
+  2171 00000C97 8B5404                  	mov	dx,[si+4]
+  2172 00000C9A 83F8FF                  	cmp	ax,byte -1						;Not scanning & unit table "empty"?
+  2173                                  I_ChkCD:
+  2174 00000C9D 7503E9B700              	je	I_AnyCD							;Yes, check for any drives to use.
+  2175 00000CA2 894756                  	mov	[bx+IDEAd+0-@],ax  				;Set this unit's parameters.
+  2176 00000CA5 895758                  	mov	[bx+IDEAd+2-@],dx
+  2177 00000CA8 E80801                  	call	I_ValDV						;Validate device as an ATAPI CD-ROM.
+  2178 00000CAB 7306                    	jnc	I_AnySy							;If no error, we can USE this drive!
+  2179 00000CAD 837F6EFF                	cmp	word [bx+ScanX-@],byte -1  		;"Scanning" for drives?
+  2180 00000CB1 75C1                    	jne	I_ScanU							;Yes, ignore error & test next unit.
+  2181                                  I_AnySy:
+  2182 00000CB3 385F6D                  	cmp	[bx+SyncX-@],bl					;Synchronizing with XDMA?
+  2183 00000CB6 7403                    	je	I_NoDMA							;Yes, see if user disabled all DMA.
+  2184 00000CB8 885F59                  	mov	[bx+SyncF-@],bl					;Disable run-time "sync" flags.
+  2185                                  I_NoDMA:
+  2186 00000CBB 807F68F0                	cmp	byte [bx+UFXSw-@],0F0h			;Was the /UX switch given?
+  2187 00000CBF 7504                    	jne	I_DspDr							;No, display all drive data.
+  2188 00000CC1 804F5401                	or	byte [bx+DMAAd-@],001h			;Post drive "DMA disabled".
+  2189                                  I_DspDr:
+  2190 00000CC5 BA[B20F]                	mov	dx,UnitMsg						;Display "Unit n:" message.
+  2191 00000CC8 E85BF4                  	call	I_Dsply
+  2192 00000CCB BA[2110]                	mov	dx,PriMsg						;Point to "Primary" message.
+  2193 00000CCE 817F56F001              	cmp	word [bx+IDEAd-@],CDATA			;Primary-channel drive?
+  2194 00000CD3 7407                    	je	I_PSMsg							;Yes, display "Primary" message.
+  2195 00000CD5 BA[2A10]                	mov	dx,SecMsg						;Point to "Secondary" message.
+  2196 00000CD8 804F5408                	or	byte [bx+DMAAd-@],008h  		;Use secondary DMA channel.
+  2197                                  I_PSMsg:
+  2198 00000CDC E847F4                  	call	I_Dsply						;Display our CD-ROM's IDE channel.
+  2199 00000CDF BA[3510]                	mov	dx,MstMsg						;Point to "Master" message.
+  2200 00000CE2 807F58B0                	cmp	byte [bx+IDESl-@],SSELECT  		;Is our drive a "slave"?
+  2201 00000CE6 7503                    	jnz	I_MSMsg							;No, display "Master".
+  2202 00000CE8 BA[3C10]                	mov	dx,SlvMsg						;Point to "Slave" message.
+  2203                                  I_MSMsg:
+  2204 00000CEB E838F4                  	call	I_Dsply						;Display "Master" or "Slave".
+  2205 00000CEE 395F66                  	cmp	[bx+IEMsg-@],bx					;Did any validation ERROR occur?
+  2206 00000CF1 7408                    	jz	I_ScnVN							;No, scan "vendor name" for data.
+  2207 00000CF3 E85D01                  	call	I_EndSy						;End XDMA "synchronization" if needed.
+  2208 00000CF6 8B5766                  	mov	dx,[bx+IEMsg-@]					;Get init error-message pointer.
+  2209 00000CF9 EB69                    	jmp	short I_InitE					;Go display error message and exit.
+  2210                                  I_ScnVN:
+  2211 00000CFB BF[C10E]                	mov	di,XCMsg+40						;Point to CD-ROM "vendor name" end.
+  2212                                  I_ScnV1:
+  2213 00000CFE C60524                  	mov	byte [di],'$'					;Set message terminator after name.
+  2214 00000D01 4F                      	dec	di								;Point to previous name byte.
+  2215 00000D02 803D20                  	cmp	byte [di],' '					;Is this byte a space?
+  2216 00000D05 74F7                    	je	I_ScnV1							;Yes, keep scanning for a non-space.
+  2217 00000D07 80BF990E24              	cmp	byte [bx+XCMsg-@],'$'  			;Is CD-ROM "name" all spaces?
+  2218 00000D0C 740C                    	je	I_ModeM							;Yes, no need to display it!
+  2219 00000D0E BA[4210]                	mov	dx,ComMsg						;Display comma/space before name.
+  2220 00000D11 E812F4                  	call	I_Dsply
+  2221 00000D14 BA[990E]                	mov	dx,XCMsg						;Display manufacturer CD-ROM "name".
+  2222 00000D17 E80CF4                  	call	I_Dsply
+  2223                                  I_ModeM:
+  2224 00000D1A BA[4F10]                	mov	dx,PIOMsg						;Point to "PIO mode" message.
+  2225 00000D1D F6475407                	test	byte [bx+DMAAd-@],007h  	;Will drive be using UltraDMA?
+  2226 00000D21 7503                    	jnz	I_MsEnd							;No, display "PIO mode" message.
+  2227 00000D23 BA[4510]                	mov	dx,UDMsg						;Point to "ATA-xxx" message.
+  2228                                  I_MsEnd:
+  2229 00000D26 E8FDF3                  	call	I_Dsply						;Display drive's operating "mode".
+  2230 00000D29 BA[5A10]                	mov	dx,CRMsg						;Display terminating CR/LF/$.
+  2231 00000D2C E8F7F3                  	call	I_Dsply
+  2232 00000D2F 8B7762                  	mov	si,[bx+UTblP-@]	   				;Update all unit-table parameters.
+  2233 00000D32 8B4754                  	mov	ax,[bx+DMAAd+0-@]   			;(If "scanning", table parameters
+  2234 00000D35 8B5756                  	mov	dx,[bx+DMAAd+2-@]
+  2235 00000D38 8904                    	mov	[si+0],ax	   					;  are NOT set from our switches!).
+  2236 00000D3A 895402                  	mov	[si+2],dx
+  2237 00000D3D 8B4758                  	mov	ax,[bx+IDESl-@]
+  2238 00000D40 894404                  	mov	[si+4],ax
+  2239 00000D43 83C614                  	add	si,byte 20	   					;Update unit-table pointer.
+  2240 00000D46 897762                  	mov	[bx+UTblP-@],si
+  2241 00000D49 FE4715                  	inc	byte [bx+Units-@]  				;Bump number of active units.
+  2242 00000D4C FE06[B70F]              	inc	byte [UMsgNo]	   				;Bump display unit number.
+  2243 00000D50 81FE[AE00]              	cmp	si,UTblEnd	   					;Can we install another drive?
+  2244 00000D54 7303E91BFF              	jb	I_ScanU	   						;Yes, loop back & check for more.
+  2245                                  I_AnyCD:
+  2246 00000D59 E8F700                  	call	I_EndSy						;End XDMA "synchronization" if needed.
+  2247 00000D5C 385F15                  	cmp	[bx+Units-@],bl					;Do we have any CD-ROM drives to use?
+  2248 00000D5F 771B                    	ja	I_ClrSt							;Yes, success -- go zero local-stack.
+  2249 00000D61 BA[0610]                	mov	dx,NDMsg						;NOT GOOD!  Point to "No CD-ROM" msg.
+  2250                                  I_InitE:
+  2251 00000D64 E8BFF3                  	call	I_Dsply						;Display desired error message.
+  2252 00000D67 5F                      	pop di
+  2253 00000D68 5E                      	pop si
+  2254 00000D69 5D                      	pop bp
+  2255 00000D6A 5C                      	pop sp
+  2256 00000D6B 5B                      	pop bx
+  2257 00000D6C 5A                      	pop dx
+  2258 00000D6D 59                      	pop cx
+  2259 00000D6E 58                      	pop ax
+  2260                                  	;
+  2261 00000D6F BA[9A0F]                	mov	dx,Suffix						;Display error message suffix.
+  2262                                  I_Quit:
+  2263 00000D72 E8B1F3                  	call	I_Dsply
+  2264                                  I_BadP:
+  2265 00000D75 31C0                    	xor	ax,ax							;Get "null" length & error flags.
+  2266 00000D77 BA0381                  	mov	dx,RPDON+RPERR
+  2267 00000D7A EB1E                    	jmp	short I_Exit					;Go set "init" packet values & exit.
+  2268                                  I_ClrSt:
+  2269 00000D7C 0E                      	push	cs							;Success!  "Zero" our local-stack.
+  2270 00000D7D 07                      	pop	es								;(Helps debug if unused stack = 0).
+  2271 00000D7E B95001                  	mov	cx,STACK+4
+  2272 00000D81 8B3E[6000]              	mov	di,[ClrStak]
+  2273 00000D85 31C0                    	xor	ax,ax
+  2274 00000D87 F3AA                    	rep	stosb
+  2275 00000D89 5F                      	pop di
+  2276 00000D8A 5E                      	pop si
+  2277 00000D8B 5D                      	pop bp
+  2278 00000D8C 5C                      	pop sp
+  2279 00000D8D 5B                      	pop bx
+  2280 00000D8E 5A                      	pop dx
+  2281 00000D8F 59                      	pop cx
+  2282 00000D90 58                      	pop ax
+  2283                                  	;
+  2284 00000D91 31C0                    	xor	ax,ax							;Load & reset driver length.
+  2285 00000D93 8706[2400]              	xchg	ax,[VDSLn]
+  2286 00000D97 BA0001                  	mov	dx,RPDON						;Get initialization "success" code.
+  2287                                  I_Exit:
+  2288 00000D9A C51E[1C00]              	lds	bx,[RqPkt]						;Set result values in "init" packet.
+  2289 00000D9E 89470E                  	mov	[bx+RPSize],ax
+  2290 00000DA1 8C4F10                  	mov	[bx+RPSize+2],cs
+  2291 00000DA4 895703                  	mov	[bx+RPStat],dx
+  2292 00000DA7 31C0                    	xor	ax,ax							;Reset returned "units found".
+  2293 00000DA9 88470D                  	mov	[bx+RPUnit],al
+  2294 00000DAC 5A                      	pop	dx								;Reload 16-bit CPU registers we used.
+  2295 00000DAD 5B                      	pop	bx
+  2296 00000DAE 58                      	pop	ax
+  2297 00000DAF 07                      	pop	es								;Reload CPU segment registers.
+  2298 00000DB0 1F                      	pop	ds
+  2299 00000DB1 9D                      	popf								;Reload CPU flags and exit.
+  2300 00000DB2 CB                      	retf
+  2301                                  ;
+  2302                                  ; Subroutine to "validate" an IDE unit as an ATAPI CD-ROM drive.
+  2303                                  ;
+  2304                                  I_ValDV:
+  2305 00000DB3 895F66                  	mov	[bx+IEMsg-@],bx					;Reset our error-message pointer.
+  2306 00000DB6 E84FF9                  	call	StopDMA						;Stop previous DMA & select drive.
+  2307 00000DB9 E833F9                  	call 	DetAtapi
+  2308 00000DBC E80AF9                  	call	TestTO						;Await controller-ready.
+  2309 00000DBF B9[BC0F]                	mov	cx,TOMsg						;Get "select timeout" message ptr.
+  2310 00000DC2 7248                    	jc	I_Val7							;If timeout, go post pointer & exit.
+  2311 00000DC4 B0A1                    	mov	al,0A1h							;Issue "Identify Packet Device" cmd.
+  2312 00000DC6 EE                      	out	dx,al
+  2313 00000DC7 E8FFF8                  	call	TestTO						;Await controller-ready.
+  2314 00000DCA B9[D30F]                	mov	cx,IDMsg						;Get "Identify" message pointer.
+  2315 00000DCD 723D                    	jc	I_Val7							;If timeout, go post pointer & exit.
+  2316 00000DCF A808                    	test	al,DRQ						;Did we also get a data-request?
+  2317 00000DD1 7436                    	jz	I_Val6							;No, post "not ATAPI" ptr. & exit.
+  2318 00000DD3 83EA07                  	sub	dx,byte 7						;Point back to IDE data register.
+  2319 00000DD6 ED                      	in	ax,dx							;Read I.D. word 0, main device flags.
+  2320 00000DD7 2503DF                  	and	ax,0DF03h						;Mask off flags for an ATAPI CD-ROM.
+  2321 00000DDA 96                      	xchg	ax,si						;Save main device flags in SI-reg.
+  2322 00000DDB B91A00                  	mov	cx,26							;Skip I.D. words 1-26 (unimportant).
+  2323                                  I_Val1:
+  2324 00000DDE ED                      	in	ax,dx
+  2325 00000DDF E2FD                    	loop	I_Val1
+  2326 00000DE1 BF[990E]                	mov	di,XCMsg						;Point to drive "name" input buffer.
+  2327 00000DE4 0E                      	push	cs
+  2328 00000DE5 07                      	pop	es
+  2329 00000DE6 B114                    	mov	cl,20							;Read & swap words 27-46 into buffer.
+  2330                                  I_Val2:
+  2331 00000DE8 ED                      	in	ax,dx							;(Manufacturer "name" of this drive).
+  2332 00000DE9 86E0                    	xchg	ah,al
+  2333 00000DEB AB                      	stosw
+  2334 00000DEC E2FA                    	loop	I_Val2
+  2335 00000DEE B107                    	mov	cl,7							;Skip I.D. words 47-52 (unimportant)
+  2336                                  I_Val3:
+  2337 00000DF0 ED                      	in	ax,dx							;  and read I.D. word 53 into AX-reg.
+  2338 00000DF1 E2FD                    	loop	I_Val3
+  2339 00000DF3 88476A                  	mov	[bx+UFlag-@],al					;Save UltraDMA "valid" flags.
+  2340 00000DF6 B123                    	mov	cl,35							;Skip I.D. words 54-87 (unimportant)
+  2341                                  I_Val4:
+  2342 00000DF8 ED                      	in	ax,dx							;  and read I.D. word 88 into AX-reg.
+  2343 00000DF9 E2FD                    	loop	I_Val4
+  2344 00000DFB 88676B                  	mov	[bx+UMode-@],ah					;Save posted UltraDMA "mode" value.
+  2345 00000DFE B1A7                    	mov	cl,167							;Skip all remaining I.D. data.
+  2346                                  I_Val5:
+  2347 00000E00 ED                      	in	ax,dx
+  2348 00000E01 E2FD                    	loop	I_Val5
+  2349 00000E03 81FE0085                	cmp	si,08500h						;Do device flags say "ATAPI CD-ROM"?
+  2350 00000E07 7408                    	je	I_Val9							;Yes, see about UltraDMA use.
+  2351                                  I_Val6:
+  2352 00000E09 B9[EA0F]                	mov	cx,NCMsg						;Get "not an ATAPI CD-ROM" msg. ptr.
+  2353                                  I_Val7:
+  2354 00000E0C 894F66                  	mov	[bx+IEMsg-@],cx					;Post desired error-message pointer.
+  2355 00000E0F F9                      	stc									;Set carry flag on (error!).
+  2356                                  I_Val8:
+  2357 00000E10 C3                      	ret									;Exit.
+  2358                                  I_Val9:
+  2359 00000E11 F6475407                	test	byte [bx+DMAAd-@],007h		;Will we be using UltraDMA?
+  2360 00000E15 75F9                    	jnz	I_Val8							;No, go exit above.
+  2361 00000E17 F6476A04                	test	byte [bx+UFlag-@],004h		;Valid UltraDMA "mode" bits?
+  2362 00000E1B 7407                    	jz	I_Val10							;No, reset UltraDMA address.
+  2363 00000E1D 8A6F6B                  	mov	ch,[bx+UMode-@]					;Get UltraDMA "mode" bits.
+  2364 00000E20 08ED                    	or	ch,ch							;Can drive do mode 0 minimum?
+  2365 00000E22 7505                    	jnz	I_Val11							;Yes, do maximum "mode" scan.
+  2366                                  I_Val10:
+  2367 00000E24 804F5401                	or	byte [bx+DMAAd-@],001h  		;Post drive "DMA disabled".
+  2368 00000E28 C3                      	ret									;Exit -- must use "PIO mode"!
+  2369                                  I_Val11:
+  2370 00000E29 56                      	push	si							;Save SI-register.
+  2371 00000E2A B1FF                    	mov	cl,0FFh							;Initialize UltraDMA "mode" scan.
+  2372 00000E2C BE[650E]                	mov	si,ModeTbl
+  2373 00000E2F 52                      	push dx
+  2374                                  I_Val12:
+  2375 00000E30 FEC1                    	inc	cl								;Advance to next UltraDMA "mode".
+  2376 00000E32 3E8B04                  	mov ax, [ds:si]
+  2377 00000E35 83C602                  	add si,2
+  2378 00000E38 3E8B14                  	mov dx, [ds:si]
+  2379 00000E3B 83C602                  	add si,2
+  2380 00000E3E 3A4F69                  	cmp	cl,[bx+MaxUM-@] 				;Are we limited to this "mode"?
+  2381 00000E41 7404                    	je	I_Val13							;Yes, set UltraDMA "mode" now.
+  2382 00000E43 D0ED                    	shr	ch,1							;Will drive do next "mode"?
+  2383 00000E45 75E9                    	jnz	I_Val12							;Yes, keep scanning for maximum.
+  2384                                  I_Val13:
+  2385 00000E47 A3[4B10]                	mov	[UDMode+0],ax					;Set UltraDMA "mode" in message.
+  2386 00000E4A 8916[4D10]              	mov	[UDMode+2],dx					;Set UltraDMA "mode" in message.
+  2387 00000E4E 5A                      	pop dx
+  2388 00000E4F 5E                      	pop	si								;Reload SI-register.
+  2389 00000E50 31C0                    	xor	ax,ax							;Clear return code & carry flag.
+  2390 00000E52 C3                      	ret									;Exit.
+  2391                                  ;
+  2392                                  ; Subroutine to end XDMA "synchronization".
+  2393                                  ;
+  2394                                  I_EndSy:
+  2395 00000E53 385F6D                  	cmp	[bx+SyncX-@],bl					;Are we synchronizing with XDMA?
+  2396 00000E56 750C                        jne	I_EndSX							;No, just exit below.
+  2397 00000E58 8E474E                  	mov	es,[bx+XDSeg-@]					;Point to XDMA driver in memory.
+  2398 00000E5B B09F                    	mov	al,09Fh							;Reset XDMA channel "busy" flags.
+  2399 00000E5D FA                      	cli
+  2400 00000E5E 2620061200              	and	[es:XDFLAGS],al
+  2401 00000E63 FB                      	sti
+  2402 00000E64 C3                      I_EndSX	ret								;Exit.
+  2403                                  ;
+  2404                                  ; Initialization UltraDMA "Mode" Message Values.
+  2405                                  ;
+  2406 00000E65 31362420                ModeTbl		db	'16$ '		;"Mode 0", ATA-16.
+  2407 00000E69 32352420                			db	'25$ '		;"Mode 1", ATA-25.
+  2408 00000E6D 33332420                			db	'33$ '		;"Mode 2", ATA-33.
+  2409 00000E71 34342420                			db	'44$ '		;"Mode 3", ATA-44  (rarely used).
+  2410 00000E75 36362420                			db	'66$ '		;"Mode 4", ATA-66.
+  2411 00000E79 31303024                			db	'100$'		;"Mode 5", ATA-100.
+  2412 00000E7D 31333324                			db	'133$'		;"Mode 6", ATA-133.
+  2413 00000E81 31353024                			db	'150$'		;"Mode 7", ATA-166, or SATA-150 ?.
+  2414 00000E85 33303024                			db	'300$'		;"Mode 8", ATA-300 (?, SATA-2).
+  2415                                  ;
+  2416                                  ; Initialization IDE Parameter-Value Table.
+  2417                                  ;
+  2418                                  
+  2419 00000E89 F001                    ScanP		dw	CDATA	;Primary-master   drive parameters.
+  2420 00000E8B A028                    			db	0A0h,028h
+  2421 00000E8D F001                    			dw	CDATA	;Primary-slave    drive parameters.
+  2422 00000E8F B028                    			db	0B0h,028h
+  2423 00000E91 7001                    ScanS		dw	CDATA-080h	;Secondary-master drive parameters.
+  2424 00000E93 A050                    			db	0A0h,050h
+  2425 00000E95 7001                    			dw	CDATA-080h	;Secondary-slave  drive parameters.
+  2426 00000E97 B050                    			db	0B0h,050h
+  2427                                  ScanE		equ	$		;(End of IDE parameter table).
+  2428                                  
+  2429 00000E99 0D0A58474344524F4D-     XCMsg		db	CR,LF,'XGCDROM '
+  2430 00000EA2 20                 
+  2431 00000EA3 56322E34622C203830-     			db	VER		;XCDROM.ASM provides version and date!
+  2432 00000EAC 3836206F6E6C792C20-
+  2433 00000EB5 303820417567203230-
+  2434 00000EBE 3131               
+  2435 00000EC0 0D0A24                  			db	CR,LF,'$'
+  2436 00000EC3 447269766572206E61-     DvrMsg		db	'Driver name is "'
+  2437 00000ECC 6D652069732022     
+  2438 00000ED3 202020202020202022-     DvrMsg1		db	'        "$'
+  2439 00000EDC 24                 
+  2440 00000EDD 504349204154412063-     CtlrMsg		db	'PCI ATA controller found, Chip Ven_'
+  2441 00000EE6 6F6E74726F6C6C6572-
+  2442 00000EEF 20666F756E642C2043-
+  2443 00000EF8 6869702056656E5F   
+  2444 00000F00 787878786826446576-     CtlrID		db	'xxxxh&Dev_'
+  2445 00000F09 5F                 
+  2446 00000F0A 78787878682E0D0A50-     CtlrID0		db	'xxxxh.',CR,LF,'Primary port - '
+  2447 00000F13 72696D61727920706F-
+  2448 00000F1C 7274202D20         
+  2449 00000F21 78787878682C205365-     CtlrAdr0 	db	'xxxxh, Secondary port - '
+  2450 00000F2A 636F6E646172792070-
+  2451 00000F33 6F7274202D20       
+  2452 00000F39 7878787868              CtlrAdr		db	'xxxxh'
+  2453 00000F3E 0D0A24                  			db	CR,LF,'$'
+  2454 00000F41 2E0D0A56445320696E-     VEMsg		db	'.',CR,LF,'VDS init error$'
+  2455 00000F4A 6974206572726F7224 
+  2456 00000F53 2E0D0A2F4C20496E76-     LEMsg		db	'.',CR,LF,'/L Invalid$'
+  2457 00000F5C 616C696424         
+  2458 00000F61 2E0D0A4552524F5220      SyEMsg		db	'.',CR,LF,'ERROR '
+  2459 00000F6A 53796E6368726F6E69-     SyMsg		db	'Synchronizing I-O with XDMA driver$'
+  2460 00000F73 7A696E6720492D4F20-
+  2461 00000F7C 776974682058444D41-
+  2462 00000F85 2064726976657224   
+  2463 00000F8D 4E6F2038303338362B-     PRMsg		db	'No 80386+ CPU'
+  2464 00000F96 20435055           
+  2465 00000F9A 3B2058474344524F4D-     Suffix		db	'; XGCDROM not loaded!',CR,LF,'$'
+  2466 00000FA3 206E6F74206C6F6164-
+  2467 00000FAC 6564210D0A24       
+  2468 00000FB2 556E697420              UnitMsg		db	'Unit '
+  2469 00000FB7 303A202024              UMsgNo		db	'0:  $'
+  2470 00000FBC 206465766963652073-     TOMsg		db	' device select timeout$'
+  2471 00000FC5 656C6563742074696D-
+  2472 00000FCE 656F757424         
+  2473 00000FD3 204964656E74696679-     IDMsg		db	' Identify Device error$'
+  2474 00000FDC 204465766963652065-
+  2475 00000FE5 72726F7224         
+  2476 00000FEA 206973206E6F742061-     NCMsg		db	' is not an ATAPI CD/DVD-ROM$'
+  2477 00000FF3 6E2041544150492043-
+  2478 00000FFC 442F4456442D524F4D-
+  2479 00001005 24                 
+  2480 00001006 4E6F2043442F445644-     NDMsg		db	'No CD/DVD-ROM drive to use$'
+  2481 0000100F 2D524F4D2064726976-
+  2482 00001018 6520746F2075736524 
+  2483 00001021 5072696D6172792D24      PriMsg		db	'Primary-$'
+  2484 0000102A 5365636F6E64617279-     SecMsg		db	'Secondary-$'
+  2485 00001033 2D24               
+  2486 00001035 6D617374657224          MstMsg		db	'master$'
+  2487 0000103C 736C61766524            SlvMsg		db	'slave$'
+  2488 00001042 2C2024                  ComMsg		db	', $'
+  2489 00001045 2C204154412D            UDMsg		db	', ATA-'
+  2490 0000104B 20202024                UDMode		db	'   $'
+  2491 0000104F 2C2050494F206D6F64-     PIOMsg		db	', PIO mode$'
+  2492 00001058 6524               
+  2493 0000105A 2E0D0A24                CRMsg		db	'.',CR,LF,'$'

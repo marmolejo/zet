@@ -1,0 +1,411 @@
+	;
+	; ROM disk driver for SST 28SF040 flash, P3SX / M6117 platform.
+	; Update fldpage and romseg depending on your hardware !
+	;
+	; (C)1998 Pascal Dornier / PC Engines; All rights reserved.
+	; This file is licensed pursuant to the COMMON PUBLIC LICENSE 0.5.
+	;
+
+	;
+	; equates
+	;
+#if def	DEBUG
+FLD_DEBUG: 		;enable for debug code
+#endif
+
+romseg	equ	0e000h	;ROM segment
+disktab	equ	0522h	;DOS drive parameter table &&&
+secsize	equ	512	;sector size (hard coded)
+maxsec	equ	1024-32	;sector count -> top of disk
+			;(deducting BIOS)
+secpertrk	equ	9	;(hard coded)
+	;
+	; variables (allocated on stack)
+	;
+fl_secno	equ	0FFFEh	;sector number
+fl_seccnt	equ	0FFFCh	;sector count
+	;
+	; Flash disk INT 13 entry
+	;
+fldisk:	sti
+	push	ds	;save registers
+	push	es
+	pusha
+	mov	bp,sp	;access to stack frame
+	sub	sp,4	;allocate variables
+#if def	FLD_DEBUG
+	call	v_dump	;& dump registers
+#endif
+	xor	di,di	;access BIOS segment
+	mov	ds,di
+	
+	cmp	ah,1	;status: return last status
+	jz	fldstat
+	mov	byte [bp._ah],0	;clear status
+	cmp	ah,2	;:read
+	jz	fldread
+	cmp	ah,0	;:reset -> ok status
+	jz	fldexit
+	cmp	ah,4	;:verify
+	jnz	fldisk3
+	jmp	fldverf
+fldisk3:	cmp	ah,3	;:write
+	jnz	fldisk4
+	jmp	fldwrt
+fldisk4:	cmp	ah,5	;:format
+	jnz	fldisk5
+	jmp	fldform
+fldisk5:	cmp	ah,15h	;:drive type
+	jz	fldtype
+	cmp	ah,8	;:drive parameters
+	jz	fldparm
+	mov	al,1	;bad command
+	jmp	short flderr
+	;
+	; return last status
+	;
+fldstat:	mov	al,[m_fdstat]
+flderr:	mov	[bp._ah],al
+       	;
+       	; return status
+       	;
+fldexit:	xor	bx,bx	;set BIOS segment
+	mov	ds,bx
+	mov	al,[bp._ah]	;status code
+	mov	[m_fdstat],al	;store in status flag
+	and	al,al	;error ?
+	jz	fld_exit2
+	or	byte [bp+18h],1	;yes: set carry
+fld_exit2:
+#if def	FLD_DEBUG
+	call	v_dump2	;& dump registers
+#endif
+	add	sp,4	;deallocate variables
+	popa		;restore registers
+	pop	es
+	pop	ds
+	iret		;return from interrupt
+	;
+	; return disk type
+	;
+fldtype:	mov	al,1	;1 = floppy, no drive change
+	jmp	flderr
+	;
+	; return disk parameters
+	;
+fldparm:	mov	[bp._es],cs	;ES: CS
+	mov	word [bp._bx],3	;drive type = 3 (720 KB)
+	mov	word [bp._cx],79*256+9	;40 tracks, 9 sectors
+	mov	word [bp._dx],1*256+2	;2 heads (DH), 2 drives
+	mov	word [bp._di],fd_ptab	;^drive parameters
+	jmp	fldexit
+	;
+	; read sectors
+	;	
+	; AL = #sectors	-> AL = #sectors read
+	; 		-> AH = status
+	; CH = track
+	; CL = sector
+	; DH = head
+	; DL = drive (0)
+	; ES:BX = destination address
+	;
+fldread:	call	fldcalc	;calculate sector number
+	mov	di,bx	;destination address
+	;
+	; transfer loop
+	;
+	cmp 	byte [bp.fl_seccnt],0	;another sector to do ?
+	jz	fldread9	;:no
+	;
+	; convert sector number into page number
+	;
+fldread1:	call	fldpage	;set page register, AX = offset
+	mov	si,ax	;^ROM data
+	jnb	fldread2	;:ok
+	mov 	byte [bp._ah],10h	;CRC error
+	jmp	short fldread9
+	;
+	; transfer data
+	;
+fldread2:	mov	cx,secsize/4
+fldread3:	lodsd		;data is inverted
+	not 	eax
+	stosd
+	loop	fldread3
+	inc	word [bp.fl_secno]	;next sector number
+	inc	byte [bp._al]	;count sectors transferred
+	dec 	byte [bp.fl_seccnt]	;another block ?
+	jnz	fldread1	;:yes
+fldread9:	jmp	fldexit
+	;
+	; verify sectors
+	;	
+	; AL = #sectors	-> AL = #sectors verified
+	; 		-> AH = status
+	; CH = track
+	; CL = sector
+	; DH = head
+	; DL = drive (0)
+	;
+fldverf:	call	fldcalc	;calculate sector number
+	cmp 	byte [bp.fl_seccnt],0	;another sector to do ?
+	jz	fldread9	;:no
+	;
+	; verify loop
+	;
+fldverf1:	cmp	word [bp.fl_secno],maxsec	;ok sector number ?
+	jb	fldverf2	;:yes
+	mov 	byte [bp._ah],10h	;CRC error
+	jmp	short fldread9
+fldverf2:	inc	word [bp.fl_secno]	;next sector number
+	inc 	byte [bp._al]	;count sectors transferred
+	dec 	byte [bp.fl_seccnt]	;another block ?
+	jnz	fldverf1	;:yes
+	jmp	fldexit	;return
+	;
+	; write sectors
+	;	
+	; AL = #sectors	-> AL = #sectors written
+	; 		-> AH = status
+	; CH = track
+	; CL = sector
+	; DH = head
+	; DL = drive (0)
+	; ES:BX = source address
+	;
+fldwrt:	call	fldcalc	;calculate sector number
+	mov	si,bx	;source address
+	;
+	; transfer loop
+	;
+	cmp 	byte [bp.fl_seccnt],0	;another sector to do ?
+	jz	fldwrt9	;:no
+	;
+	; convert sector number into page number
+	;
+fldwrt1:	call	fldpage	;set page register, AX = offset
+	jnb	fldwrt2	;:ok
+	mov 	byte [bp._ah],4	;sector not found
+	jmp	short fldwrt9
+	;
+	; write sector
+	;
+fldwrt2:	mov	di,ax	;^ROM data
+	call	fldwbk	;write 256 byte block
+	call	fldwbk	;write 256 byte block
+	inc	word [bp.fl_secno]	;next sector number
+	inc 	byte [bp._al]	;count sectors transferred
+	dec 	byte [bp.fl_seccnt]	;another block ?
+	jnz	fldwrt1	;:yes
+fldwrt9:	jmp	fldexit
+	;
+	; format track
+	;
+	; AL = #sectors (ignored)	-> AL = clobbered
+	; 		-> AH = status
+	; CH = track
+	; DH = head
+	; DL = drive (0)
+	; ES:BX -> format buffer (ignored)
+	;
+fldform:	mov	cl,1	;first sector of track
+	call	fldcalc2	;calculate sector number
+	mov	word [bp.fl_seccnt],9
+	;
+	; format loop
+	;
+fldform1:	cmp	word [bp.fl_secno],maxsec	;ok sector number ?
+	jb	fldform2	;:ok
+	mov 	byte [bp._ah],4
+	jmp	fldwrt9
+fldform2:	mov	al,[1823h]	;unlock -> write enable
+	mov	al,[1820h]
+	mov	al,[1822h]
+	mov	al,[0418h]
+	mov	al,[041Bh]
+	mov	al,[0419h]
+	mov	al,[041Ah]
+	call	fldpage	;set page, offset
+	mov	di,ax
+	mov	byte [di],20h	;sector erase setup command
+	mov	byte [di],0d0h	;sector erase execute command
+	call	fldwait
+	add	di,256
+	mov	byte [di],20h	;sector erase setup command
+	mov	byte [di],0d0h	;sector erase execute command
+	call	fldwait
+	inc	word [bp.fl_secno]	;next sector number
+	dec 	byte [bp.fl_seccnt]	;another block ?
+	jnz	fldform1	;:yes
+	mov	al,[1823h]	;lock -> write disable
+	mov	al,[1820h]
+	mov	al,[1822h]
+	mov	al,[0418h]
+	mov	al,[041Bh]
+	mov	al,[0419h]
+	mov	al,[040Ah]
+	jmp	fldwrt9	;return
+	;
+	; write a 256 byte block
+	;
+fldwbk:	push	si
+	push	di
+	mov	al,[1823h]	;unlock -> write enable
+	mov	al,[1820h]
+	mov	al,[1822h]
+	mov	al,[0418h]
+	mov	al,[041Bh]
+	mov	al,[0419h]
+	mov	al,[041Ah]
+	mov	cx,128
+fldwbk1:	mov	ax,[es:si]	;write data OR flash = flash ?
+	not	ax
+	mov	dx,[di]	;(we can clear bits, but not set them
+	or	ax,dx	;without erase)
+	cmp	ax,dx
+	jnz	fldwbk2	;:no, we need to erase block
+	add	si,2
+	add	di,2
+	loop	fldwbk1
+	jmp	short fldwbk3	;skip erase
+	;
+	; erase 256 byte block
+	;
+fldwbk2:	mov	byte [di],20h	;sector erase setup command
+	mov	byte [di],0d0h	;sector erase execute command
+	call	fldwait
+	;
+	; write 256 byte block
+	;
+fldwbk3:	pop	di	;restore pointers
+	pop	si
+	mov	cx,256
+fldwbk4:	mov	al,[es:si]	;source data
+	not	al	;invert data
+	mov	byte [di],10h	;byte program command
+	mov	[di],al	;write data
+	xor	dx,dx	;time-out counter
+fldwbk5:	dec	dx
+	jz	fldwbk6	;:bail out
+	cmp	[di],al	;= data written ?
+	jnz	fldwbk5	;:no
+	cmp	[di],al	;= data written, second time ?
+	jnz	fldwbk5
+fldwbk6:	inc	si
+	inc	di
+	loop	fldwbk4	;:next byte	
+	mov	al,[1823h]	;lock -> write disable
+	mov	al,[1820h]
+	mov	al,[1822h]
+	mov	al,[0418h]
+	mov	al,[041Bh]
+	mov	al,[0419h]
+	mov	al,[040Ah]
+	ret
+	;
+	; wait for completion of write cycle
+	;
+fldwait:	xor	cx,cx	;timeout counter
+	mov	al,[di]	;ROM status
+fldwait1:	mov	ah,al
+	mov	al,[di]
+	cmp	al,ah
+	jz	fldwait2	;end if same data for two reads
+	loop	fldwait1	;timeout to prevent hangs
+fldwait2:	ret
+	;
+	; calculate sector number -> secno
+	;
+fldcalc:	mov	byte [bp._al],0	;clear transfer count
+fldcalc2:	mov	[bp.fl_seccnt],al	;save sector count
+	xor	ax,ax	;clear sector number
+	xchg	al,ch	;swap 0 with track number
+	shl	al,1	;assume two heads
+	add	al,dh	;head
+	add	cx,ax	;sector + cylinder -> CX
+	shl	ax,3	;cylinder * 8 -> AX
+	add	ax,cx	;sector + cylinder * 9 -> AX
+	dec	ax	;-1 for sector num starting at 1
+	mov	[bp.fl_secno],ax
+	cld		;forward move
+	mov	ax,romseg	;set flash segment
+	mov	ds,ax
+	ret
+	;
+	; set page register, offset in AX from secno
+	;
+	; CY set = error; DS must point to ROM segment
+	;
+fldpage:	mov	al,68h	;set chipset index
+	out	idx,al
+	mov	ax,[bp.fl_secno]	;sector number
+	cmp	ax,maxsec	;reached maximum sector number ?
+	jae	fldpage9	;:yes, limit and overflow
+	shr	ax,7	;-> page number
+	out	dat,al	;set page register
+	mov	al,73h	;strobe page register
+	out	idx,al
+	out	dat,al
+	mov	ax,[bp.fl_secno]	;sector number again
+	shl	ax,9	;-> page offset
+	clc		;ok: return
+	ret	
+fldpage9:	stc		;error: sector number to high
+	ret
+	;
+	; initialize flash disk
+	;
+fld_init:	mov	al,10h	;enable E000 ROM decode
+	out	idx,al
+	in	al,dat
+	mov	ah,al
+	mov	al,10h
+	out	idx,al
+	mov	al,ah
+	or	al,1
+	out	dat,al
+	
+	mov	al,15h	;disable E000 shadow RAM
+	out	idx,al
+	in	al,dat
+	mov	ah,al
+	mov	al,15h
+	out	idx,al
+	mov	al,ah
+	and	al,0f0h
+	out	dat,al
+	
+	mov	al,20h	;enable write to flash ROM
+	out	idx,al
+	in	al,dat
+	mov	ah,al
+	mov	al,20h
+	out	idx,al
+	mov	al,ah
+	or	al,4
+	out	dat,al
+
+	mov	ax,romseg	;flash segment
+	mov	ds,ax
+	mov	al,[1823h]	;lock -> write disable
+	mov	al,[1820h]
+	mov	al,[1822h]
+	mov	al,[0418h]
+	mov	al,[041Bh]
+	mov	al,[0419h]
+	mov	al,[040Ah]
+	;
+	; update number of drives in equipment flag
+	;
+	xor	ax,ax	;access BIOS segment
+	mov	ds,ax
+	mov	al,[m_devflg]
+	test	al,1	;any boot drive ?
+	jz	fldini0	;:nothing yet
+      	add	al,40h	;increment number of drives
+	jmp	short fldini1
+fldini0:	or	al,1	;yes, there's one drive
+	and	al,3fh	;1 drive
+fldini1:	mov	[m_devflg],al	;update equipment flag
+	ret

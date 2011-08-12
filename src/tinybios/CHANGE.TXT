@@ -1,0 +1,78 @@
+tinyBIOS change notes			Pascal Dornier
+---------------------			pdornier@pcengines.com
+
+BUGS:
+
+- PS/2 mouse support needs more work, file available on request only.
+
+- CD Boot support needs more work, file available on request only.
+
+- Support for PCI bridges does not work right.
+
+A386 BUGS (version 4.05):
+
+- low(forward defined) not filled in correctly.
+
+- use32 causes offset 16 to be clobbered. STARTOFS should be > 0.
+
+HISTORY:
+
+This covers core changes only, not chipsets / board ports.
+Refer to respective source files for details on those.
+
+pd 010214	KBD	change reset jump to F000:FFF0 -> fixes AMD Elan SC520
+			Ctrl-Alt-Del restart.
+
+pd 010207	KBD	skip keyboard init if NO_KBC option set, KBC not
+			present.
+
+pd 010126	all	Ported to A386 assembler.
+
+pd 000816	KBD	Fixed putbuf overrun prevention.
+
+pd 000815	EQU	Changed from double use of m_vpal, m_vmsel to
+		VID	m_console, m_conkey (unused floppy bytes)
+		
+		COM	Disable 2400 baud mode (set by DOS during bootup)
+			if CONSOLE set.
+
+pd 000424	POST2	Add option QUICKMEM -> memory size and clear only.
+
+pd 000211	HDD	Added support for new SanDisk CompactFlash cards.
+
+pd 991127	EQU	Added variables for PS/2 mouse.
+		INT1X	Added hooks for PS/2 mouse.
+		PS2MOUS Added PS/2 mouse support.
+		COM	Fixed m_devflg handling.
+		SIO_NONE Moved to SIO directory.
+		SMC*	Moved to SIO directory.
+	
+pd 991115 	PCIPNP	fix PCI I/O allocation: some devices (e.g. ESS Tech)
+			have 16 bit base registers.
+
+pd 991020/21 	DATA	Add hd_top.
+		HDD	Add hd_top, needed to support M-Systems DiskOnChip.
+		POST	Add option for M-Systems DiskOnChip.
+
+pd 991003 	LPT	Fixed lp_test loop.
+		
+pd 990603	POST 	Changed to RET_SP macro.
+	
+		AS.COM	Added RET_SP macro to assembler.
+			Abandoned CYRIXGX mode in assembler (inconsistent
+			op codes depending on version).
+			Source for assembler is now available in PASM
+			directory.
+			
+		POST	Added POST code and call for cs_cache
+			if present (needs to be moved from decide routine).
+			Added return label for cs_init, cs_det, allows
+			return by JMP rather than RET.
+		
+		FILL16	Changed from .COM to .BIN extension.
+		
+		FILL32	Changed from .COM to .BIN extension.
+
+pd 990525	PCI	Rewrote 32 bit PCI BIOS to fix Linux problem.
+
+pd 990501	HDD	Add CDBOOT hook.

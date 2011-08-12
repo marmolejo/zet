@@ -1,0 +1,46 @@
+	tinyBIOS POST code list					pd 980422
+	-----------------------
+	
+	01	reset entry
+	02	chipset initialization
+	03	detect base memory size
+	04	initialize shadow RAM
+	05	init mono video
+	06	disable PCI devices
+	07	test low 64KB of DRAM
+	08	initialize stack
+	09	BIOS checksum
+	0a	super I/O initialization
+	0b	RTC test
+	0c	refresh / 8254 test
+	0d	speed-dependent chipset regs
+	0e	test 8237 DMA
+	0f	test DMA page registers
+	10	test 8254 registers
+	11	test keyboard controller
+	12	init timer, DMA, 8259...
+	13	test 8259 mask registers
+	14	test low 640KB
+	15	init vectors
+	16	PCI plug & play
+	17	shadow video BIOS
+	18	look for VGA BIOS
+	19	sign-on prompt
+	1a	second keyboard test
+	1b	extended memory test
+	1c	enable interrupts
+	1d	test / init RTC
+	1e	init floppy disk
+	1f	option ROM scan
+	20	test parallel ports
+	21	test serial ports
+	22	enable coprocessor
+	23	floppy init
+	24	hard disk init
+	25	PS/2 mouse detect
+	26	timer/RTC check
+	27	OEM boot decision point
+	00	boot
+
+	33	NMI
+	F7	low 64KB memory test failed
