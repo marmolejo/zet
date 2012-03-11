@@ -99,7 +99,11 @@ module ps2_keyb (
 
   reg [TIMER_60USEC_BITS_PP-1:0]  timer_60usec_count;
   reg [TIMER_5USEC_BITS_PP-1 :0]  timer_5usec_count;
-  reg [`TOTAL_BITS-1:0]           q;
+  reg [`TOTAL_BITS-1:0]           q_r;
+  wire [`TOTAL_BITS-1:0]          q;
+
+  // hack for the F5-F7 key bug
+  assign q = (q_r[8:1]==8'h83)?{q_r[`TOTAL_BITS-1:9],8'h02,q_r[0]} : q_r;
 
   // --------------------------------------------------------------------
   // Module instantiation
@@ -138,9 +142,9 @@ module ps2_keyb (
   // This is the shift register
   // --------------------------------------------------------------------
   always @(posedge clk)
-    if(reset) q <= 0;
+    if(reset) q_r <= 0;
     else 
-    if((m1_state == m1_rx_falling_edge_marker) ||(m1_state == m1_tx_rising_edge_marker)) q <= {ps2_data_s,q[`TOTAL_BITS-1:1]};
+    if((m1_state == m1_rx_falling_edge_marker) ||(m1_state == m1_tx_rising_edge_marker)) q_r <= {ps2_data_s,q_r[`TOTAL_BITS-1:1]};
 
   // This is the 60usec timer counter
   always @(posedge clk)
