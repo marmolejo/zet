@@ -41,7 +41,7 @@
 # ========================
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
-set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
+set_global_assignment -name LAST_QUARTUS_VERSION "11.1 SP2"
 set_global_assignment -name VERILOG_FILE ../rtl/pll.v
 set_global_assignment -name SDC_FILE kotku.sdc
 set_global_assignment -name VERILOG_FILE ../../../cores/sram/csr_sram.v
@@ -438,7 +438,6 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 
 # Incremental Compilation Assignments
 # ===================================
-set_global_assignment -name INCREMENTAL_COMPILATION OFF
 
 # Advanced I/O Timing Assignments
 # ===============================
@@ -450,7 +449,7 @@ set_global_assignment -name OUTPUT_IO_TIMING_ENDPOINT "NEAR END"
 	# EDA Netlist Writer Assignments
 	# ==============================
 	set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
-	set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
 
 # end EDA_TOOL_SETTINGS(eda_simulation)
 # -------------------------------------
@@ -590,7 +589,6 @@ set_global_assignment -name OUTPUT_IO_TIMING_ENDPOINT "NEAR END"
 
 		# Incremental Compilation Assignments
 		# ===================================
-		set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 		set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 		set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 		set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT -section_id Top
@@ -600,3 +598,4 @@ set_global_assignment -name OUTPUT_IO_TIMING_ENDPOINT "NEAR END"
 
 # end ENTITY(kotku)
 # -----------------
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

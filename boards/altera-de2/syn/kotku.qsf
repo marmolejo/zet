@@ -41,7 +41,7 @@
 # ========================
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
-set_global_assignment -name LAST_QUARTUS_VERSION "10.1 SP1"
+set_global_assignment -name LAST_QUARTUS_VERSION "11.1 SP2"
 set_global_assignment -name VERILOG_FILE ../rtl/pll.v
 set_global_assignment -name SDC_FILE kotku.sdc
 set_global_assignment -name VERILOG_FILE ../../../cores/sram/csr_sram.v
@@ -343,7 +343,6 @@ set_instance_assignment -name RESERVE_PIN "AS OUTPUT DRIVING VCC" -to tft_lcd_sy
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name ENABLE_CLOCK_LATENCY ON
-set_global_assignment -name USE_TIMEQUEST_TIMING_ANALYZER ON
 
 # Analysis & Synthesis Assignments
 # ================================
