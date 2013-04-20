@@ -1,6 +1,7 @@
 /*
  * Milkymist SoC
  * Copyright (C) 2007, 2008, 2009, 2010 Sebastien Bourdeauducq
+ * adjusted to FML 8x16 by Charley Picker <charleypicker@yahoo.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,57 +27,57 @@ module fmlarb #(
 	input m0_stb,
 	input m0_we,
 	output m0_ack,
-	input [7:0] m0_sel,
-	input [63:0] m0_di,
-	output [63:0] m0_do,
+	input [1:0] m0_sel,
+	input [15:0] m0_di,
+	output [15:0] m0_do,
 	
 	input [fml_depth-1:0] m1_adr,
 	input m1_stb,
 	input m1_we,
 	output m1_ack,
-	input [7:0] m1_sel,
-	input [63:0] m1_di,
-	output [63:0] m1_do,
+	input [1:0] m1_sel,
+	input [15:0] m1_di,
+	output [15:0] m1_do,
 	
 	input [fml_depth-1:0] m2_adr,
 	input m2_stb,
 	input m2_we,
 	output m2_ack,
-	input [7:0] m2_sel,
-	input [63:0] m2_di,
-	output [63:0] m2_do,
+	input [1:0] m2_sel,
+	input [15:0] m2_di,
+	output [15:0] m2_do,
 	
 	input [fml_depth-1:0] m3_adr,
 	input m3_stb,
 	input m3_we,
 	output m3_ack,
-	input [7:0] m3_sel,
-	input [63:0] m3_di,
-	output [63:0] m3_do,
+	input [1:0] m3_sel,
+	input [15:0] m3_di,
+	output [15:0] m3_do,
 
 	input [fml_depth-1:0] m4_adr,
 	input m4_stb,
 	input m4_we,
 	output m4_ack,
-	input [7:0] m4_sel,
-	input [63:0] m4_di,
-	output [63:0] m4_do,
+	input [1:0] m4_sel,
+	input [15:0] m4_di,
+	output [15:0] m4_do,
 
 	input [fml_depth-1:0] m5_adr,
 	input m5_stb,
 	input m5_we,
 	output m5_ack,
-	input [7:0] m5_sel,
-	input [63:0] m5_di,
-	output [63:0] m5_do,
+	input [1:0] m5_sel,
+	input [15:0] m5_di,
+	output [15:0] m5_do,
 	
 	output reg [fml_depth-1:0] s_adr,
 	output reg s_stb,
 	output reg s_we,
 	input s_ack,
-	output reg [7:0] s_sel,
-	input [63:0] s_di,
-	output reg [63:0] s_do
+	output reg [1:0] s_sel,
+	input [15:0] s_di,
+	output reg [15:0] s_do
 );
 
 assign m0_do = s_di;
@@ -196,17 +197,17 @@ end
 wire write_burst_start = s_we & s_ack;
 
 reg [2:0] wmaster;
-reg [1:0] burst_counter;
+reg [2:0] burst_counter;
 
 always @(posedge sys_clk) begin
 	if(sys_rst) begin
 		wmaster <= 3'd0;
-		burst_counter <= 2'd0;
+		burst_counter <= 3'd0;
 	end else begin
 		if(|burst_counter)
-			burst_counter <= burst_counter - 2'd1;
+			burst_counter <= burst_counter - 3'd1;
 		if(write_burst_start)
-			burst_counter <= 2'd2;
+			burst_counter <= 3'd6;
 		if(~write_burst_start & ~(|burst_counter))
 			wmaster <= next_master;
 	end
