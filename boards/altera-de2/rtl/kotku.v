@@ -273,6 +273,7 @@ module kotku (
   wire [15:0] csr_dw;
   wire [15:0] csr_dr_hpdmc;
 
+  // wires to hpdmc slave interface 
   wire [22:0] fml_adr;
   wire        fml_stb;
   wire        fml_we;
@@ -280,6 +281,15 @@ module kotku (
   wire [ 1:0] fml_sel;
   wire [15:0] fml_di;
   wire [15:0] fml_do;
+  
+  // wires to fml bridge master interface 
+  wire [19:0] fml_fmlbrg_adr;
+  wire        fml_fmlbrg_stb;
+  wire        fml_fmlbrg_we;
+  wire        fml_fmlbrg_ack;
+  wire [ 1:0] fml_fmlbrg_sel;
+  wire [15:0] fml_fmlbrg_di;
+  wire [15:0] fml_fmlbrg_do;
 
   // wires to default stb/ack
   wire        def_cyc_i;
@@ -426,14 +436,14 @@ module kotku (
   );
 
   fmlbrg #(
-    .fml_depth   (23),
+    .fml_depth   (20),  // 8086 can only address 1 MB
     .cache_depth (10)   // 1 Kbyte cache
     ) fmlbrg (
     .sys_clk  (sdram_clk),
     .sys_rst  (rst),
 
     // Wishbone slave interface
-    .wb_adr_i ({3'b000,fmlbrg_adr}),
+    .wb_adr_i (fmlbrg_adr),
     .wb_dat_i (fmlbrg_dat_w),
     .wb_dat_o (fmlbrg_dat_r),
     .wb_sel_i (fmlbrg_sel),
@@ -443,14 +453,14 @@ module kotku (
     .wb_we_i  (fmlbrg_we),
     .wb_ack_o (fmlbrg_ack),
 
-    // FML master interface
-    .fml_adr (fml_adr),
-    .fml_stb (fml_stb),
-    .fml_we  (fml_we),
-    .fml_ack (fml_ack),
-    .fml_sel (fml_sel),
-    .fml_do  (fml_do),
-    .fml_di  (fml_di)
+    // FML master 1 interface
+    .fml_adr (fml_fmlbrg_adr),
+    .fml_stb (fml_fmlbrg_stb),
+    .fml_we  (fml_fmlbrg_we),
+    .fml_ack (fml_fmlbrg_ack),
+    .fml_sel (fml_fmlbrg_sel),
+    .fml_do  (fml_fmlbrg_do),
+    .fml_di  (fml_fmlbrg_di)
   );
 
   wb_abrgr wb_csrbrg (
@@ -499,6 +509,76 @@ module kotku (
     .csr_we (csr_we),
     .csr_do (csr_dw),
     .csr_di (csr_dr_hpdmc)
+  );
+  
+  fmlarb #(
+    .fml_depth         (23)
+    ) fmlarb (
+    .sys_clk (sdram_clk),
+	.sys_rst (rst),
+	
+	// Master 0 interface - Reserved video memory port has highest priority
+	.m0_adr ({3'b001, 20'b0}),  // 1 - 2 MB Addressable memory range
+	.m0_stb (1'b0),
+	.m0_we  (1'b0),
+	.m0_ack (),
+	.m0_sel (2'b00),
+	.m0_di  (16'h0000),
+	.m0_do  (),
+		
+	// Master 1 interface - Wishbone FML bridge
+	.m1_adr ({3'b000, fml_fmlbrg_adr}),  // 0 - 1 MB Addressable memory range
+	.m1_stb (fml_fmlbrg_stb),
+	.m1_we  (fml_fmlbrg_we),
+	.m1_ack (fml_fmlbrg_ack),
+	.m1_sel (fml_fmlbrg_sel),
+	.m1_di  (fml_fmlbrg_do),
+	.m1_do  (fml_fmlbrg_di),
+	
+	// Master 2 interface - not connected
+	.m2_adr ({3'b010, 20'b0}),  // 2 - 3 MB Addressable memory range
+	.m2_stb (1'b0),
+	.m2_we  (1'b0),
+	.m2_ack (),
+	.m2_sel (2'b00),
+	.m2_di  (16'h0000),
+	.m2_do  (),
+	
+	// Master 3 interface - not connected
+	.m3_adr ({3'b011, 20'b0}),  // 3 - 4 MB Addressable memory range
+	.m3_stb (1'b0),
+	.m3_we  (1'b0),
+	.m3_ack (),
+	.m3_sel (2'b00),
+	.m3_di  (16'h0000),
+	.m3_do  (),
+	
+	// Master 4 interface - not connected
+	.m4_adr ({3'b100, 20'b0}),  // 4 - 5 MB Addressable memory range
+	.m4_stb (1'b0),
+	.m4_we  (1'b0),
+	.m4_ack (),
+	.m4_sel (2'b00),
+	.m4_di  (16'h0000),
+	.m4_do  (),
+	
+	// Master 5 interface - not connected
+	.m5_adr ({3'b101, 20'b0}),  // 5 - 6 MB Addressable memory range
+	.m5_stb (1'b0),
+	.m5_we  (1'b0),
+	.m5_ack (),
+	.m5_sel (2'b00),
+	.m5_di  (16'h0000),
+	.m5_do  (),
+	
+	// Arbitrer Slave interface - connected to hpdmc
+	.s_adr (fml_adr),
+	.s_stb (fml_stb),
+	.s_we  (fml_we),
+	.s_ack (fml_ack),
+	.s_sel (fml_sel),
+	.s_di  (fml_di),
+	.s_do  (fml_do)        
   );
 
   hpdmc #(
