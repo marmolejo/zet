@@ -24,4 +24,4 @@ add wave -hex dut/datamem/ram1
 add wave -divider ram0
 add wave -hex dut/datamem/ram0
 
-run 1us
+run 3us

@@ -1,6 +1,6 @@
 /*
- * Milkymist VJ SoC
- * Copyright (C) 2007, 2008, 2009 Sebastien Bourdeauducq
+ * Milkymist SoC
+ * Copyright (C) 2007, 2008, 2009, 2010 Sebastien Bourdeauducq
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 `define ENABLE_VCD
 
-module tb_fmlbrg;
+module tb_fmlbrg();
 
 reg clk;
 initial clk = 1'b0;
@@ -28,6 +28,7 @@ always #5 clk = ~clk;
 reg rst;
 
 reg [22:1] wb_adr_i;
+reg [2:0] wb_cti_i;
 reg [15:0] wb_dat_i;
 wire [15:0] wb_dat_o;
 reg [1:0] wb_sel_i;
@@ -44,6 +45,10 @@ wire [1:0] fml_sel;
 wire [15:0] fml_dw;
 reg [15:0] fml_dr;
 
+reg dcb_stb;
+reg [22:0] dcb_adr;
+wire [15:0] dcb_dat;
+wire dcb_hit;
 
 /* Process FML requests */
 reg [2:0] fml_wcount;
@@ -78,11 +83,12 @@ always @(posedge clk) begin
 	end
 end
 
-fmlbrg dut(
+fmlbrg dut (
 	.sys_clk(clk),
 	.sys_rst(rst),
 	
 	.wb_adr_i(wb_adr_i),
+	.wb_cti_i(wb_cti_i),
 	.wb_dat_i(wb_dat_i),
 	.wb_dat_o(wb_dat_o),
 	.wb_sel_i(wb_sel_i),
@@ -97,7 +103,12 @@ fmlbrg dut(
 	.fml_ack(fml_ack),
 	.fml_sel(fml_sel),
 	.fml_do(fml_dw),
-	.fml_di(fml_dr)
+	.fml_di(fml_dr),
+
+	.dcb_stb(dcb_stb),
+	.dcb_adr(dcb_adr),
+	.dcb_dat(dcb_dat),
+	.dcb_hit(dcb_hit)
 );
 
 task waitclock;
@@ -113,6 +124,7 @@ input [15:0] data;
 integer i;
 begin
 	wb_adr_i = address;
+	wb_cti_i = 3'b000;
 	wb_dat_i = data;
 	wb_sel_i = 2'b11;
 	wb_cyc_i = 1'b1;
@@ -137,6 +149,7 @@ input [22:1] address;
 integer i;
 begin
 	wb_adr_i = address;
+	wb_cti_i = 3'b000;
 	wb_cyc_i = 1'b1;
 	wb_stb_i = 1'b1;
 	wb_we_i = 1'b0;
@@ -154,6 +167,71 @@ begin
 end
 endtask
 
+task wbwriteburst;
+input [22:1] address;
+input [15:0] data;
+integer i;
+begin
+	wb_adr_i = address;
+	wb_cti_i = 3'b010;
+	wb_dat_i = data;
+	wb_sel_i = 2'b11;
+	wb_cyc_i = 1'b1;
+	wb_stb_i = 1'b1;
+	wb_we_i = 1'b1;
+	i = 0;
+	while(~wb_ack_o) begin
+		i = i+1;
+		waitclock;
+	end
+	waitclock;
+	$display("WB Write: %x=%x acked in %d clocks", address, data, i);
+	wb_dat_i = data+1;
+	waitclock;
+	wb_dat_i = data+2;
+	waitclock;
+	wb_dat_i = data+3;
+	wb_cti_i = 3'b111;
+	waitclock;
+	wb_adr_i = 22'hx;
+	wb_cti_i = 3'b000;
+	wb_cyc_i = 1'b0;
+	wb_stb_i = 1'b0;
+	wb_we_i = 1'b0;
+end
+endtask
+
+task wbreadburst;
+input [22:1] address;
+integer i;
+begin
+	wb_adr_i = address;
+	wb_cti_i = 3'b010;
+	wb_cyc_i = 1'b1;
+	wb_stb_i = 1'b1;
+	wb_we_i = 1'b0;
+	i = 0;
+	while(~wb_ack_o) begin
+		i = i+1;
+		waitclock;
+	end
+	$display("WB Read : %x=%x acked in %d clocks", address, wb_dat_o, i);
+	waitclock;
+	$display("read burst(1): %x", wb_dat_o);
+	waitclock;
+	$display("read burst(2): %x", wb_dat_o);
+	waitclock;
+	wb_cti_i = 3'b111;
+	$display("read burst(3): %x", wb_dat_o);
+	waitclock;
+	wb_adr_i = 22'hx;
+	wb_cti_i = 3'b000;
+	wb_cyc_i = 1'b0;
+	wb_stb_i = 1'b0;
+	wb_we_i = 1'b0;
+end
+endtask
+
 always begin
 `ifdef ENABLE_VCD
 	$dumpfile("fmlbrg.vcd");
@@ -162,10 +240,13 @@ always begin
 	rst = 1'b1;
 	
 	wb_adr_i = 22'd0;
-	wb_dat_i = 22'd0;
+	wb_dat_i = 16'd0;
 	wb_cyc_i = 1'b0;
 	wb_stb_i = 1'b0;
 	wb_we_i = 1'b0;
+
+	dcb_stb = 1'b0;
+	dcb_adr = 22'd0;
 	
 	waitclock;
 	
@@ -182,13 +263,35 @@ always begin
 	wbread(22'h01000);
 	
 	$display("Testing: read hit");
-	wbread(26'h01004);
+	wbread(22'h01004);
 	
 	$display("Testing: write miss");
 	wbwrite(22'h0, 16'hface);
-	wbread(22'h0);
-	wbread(22'h4);
+	wbread(27'h0);
+	wbread(27'h4);
 	
+	$display("Testing: read burst");
+	wbreadburst(22'h40);
+	
+	$display("Testing: write burst");
+	wbwriteburst(22'h40, 16'hcaf0);
+	
+	$display("Testing: read burst");
+	wbreadburst(22'h40);
+
+	$display("Testing: DCB miss");
+	dcb_adr = 22'hfeba;
+	dcb_stb = 1'b1;
+	waitclock;
+	$display("Result: hit=%b dat=%x", dcb_hit, dcb_dat);
+
+	$display("Testing: DCB hit");
+	dcb_adr = 22'h0;
+	dcb_stb = 1'b1;
+	waitclock;
+	$display("Result: hit=%b dat=%x", dcb_hit, dcb_dat);
+	
+	$stop;
 end
 
 
