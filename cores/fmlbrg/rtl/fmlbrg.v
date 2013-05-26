@@ -131,7 +131,7 @@ assign do2_valid = tagmem_do2[fml_depth-cache_depth-1+2];
 assign do2_tag = tagmem_do2[fml_depth-cache_depth-1:0];
 
 always @(posedge sys_clk)
-	fml_adr <= {do_tag, offset, 1'd0};
+	fml_adr <= {do_tag, index, offset, 1'd0};
 
 /*
  * DATA MEMORY
@@ -318,12 +318,13 @@ always @(*) begin
 		end
 		
 		/*
-         * Burst counter has already been loaded.
-         * Yes, we evict lines in different order depending
-         * on the critical word position of the cache miss
-         * inside the line, but who cares :)
-         */		
+     * Burst counter has already been loaded.
+     * Yes, we evict lines in different order depending
+     * on the critical word position of the cache miss
+     * inside the line, but who cares :)
+     */		
 		EVICT: begin
+		  $display("Evict");
 			fml_stb = 1'b1;
 			fml_we = 1'b1;
 			if(fml_ack) begin
@@ -364,7 +365,7 @@ always @(*) begin
 		end
 		
 		REFILL: begin
-			/* Write the tag first. This will also set the FML address. */
+		  /* Write the tag first. This will also set the FML address. */
 			di_valid = 1'b1;
 			if(wb_we_i)
 				di_dirty = 1'b1;
@@ -380,9 +381,9 @@ always @(*) begin
 			bcounter_sel = BCOUNTER_LOAD;
 			fml_stb = 1'b1;
 			/* Asserting both
-             * datamem_we_fml and
-             * datamem_we_wb, WB has priority
-             */
+       * datamem_we_fml and
+       * datamem_we_wb, WB has priority
+       */
 			datamem_we_fml = 1'b1;
 			if(wb_we_i)
                 datamem_we_wb = 1'b1;
@@ -391,54 +392,55 @@ always @(*) begin
 		end
 		REFILL2: begin
 		    /*
-             * For reads, the critical word has just been written to the datamem
-             * so by acking the cycle now we get the correct result (because the
-             * datamem is a write-first SRAM).
-             * For writes, we could have acked the cycle before but it's simpler this way.
-             * Otherwise, we have the case of a master releasing WE just after ACK,
-             * and we must add a reg to tell whether we have a read or a write in REFILL2...
-             */
-            wb_ack_o = 1'b1;
-            /* Now we must use our copy of index, as the WISHBONE
-             * address may change.
-             */
-            index_load = 1'b0;
+         * For reads, the critical word has just been written to the datamem
+         * so by acking the cycle now we get the correct result (because the
+         * datamem is a write-first SRAM).
+         * For writes, we could have acked the cycle before but it's simpler this way.
+         * Otherwise, we have the case of a master releasing WE just after ACK,
+         * and we must add a reg to tell whether we have a read or a write in REFILL2...
+         */
+        wb_ack_o = 1'b1;
+        /* Now we must use our copy of index, as the WISHBONE
+         * address may change.
+         */
+        index_load = 1'b0;
 		    datamem_we_fml = 1'b1;
 		    bcounter_sel = BCOUNTER_INC;
 		    next_state = REFILL3;
 		end
 		REFILL3: begin
-		    index_load = 1'b0;
+		  index_load = 1'b0;
 			datamem_we_fml = 1'b1;
 			bcounter_sel = BCOUNTER_INC;
 			next_state = REFILL4;
 		end
 		REFILL4: begin
-		    index_load = 1'b0;
+		  index_load = 1'b0;
 			datamem_we_fml = 1'b1;
 			bcounter_sel = BCOUNTER_INC;
 			next_state = REFILL5;
 		end
 		REFILL5: begin
-		    index_load = 1'b0;
+		  index_load = 1'b0;
 			datamem_we_fml = 1'b1;
 			bcounter_sel = BCOUNTER_INC;
 			next_state = REFILL6;
 		end
 		REFILL6: begin
-		    index_load = 1'b0;
+		  index_load = 1'b0;
 			datamem_we_fml = 1'b1;
 			bcounter_sel = BCOUNTER_INC;
 			next_state = REFILL7;
 		end
 		REFILL7: begin
-		    index_load = 1'b0;
+		$display("Refill 7");
+		  index_load = 1'b0;
 			datamem_we_fml = 1'b1;
 			bcounter_sel = BCOUNTER_INC;
 			next_state = REFILL8;
 		end
 		REFILL8: begin
-		    index_load = 1'b0;
+		  index_load = 1'b0;
 			datamem_we_fml = 1'b1;
 			bcounter_sel = BCOUNTER_INC;
 			next_state = IDLE;
