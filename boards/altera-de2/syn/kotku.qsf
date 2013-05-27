@@ -68,6 +68,7 @@ set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_bu
 set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc_banktimer.v
 set_global_assignment -name VERILOG_FILE ../../../cores/hpdmc_sdr16/rtl/hpdmc.v
 set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg_datamem.v
+set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg_tagmem.v
 set_global_assignment -name VERILOG_FILE ../../../cores/fmlbrg/rtl/fmlbrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/csrbrg/rtl/csrbrg.v
 set_global_assignment -name VERILOG_FILE ../../../cores/wb_abrg/wb_abrgr.v
