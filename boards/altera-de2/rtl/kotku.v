@@ -441,9 +441,10 @@ module kotku (
     ) fmlbrg (
     .sys_clk  (sdram_clk),
     .sys_rst  (rst),
-
-    // Wishbone slave interface
+	 
+	 // Wishbone slave interface
     .wb_adr_i (fmlbrg_adr),
+	 .wb_cti_i(3'b0),
     .wb_dat_i (fmlbrg_dat_w),
     .wb_dat_o (fmlbrg_dat_r),
     .wb_sel_i (fmlbrg_sel),
@@ -460,7 +461,14 @@ module kotku (
     .fml_ack (fml_fmlbrg_ack),
     .fml_sel (fml_fmlbrg_sel),
     .fml_do  (fml_fmlbrg_do),
-    .fml_di  (fml_fmlbrg_di)
+    .fml_di  (fml_fmlbrg_di),
+	 
+	 // Direct Cache Bus
+	 .dcb_stb(1'b0),
+	 .dcb_adr(20'b0),
+	 .dcb_dat(),
+	 .dcb_hit()
+	 
   );
 
   wb_abrgr wb_csrbrg (
