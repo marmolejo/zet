@@ -83,7 +83,10 @@ always @(posedge clk) begin
 	end
 end
 
-fmlbrg dut (
+fmlbrg #(
+  .fml_depth   (23),  // 8086 can only address 1 MB
+  .cache_depth (10)   // 1 Kbyte cache
+  ) dut (
 	.sys_clk(clk),
 	.sys_rst(rst),
 	
@@ -104,11 +107,12 @@ fmlbrg dut (
 	.fml_sel(fml_sel),
 	.fml_do(fml_dw),
 	.fml_di(fml_dr),
-
+  
 	.dcb_stb(dcb_stb),
 	.dcb_adr(dcb_adr),
 	.dcb_dat(dcb_dat),
 	.dcb_hit(dcb_hit)
+	
 );
 
 task waitclock;
@@ -120,13 +124,14 @@ endtask
 
 task wbwrite;
 input [22:1] address;
+input [1:0] sel;
 input [15:0] data;
 integer i;
 begin
 	wb_adr_i = address;
 	wb_cti_i = 3'b000;
 	wb_dat_i = data;
-	wb_sel_i = 2'b11;
+	wb_sel_i = sel;
 	wb_cyc_i = 1'b1;
 	wb_stb_i = 1'b1;
 	wb_we_i = 1'b1;
@@ -136,7 +141,7 @@ begin
 		waitclock;
 	end
 	waitclock;
-	$display("WB Write: %x=%x acked in %d clocks", address, data, i);
+	$display("WB Write: %x=%x sel=%b acked in %d clocks", address, data, sel, i);
 	wb_adr_i = 22'hx;
 	wb_cyc_i = 1'b0;
 	wb_stb_i = 1'b0;
@@ -148,7 +153,7 @@ task wbread;
 input [22:1] address;
 integer i;
 begin
-	wb_adr_i = address;
+	wb_adr_i = address;	
 	wb_cti_i = 3'b000;
 	wb_cyc_i = 1'b1;
 	wb_stb_i = 1'b1;
@@ -257,7 +262,7 @@ always begin
 	$display("Testing: read miss");
 	wbread(22'h0);
 	$display("Testing: write hit");
-	wbwrite(22'h0, 16'h5678);
+	wbwrite(22'h0, 2'b11, 16'h5678);
 	wbread(22'h0);
 	$display("Testing: read miss on a dirty line");
 	wbread(22'h01000);
@@ -266,7 +271,7 @@ always begin
 	wbread(22'h01004);
 	
 	$display("Testing: write miss");
-	wbwrite(22'h0, 16'hface);
+	wbwrite(22'h0, 2'b11, 16'hface);
 	wbread(27'h0);
 	wbread(27'h4);
 	

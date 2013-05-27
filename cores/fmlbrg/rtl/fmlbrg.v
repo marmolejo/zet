@@ -131,7 +131,7 @@ assign do2_valid = tagmem_do2[fml_depth-cache_depth-1+2];
 assign do2_tag = tagmem_do2[fml_depth-cache_depth-1:0];
 
 always @(posedge sys_clk)
-	fml_adr <= {do_tag, index, offset, 1'd0};
+	fml_adr <= {do_tag, index, offset, 1'b0};
 
 /*
  * DATA MEMORY
@@ -142,7 +142,7 @@ always @(posedge sys_clk)
 
 wire [cache_depth-1-1:0] datamem_a;
 reg [1:0] datamem_we;
-wire [15:0] datamem_di;
+reg [15:0] datamem_di;
 wire [15:0] datamem_do;
 
 wire [cache_depth-1-1:0] datamem_a2;
@@ -203,7 +203,15 @@ always @(*) begin
 		 else datamem_we = 2'b00;
 end
 
-assign datamem_di = datamem_we_wb ? {wb_dat_i} : fml_di;
+always @(*) begin
+  datamem_di = fml_di;
+  if(datamem_we_wb) begin
+    if(wb_sel_i[0])
+      datamem_di[7:0] = wb_dat_i[7:0];
+    if(wb_sel_i[1])
+      datamem_di[15:8] = wb_dat_i[15:8];
+  end
+end
 
 assign wb_dat_o = datamem_do;
 assign fml_do = datamem_do;
@@ -317,12 +325,12 @@ always @(*) begin
 				next_state = IDLE;
 		end
 		
-		/*
-     * Burst counter has already been loaded.
-     * Yes, we evict lines in different order depending
-     * on the critical word position of the cache miss
-     * inside the line, but who cares :)
-     */		
+        /*
+         * Burst counter has already been loaded.
+         * Yes, we evict lines in different order depending
+         * on the critical word position of the cache miss
+         * inside the line, but who cares :)
+         */		
 		EVICT: begin
 		  $display("Evict");
 			fml_stb = 1'b1;
@@ -380,10 +388,10 @@ always @(*) begin
 		REFILL1: begin
 			bcounter_sel = BCOUNTER_LOAD;
 			fml_stb = 1'b1;
-			/* Asserting both
-       * datamem_we_fml and
-       * datamem_we_wb, WB has priority
-       */
+            /* Asserting both
+             * datamem_we_fml and
+             * datamem_we_wb, WB has priority
+             */
 			datamem_we_fml = 1'b1;
 			if(wb_we_i)
                 datamem_we_wb = 1'b1;
@@ -391,7 +399,7 @@ always @(*) begin
 				next_state = REFILL2;
 		end
 		REFILL2: begin
-		    /*
+		/*
          * For reads, the critical word has just been written to the datamem
          * so by acking the cycle now we get the correct result (because the
          * datamem is a write-first SRAM).
