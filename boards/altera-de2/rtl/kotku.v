@@ -290,6 +290,24 @@ module kotku (
   wire [ 1:0] fml_fmlbrg_sel;
   wire [15:0] fml_fmlbrg_di;
   wire [15:0] fml_fmlbrg_do;
+  
+  // wires to VGA CPU FML master interface
+  wire [20-1:0] vga_cpu_fml_adr;  // 1MB Memory Address range
+  wire          vga_cpu_fml_stb;
+  wire          vga_cpu_fml_we;
+  wire          vga_cpu_fml_ack;
+  wire [1:0]    vga_cpu_fml_sel;
+  wire [15:0]   vga_cpu_fml_do;
+  wire [15:0]   vga_cpu_fml_di;
+  
+  // wires to VGA LCD FML master interface
+  wire [20-1:0] vga_lcd_fml_adr;  // 1MB Memory Address range
+  wire          vga_lcd_fml_stb;
+  wire          vga_lcd_fml_we;
+  wire          vga_lcd_fml_ack;
+  wire [1:0]    vga_lcd_fml_sel;
+  wire [15:0]   vga_lcd_fml_do;
+  wire [15:0]   vga_lcd_fml_di;
 
   // wires to default stb/ack
   wire        def_cyc_i;
@@ -525,14 +543,14 @@ module kotku (
     .sys_clk (sdram_clk),
 	.sys_rst (rst),
 	
-	// Master 0 interface - Reserved video memory port has highest priority
-	.m0_adr ({3'b001, 20'b0}),  // 1 - 2 MB Addressable memory range
-	.m0_stb (1'b0),
-	.m0_we  (1'b0),
-	.m0_ack (),
-	.m0_sel (2'b00),
-	.m0_di  (16'h0000),
-	.m0_do  (),
+	// Master 0 interface - VGA LCD FML (Reserved video memory port has highest priority)
+	.m0_adr ({3'b001, vga_lcd_fml_adr}),  // 1 - 2 MB Addressable memory range
+	.m0_stb (vga_lcd_fml_stb),
+	.m0_we  (vga_lcd_fml_we),
+	.m0_ack (vga_lcd_fml_ack),
+	.m0_sel (vga_lcd_fml_sel),
+	.m0_di  (vga_lcd_fml_do),
+	.m0_do  (vga_lcd_fml_di),
 		
 	// Master 1 interface - Wishbone FML bridge
 	.m1_adr ({3'b000, fml_fmlbrg_adr}),  // 0 - 1 MB Addressable memory range
@@ -543,14 +561,14 @@ module kotku (
 	.m1_di  (fml_fmlbrg_do),
 	.m1_do  (fml_fmlbrg_di),
 	
-	// Master 2 interface - not connected
-	.m2_adr ({3'b010, 20'b0}),  // 2 - 3 MB Addressable memory range
-	.m2_stb (1'b0),
-	.m2_we  (1'b0),
-	.m2_ack (),
-	.m2_sel (2'b00),
-	.m2_di  (16'h0000),
-	.m2_do  (),
+	// Master 2 interface - VGA CPU FML
+	.m2_adr ({3'b001, vga_cpu_fml_adr}),  // 1 - 2 MB Addressable memory range
+	.m2_stb (vga_cpu_fml_stb),
+	.m2_we  (vga_cpu_fml_we),
+	.m2_ack (vga_cpu_fml_ack),
+	.m2_sel (vga_cpu_fml_sel),
+	.m2_di  (vga_cpu_fml_do),
+	.m2_do  (vga_cpu_fml_di),
 	
 	// Master 3 interface - not connected
 	.m3_adr ({3'b011, 20'b0}),  // 3 - 4 MB Addressable memory range
@@ -640,7 +658,7 @@ module kotku (
     .wbs_ack_o (vga_ack_o_s),
 
     // Wishbone master interface
-    .wbm_clk_i (vga_clk),
+    .wbm_clk_i (sdram_clk),
     .wbm_adr_o (vga_adr_i),
     .wbm_dat_o (vga_dat_i),
     .wbm_dat_i (vga_dat_o),
@@ -657,12 +675,14 @@ module kotku (
   wire        csrm_we_o;
   wire [15:0] csrm_dat_o;
   wire [15:0] csrm_dat_i;
-
-  vga vga (
+  
+  vga_fml #(
+    .fml_depth   (20)  // 1MB Memory Address range
+  ) vga (
     .wb_rst_i (rst),
 
     // Wishbone slave interface
-    .wb_clk_i (vga_clk),   // 25MHz VGA clock
+    .wb_clk_i (sdram_clk),   // 100MHz VGA clock
     .wb_dat_i (vga_dat_i),
     .wb_dat_o (vga_dat_o),
     .wb_adr_i (vga_adr_i[16:1]),  // 128K
@@ -679,15 +699,34 @@ module kotku (
     .vga_blue_o  (tft_lcd_b_),
     .horiz_sync  (tft_lcd_hsync_),
     .vert_sync   (tft_lcd_vsync_),
-
+    
+    // VGA CPU FML master interface
+    .vga_cpu_fml_adr(vga_cpu_fml_adr),
+    .vga_cpu_fml_stb(vga_cpu_fml_stb),
+    .vga_cpu_fml_we(vga_cpu_fml_we),
+    .vga_cpu_fml_ack(vga_cpu_fml_ack),
+    .vga_cpu_fml_sel(vga_cpu_fml_sel),
+    .vga_cpu_fml_do(vga_cpu_fml_do),
+    .vga_cpu_fml_di(vga_cpu_fml_di),
+    
+    // VGA LCD FML master interface
+    .vga_lcd_fml_adr(vga_lcd_fml_adr),
+    .vga_lcd_fml_stb(vga_lcd_fml_stb),
+    .vga_lcd_fml_we(vga_lcd_fml_we),
+    .vga_lcd_fml_ack(vga_lcd_fml_ack),
+    .vga_lcd_fml_sel(vga_lcd_fml_sel),
+    .vga_lcd_fml_do(vga_lcd_fml_do),
+    .vga_lcd_fml_di(vga_lcd_fml_di)
+    /*
     // CSR SRAM master interface
     .csrm_adr_o (csrm_adr_o),
     .csrm_sel_o (csrm_sel_o),
     .csrm_we_o  (csrm_we_o),
     .csrm_dat_o (csrm_dat_o),
     .csrm_dat_i (csrm_dat_i)
+    */
   );
-
+  /*
   csr_sram csr_sram (
     .sys_clk (vga_clk),
 
@@ -706,7 +745,7 @@ module kotku (
     .sram_ce_n_ (sram_ce_n_),
     .sram_bw_n_ (sram_bw_n_)
   );
-
+  */
   // RS232 COM1 Port
   serial com1 (
     .wb_clk_i (clk),              // Main Clock
