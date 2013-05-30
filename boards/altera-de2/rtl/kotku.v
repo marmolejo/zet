@@ -48,13 +48,6 @@ module kotku (
     output        sdram_we_n_,
     output        sdram_cs_n_,
 
-    // sram signals
-    output [16:0] sram_addr_,
-    inout  [15:0] sram_data_,
-    output        sram_we_n_,
-    output        sram_oe_n_,
-    output [ 1:0] sram_bw_n_,
-
     // VGA signals
     output [ 3:0] tft_lcd_r_,
     output [ 3:0] tft_lcd_g_,
@@ -128,7 +121,6 @@ module kotku (
   // Unused outputs
   wire       flash_we_n_;
   wire       flash_rst_n_;
-  wire       sram_ce_n_;
   wire [1:0] sdram_dqm_;
   wire [2:0] s19_17;
 
@@ -670,12 +662,6 @@ module kotku (
     .wbm_ack_i (vga_ack_o)
   );
 
-  wire [17:1] csrm_adr_o;
-  wire [ 1:0] csrm_sel_o;
-  wire        csrm_we_o;
-  wire [15:0] csrm_dat_o;
-  wire [15:0] csrm_dat_i;
-  
   vga_fml #(
     .fml_depth   (20)  // 1MB Memory Address range
   ) vga (
@@ -717,35 +703,9 @@ module kotku (
     .vga_lcd_fml_sel(vga_lcd_fml_sel),
     .vga_lcd_fml_do(vga_lcd_fml_do),
     .vga_lcd_fml_di(vga_lcd_fml_di)
-    /*
-    // CSR SRAM master interface
-    .csrm_adr_o (csrm_adr_o),
-    .csrm_sel_o (csrm_sel_o),
-    .csrm_we_o  (csrm_we_o),
-    .csrm_dat_o (csrm_dat_o),
-    .csrm_dat_i (csrm_dat_i)
-    */
+    
   );
-  /*
-  csr_sram csr_sram (
-    .sys_clk (vga_clk),
-
-    // CSR slave interface
-    .csr_adr_i (csrm_adr_o),
-    .csr_sel_i (csrm_sel_o),
-    .csr_we_i  (csrm_we_o),
-    .csr_dat_i (csrm_dat_o),
-    .csr_dat_o (csrm_dat_i),
-
-    // Pad signals
-    .sram_addr_ ({s19_17,sram_addr_}),
-    .sram_data_ (sram_data_),
-    .sram_we_n_ (sram_we_n_),
-    .sram_oe_n_ (sram_oe_n_),
-    .sram_ce_n_ (sram_ce_n_),
-    .sram_bw_n_ (sram_bw_n_)
-  );
-  */
+  
   // RS232 COM1 Port
   serial com1 (
     .wb_clk_i (clk),              // Main Clock

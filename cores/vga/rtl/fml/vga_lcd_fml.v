@@ -35,8 +35,8 @@ module vga_lcd_fml #(
     output reg                 fml_stb,
     input                      fml_we,
     input                      fml_ack,
-    output reg           [1:0] fml_sel,
-    output reg          [15:0] fml_do,
+    output               [1:0] fml_sel,
+    output              [15:0] fml_do,
     input               [15:0] fml_di,
     
     // VGA LCD Direct Cache Bus
@@ -120,7 +120,8 @@ module vga_lcd_fml #(
   // Pixel buffer control
   reg read_fifo;
   wire fill_fifo;
-  wire [4:0] fb_data_fifo_nword;
+  // Number of words stored in the FIFO, 0-31 (32 possible values)
+  wire [4:0] fifo_level;
     
   // Each stage is controlled by enable signals
   wire en_crtc;
@@ -230,7 +231,7 @@ module vga_lcd_fml #(
 	.wreq   ( fill_fifo          ),
 	.q      ( fb_dat_o           ),
 	.rreq   ( read_fifo          ),
-	.nword  ( fb_data_fifo_nword ),
+	.nword  ( fifo_level ),
 	.empty  ( ),
 	.full   ( ),
 	.aempty ( ),
@@ -287,6 +288,10 @@ module vga_lcd_fml #(
   
   // Continuous assignments
   
+  // The lcd is read only device and these control signals are not used
+  assign fml_sel = 2'b11;
+  assign fml_do = 16'b0;
+  
   // Pack sequencer stage output into one wire group
   assign fb_dat_i = { horiz_sync_seq_o,
                       vert_sync_seq_o,
@@ -301,8 +306,8 @@ module vga_lcd_fml #(
   assign fb_video_on_v_seq_o = fb_dat_o [8];
   assign fb_character_seq_o = fb_dat_o [7:0];
   
-  // Can we start another fml burst?
-  assign can_burst = ~fb_data_fifo_nword[4] & ~fb_data_fifo_nword[3];
+  // Wait until the fifo level is 32 - 8 = 24 (enough room for a 8 pixel burst)
+  assign can_burst = fifo_level <= 5'd24;
   
   // These signals enable and control when the next crtc/sequencer cycle should occur
   assign en_crtc = next_crtc_seq_cyc;
@@ -314,7 +319,7 @@ module vga_lcd_fml #(
   // This signal enables and controls when the next pal_dac cycle should occure
   assign en_pal_dac = next_pal_dac_cyc;  // 100 Mhz version
   
-//================================================================================
+  // Behaviour
   
 /* FML ADDRESS GENERATOR */
 wire next_address;
@@ -324,7 +329,7 @@ always @(posedge clk) begin
 		fml_adr <= {fml_depth{1'b0}};
 	end else begin
 		if(next_address) begin
-			fml_adr <= baseaddress + ({3'b0, lcd_adr, 1'b0});			
+			fml_adr <= baseaddress + ({2'b0, lcd_adr, 1'b0});			
 		end
 	end
 end
@@ -344,25 +349,25 @@ assign dcb_adr = {fml_adr[fml_depth-1:3], dcb_index};
 /* CONTROLLER */
 reg [4:0] state;
 reg [4:0] next_state;
-
-parameter IDLE		= 4'd0;
-parameter TRYCACHE	= 4'd1;
-parameter CACHE1	= 4'd2;
-parameter CACHE2	= 4'd3;
-parameter CACHE3	= 4'd4;
-parameter CACHE4	= 4'd5;
-parameter CACHE5	= 4'd6;
-parameter CACHE6	= 4'd7;
-parameter CACHE7	= 4'd8;
-parameter CACHE8	= 4'd9;
-parameter FML1		= 4'd10;
-parameter FML2		= 4'd11;
-parameter FML3		= 4'd12;
-parameter FML4		= 4'd13;
-parameter FML5		= 4'd14;
-parameter FML6		= 4'd15;
-parameter FML7		= 4'd16;
-parameter FML8		= 4'd17;
+  localparam [4:0]
+    IDLE     = 5'd0,
+    TRYCACHE = 5'd1,
+    CACHE1   = 5'd2,
+    CACHE2   = 5'd3,
+    CACHE3   = 5'd4,
+    CACHE4   = 5'd5,
+    CACHE5   = 5'd6,
+    CACHE6   = 5'd7,
+    CACHE7   = 5'd8,
+    CACHE8   = 5'd9,
+    FML1     = 5'd10,
+    FML2     = 5'd11,
+    FML3     = 5'd12,
+    FML4     = 5'd13,
+    FML5     = 5'd14,
+    FML6     = 5'd15,
+    FML7     = 5'd16,
+    FML8     = 5'd17;
 
 always @(posedge clk) begin
 	if(rst)
@@ -495,8 +500,6 @@ always @(*) begin
 	endcase
 end  
   
-//================================================================================
-  // Behaviour
   // Provide counter for pal_dac stage
   always @(posedge clk)
   if (rst)
