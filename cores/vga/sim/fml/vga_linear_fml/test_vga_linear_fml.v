@@ -21,7 +21,7 @@
 //`timescale 1ns/10ps
 `timescale 1ns/1ps
 
-module test_vga_address;
+module test_vga_linear_fml;
 
   // Registers and nets
   reg       clk_50;
@@ -43,11 +43,6 @@ module test_vga_address;
   
   // CRTC configuration signals
     
-  reg [5:0]   cur_start;
-  reg [5:0]   cur_end;
-  reg [4:0]   vcursor;
-  reg [6:0]   hcursor;
-
   reg [6:0]   horiz_total;
   reg [6:0]   end_horiz;
   reg [6:0]   st_hor_retr;
@@ -55,9 +50,7 @@ module test_vga_address;
   reg [9:0]   vert_total;
   reg [9:0]   end_vert;
   reg [9:0]   st_ver_retr;
-  reg [3:0]   end_ver_retr;
-  
-  reg x_dotclockdiv2;
+  reg [3:0]   end_ver_retr;  
     
   // CSR slave interface for reading
   wire [17:1] csr_adr_o;
@@ -73,28 +66,17 @@ module test_vga_address;
   wire        fml_we = 1'b0;
   wire        fml_dw = 16'h1234;
   
-  wire [3:0]  attr_wm;
-  wire [3:0]  attr_tm;
-  wire [3:0]  fml_attr_tm;
+  wire [7:0]  fml_color;
   wire [7:0]  color;
   
-  wire        video_on_h_tm;
-  wire        fml_video_on_h_tm;
-  wire        video_on_h_wm;
   wire        video_on_h_gm;
+  wire        fml_video_on_h_gm;  
     
-  wire        horiz_sync_tm;
-  wire        fml_horiz_sync_tm;
-  wire        horiz_sync_wm;
   wire        horiz_sync_gm;
+  wire        fml_horiz_sync_gm;  
 
-  wire [16:1] csr_tm_adr_o;
-  wire        csr_tm_stb_o;
-  wire [16:1] fml_csr_tm_adr_o;
-  wire        fml_csr_tm_stb_o;
-  wire [17:1] csr_wm_adr_o;
-  wire        csr_wm_stb_o;
   wire [17:1] csr_gm_adr_o;
+  wire [17:1] fml_gm_adr_o;
   wire        csr_gm_stb_o;
   
   wire [9:0] hor_disp_end;
@@ -115,17 +97,17 @@ module test_vga_address;
   end
   
   always @(posedge clk_50)
-    fml_pipe <= rst ? 4'b0 : { fml_pipe[2:0], fml_csr_tm_stb_o };
+    fml_pipe <= rst ? 4'b0 : { fml_pipe[2:0], fml_gm_adr_o };
 
   always @(posedge clk_50) begin
 	  if(fml_pipe[1] & (fml_wcount == 0) & (fml_rcount == 0)) begin
 		  fml_ack <= 1'b1;
 		  if(fml_we) begin
-			  //$display("%t FML W addr %x data %x", $time, fml_csr_tm_adr_o, fml_dw);
+			  //$display("%t FML W addr %x data %x", $time, fml_gm_adr_o, fml_dw);
 			  fml_wcount <= 7;
 		  end else begin
 			  fml_dat_i = 16'hbeef;
-			  //$display("%t FML R addr %x data %x", $time, fml_csr_tm_adr_o, fml_dat_i);
+			  //$display("%t FML R addr %x data %x", $time, fml_gm_adr_o, fml_dat_i);
 			  fml_rcount <= 7;
 		  end
 	  end else
@@ -151,11 +133,11 @@ module test_vga_address;
   end
   
   always @(posedge clk_50)
-    csr_pipe <= rst ? 4'b0 : { csr_pipe[2:0], csr_tm_stb_o };
+    csr_pipe <= rst ? 4'b0 : { csr_pipe[2:0], csr_gm_adr_o };
 
   always @(posedge clk_50) begin
-    //if (csr_tm_stb_o)
-      //$display("%t CSR R addr %x", $time, csr_tm_adr_o);
+    //if (csr_gm_adr_o)
+      //$display("%t CSR R addr %x", $time, csr_gm_adr_o);
     if (csr_pipe[1] & (csr_rcount == 0))
          begin
            csr_ack <= 1'b1;
@@ -172,82 +154,6 @@ module test_vga_address;
   end
   
   // Module instantiations
-    vga_text_mode text_mode (
-    .clk (clk_50),
-    .rst (rst),
-    
-    //.enable (enable_sequencer),
-
-    // CSR slave interface for reading
-    .csr_adr_o (csr_tm_adr_o),
-    .csr_dat_i (csr_dat_i),
-    .csr_stb_o (csr_tm_stb_o),
-
-    .h_count      (h_count),
-    .v_count      (v_count),
-    .horiz_sync_i (horiz_sync_i),
-    .video_on_h_i (video_on_h_i),
-    .video_on_h_o (video_on_h_tm),
-
-    .cur_start  (cur_start),
-    .cur_end    (cur_end),
-    .vcursor    (vcursor),
-    .hcursor    (hcursor),
-
-    .attr         (attr_tm),
-    .horiz_sync_o (horiz_sync_tm)
-  );
-  
-  vga_text_mode_fml text_mode_fml (
-    .clk (clk_50),
-    .rst (rst),
-    
-    .enable (enable_sequencer),
-
-    // CSR slave interface for reading
-    .fml_adr_o (fml_csr_tm_adr_o),
-    .fml_dat_i (fml_dat_i),
-    .fml_stb_o (fml_csr_tm_stb_o),
-
-    .h_count      (h_count),
-    .v_count      (v_count),
-    .horiz_sync_i (horiz_sync_i),
-    .video_on_h_i (video_on_h_i),
-    .video_on_h_o (fml_video_on_h_tm),
-
-    .cur_start  (cur_start),
-    .cur_end    (cur_end),
-    .vcursor    (vcursor),
-    .hcursor    (hcursor),
-
-    .attr         (fml_attr_tm),
-    .horiz_sync_o (fml_horiz_sync_tm)
-  );
-    
-  vga_planar planar (
-    .clk (clk_50),
-    .rst (rst),
-    
-    //.enable (enable_sequencer),
-
-    // CSR slave interface for reading
-    .csr_adr_o (csr_wm_adr_o),
-    .csr_dat_i (csr_dat_i),
-    .csr_stb_o (csr_wm_stb_o),
-
-    .attr_plane_enable (4'hf),
-    .x_dotclockdiv2    (x_dotclockdiv2),
-
-    .h_count      (h_count),
-    .v_count      (v_count),
-    .horiz_sync_i (horiz_sync_i),
-    .video_on_h_i (video_on_h_i),
-    .video_on_h_o (video_on_h_wm),
-
-    .attr         (attr_wm),
-    .horiz_sync_o (horiz_sync_wm)
-  );
-
   vga_linear linear (
     .clk (clk_50),
     .rst (rst),
@@ -269,6 +175,28 @@ module test_vga_address;
     .horiz_sync_o (horiz_sync_gm)
   );
   
+  vga_linear_fml linear_fml (
+    .clk (clk_50),
+    .rst (rst),
+    
+    .enable (enable_sequencer),
+
+    // CSR slave interface for reading
+    .fml_adr_o (fml_gm_adr_o),
+    .fml_dat_i (fml_dat_i),
+    .fml_stb_o (fml_gm_stb_o),
+
+    .h_count      (h_count),
+    .v_count      (v_count),
+    .horiz_sync_i (horiz_sync_i),
+    .video_on_h_i (video_on_h_i),
+    .video_on_h_o (fml_video_on_h_gm),
+
+    .color        (fml_color),
+    .horiz_sync_o (fml_horiz_sync_gm)
+  );
+  
+    
   // Continuous assignments
   // assign hor_scan_end = { horiz_total[6:2] + 1'b1, horiz_total[1:0], 3'h7 };
   assign hor_scan_end = 10'd799;
@@ -351,11 +279,6 @@ always begin
       
   // CRTC configuration signals
     
-  cur_start    = 5'd0;   // reg [5:0]   cur_start,
-  cur_end      = 5'd0;   // reg [5:0]   cur_end,
-  vcursor      = 4'd0;   // reg [4:0]   vcursor,
-  hcursor      = 6'd0;   // reg [6:0]   hcursor,
-
   horiz_total  = 7'd639; // reg [6:0]   horiz_total,
   end_horiz    = 7'd750; // reg [6:0]   end_horiz,
   // st_hor_retr  = 7'd760; // reg [6:0]   st_hor_retr,
@@ -367,24 +290,22 @@ always begin
   st_ver_retr  = 10'd560; // reg [9:0]   st_ver_retr,
   end_ver_retr = 4'd10;  // reg [3:0]   end_ver_retr,
       
-  x_dotclockdiv2 = 1'b0;  // reg x_dotclockdiv2
-      
   //waitclock;
   
   // Total number of pixels to check
   repeat (1000) begin
     begin
-      if (attr_tm != fml_attr_tm) begin        
-        $display("Attributes attr_tm = %x and fml_attr_tm = %x did not match at (h_count = %d and v_count = %d) at time index %t" , attr_tm, fml_attr_tm, h_count, v_count, $time);        
+      if (color != fml_color) begin        
+        $display("Attributes color = %x and fml_color = %x did not match at (h_count = %d and v_count = %d) at time index %t" , color, fml_color, h_count, v_count, $time);        
       end
-      if (csr_tm_adr_o != fml_csr_tm_adr_o) begin
-        $display("Address csr_tm_adr_o = %x and fml_csr_tm_adr_o = %x did not match at (h_count = %d and v_count = %d) at time index %t" , csr_tm_adr_o, fml_csr_tm_adr_o, h_count, v_count, $time);        
+      if (csr_gm_adr_o != fml_gm_adr_o) begin
+        $display("Address csr_gm_adr_o = %x and fml_gm_adr_o = %x did not match at (h_count = %d and v_count = %d) at time index %t" , csr_gm_adr_o, fml_gm_adr_o, h_count, v_count, $time);        
       end
-      if (video_on_h_tm != fml_video_on_h_tm) begin
-        $display("Video_on_h video_on_h_tm = %x and fml_video_on_h_tm = %x did not match at (h_count = %d and v_count = %d) at time index %t" , csr_tm_adr_o, fml_video_on_h_tm, h_count, v_count, $time);
+      if (video_on_h_gm != fml_video_on_h_gm) begin
+        $display("Video_on_h video_on_h_gm = %x and fml_video_on_h_gm = %x did not match at (h_count = %d and v_count = %d) at time index %t" , csr_gm_adr_o, fml_video_on_h_gm, h_count, v_count, $time);
       end
-      if (horiz_sync_tm != fml_horiz_sync_tm) begin
-        $display("Horiz_sync horiz_sync_tm = %x and fml_horiz_sync_tm = %x did not match at (h_count = %d and v_count = %d) at time index %t" , horiz_sync_tm, fml_horiz_sync_tm, h_count, v_count, $time);
+      if (horiz_sync_gm != fml_horiz_sync_gm) begin
+        $display("Horiz_sync horiz_sync_gm = %x and fml_horiz_sync_gm = %x did not match at (h_count = %d and v_count = %d) at time index %t" , horiz_sync_gm, fml_horiz_sync_gm, h_count, v_count, $time);
       end
     end
     nextpixel;

@@ -41,9 +41,9 @@ module vga_sequencer_fml (
     input graphics_alpha,   // if not set: 640x400 text mode
 
     // CSR slave interface for reading
-    output [17:1] csr_adr_o,
-    input  [15:0] csr_dat_i,
-    output        csr_stb_o,
+    output [17:1] fml_adr_o,
+    input  [15:0] fml_dat_i,
+    output        fml_stb_o,
 
     // CRTC
     input [5:0] cur_start,
@@ -85,7 +85,7 @@ module vga_sequencer_fml (
   wire        csr_wm_stb_o;
   wire [17:1] csr_gm_adr_o;
   wire        csr_gm_stb_o;
-  wire        csr_stb_o_tmp;
+  wire        fml_stb_o_tmp;
   
   // Module instances
   vga_text_mode_fml text_mode (
@@ -96,7 +96,7 @@ module vga_sequencer_fml (
 
     // CSR slave interface for reading
     .fml_adr_o (csr_tm_adr_o),
-    .fml_dat_i (csr_dat_i),
+    .fml_dat_i (fml_dat_i),
     .fml_stb_o (csr_tm_stb_o),
 
     .h_count      (h_count),
@@ -121,9 +121,9 @@ module vga_sequencer_fml (
     .enable (enable_sequencer),
 
     // CSR slave interface for reading
-    .csr_adr_o (csr_wm_adr_o),
-    .csr_dat_i (csr_dat_i),
-    .csr_stb_o (csr_wm_stb_o),
+    .fml_adr_o (csr_wm_adr_o),
+    .fml_dat_i (fml_dat_i),
+    .fml_stb_o (csr_wm_stb_o),
 
     .attr_plane_enable (4'hf),
     .x_dotclockdiv2    (x_dotclockdiv2),
@@ -145,9 +145,9 @@ module vga_sequencer_fml (
     .enable (enable_sequencer),
 
     // CSR slave interface for reading
-    .csr_adr_o (csr_gm_adr_o),
-    .csr_dat_i (csr_dat_i),
-    .csr_stb_o (csr_gm_stb_o),
+    .fml_adr_o (csr_gm_adr_o),
+    .fml_dat_i (fml_dat_i),
+    .fml_stb_o (csr_gm_stb_o),
 
     .h_count      (h_count),
     .v_count      (v_count),
@@ -162,12 +162,12 @@ module vga_sequencer_fml (
   // Continuous assignments
   assign video_on_h   = video_on_h_p[1];
   
-  assign csr_adr_o = graphics_alpha ?
+  assign fml_adr_o = graphics_alpha ?
     (shift_reg1 ? csr_gm_adr_o : csr_wm_adr_o) : { 1'b0, csr_tm_adr_o };
 
-  assign csr_stb_o_tmp = graphics_alpha ?
+  assign fml_stb_o_tmp = graphics_alpha ?
     (shift_reg1 ? csr_gm_stb_o : csr_wm_stb_o) : csr_tm_stb_o;
-  assign csr_stb_o     = csr_stb_o_tmp & (video_on_h_i | video_on_h) & video_on_v;
+  assign fml_stb_o     = fml_stb_o_tmp & (video_on_h_i | video_on_h) & video_on_v;
   
   // Video mode sequencer horiz_sync that will be passed to next stage
   assign horiz_sync_seq_o = graphics_alpha ?

@@ -25,9 +25,9 @@ module vga_planar_fml (
     input enable,
 
     // CSR slave interface for reading
-    output [17:1] csr_adr_o,
-    input  [15:0] csr_dat_i,
-    output        csr_stb_o,
+    output [17:1] fml_adr_o,
+    input  [15:0] fml_dat_i,
+    output        fml_stb_o,
 
     // Controller registers
     input [3:0] attr_plane_enable,
@@ -69,7 +69,7 @@ module vga_planar_fml (
   reg [7:0] pipe;
 
   // Continous assignments
-  assign csr_adr_o = { plane_addr, word_offset };
+  assign fml_adr_o = { plane_addr, word_offset };
   assign bit_mask  = { bit_mask1, bit_mask0 };
 
   assign bit0 = |(bit_mask & plane0);
@@ -79,7 +79,7 @@ module vga_planar_fml (
 
   assign video_on_h_o = video_on_h[9];
   assign horiz_sync_o = horiz_sync[9];
-  assign csr_stb_o    = |pipe[4:1];
+  assign fml_stb_o    = |pipe[4:1];
   assign v_count0     = x_dotclockdiv2 ? 1'b0 : v_count[0];
 
   // Behaviour
@@ -158,9 +158,9 @@ module vga_planar_fml (
       if (enable)
         begin
           // Load plane0 when pipe == 4
-          plane0_tmp <= pipe[4] ? csr_dat_i : plane0_tmp;
-          plane1_tmp <= pipe[5] ? csr_dat_i : plane1_tmp;
-          plane2_tmp <= pipe[6] ? csr_dat_i : plane2_tmp;    
+          plane0_tmp <= pipe[4] ? fml_dat_i : plane0_tmp;
+          plane1_tmp <= pipe[5] ? fml_dat_i : plane1_tmp;
+          plane2_tmp <= pipe[6] ? fml_dat_i : plane2_tmp;    
         end
 
   // Plane data
@@ -178,7 +178,7 @@ module vga_planar_fml (
           plane0 <= pipe[7] ? plane0_tmp : plane0;
           plane1 <= pipe[7] ? plane1_tmp : plane1;
           plane2 <= pipe[7] ? plane2_tmp : plane2;
-          plane3 <= pipe[7] ? csr_dat_i : plane3;
+          plane3 <= pipe[7] ? fml_dat_i : plane3;
         end
 
   // Bit masks
