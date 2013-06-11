@@ -25,9 +25,9 @@ module vga_linear_fml (
     input enable,
 
     // CSR slave interface for reading
-    output [17:1] csr_adr_o,
-    input  [15:0] csr_dat_i,
-    output        csr_stb_o,
+    output [17:1] fml_adr_o,
+    input  [15:0] fml_dat_i,
+    output        fml_stb_o,
 
     input [9:0] h_count,
     input [9:0] v_count,
@@ -46,18 +46,33 @@ module vga_linear_fml (
   reg [ 1:0] plane_addr;
   reg [ 1:0] plane_addr0;
   reg [ 7:0] color_l;
-
+  
+  reg  [ 15:0] fml1_dat;
+  reg  [ 15:0] fml2_dat;
+  reg  [ 15:0] fml3_dat;
+  reg  [ 15:0] fml4_dat;
+  reg  [ 15:0] fml5_dat;
+  reg  [ 15:0] fml6_dat;
+  reg  [ 15:0] fml7_dat;
+  
   reg [4:0] video_on_h;
   reg [4:0] horiz_sync;
   reg [5:0] pipe;
+  //reg [61:0] pipe;
   reg [15:0] word_color;
 
   // Continous assignments
-  assign csr_adr_o = { plane_addr, word_offset, 1'b0 };
-  assign csr_stb_o = pipe[1];
-
-  assign color = pipe[4] ? csr_dat_i[7:0] : color_l;
-
+  assign fml_adr_o = { plane_addr, word_offset, 1'b0 };
+  assign fml_stb_o = pipe[1];
+  
+  assign color = pipe[4] ? fml_dat_i[7:0] : color_l;
+  /*
+  assign color = ( pipe[4]  | pipe[12] | pipe[20] | pipe[28] |
+                   pipe[36] | pipe[44] | pipe[52] | pipe[60] ) ? fml_dat_i[7:0]
+               : color_l;
+  
+  assign color = color_l;
+  */
   assign video_on_h_o = video_on_h[4];
   assign horiz_sync_o = horiz_sync[4];
 
@@ -73,7 +88,42 @@ module vga_linear_fml (
         begin
           pipe <= { pipe[4:0], ~h_count[0] };
         end
+  /*      
+  // Behaviour
+  // FML 8x16 pipeline count
+  always @(posedge clk)
+    if (rst)
+      begin
+        pipe <= 62'b0;    
+      end
+    else
+      if (enable)
+        begin
+          pipe <= { pipe[60:0], ~h_count[0] };
+        end
         
+  // Load FML 8x16 burst
+  always @(posedge clk)
+    if (enable)
+      begin          
+        if (pipe[1])
+          fml0_dat_i <= fml_dat_i[15:0];
+        if (pipe[2])
+          fml1_dat_i <= fml_dat_i[15:0];
+        if (pipe[3])
+          fml2_dat_i <= fml_dat_i[15:0];
+        if (pipe[4])
+          fml3_dat_i <= fml_dat_i[15:0];
+        if (pipe[5])
+          fml4_dat_i <= fml_dat_i[15:0];
+        if (pipe[6])
+          fml5_dat_i <= fml_dat_i[15:0];
+        if (pipe[7])
+          fml6_dat_i <= fml_dat_i[15:0];
+        if (pipe[8])
+          fml7_dat_i <= fml_dat_i[15:0];
+      end
+   */     
   // video_on_h
   always @(posedge clk)
     if (rst)
@@ -130,7 +180,41 @@ module vga_linear_fml (
     else
       if (enable)
         begin
-          color_l <= (pipe[4] ? csr_dat_i[7:0] : color_l);
+          color_l <= (pipe[4] ? fml_dat_i[7:0] : color_l);
         end
-        
+ /*
+ // color_l
+  always @(posedge clk)
+    if (rst)
+      begin
+        color_l <= 8'h0;
+      end
+    else
+      if (enable)
+        begin
+          if (pipe[3])
+            color_l <= fml0_dat_i[7:0];
+          else
+          if (pipe[11])
+            color_l <= fml1_dat_i[7:0];
+          else
+          if (pipe[19])
+            color_l <= fml2_dat_i[7:0];
+          else
+          if (pipe[27])
+            color_l <= fml3_dat_i[7:0];
+          else
+          if (pipe[35])
+            color_l <= fml4_dat_i[7:0];
+          else
+          if (pipe[43])
+            color_l <= fml5_dat_i[7:0];
+          else
+          if (pipe[51])
+            color_l <= fml6_dat_i[7:0];
+          else
+          if (pipe[59])
+            color_l <= fml7_dat_i[7:0];           
+        end
+   */     
 endmodule

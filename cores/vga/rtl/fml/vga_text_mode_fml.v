@@ -137,21 +137,21 @@ module vga_text_mode_fml (
   reg  [ 6:0] ver_addr;
   wire [10:0] vga_addr;
 
-  reg  [ 15:0] fml0_dat_i;
-  reg  [ 15:0] fml1_dat_i;
-  reg  [ 15:0] fml2_dat_i;
-  reg  [ 15:0] fml3_dat_i;
-  reg  [ 15:0] fml4_dat_i;
-  reg  [ 15:0] fml5_dat_i;
-  reg  [ 15:0] fml6_dat_i;
-  reg  [ 15:0] fml7_dat_i;
+  reg  [ 15:0] fml0_dat;
+  reg  [ 15:0] fml1_dat;
+  reg  [ 15:0] fml2_dat;
+  reg  [ 15:0] fml3_dat;
+  reg  [ 15:0] fml4_dat;
+  reg  [ 15:0] fml5_dat;
+  reg  [ 15:0] fml6_dat;
+  reg  [ 15:0] fml7_dat;  
   
   wire [11:0] char_addr;
   wire [ 7:0] char_data_out;
   reg  [ 7:0] attr_data_out;
   reg  [ 7:0] char_addr_in;
   
-  reg  [63:0] pipe;
+  reg  [66:0] pipe;  // Original value 63
   // reg  [63:0] fml_pipe;
   wire       load_shift;
 
@@ -187,7 +187,7 @@ module vga_text_mode_fml (
                         pipe[39] | pipe[47] | pipe[55] | pipe[63];
   assign video_on_h_o = video_on_h[9];
   assign horiz_sync_o = horiz_sync[9];
-  assign fml_stb_o    = pipe[2]; 
+  assign fml_stb_o    = pipe[2]; // 2 Original value
 
   assign fg_or_bg = vga_shift[7] ^ cursor_on;
 
@@ -241,92 +241,84 @@ module vga_text_mode_fml (
   always @(posedge clk)
     if (rst)
       begin
-        pipe <= 64'b0;
+        pipe <= 67'b0;  // Original value 64
       end
     else
       if (enable)
         begin
-          pipe <= { pipe[62:0], (h_count[5:0]==6'b0) };
+          //pipe <= { pipe[62:0], (h_count[5:0]==6'b0) }; // Original
+          pipe <= { pipe[65:0], (h_count[5:0]==6'b0) };
         end
         
   // Load FML 8x16 burst
   always @(posedge clk)
     if (enable)
-      begin          
-        if (pipe[2])
-          fml0_dat_i <= fml_dat_i[15:0];
-        if (pipe[3])
-          fml1_dat_i <= fml_dat_i[15:0];
-        if (pipe[4])
-          fml2_dat_i <= fml_dat_i[15:0];
-        if (pipe[5])
-          fml3_dat_i <= fml_dat_i[15:0];
-        if (pipe[6])
-          fml4_dat_i <= fml_dat_i[15:0];
-        if (pipe[7])
-          fml5_dat_i <= fml_dat_i[15:0];
-        if (pipe[8])
-          fml6_dat_i <= fml_dat_i[15:0];
-        if (pipe[9])
-          fml7_dat_i <= fml_dat_i[15:0];
+      begin
+        fml1_dat <= pipe[6]  ? fml_dat_i[15:0] : fml1_dat;
+        fml2_dat <= pipe[7]  ? fml_dat_i[15:0] : fml2_dat;
+        fml3_dat <= pipe[8]  ? fml_dat_i[15:0] : fml3_dat;
+        fml4_dat <= pipe[9]  ? fml_dat_i[15:0] : fml4_dat;
+        fml5_dat <= pipe[10] ? fml_dat_i[15:0] : fml5_dat;
+        fml6_dat <= pipe[11] ? fml_dat_i[15:0] : fml6_dat;
+        fml7_dat <= pipe[12] ? fml_dat_i[15:0] : fml7_dat;
       end  
   
  // attr_data_out
   always @(posedge clk)
     if (enable)
-     begin
-       if (pipe[5])
-         attr_data_out <= fml0_dat_i[15:8];
-       else
-       if (pipe[13])
-         attr_data_out <= fml1_dat_i[15:8];
-       else
-       if (pipe[21])
-         attr_data_out <= fml2_dat_i[15:8];
-       else
-       if (pipe[29])
-         attr_data_out <= fml3_dat_i[15:8];
-       else
-       if (pipe[37])
-         attr_data_out <= fml4_dat_i[15:8];
-       else
-       if (pipe[45])
-         attr_data_out <= fml5_dat_i[15:8];
-       else
-       if (pipe[53])
-         attr_data_out <= fml6_dat_i[15:8];
-       else
-       if (pipe[61])
-         attr_data_out <= fml7_dat_i[15:8];
-     end
+      begin
+        if (pipe[5])
+          attr_data_out <= fml_dat_i[15:8];
+        else
+        if (pipe[13])
+          attr_data_out <= fml1_dat[15:8];
+        else
+        if (pipe[21])
+          attr_data_out <= fml2_dat[15:8];
+        else
+        if (pipe[29])
+          attr_data_out <= fml3_dat[15:8];
+        else
+        if (pipe[37])
+          attr_data_out <= fml4_dat[15:8];
+        else
+        if (pipe[45])
+          attr_data_out <= fml5_dat[15:8];
+        else
+        if (pipe[53])
+          attr_data_out <= fml6_dat[15:8];
+        else
+        if (pipe[61])
+          attr_data_out <= fml7_dat[15:8];            
+      end
 
   // char_addr_in
   always @(posedge clk)
-    if (enable)
+    if (enable)      
       begin
         if (pipe[5])
-          char_addr_in <= fml0_dat_i[7:0];
+          char_addr_in <= fml_dat_i[7:0];
         else
         if (pipe[13])
-          char_addr_in <= fml1_dat_i[7:0];
+          char_addr_in <= fml1_dat[7:0];
         else
         if (pipe[21])
-          char_addr_in <= fml2_dat_i[7:0];
+          char_addr_in <= fml2_dat[7:0];
         else
         if (pipe[29])
-          char_addr_in <= fml3_dat_i[7:0];
+          char_addr_in <= fml3_dat[7:0];
         else
         if (pipe[37])
-          char_addr_in <= fml4_dat_i[7:0];
+          char_addr_in <= fml4_dat[7:0];
         else
         if (pipe[45])
-          char_addr_in <= fml5_dat_i[7:0];
+          char_addr_in <= fml5_dat[7:0];
         else
         if (pipe[53])
-          char_addr_in <= fml6_dat_i[7:0];
+          char_addr_in <= fml6_dat[7:0];
         else
         if (pipe[61])
-          char_addr_in <= fml7_dat_i[7:0];        
+          char_addr_in <= fml7_dat[7:0];                 
       end   
 
   // video_on_h

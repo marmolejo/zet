@@ -120,8 +120,8 @@ module vga_lcd_fml #(
   // Pixel buffer control
   reg read_fifo;
   wire fill_fifo;
-  // Number of words stored in the FIFO, 0-31 (32 possible values)
-  wire [4:0] fifo_level;
+  // Number of words stored in the FIFO, 0-63 (64 possible values)
+  wire [6:0] fifo_level;
     
   // Each stage is controlled by enable signals
   wire en_crtc;
@@ -199,9 +199,9 @@ module vga_lcd_fml #(
     .graphics_alpha (graphics_alpha),   // if not set: 640x400 text mode
 
     // CSR slave interface for reading
-    .csr_adr_o (lcd_adr),
-    .csr_dat_i (fifo_source_cache ? dcb_dat : fml_di),
-    .csr_stb_o (lcd_stb),
+    .fml_adr_o (lcd_adr),
+    .fml_dat_i (fifo_source_cache ? dcb_dat : fml_di),
+    .fml_stb_o (lcd_stb),
 
     // CRTC
     .cur_start (cur_start),
@@ -223,7 +223,7 @@ module vga_lcd_fml #(
   
   // video-data buffer (temporary store data read from video memory)
   // We want to store at least one scan line (800 pixels x 12 bits per pixel) in the buffer
-  vga_fifo #(4, 12) data_fifo (
+  vga_fifo #(6, 12) data_fifo (
     .clk    ( clk                ),
 	.aclr   ( 1'b1               ),
 	.sclr   ( rst                ),
@@ -306,8 +306,8 @@ module vga_lcd_fml #(
   assign fb_video_on_v_seq_o = fb_dat_o [8];
   assign fb_character_seq_o = fb_dat_o [7:0];
   
-  // Wait until the fifo level is 32 - 8 = 24 (enough room for a 8 pixel burst)
-  assign can_burst = fifo_level <= 5'd24;
+  // Wait until the fifo level is 128 - 96 = 32 (enough room for a 11 pixel burst)
+  assign can_burst = fifo_level <= 7'd32;
   
   // These signals enable and control when the next crtc/sequencer cycle should occur
   assign en_crtc = next_crtc_seq_cyc;
@@ -351,29 +351,30 @@ reg [4:0] state;
 reg [4:0] next_state;
   localparam [4:0]
     IDLE     = 5'd0,
-    TRYCACHE = 5'd1,
-    CACHE1   = 5'd2,
-    CACHE2   = 5'd3,
-    CACHE3   = 5'd4,
-    CACHE4   = 5'd5,
-    CACHE5   = 5'd6,
-    CACHE6   = 5'd7,
-    CACHE7   = 5'd8,
-    CACHE8   = 5'd9,
-    FML1     = 5'd10,
-    FML2     = 5'd11,
-    FML3     = 5'd12,
-    FML4     = 5'd13,
-    FML5     = 5'd14,
-    FML6     = 5'd15,
-    FML7     = 5'd16,
-    FML8     = 5'd17;
+    DELAY    = 5'b1,    
+    TRYCACHE = 5'd2,
+    CACHE1   = 5'd3,
+    CACHE2   = 5'd4,
+    CACHE3   = 5'd5,
+    CACHE4   = 5'd6,
+    CACHE5   = 5'd7,
+    CACHE6   = 5'd8,
+    CACHE7   = 5'd9,
+    CACHE8   = 5'd10,
+    FML1     = 5'd11,
+    FML2     = 5'd12,
+    FML3     = 5'd13,
+    FML4     = 5'd14,
+    FML5     = 5'd15,
+    FML6     = 5'd16,
+    FML7     = 5'd17,
+    FML8     = 5'd18;
 
 always @(posedge clk) begin
 	if(rst)
-		state <= IDLE;
+	    state <= IDLE; 
 	else
-		state <= next_state;
+	    state <= next_state;
 end
 
 reg next_burst;
@@ -393,17 +394,24 @@ always @(*) begin
 	
 	case(state)
 		IDLE: begin
-			if (lcd_stb) begin
-			    /* LCD is requesting another fml burst ! */
-				next_burst = 1'b1;
-				next_state = TRYCACHE;  
-			end else if(can_burst) begin
-			           next_crtc_seq_cyc = 1'b1;
-			         end
+		    if (can_burst) begin
+		        if (lcd_stb) begin
+		            /* LCD is requesting another fml burst ! */
+				    next_burst = 1'b1;  // This also calculates final address
+				    next_crtc_seq_cyc = 1'b1;
+				    next_state = DELAY;
+		        end else
+		            next_crtc_seq_cyc = 1'b1;
+		    end
 		end
+		DELAY: begin
+		    next_crtc_seq_cyc = 1'b1;
+		    next_state = TRYCACHE;
+		end		
 		/* Try to fetch from L2 first */
 		TRYCACHE: begin
 			dcb_stb = 1'b1;
+			next_crtc_seq_cyc = 1'b1;			
 			next_state = CACHE1;
 		end
 		CACHE1: begin
@@ -508,11 +516,11 @@ end
     end
   else
     begin
-      if (pixel_clk_counter == 2'b01)  // Toggle read_fifo
+      if (pixel_clk_counter == 2'd01)  // Toggle read_fifo
 		  read_fifo <= 1'b1;
 		else read_fifo <= 1'b0;
 		
-		if (pixel_clk_counter == 2'b01)  // Toggle next_pal_dac_cyc
+		if (pixel_clk_counter == 2'd02)  // Toggle next_pal_dac_cyc
 		  next_pal_dac_cyc <=1'b1;
 		else next_pal_dac_cyc <= 1'b0;
 		

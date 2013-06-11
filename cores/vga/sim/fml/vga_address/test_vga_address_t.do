@@ -2,14 +2,14 @@ quit -sim
 
 echo "Compiling verilog modules..."
 
-vlog -work work -nocovercells Z:/Documents/sirchuckalot/zet/cores/vga/sim/test_vga_address.v
-vlog -work work -nocovercells Z:/Documents/sirchuckalot/zet/cores/vga/rtl/vga_planar.v
-vlog -work work -nocovercells Z:/Documents/sirchuckalot/zet/cores/vga/rtl/vga_text_mode.v
-vlog -work work -nocovercells Z:/Documents/sirchuckalot/zet/cores/vga/rtl/vga_linear.v
-vlog -work work -nocovercells Z:/Documents/sirchuckalot/zet/cores/vga/rtl/vga_char_rom.v
-vlog -work work -nocovercells Z:/Documents/sirchuckalot/zet/cores/vga/rtl/vga_fml_text_mode.v
+vlog -work work -nocovercells ./test_vga_address.v
+vlog -work work -nocovercells ../../../rtl/vga_planar.v
+vlog -work work -nocovercells ../../../rtl/vga_text_mode.v
+vlog -work work -nocovercells ../../../rtl/vga_linear.v
+vlog -work work -nocovercells ../../../rtl/vga_char_rom.v
+vlog -work work -nocovercells ../../../rtl/fml/vga_text_mode_fml.v
 
-vsim work.test_vga_address work.vga_char_rom work.vga_fml_text_mode work.vga_linear work.vga_planar work.vga_text_mode
+vsim work.test_vga_address work.vga_char_rom work.vga_text_mode_fml work.vga_linear work.vga_planar work.vga_text_mode
 
 add wave -label clk           -hex           {sim:/test_vga_address/clk_50 } 
 add wave -label rst           -hex           {sim:/test_vga_address/rst } 
@@ -39,23 +39,23 @@ add wave -label fml_horiz_sync_tm -hex           {sim:/test_vga_address/fml_hori
 
 add wave -divider "FML Text Mode Registers"
 
-add wave -label clk -hex -unsigned {sim:/test_vga_address/fml_text_mode/clk }
-add wave -label pipe -hex -unsigned {sim:/test_vga_address/fml_text_mode/pipe }
-add wave -label fml_dat_i -hex -unsigned {sim:/test_vga_address/fml_text_mode/fml_dat_i }
-add wave -label fml0_dat_i -hex -unsigned {sim:/test_vga_address/fml_text_mode/fml0_dat_i }
-add wave -label fml1_dat_i -hex -unsigned {sim:/test_vga_address/fml_text_mode/fml1_dat_i }
-add wave -label fml2_dat_i -hex -unsigned {sim:/test_vga_address/fml_text_mode/fml2_dat_i }
-add wave -label fml3_dat_i -hex -unsigned {sim:/test_vga_address/fml_text_mode/fml3_dat_i }
-add wave -label fml4_dat_i -hex -unsigned {sim:/test_vga_address/fml_text_mode/fml4_dat_i }
-add wave -label fml5_dat_i -hex -unsigned {sim:/test_vga_address/fml_text_mode/fml5_dat_i }
-add wave -label fml6_dat_i -hex -unsigned {sim:/test_vga_address/fml_text_mode/fml6_dat_i }
-add wave -label fml7_dat_i -hex -unsigned {sim:/test_vga_address/fml_text_mode/fml7_dat_i }
+add wave -label clk -hex -unsigned {sim:/test_vga_address/text_mode_fml/clk }
+add wave -label pipe -hex -unsigned {sim:/test_vga_address/text_mode_fml/pipe }
+add wave -label fml_dat_i -hex -unsigned {sim:/test_vga_address/text_mode_fml/fml_dat_i }
+add wave -label fml0_dat -hex -unsigned {sim:/test_vga_address/text_mode_fml/fml0_dat }
+add wave -label fml1_dat -hex -unsigned {sim:/test_vga_address/text_mode_fml/fml1_dat }
+add wave -label fml2_dat -hex -unsigned {sim:/test_vga_address/text_mode_fml/fml2_dat }
+add wave -label fml3_dat -hex -unsigned {sim:/test_vga_address/text_mode_fml/fml3_dat }
+add wave -label fml4_dat -hex -unsigned {sim:/test_vga_address/text_mode_fml/fml4_dat }
+add wave -label fml5_dat -hex -unsigned {sim:/test_vga_address/text_mode_fml/fml5_dat }
+add wave -label fml6_dat -hex -unsigned {sim:/test_vga_address/text_mode_fml/fml6_dat }
+add wave -label fml7_dat -hex -unsigned {sim:/test_vga_address/text_mode_fml/fml7_dat }
 
-add wave -label attr_data_out -hex -unsigned {sim:/test_vga_address/fml_text_mode/attr_data_out }
-add wave -label char_addr_in -hex -unsigned {sim:/test_vga_address/fml_text_mode/char_addr_in }
+add wave -label attr_data_out -hex -unsigned {sim:/test_vga_address/text_mode_fml/attr_data_out }
+add wave -label char_addr_in -hex -unsigned {sim:/test_vga_address/text_mode_fml/char_addr_in }
 
-add wave -label load_shift -hex -unsigned {sim:/test_vga_address/fml_text_mode/load_shift }
-add wave -label vga_shift -hex -unsigned {sim:/test_vga_address/fml_text_mode/vga_shift }
+add wave -label load_shift -hex -unsigned {sim:/test_vga_address/text_mode_fml/load_shift }
+add wave -label vga_shift -hex -unsigned {sim:/test_vga_address/text_mode_fml/vga_shift }
 
 add wave -divider "Text Mode Registers"
 
