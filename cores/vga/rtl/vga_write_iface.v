@@ -253,7 +253,7 @@ module vga_write_iface (
   assign offset = memory_mapping1 ? { 1'b0, wbs_adr_i[14:1] }
                                   : wbs_adr_i[15:1];
 
-  assign wbm_adr_o = { plane, offset };
+  assign wbm_adr_o = { offset, plane };
   assign wbs_ack_o = (plane==2'b11 && cont);
   assign wbm_dat_o = plane[1] ? (plane[0] ? final_wr3 : final_wr2)
                               : (plane[0] ? final_wr1 : final_wr0);

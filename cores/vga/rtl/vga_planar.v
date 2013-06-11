@@ -66,7 +66,7 @@ module vga_planar (
   reg [7:0] pipe;
 
   // Continous assignments
-  assign csr_adr_o = { plane_addr, word_offset };
+  assign csr_adr_o = { word_offset, plane_addr };
   assign bit_mask  = { bit_mask1, bit_mask0 };
 
   assign bit0 = |(bit_mask & plane0);

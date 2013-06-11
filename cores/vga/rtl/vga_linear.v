@@ -50,7 +50,7 @@ module vga_linear (
   reg [15:0] word_color;
 
   // Continous assignments
-  assign csr_adr_o = { plane_addr, word_offset, 1'b0 };
+  assign csr_adr_o = { word_offset, plane_addr, 1'b0 };
   assign csr_stb_o = pipe[1];
 
   assign color = pipe[4] ? csr_dat_i[7:0] : color_l;

@@ -62,7 +62,7 @@ module vga_linear_fml (
   reg [15:0] word_color;
 
   // Continous assignments
-  assign fml_adr_o = { plane_addr, word_offset, 1'b0 };
+  assign fml_adr_o = { word_offset, plane_addr, 1'b0 };
   assign fml_stb_o = pipe[1];
   
   assign color = pipe[4] ? fml_dat_i[7:0] : color_l;
