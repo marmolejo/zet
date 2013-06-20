@@ -67,4 +67,18 @@ add wave -label char_addr_in -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/t
 add wave -label load_shift -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/load_shift }
 add wave -label vga_shift -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/vga_shift }
 
+add wave -divider "FML Linear Mode Registers"
+
+add wave -label pipe -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/linear/pipe }
+add wave -label fml_dat_i -hex {sim:/tb_vga_lcd_fml/dut/sequencer/linear/fml_dat_i }
+add wave -label fml1_dat -hex  {sim:/tb_vga_lcd_fml/dut/sequencer/linear/fml1_dat }
+add wave -label fml2_dat -hex  {sim:/tb_vga_lcd_fml/dut/sequencer/linear/fml2_dat }
+add wave -label fml3_dat -hex  {sim:/tb_vga_lcd_fml/dut/sequencer/linear/fml3_dat }
+add wave -label fml4_dat -hex  {sim:/tb_vga_lcd_fml/dut/sequencer/linear/fml4_dat }
+add wave -label fml5_dat -hex  {sim:/tb_vga_lcd_fml/dut/sequencer/linear/fml5_dat }
+add wave -label fml6_dat -hex  {sim:/tb_vga_lcd_fml/dut/sequencer/linear/fml6_dat }
+add wave -label fml7_dat -hex  {sim:/tb_vga_lcd_fml/dut/sequencer/linear/fml7_dat }
+
+add wave -label color -hex {sim:/tb_vga_lcd_fml/dut/sequencer/linear/color }
+
 run 500us

@@ -183,8 +183,11 @@ module vga_text_mode_fml (
   // Continuous assignments
   assign vga_addr     = { 4'b0, hor_addr } + { ver_addr, 4'b0 };
   assign char_addr    = { char_addr_in, v_count[3:0] };
+  /*
   assign load_shift   = pipe[7]  | pipe[15] | pipe[23] | pipe[31] |
                         pipe[39] | pipe[47] | pipe[55] | pipe[63];
+  */
+  assign load_shift   = pipe[7]  | pipe[15];
   assign video_on_h_o = video_on_h[9];
   assign horiz_sync_o = horiz_sync[9];
   assign fml_stb_o    = pipe[2]; // 2 Original value
@@ -218,7 +221,8 @@ module vga_text_mode_fml (
 
           // h_count[2:0] == 011
           // vga_addr = row_addr * 80 + hor_addr
-          fml_adr_o <= { 5'h0, vga_addr };
+          //fml_adr_o <= { 5'h0, vga_addr };
+          fml_adr_o <= { 3'h0, vga_addr, 2'b00 };
         end
 
   // cursor
@@ -247,7 +251,8 @@ module vga_text_mode_fml (
       if (enable)
         begin
           //pipe <= { pipe[62:0], (h_count[5:0]==6'b0) }; // Original
-          pipe <= { pipe[65:0], (h_count[5:0]==6'b0) };
+          //pipe <= { pipe[65:0], (h_count[5:0]==6'b0) };
+          pipe <= { pipe[65:0], (h_count[3:0]==3'b0) };
         end
         
   // Load FML 8x16 burst
@@ -270,26 +275,27 @@ module vga_text_mode_fml (
         if (pipe[5])
           attr_data_out <= fml_dat_i[15:8];
         else
+        //if (pipe[13])
+        //  attr_data_out <= fml1_dat[15:8];
+        //else
+        //if (pipe[21])
+        //  attr_data_out <= fml2_dat[15:8];
+        //else
+        //if (pipe[29])
+        //  attr_data_out <= fml3_dat[15:8];
+        //else
+        //if (pipe[37])
         if (pipe[13])
-          attr_data_out <= fml1_dat[15:8];
-        else
-        if (pipe[21])
-          attr_data_out <= fml2_dat[15:8];
-        else
-        if (pipe[29])
-          attr_data_out <= fml3_dat[15:8];
-        else
-        if (pipe[37])
           attr_data_out <= fml4_dat[15:8];
-        else
-        if (pipe[45])
-          attr_data_out <= fml5_dat[15:8];
-        else
-        if (pipe[53])
-          attr_data_out <= fml6_dat[15:8];
-        else
-        if (pipe[61])
-          attr_data_out <= fml7_dat[15:8];            
+        //else
+        //if (pipe[45])
+        //  attr_data_out <= fml5_dat[15:8];
+        //else
+        //if (pipe[53])
+        //  attr_data_out <= fml6_dat[15:8];
+        //else
+        //if (pipe[61])
+        //  attr_data_out <= fml7_dat[15:8];            
       end
 
   // char_addr_in
@@ -299,26 +305,27 @@ module vga_text_mode_fml (
         if (pipe[5])
           char_addr_in <= fml_dat_i[7:0];
         else
-        if (pipe[13])
-          char_addr_in <= fml1_dat[7:0];
-        else
-        if (pipe[21])
-          char_addr_in <= fml2_dat[7:0];
-        else
-        if (pipe[29])
-          char_addr_in <= fml3_dat[7:0];
-        else
-        if (pipe[37])
+        //if (pipe[13])
+        //  char_addr_in <= fml1_dat[7:0];
+        //else
+        //if (pipe[21])
+        //  char_addr_in <= fml2_dat[7:0];
+        //else
+        //if (pipe[29])
+        //  char_addr_in <= fml3_dat[7:0];
+        //else
+        //if (pipe[37])
+        if (pipe[13])        
           char_addr_in <= fml4_dat[7:0];
-        else
-        if (pipe[45])
-          char_addr_in <= fml5_dat[7:0];
-        else
-        if (pipe[53])
-          char_addr_in <= fml6_dat[7:0];
-        else
-        if (pipe[61])
-          char_addr_in <= fml7_dat[7:0];                 
+        //else
+        //if (pipe[45])
+        //  char_addr_in <= fml5_dat[7:0];
+        //else
+        //if (pipe[53])
+        //  char_addr_in <= fml6_dat[7:0];
+        //else
+        //if (pipe[61])
+        //  char_addr_in <= fml7_dat[7:0];                 
       end   
 
   // video_on_h

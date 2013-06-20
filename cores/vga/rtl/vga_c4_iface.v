@@ -48,7 +48,7 @@ module vga_c4_iface (
 
   // Continuous assignments
   assign wbs_ack_o = (plane_low & wbm_ack_i);
-  assign wbm_adr_o = { wbs_adr_i[15:2], wbs_adr_i[1], plane_low, 1'b0 };
+  assign wbm_adr_o = { 1'b0, wbs_adr_i[15:2], wbs_adr_i[1], plane_low };
   assign wbs_dat_o = { wbm_dat_i[7:0], dat_low };
   assign wbm_sel_o = 2'b01;
   assign wbm_dat_o = { 8'h0, plane_low ? wbs_dat_i[15:8] : wbs_dat_i[7:0] };

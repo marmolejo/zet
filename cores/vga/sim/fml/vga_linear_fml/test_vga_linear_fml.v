@@ -79,6 +79,8 @@ module test_vga_linear_fml;
   wire [17:1] fml_gm_adr_o;
   wire        csr_gm_stb_o;
   
+  wire        fml_gm_stb_o;
+  
   wire [9:0] hor_disp_end;
   wire [9:0] hor_scan_end;
   wire [9:0] ver_disp_end;
@@ -97,7 +99,7 @@ module test_vga_linear_fml;
   end
   
   always @(posedge clk_50)
-    fml_pipe <= rst ? 4'b0 : { fml_pipe[2:0], fml_gm_adr_o };
+    fml_pipe <= rst ? 4'b0 : { fml_pipe[2:0], fml_gm_stb_o };
 
   always @(posedge clk_50) begin
 	  if(fml_pipe[1] & (fml_wcount == 0) & (fml_rcount == 0)) begin
@@ -106,7 +108,8 @@ module test_vga_linear_fml;
 			  //$display("%t FML W addr %x data %x", $time, fml_gm_adr_o, fml_dw);
 			  fml_wcount <= 7;
 		  end else begin
-			  fml_dat_i = 16'hbeef;
+			  //fml_dat_i = 16'hbeef;
+			  fml_dat_i <= 16'hbeef;
 			  //$display("%t FML R addr %x data %x", $time, fml_gm_adr_o, fml_dat_i);
 			  fml_rcount <= 7;
 		  end
@@ -117,7 +120,8 @@ module test_vga_linear_fml;
 		  fml_wcount <= fml_wcount - 1;
 	  end
 	  if(fml_rcount != 0) begin
-		  fml_dat_i = #1 {13'h1eba, fml_rcount};
+		  //fml_dat_i = #1 {13'h1eba, fml_rcount};
+		  fml_dat_i <= {13'h1eba, fml_rcount};
 		  //$display("%t FML R continuing %x / %d", $time, fml_dat_i, fml_rcount);
 		  fml_rcount <= fml_rcount - 1;
 	  end
@@ -133,7 +137,7 @@ module test_vga_linear_fml;
   end
   
   always @(posedge clk_50)
-    csr_pipe <= rst ? 4'b0 : { csr_pipe[2:0], csr_gm_adr_o };
+    csr_pipe <= rst ? 4'b0 : { csr_pipe[2:0], csr_gm_stb_o };
 
   always @(posedge clk_50) begin
     //if (csr_gm_adr_o)
@@ -141,13 +145,15 @@ module test_vga_linear_fml;
     if (csr_pipe[1] & (csr_rcount == 0))
          begin
            csr_ack <= 1'b1;
-		       csr_dat_i = 16'hbeef;
+		       //csr_dat_i = 16'hbeef;
+		       csr_dat_i <= 16'hbeef;
 			     //$display("%t CSR R data %x", $time, csr_dat_i);
 			     csr_rcount <= 7;
 		     end else
 		         csr_ack <= 1'b0;		
 	  if(csr_pipe[1] & (csr_rcount != 0)) begin
-		         csr_dat_i = #1 {13'h1eba, csr_rcount};
+		         //csr_dat_i = #1 {13'h1eba, csr_rcount};
+		         csr_dat_i <= {13'h1eba, csr_rcount};
 		         //$display("%t CSR R continuing %x / %d", $time, csr_dat_i, csr_rcount);
 		         csr_rcount <= csr_rcount - 1;
 	  end	  
@@ -227,44 +233,38 @@ begin
 end
 endtask
 
-task resetpixel;
-begin
-  h_count      = 10'b0;
-  horiz_sync_i = 1'b1;
-  v_count      = 10'b0;
-  vert_sync    = 1'b1;
-  video_on_h_i = 1'b1;
-  video_on_v   = 1'b1;
-  $display("Pixel counter reset to zero");
-end
-endtask
-
-task nextpixel;
-begin
-  if (enable_crtc)
+always @(posedge clk_50) begin
+  if (rst) begin
+    h_count      = 10'b0;
+    horiz_sync_i = 1'b1;
+    v_count      = 10'b0;
+    vert_sync    = 1'b1;
+    video_on_h_i = 1'b1;
+    video_on_v   = 1'b1;
+    $display("Pixel counter reset to zero");
+  end else
       begin
-        h_count      <= (h_count==hor_scan_end) ? 10'b0 : h_count + 10'b1;
-        horiz_sync_i <= horiz_sync_i ? (h_count[9:3]!=st_hor_retr)
-                                     : (h_count[7:3]==end_hor_retr);
-        v_count      <= (v_count==ver_scan_end && h_count==hor_scan_end) ? 10'b0
-                      : ((h_count==hor_scan_end) ? v_count + 10'b1 : v_count);
-        vert_sync    <= vert_sync ? (v_count!=ver_sync_beg)
-                                  : (v_count[3:0]==ver_sync_end);
+        if (enable_crtc)
+          begin
+            h_count      <= (h_count==hor_scan_end) ? 10'b0 : h_count + 10'b1;
+            horiz_sync_i <= horiz_sync_i ? (h_count[9:3]!=st_hor_retr)
+                                         : (h_count[7:3]==end_hor_retr);
+            v_count      <= (v_count==ver_scan_end && h_count==hor_scan_end) ? 10'b0
+                          : ((h_count==hor_scan_end) ? v_count + 10'b1 : v_count);
+            vert_sync    <= vert_sync ? (v_count!=ver_sync_beg)
+                                      : (v_count[3:0]==ver_sync_end);
 
-        video_on_h_i <= (h_count==hor_scan_end) ? 1'b1
-                      : ((h_count==hor_disp_end) ? 1'b0 : video_on_h_i);
-        video_on_v   <= (v_count==10'h0) ? 1'b1
-                      : ((v_count==ver_disp_end) ? 1'b0 : video_on_v);
-      end
-  waitclock;
-  //$display("h_count = %d, v_count = %d", h_count, v_count);
+            video_on_h_i <= (h_count==hor_scan_end) ? 1'b1
+                          : ((h_count==hor_disp_end) ? 1'b0 : video_on_h_i);
+            video_on_v   <= (v_count==10'h0) ? 1'b1
+                          : ((v_count==ver_disp_end) ? 1'b0 : video_on_v);
+          end
+      end  
 end    
-endtask
   
 always begin
   // Initialize to a known state
   rst = 1'b1;  // reset is active  
-  resetpixel;  // Reset pixel counter
   enable_crtc = 1'b0;  // Make sure the crtc is not active
   enable_sequencer = 1'b0; // Make sure sequencer is not active
       
@@ -308,7 +308,8 @@ always begin
         $display("Horiz_sync horiz_sync_gm = %x and fml_horiz_sync_gm = %x did not match at (h_count = %d and v_count = %d) at time index %t" , horiz_sync_gm, fml_horiz_sync_gm, h_count, v_count, $time);
       end
     end
-    nextpixel;
+    waitclock;
+    //nextpixel;
   end  
   
   $stop;
