@@ -68,7 +68,7 @@ module vga_lcd_fml #(
     output       vert_sync,
     
     // Base address of video memory
-    input [fml_depth-1:0] baseaddress,
+    input [15:0] start_addr,
 
     // CRTC
     input [5:0] cur_start,
@@ -121,7 +121,8 @@ module vga_lcd_fml #(
   reg read_fifo;
   wire fill_fifo;
   // Number of words stored in the FIFO, 0-63 (64 possible values)
-  wire [6:0] fifo_level;
+  //wire [6:0] fifo_level;
+  wire [9:0] fifo_level;
     
   // Each stage is controlled by enable signals
   wire en_crtc;
@@ -223,7 +224,8 @@ module vga_lcd_fml #(
   
   // video-data buffer (temporary store data read from video memory)
   // We want to store at least one scan line (800 pixels x 12 bits per pixel) in the buffer
-  vga_fifo #(6, 12) data_fifo (
+  //vga_fifo #(6, 12) data_fifo (
+  vga_fifo #(9, 12) data_fifo (
     .clk    ( clk                ),
 	.aclr   ( 1'b1               ),
 	.sclr   ( rst                ),
@@ -307,7 +309,8 @@ module vga_lcd_fml #(
   assign fb_character_seq_o = fb_dat_o [7:0];
   
   // Wait until the fifo level is 128 - 96 = 32 (enough room for a 11 pixel burst)
-  assign can_burst = fifo_level <= 7'd32;
+  //assign can_burst = fifo_level <= 7'd32;
+  assign can_burst = fifo_level <= 10'd300;
   
   // These signals enable and control when the next crtc/sequencer cycle should occur
   assign en_crtc = next_crtc_seq_cyc;
@@ -329,7 +332,8 @@ always @(posedge clk) begin
 		fml_adr <= {fml_depth{1'b0}};
 	end else begin
 		if(next_address) begin
-			fml_adr <= baseaddress + ({2'b0, lcd_adr, 1'b0});			
+			//fml_adr <= start_addr + ({2'b0, lcd_adr, 1'b0});
+			fml_adr[19:0] <= { (lcd_adr + { start_addr[15:1], 2'b00 }), 1'b0 };			
 		end
 	end
 end
@@ -344,7 +348,9 @@ always @(posedge clk) begin
 		dcb_index <= 3'd0;
 end
 
-assign dcb_adr = {fml_adr[fml_depth-1:3], dcb_index};
+assign dcb_adr = { fml_adr[fml_depth-1:3], dcb_index };
+//assign dcb_adr = { fml_adr + dcb_index };
+
 
 /* CONTROLLER */
 reg [4:0] state;
@@ -396,7 +402,7 @@ always @(*) begin
 		IDLE: begin
 		    if (can_burst) begin
 		        if (lcd_stb) begin
-		            /* LCD is requesting another fml burst ! */
+		        /* LCD is requesting another fml burst ! */
 				    next_burst = 1'b1;  // This also calculates final address
 				    next_crtc_seq_cyc = 1'b1;
 				    next_state = DELAY;
@@ -417,6 +423,7 @@ always @(*) begin
 		CACHE1: begin
 			fifo_source_cache = 1'b1;
 			if(dcb_hit) begin
+			  //fifo_source_cache = 1'b1;
 				dcb_stb = 1'b1;
 				next_crtc_seq_cyc = 1'b1;
 				next_state = CACHE2;

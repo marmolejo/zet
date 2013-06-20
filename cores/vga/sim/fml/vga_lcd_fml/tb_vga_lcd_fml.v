@@ -68,7 +68,7 @@ module tb_vga_lcd_fml;
   wire       vert_sync;
     
   // Base address of video memory
-  reg [20-1:0] baseaddress;
+  reg [15:0] start_addr;
 
   // CRTC
   reg [5:0] cur_start;
@@ -122,7 +122,8 @@ module tb_vga_lcd_fml;
 		  fml_wcount <= fml_wcount - 1;
 	  end
 	  if(fml_rcount != 0) begin
-		  fml_di = #1 {13'h1eba, fml_rcount};
+		  //fml_di = #1 {13'h1eba, fml_rcount};
+		  fml_di = {13'h1eba, fml_rcount};
 		  //$display("%t FML R continuing %x / %d", $time, fml_di, fml_rcount);
 		  fml_rcount <= fml_rcount - 1;
 	  end
@@ -145,15 +146,16 @@ module tb_vga_lcd_fml;
       //$display("%t DCB R addr %x", $time, dcb_adr);
     if (dcb_stb & (dcb_rcount == 0))
          begin
-           //dcb_hit <= 1'b1;
-           dcb_hit <= 1'b0;
+           dcb_hit <= 1'b1;
+           //dcb_hit <= 1'b0;
 		       dcb_dat = 16'hbeef;
 			     //$display("%t DCB R addr %x data %x", $time, dcb_adr, dcb_dat);
 			     dcb_rcount <= 7;
 		     end else
 		         dcb_hit <= 1'b0;		
 	  if(dcb_stb & (dcb_rcount != 0)) begin
-		         dcb_dat = #1 {13'h1eba, dcb_rcount};
+		         //dcb_dat = #1 {13'h1eba, dcb_rcount};
+		         dcb_dat = {13'h1eba, dcb_rcount};
 		         //$display("%t DCB R continuing %x / %d", $time, dcb_dat, dcb_rcount);
 		         dcb_rcount <= dcb_rcount - 1;
 	  end	  
@@ -207,7 +209,7 @@ module tb_vga_lcd_fml;
       .vert_sync(vert_sync),
     
       // Base address of video memory
-      .baseaddress(baseaddress),
+      .start_addr(start_addr),
 
       // CRTC
       .cur_start(cur_start),
@@ -257,12 +259,21 @@ always begin
   
   waitclock;
   
+ /* 
   // Set Text Mode
   shift_reg1   = 1'b0;       // if set: 320x200
   graphics_alpha = 1'b0;   // if not set: 640x400 text mode
+ */
+  
+  
+  
+  // Set Linear Mode
+  shift_reg1   = 1'b1;       // if set: 320x200
+  graphics_alpha = 1'b1;   // if not set: 640x400 text mode
+  
   
   // Base address of video memory
-  baseaddress = 20'h1000;  
+  start_addr = 16'h1000;  
       
   // CRTC configuration signals
     

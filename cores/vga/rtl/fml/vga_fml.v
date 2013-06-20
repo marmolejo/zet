@@ -245,7 +245,7 @@ module vga_fml #(
     .horiz_sync  (horiz_sync),
     .vert_sync   (w_vert_sync),
     
-    .baseaddress ({4'b0, start_addr}),
+    .start_addr (start_addr),
 
     .cur_start  (cur_start),
     .cur_end    (cur_end),
