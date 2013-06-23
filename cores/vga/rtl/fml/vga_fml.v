@@ -303,13 +303,13 @@ module vga_fml #(
   
   fmlbrg #(
     .fml_depth   (fml_depth),  // 1MB Memory address range
-    .cache_depth (11)   // 2KB cache
+    .cache_depth (5)   // 32 byte cache
     ) vgafmlbrg (
     .sys_clk  (wb_clk_i),
     .sys_rst  (wb_rst_i),
 	
 	// Wishbone slave interface
-    .wb_adr_i ({ 3'b0, wbm_adr_o }),
+    .wb_adr_i ({ 2'b0, wbm_adr_o }),
 	.wb_cti_i (3'b0),
     .wb_dat_i (wbm_dat_o),
     .wb_dat_o (wbm_dat_i),

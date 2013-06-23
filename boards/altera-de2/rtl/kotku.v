@@ -284,7 +284,7 @@ module kotku (
   wire [15:0] fml_fmlbrg_do;
   
   // wires to VGA CPU FML master interface
-  wire [20-1:0] vga_cpu_fml_adr;  // 1MB Memory Address range
+  wire [19:0]   vga_cpu_fml_adr;  // 1MB Memory Address range
   wire          vga_cpu_fml_stb;
   wire          vga_cpu_fml_we;
   wire          vga_cpu_fml_ack;
@@ -293,7 +293,7 @@ module kotku (
   wire [15:0]   vga_cpu_fml_di;
   
   // wires to VGA LCD FML master interface
-  wire [20-1:0] vga_lcd_fml_adr;  // 1MB Memory Address range
+  wire [19:0]   vga_lcd_fml_adr;  // 1MB Memory Address range
   wire          vga_lcd_fml_stb;
   wire          vga_lcd_fml_we;
   wire          vga_lcd_fml_ack;
@@ -563,7 +563,7 @@ module kotku (
 	.m2_do  (vga_cpu_fml_di),
 	
 	// Master 3 interface - not connected
-	.m3_adr ({3'b011, 20'b0}),  // 3 - 4 MB Addressable memory range
+	.m3_adr ({3'b010, 20'b0}),  // 2 - 3 MB Addressable memory range
 	.m3_stb (1'b0),
 	.m3_we  (1'b0),
 	.m3_ack (),
@@ -572,7 +572,7 @@ module kotku (
 	.m3_do  (),
 	
 	// Master 4 interface - not connected
-	.m4_adr ({3'b100, 20'b0}),  // 4 - 5 MB Addressable memory range
+	.m4_adr ({3'b011, 20'b0}),  // 3 - 4 MB Addressable memory range
 	.m4_stb (1'b0),
 	.m4_we  (1'b0),
 	.m4_ack (),
@@ -581,7 +581,7 @@ module kotku (
 	.m4_do  (),
 	
 	// Master 5 interface - not connected
-	.m5_adr ({3'b101, 20'b0}),  // 5 - 6 MB Addressable memory range
+	.m5_adr ({3'b100, 20'b0}),  // 4 - 5 MB Addressable memory range
 	.m5_stb (1'b0),
 	.m5_we  (1'b0),
 	.m5_ack (),
