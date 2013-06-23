@@ -27,7 +27,7 @@ always #5 clk = ~clk;
 
 reg rst;
 
-reg [22:1] wb_adr_i;
+reg [19:1] wb_adr_i;
 reg [2:0] wb_cti_i;
 reg [15:0] wb_dat_i;
 wire [15:0] wb_dat_o;
@@ -37,7 +37,7 @@ reg wb_stb_i;
 reg wb_we_i;
 wire wb_ack_o;
 
-wire [22:0] fml_adr;
+wire [19:0] fml_adr;
 wire fml_stb;
 wire fml_we;
 reg fml_ack;
@@ -46,7 +46,7 @@ wire [15:0] fml_dw;
 reg [15:0] fml_dr;
 
 reg dcb_stb;
-reg [22:0] dcb_adr;
+reg [19:0] dcb_adr;
 wire [15:0] dcb_dat;
 wire dcb_hit;
 
@@ -84,7 +84,7 @@ always @(posedge clk) begin
 end
 
 fmlbrg #(
-  .fml_depth   (23),  // 8086 can only address 1 MB
+  .fml_depth   (20),  // 8086 can only address 1 MB
   .cache_depth (10)   // 1 Kbyte cache
   ) dut (
 	.sys_clk(clk),
@@ -123,7 +123,7 @@ end
 endtask
 
 task wbwrite;
-input [22:1] address;
+input [19:1] address;
 input [1:0] sel;
 input [15:0] data;
 integer i;
@@ -142,7 +142,7 @@ begin
 	end
 	waitclock;
 	$display("WB Write: %x=%x sel=%b acked in %d clocks", address, data, sel, i);
-	wb_adr_i = 22'hx;
+	wb_adr_i = 19'hx;
 	wb_cyc_i = 1'b0;
 	wb_stb_i = 1'b0;
 	wb_we_i = 1'b0;
@@ -150,7 +150,7 @@ end
 endtask
 
 task wbread;
-input [22:1] address;
+input [19:1] address;
 integer i;
 begin
 	wb_adr_i = address;	
@@ -165,7 +165,7 @@ begin
 	end
 	$display("WB Read : %x=%x acked in %d clocks", address, wb_dat_o, i);
 	waitclock;
-	wb_adr_i = 22'hx;
+	wb_adr_i = 19'hx;
 	wb_cyc_i = 1'b0;
 	wb_stb_i = 1'b0;
 	wb_we_i = 1'b0;
@@ -173,7 +173,7 @@ end
 endtask
 
 task wbwriteburst;
-input [22:1] address;
+input [19:1] address;
 input [15:0] data;
 integer i;
 begin
@@ -198,7 +198,7 @@ begin
 	wb_dat_i = data+3;
 	wb_cti_i = 3'b111;
 	waitclock;
-	wb_adr_i = 22'hx;
+	wb_adr_i = 19'hx;
 	wb_cti_i = 3'b000;
 	wb_cyc_i = 1'b0;
 	wb_stb_i = 1'b0;
@@ -207,7 +207,7 @@ end
 endtask
 
 task wbreadburst;
-input [22:1] address;
+input [19:1] address;
 integer i;
 begin
 	wb_adr_i = address;
@@ -229,7 +229,7 @@ begin
 	wb_cti_i = 3'b111;
 	$display("read burst(3): %x", wb_dat_o);
 	waitclock;
-	wb_adr_i = 22'hx;
+	wb_adr_i = 19'hx;
 	wb_cti_i = 3'b000;
 	wb_cyc_i = 1'b0;
 	wb_stb_i = 1'b0;
@@ -244,14 +244,14 @@ always begin
 `endif
 	rst = 1'b1;
 	
-	wb_adr_i = 22'd0;
+	wb_adr_i = 19'd0;
 	wb_dat_i = 16'd0;
 	wb_cyc_i = 1'b0;
 	wb_stb_i = 1'b0;
 	wb_we_i = 1'b0;
 
 	dcb_stb = 1'b0;
-	dcb_adr = 22'd0;
+	dcb_adr = 20'd0;
 	
 	waitclock;
 	
@@ -260,38 +260,56 @@ always begin
 	waitclock;
 	
 	$display("Testing: read miss");
-	wbread(22'h0);
+	wbread(19'h0);
 	$display("Testing: write hit");
-	wbwrite(22'h0, 2'b11, 16'h5678);
-	wbread(22'h0);
+	wbwrite(19'h0, 2'b11, 16'h5678);
+	wbread(19'h0);
 	$display("Testing: read miss on a dirty line");
-	wbread(22'h01000);
+	wbread(19'h01000);
 	
 	$display("Testing: read hit");
-	wbread(22'h01004);
+	wbread(19'h01004);
 	
 	$display("Testing: write miss");
-	wbwrite(22'h0, 2'b11, 16'hface);
+	wbwrite(19'h0, 2'b11, 16'hface);
 	wbread(27'h0);
 	wbread(27'h4);
 	
 	$display("Testing: read burst");
-	wbreadburst(22'h40);
+	wbreadburst(19'h40);
 	
 	$display("Testing: write burst");
-	wbwriteburst(22'h40, 16'hcaf0);
+	wbwriteburst(19'h40, 16'hcaf0);
 	
 	$display("Testing: read burst");
-	wbreadburst(22'h40);
+	wbreadburst(19'h40);
 
 	$display("Testing: DCB miss");
-	dcb_adr = 22'hfeba;
+	dcb_adr = 20'hfeba;
 	dcb_stb = 1'b1;
 	waitclock;
 	$display("Result: hit=%b dat=%x", dcb_hit, dcb_dat);
 
 	$display("Testing: DCB hit");
-	dcb_adr = 22'h0;
+	dcb_adr = 20'h0;
+	dcb_stb = 1'b1;
+	waitclock;
+	$display("Result: hit=%b dat=%x", dcb_hit, dcb_dat);
+	
+	$display("Testing: DCB hit");
+	dcb_adr = 20'h0;
+	dcb_stb = 1'b1;
+	waitclock;
+	$display("Result: hit=%b dat=%x", dcb_hit, dcb_dat);
+	
+	$display("Testing: DCB hit");
+	dcb_adr = 20'h1;
+	dcb_stb = 1'b1;
+	waitclock;
+	$display("Result: hit=%b dat=%x", dcb_hit, dcb_dat);
+	
+	$display("Testing: DCB hit");
+	dcb_adr = 20'h2;
 	dcb_stb = 1'b1;
 	waitclock;
 	$display("Result: hit=%b dat=%x", dcb_hit, dcb_dat);

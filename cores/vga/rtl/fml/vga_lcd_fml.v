@@ -348,8 +348,11 @@ always @(posedge clk) begin
 		dcb_index <= 3'd0;
 end
 
-assign dcb_adr = { fml_adr[fml_depth-1:3], dcb_index };
-//assign dcb_adr = { fml_adr + dcb_index };
+//assign dcb_adr = { fml_adr[fml_depth-1:3], dcb_index };
+//assign dcb_adr = { fml_adr + { dcb_index, 1'b0 } };
+//assign dcb_adr = { fml_adr + { dcb_index, 4'b0000 } };
+//assign dcb_adr = { fml_adr + ( { dcb_index, 1'b0 } ) };
+assign dcb_adr = { fml_adr + dcb_index };
 
 
 /* CONTROLLER */
@@ -422,8 +425,7 @@ always @(*) begin
 		end
 		CACHE1: begin
 			fifo_source_cache = 1'b1;
-			if(dcb_hit) begin
-			  //fifo_source_cache = 1'b1;
+			if(dcb_hit) begin						  
 				dcb_stb = 1'b1;
 				next_crtc_seq_cyc = 1'b1;
 				next_state = CACHE2;
@@ -434,7 +436,7 @@ always @(*) begin
 		 * - we fetched from the beginning of a line
 		 * - we fetch exactly a line
 		 * - we do not release dcb_stb so the cache controller locks the line
-		 * Therefore, next 3 fetchs always are cache hits.
+		 * Therefore, next 7 fetchs always are cache hits.
 		 */
 		CACHE2: begin
 			dcb_stb = 1'b1;
