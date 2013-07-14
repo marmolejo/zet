@@ -89,7 +89,10 @@ module vga_lcd_fml #(
 
     // retrace signals
     output v_retrace,
-    output vh_retrace
+    output vh_retrace,
+    
+    output vga_clk
+    
   );
 
   // Registers and nets
@@ -118,11 +121,13 @@ module vga_lcd_fml #(
   wire [7:0] fb_character_seq_o;
   
   // Pixel buffer control
-  reg read_fifo;
+  wire read_fifo;
   wire fill_fifo;
   // Number of words stored in the FIFO, 0-63 (64 possible values)
   //wire [6:0] fifo_level;
   wire [9:0] fifo_level;
+  wire       fifo_empty;
+  wire       fifo_full;
     
   // Each stage is controlled by enable signals
   wire en_crtc;
@@ -233,9 +238,9 @@ module vga_lcd_fml #(
 	.wreq   ( fill_fifo          ),
 	.q      ( fb_dat_o           ),
 	.rreq   ( read_fifo          ),
-	.nword  ( fifo_level ),
-	.empty  ( ),
-	.full   ( ),
+	.nword  ( fifo_level         ),
+	.empty  ( fifo_empty         ),
+	.full   ( fifo_full          ),
 	.aempty ( ),
 	.afull  ( )
   );
@@ -312,15 +317,24 @@ module vga_lcd_fml #(
   //assign can_burst = fifo_level <= 7'd32;
   assign can_burst = fifo_level <= 10'd300;
   
-  // These signals enable and control when the next crtc/sequencer cycle should occur
+  // These signals enable and control when the next crtc/sequencer cycle should occur  
   assign en_crtc = next_crtc_seq_cyc;
   assign en_sequencer = next_crtc_seq_cyc;
   
   // When the next_crtc_seq_cyc occurs we should place another pixel in fifo
   assign fill_fifo = next_crtc_seq_cyc;
   
+  // This signal enables and controls when we should read from the fifo
+  // We must first wait until something is in the fifo!!!
+  assign read_fifo = next_pal_dac_cyc & !fifo_empty;
+  
   // This signal enables and controls when the next pal_dac cycle should occure
-  assign en_pal_dac = next_pal_dac_cyc;  // 100 Mhz version
+  // We must first wait until something is in the fifo!!!
+  assign en_pal_dac = next_pal_dac_cyc & !fifo_empty;  // 100 Mhz version
+  
+  // This is the vga_clk signal
+  // No matter what happens, we must keep the vga_clk going!!!
+  assign vga_clk = next_pal_dac_cyc;
   
   // Behaviour
   
@@ -403,7 +417,7 @@ always @(*) begin
 	
 	case(state)
 		IDLE: begin
-		    if (can_burst) begin
+		    if (can_burst & !fifo_full) begin
 		        if (lcd_stb) begin
 		        /* LCD is requesting another fml burst ! */
 				    next_burst = 1'b1;  // This also calculates final address
@@ -525,11 +539,11 @@ end
     end
   else
     begin
-      if (pixel_clk_counter == 2'd01)  // Toggle read_fifo
-		  read_fifo <= 1'b1;
-		else read_fifo <= 1'b0;
+      //if (pixel_clk_counter == 2'd00 & !fifo_empty)  // Toggle read_fifo
+	  //  read_fifo <= 1'b1;
+	  //else read_fifo <= 1'b0;
 		
-		if (pixel_clk_counter == 2'd02)  // Toggle next_pal_dac_cyc
+		if (pixel_clk_counter == 2'd00)  // Toggle next_pal_dac_cyc
 		  next_pal_dac_cyc <=1'b1;
 		else next_pal_dac_cyc <= 1'b0;
 		
