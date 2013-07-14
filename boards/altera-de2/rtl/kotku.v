@@ -358,7 +358,7 @@ module kotku (
   pll pll (
     .inclk0 (clk_50_),
     .c0     (sdram_clk),  // 100 Mhz
-    .c1     (vga_clk),    // 25 Mhz
+    .c1     (),    // 25 Mhz
     .c2     (clk),        // 12.5 Mhz
     .locked (lock)
   );
@@ -702,7 +702,9 @@ module kotku (
     .vga_lcd_fml_ack(vga_lcd_fml_ack),
     .vga_lcd_fml_sel(vga_lcd_fml_sel),
     .vga_lcd_fml_do(vga_lcd_fml_do),
-    .vga_lcd_fml_di(vga_lcd_fml_di)
+    .vga_lcd_fml_di(vga_lcd_fml_di),
+    
+    .vga_clk(vga_clk)
     
   );
   

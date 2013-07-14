@@ -57,7 +57,9 @@ module vga_fml #(
 	input                  vga_lcd_fml_ack,
 	output [1:0]           vga_lcd_fml_sel,
 	output [15:0]          vga_lcd_fml_do,
-	input  [15:0]          vga_lcd_fml_di
+	input  [15:0]          vga_lcd_fml_di,
+	
+	output vga_clk
     
   );
 
@@ -264,7 +266,9 @@ module vga_fml #(
     .x_dotclockdiv2 (x_dotclockdiv2),
 
     .v_retrace  (v_retrace),
-    .vh_retrace (vh_retrace)
+    .vh_retrace (vh_retrace),
+    
+    .vga_clk(vga_clk)
   );
 
   vga_cpu_mem_iface cpu_mem_iface (
