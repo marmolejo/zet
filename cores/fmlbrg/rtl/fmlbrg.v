@@ -64,7 +64,7 @@ wire [3:1] offset = wb_adr_i[3:1];
 wire [cache_depth-1-4:0] index = wb_adr_i[cache_depth-1:4];
 wire [fml_depth-cache_depth-1:0] tag = wb_adr_i[fml_depth-1:cache_depth];
 
-wire [3:0] dcb_offset = dcb_adr[3:0];
+wire [3:1] dcb_offset = dcb_adr[3:1];
 wire [cache_depth-1-4:0] dcb_index = dcb_adr[cache_depth-1:4];
 wire [fml_depth-cache_depth-1:0] dcb_tag = dcb_adr[fml_depth-1:cache_depth];
 
@@ -87,7 +87,7 @@ wire [fml_depth-cache_depth-1+2:0] tagmem_do2;
 
 fmlbrg_tagmem #(
 	.depth(cache_depth-4),
-	.width(fml_depth-cache_depth-1+2)
+	.width(fml_depth-cache_depth+2)
 ) tagmem (
 	.sys_clk(sys_clk),
 
@@ -145,7 +145,7 @@ reg [1:0] datamem_we;
 reg [15:0] datamem_di;
 wire [15:0] datamem_do;
 
-wire [cache_depth-3-1:0] datamem_a2;
+wire [cache_depth-1-1:0] datamem_a2;
 wire [15:0] datamem_do2;
 
 fmlbrg_datamem #(
@@ -190,7 +190,7 @@ end
 
 assign datamem_a = { index_load ? index : index_r, bcounter_next };
 
-assign datamem_a2 = {dcb_index, dcb_offset[3:2]};
+assign datamem_a2 = {dcb_index, dcb_offset};
 
 reg datamem_we_wb;
 reg datamem_we_fml;
