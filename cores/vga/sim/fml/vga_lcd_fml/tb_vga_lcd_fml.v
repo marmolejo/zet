@@ -1,7 +1,8 @@
 /*
  *  DUT VGA LCD FML
- *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
- *  with modifications by Charley Picker <charleypicker@yahoo.com>
+ *
+ *  VGA FML support
+ *  Copyright (C) 2013 Charley Picker <charleypicker@yahoo.com>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -90,6 +91,8 @@ module tb_vga_lcd_fml;
   // retrace signals
   wire v_retrace;
   wire vh_retrace;
+  
+  wire vga_clk;
   
   /* Process FML requests */
   reg [2:0] fml_wcount;
@@ -181,11 +184,11 @@ module tb_vga_lcd_fml;
       .fml_di(fml_di),
     
       // VGA LCD Direct Cache Bus
-	  .dcb_stb(dcb_stb),
-	  .dcb_adr(dcb_adr),
-	  .dcb_dat(dcb_dat),
-	  .dcb_hit(dcb_hit),
-	
+      .dcb_stb(dcb_stb),
+      .dcb_adr(dcb_adr),
+      .dcb_dat(dcb_dat),
+      .dcb_hit(dcb_hit),
+
       // attribute_ctrl
       .pal_addr(pal_addr),
       .pal_we(pal_we),
@@ -230,7 +233,9 @@ module tb_vga_lcd_fml;
 
       // retrace signals
       .v_retrace(v_retrace),
-      .vh_retrace(vh_retrace)
+      .vh_retrace(vh_retrace),
+      
+      .vga_clk(vga_clk)
   );
     
   // Continuous assignments

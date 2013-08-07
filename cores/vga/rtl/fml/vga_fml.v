@@ -1,7 +1,9 @@
 /*
  *  VGA top level file
  *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
- *  VGA SDRAM support added by Charley Picker <charleypicker@yahoo.com>
+ *
+ *  VGA FML support
+ *  Copyright (C) 2013 Charley Picker <charleypicker@yahoo.com>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -40,27 +42,27 @@ module vga_fml #(
     output [ 3:0] vga_blue_o,
     output        horiz_sync,
     output        vert_sync,
-    
-   // VGA CPU FML master interface
+
+    // VGA CPU FML master interface
     output [fml_depth-1:0] vga_cpu_fml_adr,
-	output                 vga_cpu_fml_stb,
-	output                 vga_cpu_fml_we,
-	input                  vga_cpu_fml_ack,
-	output [1:0]           vga_cpu_fml_sel,
-	output [15:0]          vga_cpu_fml_do,
-	input  [15:0]          vga_cpu_fml_di,
-	
-	// VGA LCD FML master interface
-	output [fml_depth-1:0] vga_lcd_fml_adr,
-	output                 vga_lcd_fml_stb,
-	output                 vga_lcd_fml_we,
-	input                  vga_lcd_fml_ack,
-	output [1:0]           vga_lcd_fml_sel,
-	output [15:0]          vga_lcd_fml_do,
-	input  [15:0]          vga_lcd_fml_di,
-	
-	output vga_clk
-    
+    output                 vga_cpu_fml_stb,
+    output                 vga_cpu_fml_we,
+    input                  vga_cpu_fml_ack,
+    output [1:0]           vga_cpu_fml_sel,
+    output [15:0]          vga_cpu_fml_do,
+    input  [15:0]          vga_cpu_fml_di,
+
+    // VGA LCD FML master interface
+    output [fml_depth-1:0] vga_lcd_fml_adr,
+    output                 vga_lcd_fml_stb,
+    output                 vga_lcd_fml_we,
+    input                  vga_lcd_fml_ack,
+    output [1:0]           vga_lcd_fml_sel,
+    output [15:0]          vga_lcd_fml_do,
+    input  [15:0]          vga_lcd_fml_di,
+
+    output vga_clk
+
   );
 
 
@@ -203,7 +205,7 @@ module vga_fml #(
     .v_retrace  (v_retrace),
     .vh_retrace (vh_retrace)
   );
-  
+
   vga_lcd_fml #(
     .fml_depth   (fml_depth)  // 1MB Memeory address range
     ) lcd (
@@ -225,7 +227,7 @@ module vga_fml #(
     .dac_write_data_cycle    (dac_write_data_cycle),
     .dac_write_data_register (dac_write_data_register),
     .dac_write_data          (dac_write_data),
-    
+
     // VGA LCD FML master interface
     .fml_adr (vga_lcd_fml_adr),
     .fml_stb (vga_lcd_fml_stb),
@@ -234,12 +236,12 @@ module vga_fml #(
     .fml_sel (vga_lcd_fml_sel),
     .fml_do  (vga_lcd_fml_do),
     .fml_di  (vga_lcd_fml_di),
-    
+
     // VGA LCD Direct Cache Bus
-	.dcb_stb(vga_lcd_dcb_stb),
-	.dcb_adr(vga_lcd_dcb_adr),
-	.dcb_dat(vga_lcd_dcb_dat),
-	.dcb_hit(vga_lcd_dcb_hit),
+    .dcb_stb(vga_lcd_dcb_stb),
+    .dcb_adr(vga_lcd_dcb_adr),
+    .dcb_dat(vga_lcd_dcb_dat),
+    .dcb_hit(vga_lcd_dcb_hit),
 
     .vga_red_o   (vga_red_o),
     .vga_green_o (vga_green_o),
@@ -267,7 +269,7 @@ module vga_fml #(
 
     .v_retrace  (v_retrace),
     .vh_retrace (vh_retrace),
-    
+
     .vga_clk(vga_clk)
   );
 
@@ -304,17 +306,17 @@ module vga_fml #(
     .color_compare    (color_compare),
     .color_dont_care  (color_dont_care)
   );
-  
+
   fmlbrg #(
     .fml_depth   (fml_depth),  // 1MB Memory address range
     .cache_depth (5)   // 32 byte cache
     ) vgafmlbrg (
     .sys_clk  (wb_clk_i),
     .sys_rst  (wb_rst_i),
-	
-	// Wishbone slave interface
+
+    // Wishbone slave interface
     .wb_adr_i ({ 2'b0, wbm_adr_o }),
-	.wb_cti_i (3'b0),
+    .wb_cti_i (3'b0),
     .wb_dat_i (wbm_dat_o),
     .wb_dat_o (wbm_dat_i),
     .wb_sel_i (wbm_sel_o),
@@ -332,19 +334,19 @@ module vga_fml #(
     .fml_sel (vga_cpu_fml_sel),
     .fml_do  (vga_cpu_fml_do),
     .fml_di  (vga_cpu_fml_di),
-    
+
     // VGA LCD Direct Cache Bus	 
-	.dcb_stb(vga_lcd_dcb_stb),
-	.dcb_adr(vga_lcd_dcb_adr),
-	.dcb_dat(vga_lcd_dcb_dat),
-	.dcb_hit(vga_lcd_dcb_hit)
-	 
+    .dcb_stb (vga_lcd_dcb_stb),
+    .dcb_adr (vga_lcd_dcb_adr),
+    .dcb_dat (vga_lcd_dcb_dat),
+    .dcb_hit (vga_lcd_dcb_hit)
+
   );
-  
+
   // Continous assignments
   assign wb_dat_o  = wb_tga_i ? conf_wb_dat_o : mem_wb_dat_o;
   assign wb_ack_o  = wb_tga_i ? conf_wb_ack_o : mem_wb_ack_o;
   assign stb       = wb_stb_i & wb_cyc_i;
   assign vert_sync = ~graphics_alpha ^ w_vert_sync;
-  
+
 endmodule

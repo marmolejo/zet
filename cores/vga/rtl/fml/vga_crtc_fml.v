@@ -1,7 +1,9 @@
 /*
  *  CRTC controller for VGA
  *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
- *  with modifications by Charley Picker>
+ *
+ *  VGA FML support
+ *  Copyright (C) 2013 Charley Picker <charleypicker@yahoo.com>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -21,11 +23,11 @@
 module vga_crtc_fml (
     input         clk,              // 100 Mhz clock
     input         rst,
-    
+
     input         enable_crtc,
-    
+
     // CRTC configuration signals
-    
+
     input [5:0]   cur_start,
     input [5:0]   cur_end,
     input [4:0]   vcursor,
@@ -39,18 +41,18 @@ module vga_crtc_fml (
     input [9:0]   end_vert,
     input [9:0]   st_ver_retr,
     input [3:0]   end_ver_retr,
-    
+
     // CRTC output signals
-    
+
     output reg [9:0]  h_count,      // Horizontal pipeline delay is 2 cycles
     output reg        horiz_sync_i,
-    
+
     output reg [9:0]  v_count,      // 0 to VER_SCAN_END
     output reg        vert_sync,
-    
+
     output reg        video_on_h_i,
     output reg        video_on_v
-    
+
   );
 
   // Registers and nets
@@ -60,7 +62,7 @@ module vga_crtc_fml (
   wire [9:0] ver_sync_beg;
   wire [3:0] ver_sync_end;
   wire [9:0] ver_scan_end;
-    
+
   // Continuous assignments
   assign hor_scan_end = { horiz_total[6:2] + 1'b1, horiz_total[1:0], 3'h7 };
   assign hor_disp_end = { end_horiz, 3'h7 };
@@ -68,7 +70,7 @@ module vga_crtc_fml (
   assign ver_disp_end = end_vert + 10'd1;
   assign ver_sync_beg = st_ver_retr;
   assign ver_sync_end = end_ver_retr + 4'd1;
-  
+
   // Sync generation & timing process
   // Generate horizontal and vertical timing signals for video signal
   always @(posedge clk)
@@ -97,5 +99,5 @@ module vga_crtc_fml (
           video_on_v   <= (v_count==10'h0) ? 1'b1
                         : ((v_count==ver_disp_end) ? 1'b0 : video_on_v);
         end
-  
+
 endmodule

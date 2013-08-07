@@ -1,5 +1,11 @@
 quit -sim
 
+if {[file exists work]} {
+  vdel -lib work -all
+}
+vlib work
+vmap work work
+
 echo "Compiling verilog modules..."
 
 vlog -work work -nocovercells ./tb_vga_lcd_fml.v
@@ -52,14 +58,7 @@ add wave -divider "FML Text Mode Registers"
 
 add wave -label pipe -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/pipe }
 add wave -label fml_dat_i -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/fml_dat_i }
-add wave -label fml0_dat -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/fml0_dat }
 add wave -label fml1_dat -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/fml1_dat }
-add wave -label fml2_dat -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/fml2_dat }
-add wave -label fml3_dat -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/fml3_dat }
-add wave -label fml4_dat -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/fml4_dat }
-add wave -label fml5_dat -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/fml5_dat }
-add wave -label fml6_dat -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/fml6_dat }
-add wave -label fml7_dat -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/fml7_dat }
 
 add wave -label attr_data_out -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/attr_data_out }
 add wave -label char_addr_in -hex -unsigned {sim:/tb_vga_lcd_fml/dut/sequencer/text_mode/char_addr_in }
