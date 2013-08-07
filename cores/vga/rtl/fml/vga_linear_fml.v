@@ -1,7 +1,9 @@
 /*
  *  Linear mode graphics for VGA
  *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
- *  with modifications by Charley Picker <charleypicker@yahoo.com>
+ *
+ *  VGA FML support
+ *  Copyright (C) 2013 Charley Picker <charleypicker@yahoo.com>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -80,7 +82,7 @@ module vga_linear_fml (
         begin
           pipe <= { pipe[17:0], (h_count[3:0]==4'h0) };
         end
-       
+
   // Load FML 8x16 burst
   always @(posedge clk)
     if (enable)
@@ -93,7 +95,7 @@ module vga_linear_fml (
         fml6_dat <= pipe[10] ? fml_dat_i[15:0] : fml6_dat;
         fml7_dat <= pipe[11] ? fml_dat_i[15:0] : fml7_dat;
       end
-        
+
   // video_on_h
   always @(posedge clk)
     if (rst)
@@ -105,7 +107,7 @@ module vga_linear_fml (
         begin
           video_on_h <= { video_on_h[3:0], video_on_h_i };
         end
-        
+
   // horiz_sync
   always @(posedge clk)
     if (rst)
@@ -117,7 +119,7 @@ module vga_linear_fml (
         begin
           horiz_sync <= { horiz_sync[3:0], horiz_sync_i };
         end
-        
+
   // Address generation
   always @(posedge clk)
     if (rst)
@@ -172,7 +174,7 @@ module vga_linear_fml (
             color_l <= fml6_dat[7:0];
           else
           if (pipe[17])
-            color_l <= fml7_dat[7:0];           
+            color_l <= fml7_dat[7:0];
         end
-           
+
 endmodule

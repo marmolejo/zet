@@ -1,7 +1,9 @@
 /*
  *  Planar mode graphics for VGA
  *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
- *  with modifications by Charley Picker <charleypicker@yahoo.com>
+ *
+ *  VGA FML support
+ *  Copyright (C) 2013 Charley Picker <charleypicker@yahoo.com>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -21,7 +23,7 @@
 module vga_planar_fml (
     input clk,
     input rst,
-    
+
     input enable,
 
     // CSR slave interface for reading
@@ -95,7 +97,7 @@ module vga_planar_fml (
           pipe <= { pipe[6:0],
             x_dotclockdiv2 ? (h_count[4:0]==5'h0) : (h_count[3:0]==4'h0) };    
         end
-  
+
   // video_on_h
   always @(posedge clk)
     if (rst)
@@ -107,7 +109,7 @@ module vga_planar_fml (
         begin
           video_on_h <= { video_on_h[8:0], video_on_h_i };
         end
-  
+
   // horiz_sync
   always @(posedge clk)
     if (rst)
@@ -119,7 +121,7 @@ module vga_planar_fml (
         begin
           horiz_sync <= { horiz_sync[8:0], horiz_sync_i };
         end
-  
+
   // Address generation
   always @(posedge clk)
     if (rst)
@@ -145,7 +147,7 @@ module vga_planar_fml (
                                          : { row_addr, 3'b000 }) + col_addr;
           plane_addr  <= plane_addr0;
         end
-      
+
   // Temporary plane data
   always @(posedge clk)
     if (rst)

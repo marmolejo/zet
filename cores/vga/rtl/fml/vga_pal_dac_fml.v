@@ -1,7 +1,9 @@
 /*
  *  PAL/DAC controller for VGA
  *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
- *  with modifications by Charley Picker <charleypicker@yahoo.com>
+ *
+ *  VGA FML support
+ *  Copyright (C) 2013 Charley Picker <charleypicker@yahoo.com>
  *
  *  This file is part of the Zet processor. This processor is free
  *  hardware; you can redistribute it and/or modify it under the terms of
@@ -21,19 +23,19 @@
 module vga_pal_dac_fml (
     input clk,              // 100 Mhz clock
     input rst,
-    
+
     input enable_pal_dac,
-    
+
     // VGA PAL/DAC input signals
-    
+
     input        horiz_sync_pal_dac_i,
     input        vert_sync_pal_dac_i,
     input        video_on_h_pal_dac_i,
     input        video_on_v_pal_dac_i,
     input [7:0]  character_pal_dac_i,
-    
+
     // VGA PAL/DAC configuration signals
-    
+
     input shift_reg1,       // if set: 320x200
     input graphics_alpha,   // if not set: 640x400 text mode
 
@@ -51,7 +53,7 @@ module vga_pal_dac_fml (
     input  [1:0] dac_write_data_cycle,
     input  [7:0] dac_write_data_register,
     input  [3:0] dac_write_data,
-    
+
     // VGA PAL/DAC output signals
 
     // VGA pad signals
@@ -69,7 +71,7 @@ module vga_pal_dac_fml (
   // Registers and nets
   wire       video_on_v;
   reg [1:0]  video_on_h_p;
-  
+
   wire       video_on;
 
   wire [3:0] attr;
@@ -86,7 +88,7 @@ module vga_pal_dac_fml (
   wire [3:0] blue;
 
   // Module instances
-  
+
   vga_palette_regs_fml palette_regs (
     .clk (clk),
 
@@ -121,9 +123,9 @@ module vga_pal_dac_fml (
   // Continuous assignments
   assign video_on_v   = video_on_v_pal_dac_i;
   assign vert_sync    = vert_sync_pal_dac_i;
-  
+
   assign video_on     = video_on_h && video_on_v;
-  
+
   assign attr  = character_pal_dac_i[3:0];
   assign index = (graphics_alpha & shift_reg1) ? index_gm : index_pal;
 
@@ -143,7 +145,7 @@ module vga_pal_dac_fml (
         begin
           index_gm <= character_pal_dac_i;
         end
-  
+
   // Horiz sync
   always @(posedge clk)
     if (rst)
@@ -155,7 +157,7 @@ module vga_pal_dac_fml (
         begin
           { horiz_sync, horiz_sync_p } <= { horiz_sync_p[1:0], horiz_sync_pal_dac_i };    
         end
-  
+
   // Video_on pipe
   always @(posedge clk)
     if (rst)
@@ -167,7 +169,7 @@ module vga_pal_dac_fml (
         begin
           video_on_h_p <= { video_on_h_p[0], video_on_h_pal_dac_i };
         end
-  
+
   // Colour signals
   always @(posedge clk)
     if (rst)
