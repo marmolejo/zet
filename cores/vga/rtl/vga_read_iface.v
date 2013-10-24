@@ -64,7 +64,7 @@ module vga_read_iface (
   assign latch2 = latch_sel ? latch[2][15:8] : latch[2][7:0];
   assign latch3 = latch_sel ? latch[3][15:8] : latch[3][7:0];
 
-  assign wbm_adr_o = { plane, offset };
+  assign wbm_adr_o = { offset, plane };
   assign wbs_ack_o = (plane==2'b11 && wbm_ack_i);
   assign offset    = memory_mapping1 ? { 1'b0, wbs_adr_i[14:1] }
                                      : wbs_adr_i[15:1];

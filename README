@@ -43,10 +43,10 @@ http://zet.aluzina.org
     starting from offset 0.
 
     In Linux:
-    you will need the Nios II Embedded Design Suite and Quartus II
-    installed. Setup the environment variables $NIOS2EDS and $QUARTUSDIR
-    pointing to the directories of the Nios II EDS and Quartus II
-    repectively. Then run the script boards/altera*/bin/flash_bios.sh
+    You will need Quartus II installed. Run the script:
+    $NIOS2EDS/nios2_command_shell.sh boards/altera-de*/bin/flash_bios.sh
+    where NIOS2EDS points to the NIOS II Embedded Development System 
+    directory included with the Quartus II installation.
 
   3) Build the bitfiles
     To create the bitfiles, you will need the Quartus II software. The
