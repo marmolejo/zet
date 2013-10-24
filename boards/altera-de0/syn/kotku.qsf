@@ -41,7 +41,7 @@
 # ========================
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:09:38  MARCH 18, 2009"
-set_global_assignment -name LAST_QUARTUS_VERSION "10.1 SP1"
+set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name SDC_FILE kotku.sdc
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_write_iface.v
 set_global_assignment -name VERILOG_FILE ../../../cores/vga/rtl/vga_read_iface.v
