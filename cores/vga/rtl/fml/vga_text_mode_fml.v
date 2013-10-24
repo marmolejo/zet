@@ -205,7 +205,7 @@ module vga_text_mode_fml (
   always @(posedge clk)
     if (rst)
       begin
-        video_on_h <= 10'b0;
+        video_on_h <= 8'b0;
       end
     else
       if (enable)
@@ -217,7 +217,7 @@ module vga_text_mode_fml (
   always @(posedge clk)
     if (rst)
       begin
-        horiz_sync <= 10'b0;
+        horiz_sync <= 8'b0;
       end
     else
       if (enable)
