@@ -8,12 +8,13 @@
 #**************************************************************
 create_clock -period 20 [get_ports clk_50_]
 create_clock -period 50000 speaker:speaker|speaker_i2c_av_config:i2c_av_config|mI2C_CTRL_CLK
+create_clock -period 40 vga_fml:vga|vga_lcd_fml:lcd|next_pal_dac_cyc
 
 
 #**************************************************************
 # Create Generated Clock
 #**************************************************************
-derive_pll_clocks
+derive_pll_clocks -create_base_clocks
 
 
 #**************************************************************
