@@ -106,3 +106,4 @@ http://zet.aluzina.org
    - Sebastien Bourdeauducq to his DRAM memory controller
    - Donna Polehn for adding mouse and shadow BIOS support
    - Yury Savchuk for improving the timer and improving the processor
+   - Charley Picker for SDRAM video support and Altera DE2 board port
