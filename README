@@ -2,8 +2,8 @@
 ====================================
 
 This package contains all source code, test benches, bitfiles, ROMs and
-scripts used in Zet processor x86 SoC. As of version 1.2.0, Zet runs on
-3 different FPGA boards: Terasic Altera DE0, DE1 and DE2-115.
+scripts used in Zet processor x86 SoC. As of version 1.3.0, Zet runs on
+3 different FPGA boards: Terasic Altera DE0, DE1, DE2 and DE2-115.
 
 You can find all information in the website of the project:
 http://zet.aluzina.org
