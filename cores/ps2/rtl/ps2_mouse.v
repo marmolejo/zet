@@ -22,6 +22,7 @@ module ps2_mouse (
     input reset,              // Reset Input
     inout ps2_clk,            // PS2 Clock, Bidirectional
     inout ps2_dat,            // PS2 Data, Bidirectional
+    input inhibit,
 
     input  [7:0] the_command,        // Command to send to mouse
     input        send_command,       // Signal to send
