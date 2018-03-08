@@ -152,6 +152,7 @@ module ps2_mouse (
     .reset                         (reset),
     .the_command                   (the_command),
     .send_command                  (send_command),
+    .inhibit                       (inhibit),
     .ps2_clk_posedge               (ps2_clk_posedge),
     .ps2_clk_negedge               (ps2_clk_negedge),
     .ps2_clk                       (ps2_clk),        // Bidirectionals
