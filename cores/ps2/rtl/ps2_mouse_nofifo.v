@@ -23,7 +23,7 @@ module ps2_mouse_nofifo (
 
     input  [7:0] writedata,   // data to send
     input        write,       // signal to send it
-
+    input        inhibit,
     output [7:0] readdata,    // data read
     output       irq,         // signal data has arrived
 
@@ -51,6 +51,7 @@ module ps2_mouse_nofifo (
 
     .received_data    (readdata),
     .received_data_en (irq),
+    .inhibit          (inhibit),
 
     .command_was_sent              (command_was_sent),
     .error_communication_timed_out (error_sending_command),

@@ -24,6 +24,7 @@ module ps2_mouse_cmdout (
     input       send_command,
     input       ps2_clk_posedge,
     input       ps2_clk_negedge,
+    input       inhibit,
     inout       ps2_clk,
     inout       ps2_dat,
     output reg  command_was_sent,
@@ -219,7 +220,7 @@ module ps2_mouse_cmdout (
   // --------------------------------------------------------------------
   // Combinational logic
   // --------------------------------------------------------------------
-  assign ps2_clk    = (s_ps2_transmitter == PS2_STATE_1_INITIATE_COMMUNICATION) ? 1'b0 : 1'bz;
+  assign ps2_clk    = (s_ps2_transmitter == PS2_STATE_1_INITIATE_COMMUNICATION || inhibit) ? 1'b0 : 1'bz;
 
   assign ps2_dat    = (s_ps2_transmitter == PS2_STATE_3_TRANSMIT_DATA) ? ps2_command[cur_bit] :
                   (s_ps2_transmitter == PS2_STATE_2_WAIT_FOR_CLOCK) ? 1'b0 :

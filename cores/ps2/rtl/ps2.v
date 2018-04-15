@@ -303,6 +303,7 @@ module ps2 (
 
     .readdata (MSE_dat_o), // data read
     .irq      (MSE_RDY),   // signal data has arrived and is ready to be read
+    .inhibit  (MSE_INT),
 
     .error_sending_command (MSE_TOER),  // Time out error
     .buffer_overrun_error  (MSE_OVER)    // Buffer over run error
