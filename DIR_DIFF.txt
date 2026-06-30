@@ -1,0 +1,304 @@
+
+-------------------------------------------------------------------------------
+   ROBOCOPY     ::     Robust File Copy for Windows                              
+-------------------------------------------------------------------------------
+
+  Started : Wednesday, 8 June 2022 4:17:35 PM
+   Source : I:\x\Zet-1.3.1-Archive\
+     Dest : I:\ZetCPU\zet-master-new\zet-master\
+
+    Files : *.*
+	    
+  Options : *.* /FP /NDL /L /S /E /DCOPY:DA /COPY:DAT /PURGE /MIR /NP /R:1000000 /W:30 
+
+------------------------------------------------------------------------------
+
+	    New File  		     183	I:\x\Zet-1.3.1-Archive\ChangeLog-1.3.1
+	    Older     		   35147	I:\x\Zet-1.3.1-Archive\COPYING
+	    Older     		    5023	I:\x\Zet-1.3.1-Archive\README
+	*EXTRA Dir        -1	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\
+	*EXTRA Dir        -1	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\
+	  *EXTRA File 		    1445	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\bios.v
+	  *EXTRA File 		    2478	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\I2C_Controller.v
+	  *EXTRA File 		    4612	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\I2C_HDMI_Config.v
+	  *EXTRA File 		    2365	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\I2C_WRITE_WDATA.v
+	  *EXTRA File 		   28582	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\kotku.v
+	  *EXTRA File 		   51570	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\pll.qip
+	  *EXTRA File 		     459	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\pll.sip
+	  *EXTRA File 		   17473	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\pll.v
+	  *EXTRA File 		   28454	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\soc.v
+	*EXTRA Dir        -1	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\pll\
+	  *EXTRA File 		     298	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\pll\pll_0002.qip
+	  *EXTRA File 		    2295	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\rtl\pll\pll_0002.v
+	*EXTRA Dir        -1	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\syn\
+	  *EXTRA File 		    1282	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\syn\kotku.qpf
+	  *EXTRA File 		   76620	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\syn\kotku.qsf
+	  *EXTRA File 		   44486	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\syn\soc_system.qsys
+	  *EXTRA File 		   2.3 m	I:\ZetCPU\zet-master-new\zet-master\boards\altera-de10-nano\syn\soc_system.sopcinfo
+	    Older     		     733	I:\x\Zet-1.3.1-Archive\boards\altera-de0\bin\flash_bios.sh
+	    New File  		  496611	I:\x\Zet-1.3.1-Archive\boards\altera-de0\bin\flash_bios.sof
+	    Older     		    2939	I:\x\Zet-1.3.1-Archive\boards\altera-de0\doc\audio.txt
+	    Older     		   28718	I:\x\Zet-1.3.1-Archive\boards\altera-de0\rtl\kotku.v
+	    Older     		   16359	I:\x\Zet-1.3.1-Archive\boards\altera-de0\rtl\pll.v
+	    New File  		  524508	I:\x\Zet-1.3.1-Archive\boards\altera-de0\syn\kotku.pof
+	    Older     		    1231	I:\x\Zet-1.3.1-Archive\boards\altera-de0\syn\kotku.qpf
+	    Older     		   23038	I:\x\Zet-1.3.1-Archive\boards\altera-de0\syn\kotku.qsf
+	    Older     		    2370	I:\x\Zet-1.3.1-Archive\boards\altera-de0\syn\kotku.sdc
+	    New File  		  496842	I:\x\Zet-1.3.1-Archive\boards\altera-de0\syn\kotku.sof
+	    Older     		    3075	I:\x\Zet-1.3.1-Archive\boards\altera-de0\syn\kotku.srf
+	    Older     		     726	I:\x\Zet-1.3.1-Archive\boards\altera-de1\bin\flash_bios.sh
+	    New File  		  475756	I:\x\Zet-1.3.1-Archive\boards\altera-de1\bin\flash_bios.sof
+	    Older     		   28300	I:\x\Zet-1.3.1-Archive\boards\altera-de1\rtl\kotku.v
+	    Older     		   16359	I:\x\Zet-1.3.1-Archive\boards\altera-de1\rtl\pll.v
+	    Older     		      85	I:\x\Zet-1.3.1-Archive\boards\altera-de1\sim\bios.sh
+	    Older     		    2638	I:\x\Zet-1.3.1-Archive\boards\altera-de1\sim\is61lv25616.v
+	    Older     		    4808	I:\x\Zet-1.3.1-Archive\boards\altera-de1\sim\Makefile
+	    Older     		   88028	I:\x\Zet-1.3.1-Archive\boards\altera-de1\sim\s29al032d_00.v
+	    Older     		    3123	I:\x\Zet-1.3.1-Archive\boards\altera-de1\sim\t.do
+	    Older     		    4283	I:\x\Zet-1.3.1-Archive\boards\altera-de1\sim\test_kotku.v
+	    New File  		  524508	I:\x\Zet-1.3.1-Archive\boards\altera-de1\syn\kotku.pof
+	    Older     		    1231	I:\x\Zet-1.3.1-Archive\boards\altera-de1\syn\kotku.qpf
+	    Older     		   33820	I:\x\Zet-1.3.1-Archive\boards\altera-de1\syn\kotku.qsf
+	    Older     		    2547	I:\x\Zet-1.3.1-Archive\boards\altera-de1\syn\kotku.sdc
+	    New File  		  476034	I:\x\Zet-1.3.1-Archive\boards\altera-de1\syn\kotku.sof
+	    Older     		     726	I:\x\Zet-1.3.1-Archive\boards\altera-de2\bin\flash_bios.sh
+	    Older     		   29512	I:\x\Zet-1.3.1-Archive\boards\altera-de2\rtl\kotku.v
+	    Older     		   16359	I:\x\Zet-1.3.1-Archive\boards\altera-de2\rtl\pll.v
+	    New File  		  524508	I:\x\Zet-1.3.1-Archive\boards\altera-de2\syn\kotku.pof
+	    Older     		    1231	I:\x\Zet-1.3.1-Archive\boards\altera-de2\syn\kotku.qpf
+	    Older     		   34528	I:\x\Zet-1.3.1-Archive\boards\altera-de2\syn\kotku.qsf
+	    Older     		    2547	I:\x\Zet-1.3.1-Archive\boards\altera-de2\syn\kotku.sdc
+	    New File  		  841410	I:\x\Zet-1.3.1-Archive\boards\altera-de2\syn\kotku.sof
+	    Older     		     734	I:\x\Zet-1.3.1-Archive\boards\altera-de2-115\bin\flash_bios.sh
+	    New File  		   3.3 m	I:\x\Zet-1.3.1-Archive\boards\altera-de2-115\bin\flash_bios.sof
+	    Older     		   28582	I:\x\Zet-1.3.1-Archive\boards\altera-de2-115\rtl\kotku.v
+	    Older     		   17388	I:\x\Zet-1.3.1-Archive\boards\altera-de2-115\rtl\pll.v
+	    New File  		   8.0 m	I:\x\Zet-1.3.1-Archive\boards\altera-de2-115\syn\kotku.pof
+	    Older     		    1231	I:\x\Zet-1.3.1-Archive\boards\altera-de2-115\syn\kotku.qpf
+	    Older     		   27475	I:\x\Zet-1.3.1-Archive\boards\altera-de2-115\syn\kotku.qsf
+	    Older     		    2572	I:\x\Zet-1.3.1-Archive\boards\altera-de2-115\syn\kotku.sdc
+	    New File  		   3.3 m	I:\x\Zet-1.3.1-Archive\boards\altera-de2-115\syn\kotku.sof
+	    Older     		    1723	I:\x\Zet-1.3.1-Archive\boards\altera-de2-115\syn\kotku.srf
+	*EXTRA Dir        -1	I:\ZetCPU\zet-master-new\zet-master\cores\wb_arbiter\
+	  *EXTRA File 		    4896	I:\ZetCPU\zet-master-new\zet-master\cores\wb_arbiter\arbiter.v
+	  *EXTRA File 		    3067	I:\ZetCPU\zet-master-new\zet-master\cores\wb_arbiter\priority_encoder.v
+	  *EXTRA File 		    5579	I:\ZetCPU\zet-master-new\zet-master\cores\wb_arbiter\wb_arbiter_2.v
+	*EXTRA Dir        -1	I:\ZetCPU\zet-master-new\zet-master\cores\wb_avalon_bridge\
+	  *EXTRA File 		    6919	I:\ZetCPU\zet-master-new\zet-master\cores\wb_avalon_bridge\wb_to_avalon_bridge.v
+	    Older     		    1941	I:\x\Zet-1.3.1-Archive\cores\csrbrg\rtl\csrbrg.v
+	    Older     		     122	I:\x\Zet-1.3.1-Archive\cores\csrbrg\test\Makefile
+	    Older     		    3006	I:\x\Zet-1.3.1-Archive\cores\csrbrg\test\tb_csrbrg.v
+	    New File  		  393216	I:\x\Zet-1.3.1-Archive\cores\flash\bios.dat
+	    New File  		     640	I:\x\Zet-1.3.1-Archive\cores\flash\bootrom.dat
+	    Older     		    1593	I:\x\Zet-1.3.1-Archive\cores\flash\bootrom.v
+	    Older     		    2610	I:\x\Zet-1.3.1-Archive\cores\flash\flash16.v
+	    Older     		    3110	I:\x\Zet-1.3.1-Archive\cores\flash\flash8.v
+	    Older     		    3665	I:\x\Zet-1.3.1-Archive\cores\flash\flash8_r2.v
+	    Older     		    5340	I:\x\Zet-1.3.1-Archive\cores\fmlarb\rtl\fmlarb.v
+	    Older     		    1446	I:\x\Zet-1.3.1-Archive\cores\fmlbrg\doc\fmlbrg.tex
+	    Older     		     267	I:\x\Zet-1.3.1-Archive\cores\fmlbrg\doc\Makefile
+	    Older     		   11811	I:\x\Zet-1.3.1-Archive\cores\fmlbrg\rtl\fmlbrg.v
+	    Older     		    2062	I:\x\Zet-1.3.1-Archive\cores\fmlbrg\rtl\fmlbrg_datamem.v
+	    Older     		    1525	I:\x\Zet-1.3.1-Archive\cores\fmlbrg\rtl\fmlbrg_tagmem.v
+	    Older     		     142	I:\x\Zet-1.3.1-Archive\cores\fmlbrg\test\Makefile
+	    Older     		     438	I:\x\Zet-1.3.1-Archive\cores\fmlbrg\test\tb.do
+	    Older     		    6104	I:\x\Zet-1.3.1-Archive\cores\fmlbrg\test\tb_fmlbrg.v
+	    Older     		    1286	I:\x\Zet-1.3.1-Archive\cores\gpio\rtl\hex_display.v
+	    Older     		    1890	I:\x\Zet-1.3.1-Archive\cores\gpio\rtl\seg_7.v
+	    Older     		    2337	I:\x\Zet-1.3.1-Archive\cores\gpio\rtl\sw_leds.v
+	    Older     		    6211	I:\x\Zet-1.3.1-Archive\cores\hpdmc_sdr16\rtl\hpdmc.v
+	    Older     		    1620	I:\x\Zet-1.3.1-Archive\cores\hpdmc_sdr16\rtl\hpdmc_banktimer.v
+	    Older     		    1440	I:\x\Zet-1.3.1-Archive\cores\hpdmc_sdr16\rtl\hpdmc_busif.v
+	    Older     		    3416	I:\x\Zet-1.3.1-Archive\cores\hpdmc_sdr16\rtl\hpdmc_ctlif.v
+	    Older     		    4824	I:\x\Zet-1.3.1-Archive\cores\hpdmc_sdr16\rtl\hpdmc_datactl.v
+	    Older     		    9148	I:\x\Zet-1.3.1-Archive\cores\hpdmc_sdr16\rtl\hpdmc_mgmt.v
+	    Older     		    1244	I:\x\Zet-1.3.1-Archive\cores\hpdmc_sdr16\rtl\hpdmc_sdrio.v
+	    Older     		   47425	I:\x\Zet-1.3.1-Archive\cores\hpdmc_sdr16\test\mt48lc16m16a2.v
+	    Older     		     868	I:\x\Zet-1.3.1-Archive\cores\hpdmc_sdr16\test\t.do
+	    Older     		    7591	I:\x\Zet-1.3.1-Archive\cores\hpdmc_sdr16\test\tb_hpdmc.v
+	    Older     		    2306	I:\x\Zet-1.3.1-Archive\cores\pic\rtl\simple_pic.v
+	    Older     		   19681	I:\x\Zet-1.3.1-Archive\cores\ps2\rtl\ps2.v
+	    Older     		   13357	I:\x\Zet-1.3.1-Archive\cores\ps2\rtl\ps2_keyb.v
+	    Older     		    1330	I:\x\Zet-1.3.1-Archive\cores\ps2\rtl\ps2_keyb_xtcodes.v
+	    Older     		    7180	I:\x\Zet-1.3.1-Archive\cores\ps2\rtl\ps2_mouse.v
+	    Older     		    9823	I:\x\Zet-1.3.1-Archive\cores\ps2\rtl\ps2_mouse_cmdout.v
+	    Older     		    5048	I:\x\Zet-1.3.1-Archive\cores\ps2\rtl\ps2_mouse_datain.v
+	    Older     		    2006	I:\x\Zet-1.3.1-Archive\cores\ps2\rtl\ps2_mouse_nofifo.v
+	    Older     		     384	I:\x\Zet-1.3.1-Archive\cores\ps2\rtl\xt_codes.dat
+	    Older     		    2639	I:\x\Zet-1.3.1-Archive\cores\sdspi\rtl\sdspi.v
+	    Older     		     199	I:\x\Zet-1.3.1-Archive\cores\sdspi\sim\t.do
+	    Older     		    4583	I:\x\Zet-1.3.1-Archive\cores\sdspi\sim\test_sdpi.v
+	    Older     		    7793	I:\x\Zet-1.3.1-Archive\cores\sdspi\syn\test_sdspi.qsf
+	    Older     		    6336	I:\x\Zet-1.3.1-Archive\cores\sdspi\test\test_sdpi.v
+	    Older     		   18208	I:\x\Zet-1.3.1-Archive\cores\serial\rtl\serial.v
+	    Older     		    3770	I:\x\Zet-1.3.1-Archive\cores\serial\rtl\serial_arx.v
+	    Older     		    2819	I:\x\Zet-1.3.1-Archive\cores\serial\rtl\serial_atx.v
+	    Older     		     818	I:\x\Zet-1.3.1-Archive\cores\sound\doc\hardware hookup.txt
+	    Older     		    8411	I:\x\Zet-1.3.1-Archive\cores\sound\rtl\sound.v
+	    Older     		    1022	I:\x\Zet-1.3.1-Archive\cores\sound\rtl\sound_dac8.v
+	    Older     		    2588	I:\x\Zet-1.3.1-Archive\cores\sound\test\playsnd.c
+	    Older     		    1276	I:\x\Zet-1.3.1-Archive\cores\sound\test\spkr.c
+	    Older     		    1560	I:\x\Zet-1.3.1-Archive\cores\speaker\bare\speaker.v
+	    Older     		    2433	I:\x\Zet-1.3.1-Archive\cores\speaker\wm8731\speaker.v
+	    Older     		    9945	I:\x\Zet-1.3.1-Archive\cores\speaker\wm8731\speaker_i2c_av_config.v
+	    Older     		    4169	I:\x\Zet-1.3.1-Archive\cores\speaker\wm8731\speaker_i2c_controller.v
+	    Older     		    4122	I:\x\Zet-1.3.1-Archive\cores\speaker\wm8731\speaker_iface.v
+	    Older     		    1896	I:\x\Zet-1.3.1-Archive\cores\sram\csr_sram.v
+	    Older     		    1348	I:\x\Zet-1.3.1-Archive\cores\timer\rtl\clk_gen.v
+	    Older     		    6543	I:\x\Zet-1.3.1-Archive\cores\timer\rtl\timer.v
+	    Older     		    7475	I:\x\Zet-1.3.1-Archive\cores\timer\rtl\timer_counter.v
+	    Older     		    6144	I:\x\Zet-1.3.1-Archive\cores\vdu\rtl\attr_rom.dat
+	    Older     		    6144	I:\x\Zet-1.3.1-Archive\cores\vdu\rtl\buff_rom.dat
+	    Older     		   12288	I:\x\Zet-1.3.1-Archive\cores\vdu\rtl\char_rom.dat
+	    Older     		   12231	I:\x\Zet-1.3.1-Archive\cores\vdu\rtl\vdu.v
+	    Older     		    1169	I:\x\Zet-1.3.1-Archive\cores\vdu\rtl\vdu_char_rom.v
+	    Older     		    1248	I:\x\Zet-1.3.1-Archive\cores\vdu\rtl\vdu_ram_2k_attr.v
+	    Older     		    1248	I:\x\Zet-1.3.1-Archive\cores\vdu\rtl\vdu_ram_2k_char.v
+	    Older     		   12288	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\char_rom.dat
+	    Older     		    8347	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga.v
+	    Older     		    2377	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_c4_iface.v
+	    Older     		    1169	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_char_rom.v
+	    Older     		   10244	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_config_iface.v
+	    Older     		    5306	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_cpu_mem_iface.v
+	    Older     		    2194	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_dac_regs.v
+	    Older     		    8151	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_lcd.v
+	    Older     		    2720	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_linear.v
+	    Older     		    1992	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_mem_arbitrer.v
+	    Older     		    1390	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_palette_regs.v
+	    Older     		    4789	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_planar.v
+	    Older     		    3635	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_read_iface.v
+	    Older     		    5086	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_text_mode.v
+	    Older     		    9159	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\vga_write_iface.v
+	    Older     		    3504	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\fml\vga_crtc_fml.v
+	    Older     		    2363	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\fml\vga_dac_regs_fml.v
+	    Older     		    8385	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\fml\vga_fifo.v
+	    Older     		   10069	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\fml\vga_fml.v
+	    Older     		   14788	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\fml\vga_lcd_fml.v
+	    Older     		    4710	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\fml\vga_linear_fml.v
+	    Older     		    1532	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\fml\vga_palette_regs_fml.v
+	    Older     		    4746	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\fml\vga_pal_dac_fml.v
+	    Older     		    5697	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\fml\vga_planar_fml.v
+	    Older     		    5617	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\fml\vga_sequencer_fml.v
+	    Older     		    6480	I:\x\Zet-1.3.1-Archive\cores\vga\rtl\fml\vga_text_mode_fml.v
+	    Older     		   11386	I:\x\Zet-1.3.1-Archive\cores\vga\sim\fml\vga_address\tb_vga_address.v
+	    Older     		    3538	I:\x\Zet-1.3.1-Archive\cores\vga\sim\fml\vga_address\tb_vga_address_t.do
+	    Older     		    8410	I:\x\Zet-1.3.1-Archive\cores\vga\sim\fml\vga_lcd_fml\tb_vga_lcd_fml.v
+	    Older     		    4400	I:\x\Zet-1.3.1-Archive\cores\vga\sim\fml\vga_lcd_fml\tb_vga_lcd_t.do
+	    Older     		    9548	I:\x\Zet-1.3.1-Archive\cores\vga\sim\fml\vga_linear_fml\tb_vga_linear_fml.v
+	    Older     		    3146	I:\x\Zet-1.3.1-Archive\cores\vga\sim\fml\vga_linear_fml\tb_vga_linear_fml_t.do
+	    Older     		    3935	I:\x\Zet-1.3.1-Archive\cores\wb_abrg\wb_abrg.v
+	    Older     		    4126	I:\x\Zet-1.3.1-Archive\cores\wb_abrg\wb_abrgr.v
+	    Older     		    5097	I:\x\Zet-1.3.1-Archive\cores\wb_abrg\wb_abrg_reg.v
+	    Older     		    2059	I:\x\Zet-1.3.1-Archive\cores\wb_abrg\wb_regslice.v
+	    Older     		    9193	I:\x\Zet-1.3.1-Archive\cores\wb_switch\wb_switch.v
+	    Older     		    2762	I:\x\Zet-1.3.1-Archive\cores\zet\bin\micro2rom
+	    Older     		    1008	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\defines.v
+	    New File  		   26112	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\micro_rom.dat
+	    New File  		    4735	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\rom_def.v
+	    Older     		    2739	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet.v
+	    Older     		    1975	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_addsub.v
+	    Older     		    3832	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_alu.v
+	    Older     		    2132	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_arlog.v
+	    Older     		    1032	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_bitlog.v
+	    Older     		    2161	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_conv.v
+	    Older     		    6449	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_core.v
+	    Older     		    3941	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_decode.v
+	    Older     		    4907	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_div_su.v
+	    Older     		    5863	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_div_uu.v
+	    Older     		    3746	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_exec.v
+	    Older     		    5280	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_fetch.v
+	    Older     		    1028	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_fulladd16.v
+	    Older     		    2051	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_jmp_cond.v
+	    Older     		    1794	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_memory_regs.v
+	    Older     		    3610	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_micro_data.v
+	    Older     		    1217	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_micro_rom.v
+	    Older     		    3121	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_muldiv.v
+	    Older     		    1258	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_mux8_1.v
+	    Older     		    1281	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_mux8_16.v
+	    Older     		    1703	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_next_or_not.v
+	    Older     		    2391	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_nstate.v
+	    Older     		   28563	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_opcode_deco.v
+	    Older     		    2372	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_othop.v
+	    Older     		    3071	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_regfile.v
+	    Older     		    2271	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_rxr16.v
+	    Older     		    1595	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_rxr8.v
+	    Older     		    4708	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_shrot.v
+	    Older     		    3881	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\zet_wb_master.v
+	    Older     		   65858	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\altera\microcode.txt
+	    Older     		    1020	I:\x\Zet-1.3.1-Archive\cores\zet\rtl\altera\zet_signmul17.v
+	    Older     		    2587	I:\x\Zet-1.3.1-Archive\cores\zet\rtl-syn\fpga_zet_top.v
+	    Older     		    1989	I:\x\Zet-1.3.1-Archive\cores\zet\sim\Makefile
+	    Older     		     869	I:\x\Zet-1.3.1-Archive\cores\zet\sim\memory.v
+	    Older     		    2947	I:\x\Zet-1.3.1-Archive\cores\zet\sim\t.do
+	    Older     		    1997	I:\x\Zet-1.3.1-Archive\cores\zet\sim\test_zet.v
+	    Older     		    1243	I:\x\Zet-1.3.1-Archive\cores\zet\syn\zet.qpf
+	    Older     		    4779	I:\x\Zet-1.3.1-Archive\cores\zet\syn\zet.qsf
+	    Older     		     570	I:\x\Zet-1.3.1-Archive\cores\zet\tests\.bochsrc
+	    Older     		     205	I:\x\Zet-1.3.1-Archive\cores\zet\tests\00_stub.s
+	    Older     		    1797	I:\x\Zet-1.3.1-Archive\cores\zet\tests\01_jmpmov.s
+	    Older     		    1398	I:\x\Zet-1.3.1-Archive\cores\zet\tests\01_mov.s
+	    Older     		    2003	I:\x\Zet-1.3.1-Archive\cores\zet\tests\02_datatrnf.s
+	    Older     		     542	I:\x\Zet-1.3.1-Archive\cores\zet\tests\03_control.s
+	    Older     		    1683	I:\x\Zet-1.3.1-Archive\cores\zet\tests\04_jump1.s
+	    Older     		    1062	I:\x\Zet-1.3.1-Archive\cores\zet\tests\05_jump2.s
+	    Older     		     822	I:\x\Zet-1.3.1-Archive\cores\zet\tests\06_interrupt.s
+	    Older     		    1305	I:\x\Zet-1.3.1-Archive\cores\zet\tests\07_strings.s
+	    Older     		     228	I:\x\Zet-1.3.1-Archive\cores\zet\tests\08_bug5.s
+	    Older     		    3381	I:\x\Zet-1.3.1-Archive\cores\zet\tests\08_rep.s
+	    Older     		     332	I:\x\Zet-1.3.1-Archive\cores\zet\tests\09_vdu.s
+	    Older     		    2985	I:\x\Zet-1.3.1-Archive\cores\zet\tests\10_bitwise.s
+	    Older     		    2220	I:\x\Zet-1.3.1-Archive\cores\zet\tests\11_shifts.s
+	    Older     		    2926	I:\x\Zet-1.3.1-Archive\cores\zet\tests\12_rotate.s
+	    Older     		    2843	I:\x\Zet-1.3.1-Archive\cores\zet\tests\13_bcdcnv.s
+	    Older     		    2764	I:\x\Zet-1.3.1-Archive\cores\zet\tests\14_add.s
+	    Older     		    2176	I:\x\Zet-1.3.1-Archive\cores\zet\tests\15_sub.s
+	    Older     		    1340	I:\x\Zet-1.3.1-Archive\cores\zet\tests\16_cmpneg.s
+	    Older     		    2462	I:\x\Zet-1.3.1-Archive\cores\zet\tests\17_mul.s
+	    Older     		    4073	I:\x\Zet-1.3.1-Archive\cores\zet\tests\18_div.s
+	    Older     		     127	I:\x\Zet-1.3.1-Archive\cores\zet\tests\18_div1.s
+	    Older     		    1164	I:\x\Zet-1.3.1-Archive\cores\zet\tests\19_segpr.s
+	    Older     		     448	I:\x\Zet-1.3.1-Archive\cores\zet\tests\20_hdemu.s
+	    Older     		     209	I:\x\Zet-1.3.1-Archive\cores\zet\tests\21_async.s
+	    Older     		    2412	I:\x\Zet-1.3.1-Archive\cores\zet\tests\22_sysace.s
+	    Older     		     124	I:\x\Zet-1.3.1-Archive\cores\zet\tests\23_enter.s
+	    Older     		    3536	I:\x\Zet-1.3.1-Archive\cores\zet\tests\24_sdcard.s
+	    Older     		     787	I:\x\Zet-1.3.1-Archive\cores\zet\tests\25_hpdmc.s
+	    Older     		    2163	I:\x\Zet-1.3.1-Archive\cores\zet\tests\Makefile
+	    Older     		     124	I:\x\Zet-1.3.1-Archive\cores\zet\tests\README
+	    New File  		  131072	I:\x\Zet-1.3.1-Archive\src\bios\bios.rom
+	    Older     		      26	I:\x\Zet-1.3.1-Archive\src\bios\build.bat
+	    Older     		      28	I:\x\Zet-1.3.1-Archive\src\bios\clean.bat
+	    Older     		    3541	I:\x\Zet-1.3.1-Archive\src\bios\common.inc
+	    Older     		   73960	I:\x\Zet-1.3.1-Archive\src\bios\entry.asm
+	    Older     		    4217	I:\x\Zet-1.3.1-Archive\src\bios\makefile
+	    Older     		    4679	I:\x\Zet-1.3.1-Archive\src\bios\makefile.win
+	    Older     		    3019	I:\x\Zet-1.3.1-Archive\src\bios\README.txt
+	    Older     		   34204	I:\x\Zet-1.3.1-Archive\src\bios\vga.asm
+	    Older     		   30965	I:\x\Zet-1.3.1-Archive\src\bios\vgabios.c
+	    Older     		    5131	I:\x\Zet-1.3.1-Archive\src\bios\vgabios.h
+	    Older     		   25660	I:\x\Zet-1.3.1-Archive\src\bios\vgafonts.h
+	    Older     		   29332	I:\x\Zet-1.3.1-Archive\src\bios\vgatables.h
+	    Older     		   93613	I:\x\Zet-1.3.1-Archive\src\bios\zetbios.c
+	    Older     		   18146	I:\x\Zet-1.3.1-Archive\src\bios\zetbios.h
+	    Older     		   13365	I:\x\Zet-1.3.1-Archive\src\tools\biossums.c
+	    Older     		    1025	I:\x\Zet-1.3.1-Archive\src\tools\ff.c
+	    Older     		    2372	I:\x\Zet-1.3.1-Archive\src\tools\hexer.c
+	    Older     		    1189	I:\x\Zet-1.3.1-Archive\src\tools\incr-img.c
+	    Older     		     218	I:\x\Zet-1.3.1-Archive\src\tools\Makefile
+	    Older     		    1837	I:\x\Zet-1.3.1-Archive\src\tools\meow.c
+	    Older     		    2877	I:\x\Zet-1.3.1-Archive\src\tools\mifer.c
+	    Older     		    1094	I:\x\Zet-1.3.1-Archive\src\tools\out2rom-ml403.c
+	    Older     		    1184	I:\x\Zet-1.3.1-Archive\src\tools\read-addr.c
+	    Older     		     845	I:\x\Zet-1.3.1-Archive\src\tools\read-trace.c
+	    Older     		     982	I:\x\Zet-1.3.1-Archive\src\tools\splitlh.c
+	    Older     		    5794	I:\x\Zet-1.3.1-Archive\src\tools\vgasums.c
+
+------------------------------------------------------------------------------
+
+               Total    Copied   Skipped  Mismatch    FAILED    Extras
+    Dirs :        80         0        80         0         0         6
+   Files :       254       254         0         0         0        19
+   Bytes :   20.99 m   20.99 m         0         0         0    2.66 m
+   Times :   0:00:00   0:00:00                       0:00:00   0:00:00
+   Ended : Wednesday, 8 June 2022 4:17:35 PM
+
